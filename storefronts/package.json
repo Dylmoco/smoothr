@@ -2,11 +2,15 @@
     "name": "storefronts",
     "version": "1.0.0",
     "scripts": {
-      "build": "echo 'Nothing to build yet'",
+      "build": "vite build",
+      "dev": "vite",
       "test": "node core/auth/__tests__/auth.test.js"
     },
     "dependencies": {
       "@supabase/supabase-js": "^2.50.0"
+    },
+    "devDependencies": {
+      "vite": "^5.2.0"
     }
   }
   
