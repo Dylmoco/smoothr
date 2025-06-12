@@ -1,0 +1,10 @@
+export * as abandonedCart from './abandoned-cart/index.js';
+export * as affiliates from './affiliates/index.js';
+export * as analytics from './analytics/index.js';
+export * as currency from './currency/index.js';
+export * as dashboard from './dashboard/index.js';
+export * as discounts from './discounts/index.js';
+export * as orders from './orders/index.js';
+export * as returns from './returns/index.js';
+export * as reviews from './reviews/index.js';
+export * as subscriptions from './subscriptions/index.js';
