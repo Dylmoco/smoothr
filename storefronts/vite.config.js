@@ -4,9 +4,10 @@ import path from 'path';
 export default defineConfig({
   build: {
     lib: {
-      entry: path.resolve(__dirname, 'core/index.js'), // your SDK entry point
+      entry: path.resolve(__dirname, 'core/index.js'), // SDK entry point
       name: 'SmoothrSDK',
-      fileName: () => 'smoothr-sdk.js' // updated to a clean, professional filename
+      fileName: () => 'smoothr-sdk.js',
+      formats: ['es'] // <-- CRITICAL: output ES module only!
     },
     rollupOptions: {
       // Externalize deps that shouldn’t be bundled

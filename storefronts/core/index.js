@@ -1,3 +1,4 @@
+console.log('Smoothr SDK loaded');
 export * as abandonedCart from './abandoned-cart/index.js';
 export * as affiliates from './affiliates/index.js';
 export * as analytics from './analytics/index.js';
