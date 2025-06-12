@@ -3,14 +3,21 @@ import path from 'path';
 
 export default defineConfig({
   build: {
+    lib: {
+      entry: path.resolve(__dirname, 'core/index.js'), // your SDK entry point
+      name: 'SmoothrSDK',
+      fileName: () => 'smoothr-sdk.js' // updated to a clean, professional filename
+    },
     rollupOptions: {
-      input: path.resolve(__dirname, 'core/index.js'),
+      // Externalize deps that shouldn’t be bundled
+      external: ['@supabase/supabase-js'],
       output: {
-        dir: 'dist',
-        format: 'es'
+        globals: {
+          '@supabase/supabase-js': 'Supabase'
+        }
       }
     },
-    target: 'esnext',
+    outDir: 'dist',
     emptyOutDir: true
   }
 });
