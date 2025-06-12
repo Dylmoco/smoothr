@@ -6,13 +6,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables (ignore all real .env files, keep .env.example)
+# Environment variables
 .env
 .env.*
-*/.env
-*/.env.*
-!*.env.example
-!*/.env.example
 
 # Build output
 /dist
@@ -22,5 +18,3 @@ out/
 
 # Misc
 .DS_Store
-*.env.backup
-*.env.bak
