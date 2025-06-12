@@ -1,7 +1,12 @@
 # auth
 
-Authentication utilities powered by Supabase. Attach `[data-smoothr-auth]`
-attributes to forms or buttons to trigger login and logout from any storefront.
+Authentication utilities powered by Supabase. Attach `[data-smoothr]`
+attributes to trigger login and logout from any storefront.
+
+> **Why use a `div` for the login button?**
+> Webflow blocks password form submissions on `.webflow.io` domains. By never
+> triggering a native submit event, this pattern works seamlessly on both
+> staging and production sites.
 
 ## Redirect lookup
 
@@ -31,12 +36,12 @@ initAuth({ supabaseUrl: 'https://xyz.supabase.co', supabaseKey: 'public-anon-key
 Markup example:
 
 ```html
-<form data-smoothr-auth="login">
-  <input type="email" name="email" />
-  <input type="password" name="password" />
-  <button type="submit">Login</button>
+<form data-smoothr="login-form">
+  <input type="email" data-smoothr-input="email" />
+  <input type="password" data-smoothr-input="password" />
+  <div data-smoothr="login">Sign In</div>
 </form>
-<button data-smoothr-auth="logout">Logout</button>
+<div data-smoothr="logout">Logout</div>
 ```
 
 Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
