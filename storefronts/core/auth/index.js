@@ -4,6 +4,9 @@ let supabase;
 
 export function initAuth({ supabaseUrl, supabaseKey }) {
   supabase = createClient(supabaseUrl, supabaseKey);
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    console.log(user ? 'Logged in as: ' + user.email : 'Not logged in');
+  });
   bindLoginForms();
   bindLogoutButtons();
 }
@@ -18,6 +21,7 @@ function bindLoginForms() {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error) {
+          console.log(data.user ? 'Logged in as: ' + data.user.email : 'Logged in');
           document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
           const url = await lookupRedirectUrl('login');
           window.location.href = url;
@@ -39,6 +43,8 @@ function bindLogoutButtons() {
       if (error) {
         console.error(error);
       }
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log(user ? 'Logged in as: ' + user.email : 'Not logged in');
       document.dispatchEvent(new CustomEvent('smoothr:logout'));
       const url = await lookupRedirectUrl('logout');
       window.location.href = url;
