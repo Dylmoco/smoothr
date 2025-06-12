@@ -1,6 +1,8 @@
-{  "name": "storefronts",
-    "version": "1.0.0",
-    "scripts": {
-      "build": "echo 'Nothing to build yet'"
-    }
+{
+  "name": "storefronts",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Nothing to build yet'",
+    "test": "node core/auth/__tests__/auth.test.js"
+  }
 }

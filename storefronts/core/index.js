@@ -8,3 +8,4 @@ export * as orders from './orders/index.js';
 export * as returns from './returns/index.js';
 export * as reviews from './reviews/index.js';
 export * as subscriptions from './subscriptions/index.js';
+export * as auth from "./auth/index.js";
