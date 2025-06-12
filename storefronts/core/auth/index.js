@@ -15,11 +15,17 @@ function bindLoginForms() {
       const fd = new FormData(form);
       const email = fd.get('email');
       const password = fd.get('password');
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error) {
-        document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-        const url = await lookupRedirectUrl('login');
-        window.location.href = url;
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!error) {
+          document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+          const url = await lookupRedirectUrl('login');
+          window.location.href = url;
+        } else {
+          console.error(error);
+        }
+      } catch (err) {
+        console.error(err);
       }
     });
   });
@@ -29,7 +35,10 @@ function bindLogoutButtons() {
   document.querySelectorAll('[data-smoothr-auth="logout"]').forEach(btn => {
     btn.addEventListener('click', async evt => {
       evt.preventDefault();
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error(error);
+      }
       document.dispatchEvent(new CustomEvent('smoothr:logout'));
       const url = await lookupRedirectUrl('logout');
       window.location.href = url;
@@ -53,7 +62,8 @@ export async function lookupRedirectUrl(type) {
       throw error;
     }
     return data[`${type}_redirect_url`] || window.location.origin;
-  } catch {
+  } catch (err) {
+    console.error(err);
     return window.location.origin;
   }
 }
