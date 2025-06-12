@@ -7,17 +7,25 @@ export function initAuth({ supabaseUrl, supabaseKey }) {
   supabase.auth.getUser().then(({ data: { user } }) => {
     console.log(user ? 'Logged in as: ' + user.email : 'Not logged in');
   });
-  bindLoginForms();
-  bindLogoutButtons();
+  document.addEventListener('DOMContentLoaded', () => {
+    bindLoginDivs();
+    bindLogoutButtons();
+  });
 }
 
-function bindLoginForms() {
-  document.querySelectorAll('[data-smoothr-auth="login"]').forEach(form => {
-    form.addEventListener('submit', async evt => {
+//
+// Bind login click handlers using a <div> button instead of a form submit.
+// This avoids Webflow's password field restrictions on staging domains by never
+// triggering a native submit event.
+//
+function bindLoginDivs() {
+  document.querySelectorAll('[data-smoothr="login"]').forEach(btn => {
+    btn.addEventListener('click', async evt => {
       evt.preventDefault();
-      const fd = new FormData(form);
-      const email = fd.get('email');
-      const password = fd.get('password');
+      const form = btn.closest('form[data-smoothr="login-form"]');
+      if (!form) return;
+      const email = form.querySelector('[data-smoothr-input="email"]')?.value || '';
+      const password = form.querySelector('[data-smoothr-input="password"]')?.value || '';
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error) {
@@ -36,7 +44,7 @@ function bindLoginForms() {
 }
 
 function bindLogoutButtons() {
-  document.querySelectorAll('[data-smoothr-auth="logout"]').forEach(btn => {
+  document.querySelectorAll('[data-smoothr="logout"]').forEach(btn => {
     btn.addEventListener('click', async evt => {
       evt.preventDefault();
       const { error } = await supabase.auth.signOut();

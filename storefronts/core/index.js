@@ -1,12 +1,46 @@
 console.log('Smoothr SDK loaded');
-export * as abandonedCart from './abandoned-cart/index.js';
-export * as affiliates from './affiliates/index.js';
-export * as analytics from './analytics/index.js';
-export * as currency from './currency/index.js';
-export * as dashboard from './dashboard/index.js';
-export * as discounts from './discounts/index.js';
-export * as orders from './orders/index.js';
-export * as returns from './returns/index.js';
-export * as reviews from './reviews/index.js';
-export * as subscriptions from './subscriptions/index.js';
-export * as auth from "./auth/index.js";
+import * as abandonedCart from './abandoned-cart/index.js';
+import * as affiliates from './affiliates/index.js';
+import * as analytics from './analytics/index.js';
+import * as currency from './currency/index.js';
+import * as dashboard from './dashboard/index.js';
+import * as discounts from './discounts/index.js';
+import * as orders from './orders/index.js';
+import * as returns from './returns/index.js';
+import * as reviews from './reviews/index.js';
+import * as subscriptions from './subscriptions/index.js';
+import * as auth from './auth/index.js';
+
+export {
+  abandonedCart,
+  affiliates,
+  analytics,
+  currency,
+  dashboard,
+  discounts,
+  orders,
+  returns,
+  reviews,
+  subscriptions,
+  auth
+};
+
+const Smoothr = {
+  abandonedCart,
+  affiliates,
+  analytics,
+  currency,
+  dashboard,
+  discounts,
+  orders,
+  returns,
+  reviews,
+  subscriptions,
+  auth
+};
+
+if (typeof window !== 'undefined') {
+  window.Smoothr = Smoothr;
+}
+
+export default Smoothr;
