@@ -4,6 +4,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
+        "pretest": "npm install",
         "test": "node core/auth/__tests__/auth.test.js"
     },
     "dependencies": {
