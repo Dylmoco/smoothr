@@ -24,3 +24,5 @@ out/
 .DS_Store
 *.env.backup
 *.env.bak
+
+.history/
