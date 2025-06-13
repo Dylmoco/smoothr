@@ -41,6 +41,7 @@ const Smoothr = {
 
 if (typeof window !== 'undefined') {
   window.Smoothr = Smoothr;
+  auth.initAuth();
 }
 
 export default Smoothr;

@@ -4,6 +4,15 @@ Client-facing storefront code and widgets.
 
 This package contains the core storefront modules located in `./core`.
 
+The bundled SDK is designed for zero‑config installation on platforms like
+Webflow. Simply include
+
+```html
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+```
+
+and authentication will initialize automatically.
+
 ## Core modules
 
 - abandoned-cart
