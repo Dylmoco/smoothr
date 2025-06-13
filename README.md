@@ -15,6 +15,53 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 
 This README serves as the source of truth for new developers on how the repository is organized and where modules belong.
 
+## Workspace Setup
+
+The repository is managed as a Node.js workspace. The root `package.json` lists
+two workspaces:
+
+- `smoothr` – the admin dashboard
+- `storefronts` – the storefront SDK and widgets
+
+Running `npm install` from the repository root installs dependencies for all
+packages in one step.
+
+## Running the Admin Dashboard
+
+The admin dashboard lives in `/smoothr`. After installing dependencies you can
+build it with:
+
+```bash
+cd smoothr
+npm install
+npm run build
+```
+
+This will output any compiled assets. A development server can be added later
+via `npm run dev` when the project grows.
+
+## Running the Storefront SDK
+
+The storefront package provides a Vite based development server. Start it with:
+
+```bash
+cd storefronts
+npm install
+npm run dev
+```
+
+Build the SDK for production with `npm run build` which outputs
+`dist/smoothr-sdk.js`.
+
+## Contribution Guidelines
+
+- **Node.js**: use version 20 or later.
+- **Tests**: run `npm test` from the repository root to execute tests in all
+  workspaces.
+- **Coding style**: follow the existing style—two space indentation, single
+  quotes and trailing semicolons. Keep the code free of unused variables and
+  prefer small, focused commits.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

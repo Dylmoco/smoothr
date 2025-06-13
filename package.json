@@ -1,0 +1,12 @@
+{
+  "name": "smoothr-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "smoothr",
+    "storefronts"
+  ],
+  "scripts": {
+    "test": "npm --workspace storefronts test"
+  }
+}
