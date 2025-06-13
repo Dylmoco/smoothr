@@ -43,6 +43,16 @@ import * as core from './core/index.js';
 core.discounts; // example access
 ```
 
+## Building the SDK
+
+Generate the production bundle with:
+
+```bash
+vite build
+```
+
+The compiled file will be written to `dist/smoothr-sdk.js`.
+
 ## Running tests
 
 Run `npm install` once before executing the test suite to ensure all dependencies are available.
