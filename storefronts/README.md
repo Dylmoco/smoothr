@@ -55,11 +55,10 @@ The compiled file will be written to `dist/smoothr-sdk.js`.
 
 ## Running tests
 
-Run `npm install` once before executing the test suite to ensure all dependencies are available.
+Vitest runs the unit tests for this package. After installing dependencies run:
 
 ```bash
-npm install
 npm test
 ```
 
-`npm test` also triggers a `pretest` step that installs dependencies automatically if needed.
+The `pretest` script ensures dependencies are installed before tests execute.

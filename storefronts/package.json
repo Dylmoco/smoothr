@@ -1,16 +1,18 @@
 {
     "name": "storefronts",
     "version": "1.0.0",
+    "type": "module",
     "scripts": {
         "build": "vite build",
         "dev": "vite",
         "pretest": "npm install",
-        "test": "node core/auth/__tests__/auth.test.js"
+        "test": "vitest run"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.50.0"
     },
     "devDependencies": {
-        "vite": "^5.4.19"
+        "vite": "^5.4.19",
+        "vitest": "^1.5.0"
     }
 }

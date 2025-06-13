@@ -53,6 +53,15 @@ npm run dev
 Build the SDK for production with `npm run build` which outputs
 `dist/smoothr-sdk.js`.
 
+## Running Tests
+
+Vitest is used for unit testing across the workspace. Run all tests from the
+repository root with:
+
+```bash
+npm test
+```
+
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later.
