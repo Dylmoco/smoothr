@@ -13,7 +13,9 @@ Webflow. Simply include
 
 and authentication will initialize automatically.
 
-Create a `.env` file in this directory and provide your Supabase project details:
+Create a `.env` file in this directory and provide your Supabase project details.
+These variables are injected at build time so the final SDK has no
+`process.env` references:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url

@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 const DEFAULT_SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
+  (typeof __NEXT_PUBLIC_SUPABASE_URL__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_URL__) ||
+  'https://your-project.supabase.co';
 const DEFAULT_SUPABASE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+  (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
+  'your-anon-key';
 
 let supabase;
 
