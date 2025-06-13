@@ -25,12 +25,23 @@ Required columns in the `stores` table:
 - `login_redirect_url` – URL to redirect after login
 - `logout_redirect_url` – URL to redirect after logout
 
+
 ## Usage
+
+The storefront SDK automatically initializes authentication when loaded. In
+Webflow or other drop-in platforms simply include the script tag:
+
+```html
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+```
+
+No additional JavaScript configuration is required. For advanced use you can
+still call `initAuth()` manually:
 
 ```javascript
 import { initAuth } from './auth/index.js';
 
-initAuth({ supabaseUrl: 'https://xyz.supabase.co', supabaseKey: 'public-anon-key' });
+initAuth();
 ```
 
 Markup example:

@@ -1,8 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
+const DEFAULT_SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';
+const DEFAULT_SUPABASE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFy' +
+  'enZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4' +
+  'OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU';
+
 let supabase;
 
-export function initAuth({ supabaseUrl, supabaseKey }) {
+export function initAuth({
+  supabaseUrl = DEFAULT_SUPABASE_URL,
+  supabaseKey = DEFAULT_SUPABASE_KEY
+} = {}) {
   supabase = createClient(supabaseUrl, supabaseKey);
   supabase.auth.getUser().then(({ data: { user } }) => {
     console.log(user ? 'Logged in as: ' + user.email : 'Not logged in');
