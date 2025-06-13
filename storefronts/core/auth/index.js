@@ -15,7 +15,22 @@ export function initAuth({
 } = {}) {
   supabase = createClient(supabaseUrl, supabaseKey);
   supabase.auth.getUser().then(({ data: { user } }) => {
-    console.log(user ? 'Logged in as: ' + user.email : 'Not logged in');
+    if (typeof window !== 'undefined') {
+      window.smoothr = window.smoothr || {};
+      window.smoothr.auth = { user: user || null };
+
+      if (user) {
+        console.log(
+          `%c✅ Smoothr Auth: Logged in as ${user.email}`,
+          'color: #22c55e; font-weight: bold;'
+        );
+      } else {
+        console.log(
+          '%c🔒 Smoothr Auth: Not logged in',
+          'color: #f87171; font-weight: bold;'
+        );
+      }
+    }
   });
   document.addEventListener('DOMContentLoaded', () => {
     bindLoginDivs();
@@ -61,8 +76,25 @@ function bindLogoutButtons() {
       if (error) {
         console.error(error);
       }
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log(user ? 'Logged in as: ' + user.email : 'Not logged in');
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (typeof window !== 'undefined') {
+        window.smoothr = window.smoothr || {};
+        window.smoothr.auth = { user: user || null };
+
+        if (user) {
+          console.log(
+            `%c✅ Smoothr Auth: Logged in as ${user.email}`,
+            'color: #22c55e; font-weight: bold;'
+          );
+        } else {
+          console.log(
+            '%c🔒 Smoothr Auth: Not logged in',
+            'color: #f87171; font-weight: bold;'
+          );
+        }
+      }
       document.dispatchEvent(new CustomEvent('smoothr:logout'));
       const url = await lookupRedirectUrl('logout');
       window.location.href = url;
