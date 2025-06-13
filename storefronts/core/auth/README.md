@@ -56,3 +56,17 @@ Markup example:
 ```
 
 Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
+
+## Accessing the current user
+
+`initAuth()` retrieves the existing session and exposes it on
+`window.smoothr.auth.user`. The value is `null` if no user is logged in.
+After `initAuth()` resolves (or after automatic initialization when loading
+the SDK) you can check whether someone is logged in by reading:
+
+```javascript
+window.smoothr?.auth?.user !== null
+```
+
+This property is `undefined` before initialization, so ensure `initAuth()` has
+completed before relying on it.
