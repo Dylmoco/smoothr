@@ -14,3 +14,7 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
 This README serves as the source of truth for new developers on how the repository is organized and where modules belong.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
