@@ -13,6 +13,15 @@ Webflow. Simply include
 
 and authentication will initialize automatically.
 
+Create a `.env` file in this directory and provide your Supabase project details:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+An `.env.example` file is included for reference.
+
 ## Core modules
 
 - abandoned-cart
