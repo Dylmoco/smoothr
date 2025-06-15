@@ -40,6 +40,13 @@ const Smoothr = {
 };
 
 if (typeof window !== 'undefined') {
+  const cfg = window.SMOOTHR_CONFIG || {};
+  if (cfg.baseCurrency) {
+    currency.setBaseCurrency(cfg.baseCurrency);
+  }
+  if (cfg.rates) {
+    currency.updateRates(cfg.rates);
+  }
   window.Smoothr = Smoothr;
   auth.initAuth();
 }
