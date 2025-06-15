@@ -5,6 +5,7 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 ## Directory Overview
 
 - **/storefronts/** – Client-facing storefront code and widgets.
+  - _Note: previous references to a `/client` directory have been replaced by `/storefronts`. All storefront modules live here._
   - **/core/** – Core storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, customer dashboard, abandoned cart, and subscriptions.
   - **/platforms/** – Adapters for various web builder platforms.
   - **/clonables/** – Embeddable widgets and plug‑and‑play code.
