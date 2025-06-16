@@ -22,13 +22,21 @@ export async function onRequestGet({ request }) {
     });
   }
   try {
-    const apiUrl = `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+    const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${symbols.join(',')}`;
     console.log('Fetching live rates from', apiUrl);
     let data;
     try {
       const res = await fetch(apiUrl, {
-        headers: { 'User-Agent': 'SmoothrCurrencyBot/1.0' }
+        headers: {
+          'User-Agent': 'SmoothrCurrencyBot/1.0',
+          'Accept': 'application/json'
+        },
+        redirect: 'manual'
       });
+      console.log('Fetch result URL:', res.url, 'status:', res.status);
+      if (res.status === 301 || res.url.includes('fixer.io')) {
+        console.warn('Possible redirect detected:', res.status, res.url);
+      }
       if (!res.ok) {
         console.error('Exchange fetch status', res.status);
         console.error('Exchange fetch body', await res.text());
