@@ -19,11 +19,10 @@ const FALLBACK = {
 
 serve(async (req: Request) => {
   const url = new URL(req.url)
-  const base = (url.searchParams.get('base') || 'GBP').toUpperCase()
-  const symbols = (url.searchParams.get('symbols') || 'USD,EUR,GBP').toUpperCase()
 
   try {
-    const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${symbols}`
+    const apiUrl =
+      'https://openexchangerates.org/api/latest.json?app_id=eca2385f63504d80a624d130cce7e240&symbols=USD,EUR,GBP'
     const res = await fetch(apiUrl, { redirect: 'manual' })
     console.log('📡 Fetching live rates from', apiUrl)
     console.log('🌐 Response status:', res.status)
@@ -42,7 +41,19 @@ serve(async (req: Request) => {
       throw new Error('Invalid rates structure')
     }
 
-    const payload = { base: data.base, date: data.date, rates: data.rates }
+    const gbpRate = data.rates.GBP
+    const convertedRates = {
+      USD: data.rates.USD / gbpRate,
+      EUR: data.rates.EUR / gbpRate,
+      GBP: 1,
+    }
+    console.log('💸 Using OpenExchangeRates:', convertedRates)
+
+    const payload = {
+      base: 'GBP',
+      date: new Date(data.timestamp * 1000).toISOString(),
+      rates: convertedRates,
+    }
     return new Response(JSON.stringify(payload), { headers: CORS_HEADERS })
   } catch (e) {
     console.error('❌ Fetch or JSON error:', e);
