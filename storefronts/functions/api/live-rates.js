@@ -25,16 +25,18 @@ export async function onRequestGet({ request }) {
     const apiUrl = `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
     let data;
     try {
-      const res = await fetch(apiUrl);
+      const res = await fetch(apiUrl, {
+        headers: { 'User-Agent': 'SmoothrCurrencyBot/1.0' }
+      });
       if (!res.ok) {
-        const text = await res.text();
-        console.error('Live rates fetch failed', res.status, text);
+        console.error('Exchange fetch status', res.status);
+        console.error('Exchange fetch body', await res.text());
         throw new Error('Fetch failed');
       }
       data = await res.json();
-    } catch (err) {
-      console.error('Error requesting live rates', err);
-      throw err;
+    } catch (e) {
+      console.error('Exchange fetch error', e);
+      throw e;
     }
     const rates = {};
     symbols.forEach(code => {
