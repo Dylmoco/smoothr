@@ -52,7 +52,12 @@ if (typeof window !== 'undefined') {
   }
   const base = cfg.baseCurrency || currency.baseCurrency;
   const symbols = cfg.rates ? Object.keys(cfg.rates) : Object.keys(currency.rates);
-  fetchExchangeRates(base, symbols)
+  const urlBase = cfg.rateSource || 'https://api.exchangerate.host/latest';
+  if (cfg.debug) {
+    const debugUrl = `${urlBase}?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+    console.log('smoothr:live-rates-url', debugUrl);
+  }
+  fetchExchangeRates(base, symbols, cfg.rateSource)
     .then(rates => {
       if (rates) {
         currency.updateRates(rates);
