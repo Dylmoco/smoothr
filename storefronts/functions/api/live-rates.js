@@ -34,6 +34,11 @@ export async function onRequestGet({ request }) {
         throw new Error('Fetch failed');
       }
       data = await res.json();
+      if (!data.rates || typeof data.rates.USD !== 'number') {
+        console.error('Invalid rates payload', data);
+        throw new Error('Invalid rates structure');
+      }
+      console.log('Received live rates:', data.rates);
     } catch (e) {
       console.error('Exchange fetch error', e);
       throw e;
