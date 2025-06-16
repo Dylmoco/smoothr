@@ -25,7 +25,7 @@ function replacePrices() {
 
 export function initCurrencyDom() {
   if (typeof document === 'undefined') return;
-  document.addEventListener('DOMContentLoaded', replacePrices);
+  replacePrices();
   document.addEventListener('smoothr:currencychange', replacePrices);
 }
 
