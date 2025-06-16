@@ -66,5 +66,3 @@ import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.j
 // Always expose helper on the global object for browser embeds
 globalThis.setSelectedCurrency =
   globalThis.setSelectedCurrency || setSelectedCurrency;
-// trigger Cloudflare deploy
-// deploy trigger 003
