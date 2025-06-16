@@ -1,3 +1,4 @@
+// DEPRECATED: Replaced by Supabase Edge Function `proxy-live-rates`
 const CACHE = new Map();
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
