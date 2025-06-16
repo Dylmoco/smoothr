@@ -57,3 +57,4 @@ import { setSelectedCurrency } from '../platforms/webflow-dom.js';
 if (typeof window !== 'undefined') {
   window.setSelectedCurrency = window.setSelectedCurrency || setSelectedCurrency;
 }
+// trigger Cloudflare deploy
