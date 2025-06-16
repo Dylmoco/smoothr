@@ -19,22 +19,26 @@ export async function handleRequest(
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
   const token = Deno.env.get('OPENEXCHANGERATES_TOKEN') || ''
-  console.log('Loaded token:', token)
+  console.log('🔑 Loaded token:', token)
   let usedFallback = false
   let payload
   try {
     const apiUrl =
-      `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`;
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Token ${token}`;
-    }
-    const res = await fetchFn(apiUrl, { redirect: 'manual', headers });
-    const rawText = await res.text();
-    const data = JSON.parse(rawText);
+      `https://openexchangerates.org/api/latest.json?app_id=${token}&base=USD`;
+    const res = await fetchFn(apiUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: `Token ${token}`,
+        Accept: 'application/json',
+        'User-Agent': 'SmoothrProxy/1.0'
+      },
+      redirect: 'manual'
+    });
     if (!res.ok) {
+      console.log('❌ Live fetch failed', res.status, await res.text());
       throw new Error('Fetch failed');
     }
+    const data = await res.json();
     if (!data.rates || typeof data.rates.USD !== 'number') {
       throw new Error('Invalid rates structure');
     }
