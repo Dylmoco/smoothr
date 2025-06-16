@@ -39,6 +39,8 @@ const Smoothr = {
   auth
 };
 
+let setSelectedCurrency = setDomCurrency;
+
 if (typeof window !== 'undefined') {
   const cfg = window.SMOOTHR_CONFIG || {};
   if (cfg.baseCurrency) {
@@ -47,14 +49,22 @@ if (typeof window !== 'undefined') {
   if (cfg.rates) {
     currency.updateRates(cfg.rates);
   }
+  if (cfg.platform === 'webflow-ecom') {
+    setSelectedCurrency = setEcomCurrency;
+  } else if (cfg.platform === 'cms') {
+    setSelectedCurrency = setCmsCurrency;
+  }
   window.Smoothr = Smoothr;
   auth.initAuth();
 }
 
 export default Smoothr;
 
-import { setSelectedCurrency } from '../platforms/webflow-dom.js';
+import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow-dom.js';
+import { setSelectedCurrency as setEcomCurrency } from '../platforms/webflow-ecom-currency.js';
+import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
 // Always expose helper on the global object for browser embeds
-globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || setSelectedCurrency;
+globalThis.setSelectedCurrency =
+  globalThis.setSelectedCurrency || setSelectedCurrency;
 // trigger Cloudflare deploy
 // deploy trigger 003
