@@ -1,4 +1,8 @@
-export async function fetchExchangeRates(base = 'GBP', symbols = ['USD', 'EUR', 'GBP']) {
+export async function fetchExchangeRates(
+  base = 'GBP',
+  symbols = ['USD', 'EUR', 'GBP'],
+  rateSource
+) {
   if (typeof fetch === 'undefined') return null;
 
   const CACHE_KEY = 'smoothrRatesCache';
@@ -14,7 +18,8 @@ export async function fetchExchangeRates(base = 'GBP', symbols = ['USD', 'EUR', 
   }
 
   try {
-    const url = `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+    const source = rateSource || 'https://api.exchangerate.host/latest';
+    const url = `${source}?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch rates');
     const data = await res.json();

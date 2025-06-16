@@ -49,14 +49,15 @@ core.discounts; // example access
 ## Currency Conversion
 
 Define a global `SMOOTHR_CONFIG` before loading the SDK to set the base
-currency and any custom exchange rates. These options are applied at runtime
-when the script initializes.
+currency, provide custom exchange rates, or override the live rates endpoint.
+These options are applied at runtime when the script initializes.
 
 ```html
 <script>
   window.SMOOTHR_CONFIG = {
     baseCurrency: 'USD',
-    rates: { USD: 1, EUR: 0.9, GBP: 0.8 }
+    rates: { USD: 1, EUR: 0.9, GBP: 0.8 },
+    rateSource: 'https://example.com/api/live-rates'
   };
 </script>
 <script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>

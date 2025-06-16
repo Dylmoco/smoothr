@@ -10,7 +10,7 @@ Utilities for formatting and converting prices in multiple currencies.
   another. Defaults to the base currency.
 - `formatPrice(amount, code?, locale?)` – format a number as a localized
   currency string.
-- `fetchExchangeRates(base?, symbols?)` – retrieve live FX data with 24h caching.
+- `fetchExchangeRates(base?, symbols?, rateSource?)` – retrieve live FX data with 24h caching.
 
 ## Global configuration
 
