@@ -16,15 +16,16 @@ export const FALLBACK = {
 
 export async function handleRequest(
   req: Request,
-  token: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
+  const token = Deno.env.get('OPENEXCHANGERATES_TOKEN') || ''
+  console.log('Loaded token:', token)
   try {
     const apiUrl =
       `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`;
     const headers: Record<string, string> = {};
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Token ${token}`;
     }
     const res = await fetchFn(apiUrl, { redirect: 'manual', headers });
     const rawText = await res.text();

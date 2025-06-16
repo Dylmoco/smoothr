@@ -12,8 +12,9 @@ describe('handleRequest', () => {
       })
     }
     const fetchFn = vi.fn(async () => mockRes as any)
+    Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
     const req = new Request('https://example.com')
-    const res = await handleRequest(req, 'token', fetchFn)
+    const res = await handleRequest(req, fetchFn)
     const body = await res.json()
     expect(body.base).toBe('GBP')
     expect(body.rates).toEqual({ USD: 2/1, EUR: 1/1, GBP: 1 })
@@ -22,8 +23,9 @@ describe('handleRequest', () => {
 
   it('falls back when fetch throws', async () => {
     const fetchFn = vi.fn(async () => { throw new Error('fail') })
+    Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
     const req = new Request('https://example.com')
-    const res = await handleRequest(req, 'token', fetchFn)
+    const res = await handleRequest(req, fetchFn)
     const body = await res.json()
     expect(body.base).toBe(FALLBACK.base)
     expect(body.rates).toEqual(FALLBACK.rates)
