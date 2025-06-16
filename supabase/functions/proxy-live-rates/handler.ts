@@ -23,22 +23,25 @@ export async function handleRequest(
   let usedFallback = false
   let payload
   try {
-    const apiUrl =
-      `https://openexchangerates.org/api/latest.json?app_id=${token}&base=USD`;
-    const res = await fetchFn(apiUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: `Token ${token}`,
-        Accept: 'application/json',
-        'User-Agent': 'SmoothrProxy/1.0'
+    console.log('🚀 About to fetch OpenExchangeRates')
+    const response = await fetchFn(
+      `https://openexchangerates.org/api/latest.json?app_id=${token}&base=USD`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Token ${token}`,
+          Accept: 'application/json',
+          'User-Agent': 'SmoothrProxy/1.0',
+        },
+        redirect: 'manual',
       },
-      redirect: 'manual'
-    });
-    if (!res.ok) {
-      console.log('❌ Live fetch failed', res.status, await res.text());
-      throw new Error('Fetch failed');
+    )
+    console.log('✅ Got response from OpenExchangeRates:', response.status)
+    if (!response.ok) {
+      console.log('❌ Live fetch failed', response.status, await response.text())
+      throw new Error('Fetch failed')
     }
-    const data = await res.json();
+    const data = await response.json();
     if (!data.rates || typeof data.rates.USD !== 'number') {
       throw new Error('Invalid rates structure');
     }
