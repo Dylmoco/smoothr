@@ -10,12 +10,14 @@ Utilities for formatting and converting prices in multiple currencies.
   another. Defaults to the base currency.
 - `formatPrice(amount, code?, locale?)` – format a number as a localized
   currency string.
+- `fetchExchangeRates(base?, symbols?)` – retrieve live FX data with 24h caching.
 
 ## Global configuration
 
 When the SDK loads it checks for `window.SMOOTHR_CONFIG` and applies the
-`baseCurrency` and `rates` values if present. This lets you define conversion
-options inline before loading the bundle:
+`baseCurrency` and `rates` values if present. Live rates are fetched once per
+day and will override these static values when available. Define defaults inline
+before loading the bundle:
 
 ```html
 <script>

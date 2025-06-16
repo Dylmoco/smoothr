@@ -10,6 +10,7 @@ import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
 import * as auth from './auth/index.js';
+import { fetchExchangeRates } from './currency/live-rates.js';
 
 export {
   abandonedCart,
@@ -49,6 +50,18 @@ if (typeof window !== 'undefined') {
   if (cfg.rates) {
     currency.updateRates(cfg.rates);
   }
+  const base = cfg.baseCurrency || currency.baseCurrency;
+  const symbols = cfg.rates ? Object.keys(cfg.rates) : Object.keys(currency.rates);
+  fetchExchangeRates(base, symbols)
+    .then(rates => {
+      if (rates) {
+        currency.updateRates(rates);
+        if (cfg.debug) {
+          console.log('smoothr:live-rates', rates);
+        }
+      }
+    })
+    .catch(() => {});
   if (cfg.platform === 'webflow-ecom') {
     setSelectedCurrency = setEcomCurrency;
   } else if (cfg.platform === 'cms') {
