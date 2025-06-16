@@ -120,8 +120,12 @@ Example response:
 { "rates": { "USD": 1.27, "EUR": 1.18, "GBP": 1 } }
 ```
 
-If an error occurs the function returns:
+If an error occurs the function returns a fallback object:
 
 ```json
-{ "error": "Failed to fetch live rates" }
+{
+  "base": "GBP",
+  "date": "<timestamp>",
+  "rates": { "USD": 1.25, "EUR": 1.17, "GBP": 1 }
+}
 ```
