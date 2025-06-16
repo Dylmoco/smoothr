@@ -12,6 +12,10 @@ import * as subscriptions from './subscriptions/index.js';
 import * as auth from './auth/index.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
 
+// Default endpoint for retrieving live exchange rates via Supabase proxy.
+const DEFAULT_RATE_SOURCE =
+  'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
+
 export {
   abandonedCart,
   affiliates,
@@ -52,9 +56,15 @@ if (typeof window !== 'undefined') {
   }
   const base = cfg.baseCurrency || currency.baseCurrency;
   const symbols = cfg.rates ? Object.keys(cfg.rates) : Object.keys(currency.rates);
-  const urlBase = cfg.rateSource || 'https://api.exchangerate.host/latest';
+  const urlBase = cfg.rateSource || DEFAULT_RATE_SOURCE;
   if (cfg.debug) {
-    const debugUrl = `${urlBase}?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+    let debugUrl = urlBase;
+    if (!/[?&]base=/.test(urlBase)) {
+      debugUrl += (debugUrl.includes('?') ? '&' : '?') + `base=${encodeURIComponent(base)}`;
+    }
+    if (!/[?&]symbols=/.test(urlBase)) {
+      debugUrl += (debugUrl.includes('?') ? '&' : '?') + `symbols=${symbols.join(',')}`;
+    }
     console.log('smoothr:live-rates-url', debugUrl);
   }
   fetchExchangeRates(base, symbols, cfg.rateSource)

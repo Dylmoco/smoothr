@@ -57,7 +57,7 @@ These options are applied at runtime when the script initializes.
   window.SMOOTHR_CONFIG = {
     baseCurrency: 'USD',
     rates: { USD: 1, EUR: 0.9, GBP: 0.8 },
-    rateSource: 'https://example.com/api/live-rates'
+    rateSource: 'https://<your-project-id>.functions.supabase.co/proxy-live-rates'
   };
 </script>
 <script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
@@ -104,14 +104,14 @@ npm test
 
 The `pretest` script ensures dependencies are installed before tests execute.
 
-## Cloudflare Live Rates Function
+## Supabase Proxy Live Rates Function
 
-The SDK retrieves exchange rates from a Cloudflare Pages Function available at `/api/live-rates`. Supply `base` and `symbols` query parameters to request specific currencies. Results are cached for 24 hours.
+The SDK retrieves exchange rates from a Supabase Edge Function available at `proxy-live-rates`. Supply `base` and `symbols` query parameters to override the defaults if needed. Results are cached for 24 hours.
 
 Example request:
 
 ```
-/api/live-rates?base=GBP&symbols=USD,EUR,GBP
+https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP
 ```
 
 Example response:
