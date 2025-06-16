@@ -25,6 +25,22 @@ function replacePrices(root = document) {
   root.querySelectorAll('[data-smoothr-price]').forEach(formatElement);
 }
 
+function bindCurrencyButtons(root = document) {
+  if (root.id && root.id.startsWith('currency-')) {
+    const code = root.id.slice('currency-'.length).toUpperCase();
+    if (!root.__smoothrCurrencyBound) {
+      root.addEventListener('click', () => setSelectedCurrency(code));
+      root.__smoothrCurrencyBound = true;
+    }
+  }
+  root.querySelectorAll('[id^="currency-"]').forEach(el => {
+    const code = el.id.slice('currency-'.length).toUpperCase();
+    if (el.__smoothrCurrencyBound) return;
+    el.addEventListener('click', () => setSelectedCurrency(code));
+    el.__smoothrCurrencyBound = true;
+  });
+}
+
 export function initWebflowEcomCurrency() {
   if (typeof document === 'undefined') return;
 
@@ -37,10 +53,16 @@ export function initWebflowEcomCurrency() {
               if (node.matches && node.matches('[data-smoothr-price]')) {
                 formatElement(node);
               }
+              if (node.matches && node.id?.startsWith('currency-')) {
+                bindCurrencyButtons(node);
+              }
               if (node.querySelectorAll) {
                 node
                   .querySelectorAll('[data-smoothr-price]')
                   .forEach(formatElement);
+                node
+                  .querySelectorAll('[id^="currency-"]')
+                  .forEach(el => bindCurrencyButtons(el));
               }
             });
           });
@@ -49,6 +71,7 @@ export function initWebflowEcomCurrency() {
 
   document.addEventListener('DOMContentLoaded', () => {
     replacePrices();
+    bindCurrencyButtons();
     observer?.observe(document.body, { childList: true, subtree: true });
   });
 

@@ -41,14 +41,12 @@ describe('webflow adapter price replacement', () => {
     initCurrencyDom();
   });
 
-  it('replaces prices on DOMContentLoaded', () => {
-    events.DOMContentLoaded();
+  it('replaces prices immediately', () => {
     expect(els[0].textContent).toBe('$10.00');
     expect(els[1].textContent).toBe('$20.50');
   });
 
   it('updates prices when currency changes', () => {
-    events.DOMContentLoaded();
     setSelectedCurrency('EUR');
     expect(els[0].textContent).toBe('€5.00');
     expect(els[1].textContent).toBe('€10.25');

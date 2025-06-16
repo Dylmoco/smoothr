@@ -23,9 +23,21 @@ function replacePrices() {
   });
 }
 
+function bindCurrencyButtons(root = document) {
+  root.querySelectorAll('[id^="currency-"]').forEach(el => {
+    const code = el.id.slice('currency-'.length).toUpperCase();
+    if (el.__smoothrCurrencyBound) return;
+    el.addEventListener('click', () => setSelectedCurrency(code));
+    el.__smoothrCurrencyBound = true;
+  });
+}
+
 export function initCmsCurrency() {
   if (typeof document === 'undefined') return;
-  document.addEventListener('DOMContentLoaded', replacePrices);
+  document.addEventListener('DOMContentLoaded', () => {
+    replacePrices();
+    bindCurrencyButtons();
+  });
   document.addEventListener('smoothr:currencychange', replacePrices);
 }
 
