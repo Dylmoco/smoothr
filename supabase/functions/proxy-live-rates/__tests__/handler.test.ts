@@ -21,6 +21,26 @@ describe('handleRequest', () => {
     expect(body.date).toBe(new Date(2 * 1000).toISOString())
   })
 
+  it('requests OER with required headers', async () => {
+    const mockRes = {
+      ok: true,
+      status: 200,
+      json: async () => ({ timestamp: 0, rates: { USD: 1, EUR: 1, GBP: 1 } })
+    }
+    const fetchFn = vi.fn(async (url: string, opts: any) => {
+      expect(opts.method).toBe('GET')
+      expect(opts.headers.Authorization).toBe('Token token')
+      expect(opts.headers.Accept).toBe('application/json')
+      expect(opts.headers['User-Agent']).toBe('SmoothrProxy/1.0')
+      expect(opts.redirect).toBe('manual')
+      return mockRes as any
+    })
+    Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
+    const req = new Request('https://example.com')
+    await handleRequest(req, fetchFn)
+    expect(fetchFn).toHaveBeenCalled()
+  })
+
   it('falls back when fetch throws', async () => {
     const fetchFn = vi.fn(async () => { throw new Error('fail') })
     Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
