@@ -16,6 +16,9 @@ export default defineConfig(({ mode }) => {
         formats: ['es'] // Output ES module only
       },
       // rollupOptions removed for bundling everything
+      rollupOptions: {
+        treeshake: false
+      },
       outDir: 'dist',
       emptyOutDir: true
     }
