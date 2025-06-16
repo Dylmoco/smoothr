@@ -13,3 +13,15 @@ supabase functions deploy proxy-live-rates
 
 The CLI will upload the function to the currently linked project and make it available at `https://<project-ref>.functions.supabase.co/proxy-live-rates`.
 
+## Configuration
+
+Create a `.env` file in `supabase/functions` to provide environment variables to
+the deployed functions. The live rates proxy requires an OpenExchangeRates API
+token:
+
+```bash
+OPENEXCHANGERATES_TOKEN=your-token
+```
+
+See `.env.example` for a template.
+
