@@ -27,3 +27,6 @@ storefronts/dist/
 *.env.bak
 
 .history/
+
+# Supabase env
+supabase/functions/.env
