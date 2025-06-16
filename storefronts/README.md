@@ -102,3 +102,25 @@ npm test
 ```
 
 The `pretest` script ensures dependencies are installed before tests execute.
+
+## Cloudflare Live Rates Function
+
+The SDK retrieves exchange rates from a Cloudflare Pages Function available at `/api/live-rates`. Supply `base` and `symbols` query parameters to request specific currencies. Results are cached for 24 hours.
+
+Example request:
+
+```
+/api/live-rates?base=GBP&symbols=USD,EUR,GBP
+```
+
+Example response:
+
+```json
+{ "rates": { "USD": 1.27, "EUR": 1.18, "GBP": 1 } }
+```
+
+If an error occurs the function returns:
+
+```json
+{ "error": "Failed to fetch live rates" }
+```
