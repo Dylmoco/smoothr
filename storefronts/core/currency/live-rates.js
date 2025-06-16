@@ -1,3 +1,5 @@
+console.log("🔥 Smoothr live-rates function triggered");
+
 export async function fetchExchangeRates(
   base = 'GBP',
   symbols = ['USD', 'EUR', 'GBP'],
