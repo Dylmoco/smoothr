@@ -21,9 +21,14 @@ serve(async (req: Request) => {
   const url = new URL(req.url)
 
   try {
+    const token = Deno.env.get('OPENEXCHANGERATES_TOKEN') || ''
     const apiUrl =
-      'https://openexchangerates.org/api/latest.json?app_id=eca2385f63504d80a624d130cce7e240&symbols=USD,EUR,GBP'
-    const res = await fetch(apiUrl, { redirect: 'manual' })
+      `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    const res = await fetch(apiUrl, { redirect: 'manual', headers })
     console.log('📡 Fetching live rates from', apiUrl)
     console.log('🌐 Response status:', res.status)
     const rawText = await res.text()
