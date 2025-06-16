@@ -10,13 +10,12 @@ const CORS_HEADERS = {
 
 const FALLBACK = {
   base: 'GBP',
-  date: new Date().toISOString(),
   rates: {
     USD: 1.25,
     EUR: 1.17,
-    GBP: 1
-  }
-}
+    GBP: 1,
+  },
+};
 
 serve(async (req: Request) => {
   const url = new URL(req.url)
@@ -41,7 +40,8 @@ serve(async (req: Request) => {
     const payload = { base: data.base, date: data.date, rates: data.rates }
     return new Response(JSON.stringify(payload), { headers: CORS_HEADERS })
   } catch (err) {
-    console.error('Failed to fetch live rates', err)
-    return new Response(JSON.stringify(FALLBACK), { headers: CORS_HEADERS })
+    console.error('Failed to fetch live rates', err);
+    const fallbackPayload = { ...FALLBACK, date: new Date().toISOString() };
+    return new Response(JSON.stringify(fallbackPayload), { headers: CORS_HEADERS });
   }
 })
