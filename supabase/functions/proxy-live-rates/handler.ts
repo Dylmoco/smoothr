@@ -20,6 +20,8 @@ export async function handleRequest(
 ): Promise<Response> {
   const token = Deno.env.get('OPENEXCHANGERATES_TOKEN') || ''
   console.log('Loaded token:', token)
+  let usedFallback = false
+  let payload
   try {
     const apiUrl =
       `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`;
@@ -42,14 +44,20 @@ export async function handleRequest(
       EUR: data.rates.EUR / gbpRate,
       GBP: 1,
     };
-    const payload = {
+    payload = {
       base: 'GBP',
       date: new Date(data.timestamp * 1000).toISOString(),
       rates: convertedRates,
-    };
-    return new Response(JSON.stringify(payload), { headers: CORS_HEADERS });
+    }
   } catch (_e) {
-    const fallbackPayload = { ...FALLBACK, date: new Date().toISOString() };
-    return new Response(JSON.stringify(fallbackPayload), { headers: CORS_HEADERS });
+    usedFallback = true
+    payload = { ...FALLBACK, date: new Date().toISOString() }
   }
+
+  if (usedFallback) {
+    console.log('🚨 Using fallback rates')
+  } else {
+    console.log('✅ Using OpenExchangeRates live rates')
+  }
+  return new Response(JSON.stringify(payload), { headers: CORS_HEADERS })
 }
