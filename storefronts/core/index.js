@@ -54,8 +54,7 @@ if (typeof window !== 'undefined') {
 export default Smoothr;
 
 import { setSelectedCurrency } from '../platforms/webflow-dom.js';
-if (typeof window !== 'undefined') {
-  window.setSelectedCurrency = window.setSelectedCurrency || setSelectedCurrency;
-}
+// Always expose helper on the global object for browser embeds
+globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || setSelectedCurrency;
 // trigger Cloudflare deploy
 // deploy trigger 003
