@@ -25,13 +25,18 @@ serve(async (req: Request) => {
   try {
     const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${symbols}`
     const res = await fetch(apiUrl, { redirect: 'manual' })
+    console.log('📡 Fetching live rates from', apiUrl)
+    console.log('🌐 Response status:', res.status)
+    const rawText = await res.text()
+    console.log('🧾 Raw response body:', rawText)
+
+    const data = JSON.parse(rawText)
     if (!res.ok) {
       console.error('Exchange fetch status', res.status)
-      console.error('Exchange fetch body', await res.text())
+      console.error('Exchange fetch body', rawText)
       throw new Error('Fetch failed')
     }
 
-    const data = await res.json()
     if (!data.rates || typeof data.rates.USD !== 'number') {
       console.error('Invalid rates payload', data)
       throw new Error('Invalid rates structure')
@@ -39,8 +44,8 @@ serve(async (req: Request) => {
 
     const payload = { base: data.base, date: data.date, rates: data.rates }
     return new Response(JSON.stringify(payload), { headers: CORS_HEADERS })
-  } catch (err) {
-    console.error('Failed to fetch live rates', err);
+  } catch (e) {
+    console.error('❌ Fetch or JSON error:', e);
     const fallbackPayload = { ...FALLBACK, date: new Date().toISOString() };
     return new Response(JSON.stringify(fallbackPayload), { headers: CORS_HEADERS });
   }
