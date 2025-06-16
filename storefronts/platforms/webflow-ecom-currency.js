@@ -1,5 +1,19 @@
 import { convertPrice, formatPrice, baseCurrency } from '../core/currency/index.js';
 
+const PRICE_SELECTORS = [
+  '.w-commerce-commerceproductprice',
+  '.w-commerce-commercecartitemprice',
+  '.product-price'
+];
+
+function parsePriceText(text) {
+  return parseFloat(
+    text
+      .replace(/[£$€]/g, '')
+      .replace(/[,\s]/g, '')
+  );
+}
+
 function getSelectedCurrency() {
   if (typeof window === 'undefined') return baseCurrency;
   return localStorage.getItem('smoothr:currency') || baseCurrency;
@@ -21,7 +35,32 @@ function formatElement(el) {
   el.textContent = formatPrice(converted, currency);
 }
 
+function bindPriceElements(root = document) {
+  const els = [];
+  if (root.matches) {
+    if (PRICE_SELECTORS.some(sel => root.matches(sel))) {
+      els.push(root);
+    }
+  }
+  if (root.querySelectorAll) {
+    root.querySelectorAll(PRICE_SELECTORS.join(',')).forEach(el => els.push(el));
+  }
+  els.forEach(el => {
+    if (!el.hasAttribute('data-smoothr-price')) {
+      const amt = parsePriceText(el.textContent || '');
+      if (!isNaN(amt)) {
+        el.setAttribute('data-smoothr-price', amt);
+        if (window.SMOOTHR_CONFIG?.debug) {
+          console.log('smoothr:bind-price', el, amt);
+        }
+      }
+    }
+    formatElement(el);
+  });
+}
+
 function replacePrices(root = document) {
+  bindPriceElements(root);
   root.querySelectorAll('[data-smoothr-price]').forEach(formatElement);
 }
 
@@ -50,6 +89,7 @@ export function initWebflowEcomCurrency() {
           muts.forEach(m => {
             m.addedNodes.forEach(node => {
               if (node.nodeType !== 1) return;
+              bindPriceElements(node);
               if (node.matches && node.matches('[data-smoothr-price]')) {
                 formatElement(node);
               }
@@ -70,6 +110,7 @@ export function initWebflowEcomCurrency() {
       : null;
 
   document.addEventListener('DOMContentLoaded', () => {
+    bindPriceElements();
     replacePrices();
     bindCurrencyButtons();
     observer?.observe(document.body, { childList: true, subtree: true });
