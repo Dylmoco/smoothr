@@ -38,7 +38,13 @@ export async function fetchExchangeRates(
     if (params.length) {
       url += (source.includes('?') ? '&' : '?') + params.join('&');
     }
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'SmoothrCurrencyBot/1.0',
+        Accept: 'application/json'
+      },
+      redirect: 'manual'
+    });
     if (!res.ok) throw new Error('Failed to fetch rates');
     const data = await res.json();
     const rates = {};
