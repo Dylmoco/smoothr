@@ -23,6 +23,7 @@ export async function onRequestGet({ request }) {
   }
   try {
     const apiUrl = `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+    console.log('Fetching live rates from', apiUrl);
     let data;
     try {
       const res = await fetch(apiUrl, {
