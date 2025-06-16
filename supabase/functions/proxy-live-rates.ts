@@ -1,4 +1,4 @@
-// ⚠️ This function exists because Cloudflare fetch to exchangerate.host fails due to internal redirection to Fixer.io.
+// ⚠️ Deployed via Codex because Cloudflare Pages Function could not reach exchangerate.host. This function is now the canonical Smoothr rate source.
 import { serve } from 'https://deno.land/std@0.192.0/http/server.ts'
 
 const CORS_HEADERS = {
