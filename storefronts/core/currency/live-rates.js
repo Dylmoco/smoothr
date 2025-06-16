@@ -1,5 +1,11 @@
 console.log("🔥 Smoothr live-rates function triggered");
 
+// Default endpoint used when no custom rateSource is provided. This proxies
+// requests through a Supabase Edge Function to avoid Cloudflare redirect
+// issues.
+const DEFAULT_RATE_SOURCE =
+  'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
+
 export async function fetchExchangeRates(
   base = 'GBP',
   symbols = ['USD', 'EUR', 'GBP'],
@@ -20,8 +26,18 @@ export async function fetchExchangeRates(
   }
 
   try {
-    const source = rateSource || 'https://api.exchangerate.host/latest';
-    const url = `${source}?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+    const source = rateSource || DEFAULT_RATE_SOURCE;
+    let url = source;
+    const params = [];
+    if (!/[?&]base=/.test(source)) {
+      params.push(`base=${encodeURIComponent(base)}`);
+    }
+    if (!/[?&]symbols=/.test(source)) {
+      params.push(`symbols=${symbols.join(',')}`);
+    }
+    if (params.length) {
+      url += (source.includes('?') ? '&' : '?') + params.join('&');
+    }
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch rates');
     const data = await res.json();
