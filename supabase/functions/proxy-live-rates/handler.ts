@@ -12,12 +12,14 @@ export async function handleRequest(
   const token = Deno.env.get('OPENEXCHANGERATES_TOKEN');
 
   if (!token) {
-    console.error('❌ OPENEXCHANGERATES_TOKEN is missing');
+    console.error('❌ ENV TOKEN IS MISSING AT RUNTIME');
     return new Response(
-      JSON.stringify({ code: 500, message: 'OPENEXCHANGERATES_TOKEN is not set' }),
+      JSON.stringify({ code: 500, message: 'OPENEXCHANGERATES_TOKEN is not set at runtime' }),
       { status: 500, headers: CORS_HEADERS },
     );
   }
+
+  console.log('✅ Token is present. Proceeding to fetch…');
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS_HEADERS });

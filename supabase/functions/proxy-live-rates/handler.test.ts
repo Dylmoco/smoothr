@@ -78,7 +78,7 @@ describe('handleRequest missing token', () => {
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({
       code: 500,
-      message: 'OPENEXCHANGERATES_TOKEN is not set'
+      message: 'OPENEXCHANGERATES_TOKEN is not set at runtime'
     });
   });
 });
