@@ -5,16 +5,6 @@ export const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-export const FALLBACK = {
-  base: 'GBP',
-  rates: {
-    USD: 1.25,
-    EUR: 1.17,
-    GBP: 1,
-  },
-  fallback: true,
-};
-
 export async function handleRequest(
   req: Request,
   fetchFn: typeof fetch = fetch,
@@ -25,7 +15,7 @@ export async function handleRequest(
   if (!token) {
     console.error('❌ OPENEXCHANGERATES_TOKEN is missing');
     return new Response(
-      JSON.stringify({ message: 'Missing token' }),
+      JSON.stringify({ code: 500, message: 'Live rate fetch failed' }),
       { status: 500, headers: CORS_HEADERS },
     );
   }
@@ -41,7 +31,6 @@ export async function handleRequest(
     );
   }
 
-  let usedFallback = false;
   let payload;
 
   try {
@@ -64,7 +53,10 @@ export async function handleRequest(
     console.log('✅ Fetch status:', response.status);
     if (!response.ok) {
       console.log('❌ Fetch failed:', await response.text());
-      throw new Error('Fetch failed');
+      return new Response(
+        JSON.stringify({ code: 500, message: 'Live rate fetch failed' }),
+        { status: 500, headers: CORS_HEADERS },
+      );
     }
 
     const data = await response.json();
@@ -86,15 +78,13 @@ export async function handleRequest(
       rates: convertedRates,
     };
   } catch (_e) {
-    usedFallback = true;
-    payload = { ...FALLBACK, date: new Date().toISOString() };
+    return new Response(
+      JSON.stringify({ code: 500, message: 'Live rate fetch failed' }),
+      { status: 500, headers: CORS_HEADERS },
+    );
   }
 
-  if (usedFallback) {
-    console.log('🚨 Using fallback rates');
-  } else {
-    console.log('✅ Using OpenExchangeRates live rates');
-  }
+  console.log('✅ Using OpenExchangeRates live rates');
 
   return new Response(JSON.stringify(payload), { headers: CORS_HEADERS });
 }
