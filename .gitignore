@@ -30,3 +30,7 @@ storefronts/dist/
 
 # Supabase env
 supabase/functions/.env
+
+# Supabase temp directories
+supabase/.temp/
+supabase/functions/**/.temp/
