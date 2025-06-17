@@ -25,10 +25,12 @@ describe('signup flow', () => {
   let submitHandler;
   let emailValue;
   let passwordValue;
+  let confirmValue;
 
   beforeEach(() => {
     emailValue = 'test@example.com';
-    passwordValue = 'secret123';
+    passwordValue = 'Password1';
+    confirmValue = 'Password1';
     submitHandler = undefined;
     const form = {
       addEventListener: vi.fn((ev, cb) => {
@@ -37,6 +39,7 @@ describe('signup flow', () => {
       querySelector: vi.fn(selector => {
         if (selector === '[data-smoothr-input="email"]') return { value: emailValue };
         if (selector === '[data-smoothr-input="password"]') return { value: passwordValue };
+        if (selector === '[data-smoothr-input="password-confirm"]') return { value: confirmValue };
         return null;
       })
     };
@@ -55,7 +58,7 @@ describe('signup flow', () => {
     await flushPromises();
     await submitHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(signUpMock).toHaveBeenCalledWith({ email: 'test@example.com', password: 'secret123' });
+    expect(signUpMock).toHaveBeenCalledWith({ email: 'test@example.com', password: 'Password1' });
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     expect(global.window.location.href).toBe('/redirect');
   });
@@ -78,8 +81,16 @@ describe('signup flow', () => {
     await submitHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(signUpMock).not.toHaveBeenCalled();
+    signUpMock.mockClear();
     passwordValue = 'short';
     emailValue = 'user@example.com';
+    confirmValue = 'short';
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(signUpMock).not.toHaveBeenCalled();
+    signUpMock.mockClear();
+    passwordValue = 'Password1';
+    confirmValue = 'Mismatch';
     await submitHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(signUpMock).not.toHaveBeenCalled();

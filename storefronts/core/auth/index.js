@@ -17,6 +17,70 @@ const DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL =
 
 let supabase;
 
+function isValidEmail(email) {
+  return /^\S+@\S+\.\S+$/.test(email);
+}
+
+function passwordStrength(password) {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return score;
+}
+
+function updateStrengthMeter(form, password) {
+  const meter = form.querySelector('[data-smoothr-password-strength]');
+  if (!meter) return;
+  const score = passwordStrength(password);
+  const label = score >= 4 ? 'Strong' : score >= 3 ? 'Medium' : 'Weak';
+  if (meter.tagName === 'PROGRESS') {
+    meter.value = score;
+  } else {
+    meter.textContent = label;
+  }
+}
+
+function setLoading(el, loading) {
+  if (!el) return;
+  if (loading) {
+    el.dataset.originalText = el.textContent;
+    el.textContent = 'Loading...';
+    el.disabled = true;
+  } else {
+    if (el.dataset.originalText) {
+      el.textContent = el.dataset.originalText;
+      delete el.dataset.originalText;
+    }
+    el.disabled = false;
+  }
+}
+
+function showError(form, msg, input) {
+  const target = form.querySelector('[data-smoothr-error]');
+  if (target) {
+    target.textContent = msg;
+    target.style.display = '';
+    target.focus && target.focus();
+  } else {
+    alert(msg);
+  }
+  if (input && input.focus) input.focus();
+}
+
+function showSuccess(form, msg) {
+  const target = form.querySelector('[data-smoothr-success]');
+  if (target) {
+    target.textContent = msg;
+    target.style.display = '';
+    target.focus && target.focus();
+  } else {
+    alert(msg);
+  }
+}
+
 export function initAuth({
   supabaseUrl = DEFAULT_SUPABASE_URL,
   supabaseKey = DEFAULT_SUPABASE_KEY
@@ -50,6 +114,7 @@ export function initAuth({
   });
   document.addEventListener('DOMContentLoaded', () => {
     bindLoginDivs();
+    bindLoginForms();
     bindLogoutButtons();
     bindGoogleLoginButtons();
     bindSignupForms();
@@ -68,21 +133,42 @@ function bindLoginDivs() {
       evt.preventDefault();
       const form = btn.closest('form[data-smoothr="login-form"]');
       if (!form) return;
-      const email = form.querySelector('[data-smoothr-input="email"]')?.value || '';
-      const password = form.querySelector('[data-smoothr-input="password"]')?.value || '';
+      const email = form.querySelector('[data-smoothr-input="email"]');
+      const passwordInput = form.querySelector('[data-smoothr-input="password"]');
+      const emailVal = email?.value || '';
+      const password = passwordInput?.value || '';
+      if (!isValidEmail(emailVal)) {
+        showError(form, 'Enter a valid email address', email);
+        return;
+      }
+      setLoading(btn, true);
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: emailVal, password });
         if (!error) {
-          console.log(data.user ? 'Logged in as: ' + data.user.email : 'Logged in');
+          showSuccess(form, 'Logged in, redirecting...');
           document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
           const url = await lookupRedirectUrl('login');
-          window.location.href = url;
+          setTimeout(() => {
+            window.location.href = url;
+          }, 1000);
         } else {
-          console.error(error);
+          showError(form, error.message || 'Invalid credentials', email);
         }
       } catch (err) {
-        console.error(err);
+        showError(form, err.message || 'Network error', email);
+      } finally {
+        setLoading(btn, false);
       }
+    });
+  });
+}
+
+function bindLoginForms() {
+  document.querySelectorAll('form[data-smoothr="login-form"]').forEach(form => {
+    form.addEventListener('submit', evt => {
+      evt.preventDefault();
+      const btn = form.querySelector('[data-smoothr="login"]');
+      btn?.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
     });
   });
 }
@@ -98,25 +184,47 @@ function bindGoogleLoginButtons() {
 
 function bindSignupForms() {
   document.querySelectorAll('form[data-smoothr="signup"]').forEach(form => {
+    const passwordInput = form.querySelector('[data-smoothr-input="password"]');
+    passwordInput?.addEventListener('input', () => {
+      updateStrengthMeter(form, passwordInput.value);
+    });
     form.addEventListener('submit', async evt => {
       evt.preventDefault();
-      const email = form.querySelector('[data-smoothr-input="email"]')?.value || '';
-      const password = form.querySelector('[data-smoothr-input="password"]')?.value || '';
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        console.error('Invalid email address');
+      const emailInput = form.querySelector('[data-smoothr-input="email"]');
+      const confirmInput = form.querySelector('[data-smoothr-input="password-confirm"]');
+      const email = emailInput?.value || '';
+      const password = passwordInput?.value || '';
+      const confirm = confirmInput?.value || '';
+      if (!isValidEmail(email)) {
+        showError(form, 'Enter a valid email address', emailInput);
         return;
       }
-      if (password.length < 6) {
-        console.error('Password must be at least 6 characters');
+      if (passwordStrength(password) < 3) {
+        showError(form, 'Weak password', passwordInput);
         return;
       }
+      if (password !== confirm) {
+        showError(form, 'Passwords do not match', confirmInput);
+        return;
+      }
+      const submitBtn = form.querySelector('[type="submit"]');
+      setLoading(submitBtn, true);
       try {
-        const { error } = await signUp(email, password);
+        const { data, error } = await signUp(email, password);
         if (error) {
-          console.error(error);
+          showError(form, error.message || 'Signup failed', emailInput);
+        } else {
+          document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+          showSuccess(form, 'Account created! Redirecting...');
+          const url = await lookupRedirectUrl('login');
+          setTimeout(() => {
+            window.location.href = url;
+          }, 1000);
         }
       } catch (err) {
-        console.error(err);
+        showError(form, err.message || 'Network error', emailInput);
+      } finally {
+        setLoading(submitBtn, false);
       }
     });
   });
@@ -126,20 +234,25 @@ function bindPasswordResetForms() {
   document.querySelectorAll('form[data-smoothr="password-reset"]').forEach(form => {
     form.addEventListener('submit', async evt => {
       evt.preventDefault();
-      const email = form.querySelector('[data-smoothr-input="email"]')?.value || '';
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        alert('Invalid email address');
+      const emailInput = form.querySelector('[data-smoothr-input="email"]');
+      const email = emailInput?.value || '';
+      if (!isValidEmail(email)) {
+        showError(form, 'Enter a valid email address', emailInput);
         return;
       }
+      const submitBtn = form.querySelector('[type="submit"]');
+      setLoading(submitBtn, true);
       try {
         const { error } = await requestPasswordReset(email);
         if (error) {
-          alert(error.message || 'Error requesting password reset');
+          showError(form, error.message || 'Error requesting password reset', emailInput);
         } else {
-          alert('Check your email for a reset link.');
+          showSuccess(form, 'Check your email for a reset link.');
         }
       } catch (err) {
-        alert(err.message || 'Error requesting password reset');
+        showError(form, err.message || 'Error requesting password reset', emailInput);
+      } finally {
+        setLoading(submitBtn, false);
       }
     });
   });
@@ -192,13 +305,6 @@ export async function signInWithGoogle() {
 
 export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (!error) {
-    document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-    const url = await lookupRedirectUrl('login');
-    if (typeof window !== 'undefined') {
-      window.location.href = url;
-    }
-  }
   return { data, error };
 }
 
@@ -222,31 +328,39 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
     document
       .querySelectorAll('form[data-smoothr="password-reset-confirm"]')
       .forEach(form => {
+        const passwordInput = form.querySelector('[data-smoothr-input="password"]');
+        passwordInput?.addEventListener('input', () => {
+          updateStrengthMeter(form, passwordInput.value);
+        });
         form.addEventListener('submit', async evt => {
           evt.preventDefault();
-          const password =
-            form.querySelector('[data-smoothr-input="password"]')?.value || '';
-          const confirm =
-            form.querySelector('[data-smoothr-input="password-confirm"]')?.value ||
-            '';
-          if (password.length < 6) {
-            alert('Password must be at least 6 characters');
+          const confirmInput = form.querySelector('[data-smoothr-input="password-confirm"]');
+          const password = passwordInput?.value || '';
+          const confirm = confirmInput?.value || '';
+          if (passwordStrength(password) < 3) {
+            showError(form, 'Weak password', passwordInput);
             return;
           }
           if (password !== confirm) {
-            alert('Passwords do not match');
+            showError(form, 'Passwords do not match', confirmInput);
             return;
           }
+          const submitBtn = form.querySelector('[type="submit"]');
+          setLoading(submitBtn, true);
           try {
             const { error } = await supabase.auth.updateUser({ password });
             if (error) {
-              alert(error.message || 'Password update failed');
+              showError(form, error.message || 'Password update failed', submitBtn);
             } else {
-              alert('Password updated');
-              window.location.href = redirectTo;
+              showSuccess(form, 'Password updated');
+              setTimeout(() => {
+                window.location.href = redirectTo;
+              }, 1000);
             }
           } catch (err) {
-            alert(err.message || 'Password update failed');
+            showError(form, err.message || 'Password update failed', submitBtn);
+          } finally {
+            setLoading(submitBtn, false);
           }
         });
       });

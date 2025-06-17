@@ -55,6 +55,10 @@ Markup example:
 <form data-smoothr="signup">
   <input type="email" data-smoothr-input="email" />
   <input type="password" data-smoothr-input="password" />
+  <input type="password" data-smoothr-input="password-confirm" />
+  <div data-smoothr-password-strength></div>
+  <div data-smoothr-error hidden></div>
+  <div data-smoothr-success hidden></div>
   <button type="submit">Create Account</button>
 </form>
 <div data-smoothr="login-google">Sign in with Google</div>
@@ -65,10 +69,12 @@ Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
 
 ## Signup
 
-Attach `[data-smoothr="signup"]` to a form containing `email` and `password`
-inputs. The SDK intercepts the submit event, validates the fields and calls
-`supabase.auth.signUp()` under the hood. On success the user is automatically
-logged in and redirected using the same logic as the login flow.
+Attach `[data-smoothr="signup"]` to a form containing `email`, `password` and a
+matching `password-confirm` input. A strength meter element labelled
+`[data-smoothr-password-strength]` is optional but recommended. The SDK
+validates email format, requires a strong password and ensures both password
+fields match. When the signup succeeds a confirmation message is shown and the
+user is redirected after a short delay.
 
 Environment variables required are the same as for login:
 
@@ -139,7 +145,7 @@ NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
 </script>
 ```
 
-Submitting the request form validates the email and displays an alert indicating
-success or failure. On the confirmation page the user must enter and confirm a
-new password. If the update succeeds they are redirected to the provided URL;
-otherwise an error message is shown.
+Submitting the request form validates the email and shows an inline success or
+error message. On the confirmation page the password strength meter updates as
+the user types. The new password must be strong and match the confirmation
+field. After a successful update the page redirects after a short delay.

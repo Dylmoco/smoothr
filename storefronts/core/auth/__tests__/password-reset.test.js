@@ -138,4 +138,22 @@ describe('password reset confirmation', () => {
     await flushPromises();
     expect(global.window.alert).toHaveBeenCalled();
   });
+
+  it('validates strength and match', async () => {
+    updateUserMock.mockResolvedValue({ data: {}, error: null });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    auth.initPasswordResetConfirmation({ redirectTo: '/login' });
+    await flushPromises();
+    passwordValue = 'short';
+    confirmValue = 'short';
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(updateUserMock).not.toHaveBeenCalled();
+    updateUserMock.mockClear();
+    passwordValue = 'Password1';
+    confirmValue = 'Different1';
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(updateUserMock).not.toHaveBeenCalled();
+  });
 });
