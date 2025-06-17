@@ -6,6 +6,10 @@ console.log("🔥 Smoothr live-rates function triggered");
 const DEFAULT_RATE_SOURCE =
   'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
 
+// Endpoint requiring auth token
+const PROXY_LIVE_RATES_ENDPOINT =
+  'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
+
 export async function fetchExchangeRates(
   base = 'GBP',
   symbols = ['USD', 'EUR', 'GBP'],
@@ -38,11 +42,15 @@ export async function fetchExchangeRates(
     if (params.length) {
       url += (source.includes('?') ? '&' : '?') + params.join('&');
     }
+    const headers = {
+      'User-Agent': 'SmoothrCurrencyBot/1.0',
+      Accept: 'application/json'
+    };
+    if (url.startsWith(PROXY_LIVE_RATES_ENDPOINT)) {
+      headers.Authorization = 'Token eca2385f63504d80a624d130cce7e240';
+    }
     const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'SmoothrCurrencyBot/1.0',
-        Accept: 'application/json'
-      },
+      headers,
       redirect: 'manual'
     });
     if (!res.ok) throw new Error('Failed to fetch rates');
