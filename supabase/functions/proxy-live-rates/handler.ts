@@ -19,16 +19,12 @@ export async function handleRequest(
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
   const token = "a45f3fb4ba674d089a2484adf5bd9262";
-  console.log('🔑 Loaded token:', token);
-
-  // 🧪 Dummy log to confirm redeploy
-  console.log('💡 Smoothr deploy patch — clean re-init');
+  console.log('✅ LIVE token used:', token);
 
   let usedFallback = false;
   let payload;
 
   try {
-    console.log('🚀 About to fetch OpenExchangeRates');
     const url = `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,GBP,EUR`;
 
     const response = await fetchFn(url, {
@@ -46,10 +42,6 @@ export async function handleRequest(
     }
 
     const data = await response.json();
-    if (!data.rates || typeof data.rates.USD !== 'number') {
-      throw new Error('Invalid rates structure');
-    }
-
     const gbpRate = data.rates.GBP;
     const convertedRates = {
       USD: data.rates.USD / gbpRate,
@@ -68,9 +60,9 @@ export async function handleRequest(
   }
 
   if (usedFallback) {
-    console.log('🚨 Using fallback rates');
+    console.log('🚨 Fallback triggered');
   } else {
-    console.log('✅ Using OpenExchangeRates live rates');
+    console.log('✅ Live rates returned');
   }
 
   return new Response(JSON.stringify(payload), { headers: CORS_HEADERS });
