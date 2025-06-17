@@ -14,7 +14,7 @@ export async function handleRequest(
   if (!token) {
     console.error('❌ OPENEXCHANGERATES_TOKEN is missing');
     return new Response(
-      JSON.stringify({ code: 500, message: 'Live rate fetch failed' }),
+      JSON.stringify({ code: 500, message: 'OPENEXCHANGERATES_TOKEN is not set' }),
       { status: 500, headers: CORS_HEADERS },
     );
   }
@@ -43,20 +43,31 @@ export async function handleRequest(
 
     const url =
       `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`;
+    console.log('ℹ️ Fetching', url.replace(token, '[redacted]'));
 
-    const response = await fetchFn(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'SmoothrProxy/1.0',
-      },
-    });
-
+    let response: Response;
+    try {
+      response = await fetchFn(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SmoothrProxy/1.0',
+        },
+      });
+    } catch (err) {
+      const detail = (err as Error).message;
+      console.error('❌ Fetch error:', detail);
+      return new Response(
+        JSON.stringify({ code: 500, message: 'Fetch failed', detail }),
+        { status: 500, headers: CORS_HEADERS },
+      );
+    }
     console.log('✅ Fetch status:', response.status);
     if (!response.ok) {
-      console.log('❌ Fetch failed:', await response.text());
+      const detail = await response.text();
+      console.log('❌ Fetch failed:', detail);
       return new Response(
-        JSON.stringify({ code: 500, message: 'Live rate fetch failed' }),
+        JSON.stringify({ code: 500, message: 'Fetch failed', detail }),
         { status: 500, headers: CORS_HEADERS },
       );
     }
