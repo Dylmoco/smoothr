@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { handleRequest, FALLBACK } from './handler';
+import { handleRequest } from './handler';
 
 const AUTH_HEADER = 'Token eca2385f63504d80a624d130cce7e240';
 
@@ -64,6 +64,10 @@ describe('handleRequest missing token', () => {
     const res = await handleRequest(req, fetchFn);
     expect(fetchFn).not.toHaveBeenCalled();
     expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({
+      code: 500,
+      message: 'Live rate fetch failed'
+    });
   });
 });
 
@@ -99,18 +103,16 @@ describe('handleRequest OpenExchangeRates integration', () => {
     expect(body.rates.GBP).toBe(1);
   });
 
-  it('falls back when fetch fails', async () => {
+  it('returns 500 when fetch fails', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new Error('network'));
     const req = new Request('https://example.com/');
     req.headers.set('Authorization', AUTH_HEADER);
     const res = await handleRequest(req, fetchFn);
-    const body = await res.json();
-
     expect(fetchFn).toHaveBeenCalled();
-    expect(body).toMatchObject({
-      base: FALLBACK.base,
-      rates: FALLBACK.rates,
-      fallback: true
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({
+      code: 500,
+      message: 'Live rate fetch failed'
     });
   });
 });
