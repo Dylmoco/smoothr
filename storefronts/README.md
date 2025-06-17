@@ -20,6 +20,7 @@ These variables are injected at build time so the final SDK has no
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL=your-redirect-url
 ```
 
 An `.env.example` file is included for reference.

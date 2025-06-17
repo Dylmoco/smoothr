@@ -52,10 +52,22 @@ Markup example:
   <input type="password" data-smoothr-input="password" />
   <div data-smoothr="login">Sign In</div>
 </form>
+<div data-smoothr="login-google">Sign in with Google</div>
 <div data-smoothr="logout">Logout</div>
 ```
 
 Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
+
+## Google OAuth login
+
+Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
+function directly or attach `[data-smoothr="login-google"]` to any element as
+shown above.
+
+The SDK redirects users to the URL defined by the
+`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` environment variable. After Supabase
+completes authentication the user returns to that page, the login event fires,
+and the final redirect is determined by the store settings described earlier.
 
 ## Accessing the current user
 
