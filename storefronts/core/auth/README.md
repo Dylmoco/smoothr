@@ -65,6 +65,11 @@ Markup example:
 <div data-smoothr="logout">Logout</div>
 ```
 
+Error and success containers (`[data-smoothr-error]` and `[data-smoothr-success]`)
+can live anywhere near the element that triggers the action. The SDK walks up
+the DOM from the clicked element to find the closest container before falling
+back to `alert()` and logging a message to the console if none exists.
+
 Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
 
 ## Signup

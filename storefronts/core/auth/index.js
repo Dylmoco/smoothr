@@ -58,25 +58,44 @@ function setLoading(el, loading) {
   }
 }
 
-function showError(form, msg, input) {
-  const target = form.querySelector('[data-smoothr-error]');
+function findMessageContainer(start, selector) {
+  let el = start;
+  while (el) {
+    if (el.matches && el.matches(selector)) return el;
+    if (el.querySelector) {
+      const found = el.querySelector(selector);
+      if (found) return found;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
+function showError(form, msg, input, trigger) {
+  const target =
+    findMessageContainer(trigger || form, '[data-smoothr-error]') ||
+    form.querySelector('[data-smoothr-error]');
   if (target) {
     target.textContent = msg;
     target.style.display = '';
     target.focus && target.focus();
   } else {
+    console.error('No [data-smoothr-error] container found');
     alert(msg);
   }
   if (input && input.focus) input.focus();
 }
 
-function showSuccess(form, msg) {
-  const target = form.querySelector('[data-smoothr-success]');
+function showSuccess(form, msg, trigger) {
+  const target =
+    findMessageContainer(trigger || form, '[data-smoothr-success]') ||
+    form.querySelector('[data-smoothr-success]');
   if (target) {
     target.textContent = msg;
     target.style.display = '';
     target.focus && target.focus();
   } else {
+    console.log('No [data-smoothr-success] container found');
     alert(msg);
   }
 }
@@ -159,7 +178,7 @@ function bindAuthElements(root = document) {
           const emailVal = email?.value || '';
           const password = passwordInput?.value || '';
           if (!isValidEmail(emailVal)) {
-            showError(targetForm, 'Enter a valid email address', email);
+            showError(targetForm, 'Enter a valid email address', email, el);
             return;
           }
           setLoading(el, true);
@@ -173,7 +192,7 @@ function bindAuthElements(root = document) {
                 window.smoothr = window.smoothr || {};
                 window.smoothr.auth = { user: data.user || null };
               }
-              showSuccess(targetForm, 'Logged in, redirecting...');
+              showSuccess(targetForm, 'Logged in, redirecting...', el);
               document.dispatchEvent(
                 new CustomEvent('smoothr:login', { detail: data })
               );
@@ -182,10 +201,10 @@ function bindAuthElements(root = document) {
                 window.location.href = url;
               }, 1000);
             } else {
-              showError(targetForm, error.message || 'Invalid credentials', email);
+                showError(targetForm, error.message || 'Invalid credentials', email, el);
             }
           } catch (err) {
-            showError(targetForm, err.message || 'Network error', email);
+              showError(targetForm, err.message || 'Network error', email, el);
           } finally {
             setLoading(el, false);
           }
@@ -217,15 +236,15 @@ function bindAuthElements(root = document) {
           const password = passwordInput?.value || '';
           const confirm = confirmInput?.value || '';
           if (!isValidEmail(email)) {
-            showError(targetForm, 'Enter a valid email address', emailInput);
+            showError(targetForm, 'Enter a valid email address', emailInput, el);
             return;
           }
           if (passwordStrength(password) < 3) {
-            showError(targetForm, 'Weak password', passwordInput);
+            showError(targetForm, 'Weak password', passwordInput, el);
             return;
           }
           if (password !== confirm) {
-            showError(targetForm, 'Passwords do not match', confirmInput);
+            showError(targetForm, 'Passwords do not match', confirmInput, el);
             return;
           }
           const submitBtn = targetForm.querySelector('[type="submit"]');
@@ -233,21 +252,21 @@ function bindAuthElements(root = document) {
           try {
             const { data, error } = await signUp(email, password);
             if (error) {
-              showError(targetForm, error.message || 'Signup failed', emailInput);
+              showError(targetForm, error.message || 'Signup failed', emailInput, el);
             } else {
               if (typeof window !== 'undefined') {
                 window.smoothr = window.smoothr || {};
                 window.smoothr.auth = { user: data.user || null };
               }
               document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-              showSuccess(targetForm, 'Account created! Redirecting...');
+              showSuccess(targetForm, 'Account created! Redirecting...', el);
               const url = await lookupRedirectUrl('login');
               setTimeout(() => {
                 window.location.href = url;
               }, 1000);
             }
           } catch (err) {
-            showError(targetForm, err.message || 'Network error', emailInput);
+            showError(targetForm, err.message || 'Network error', emailInput, el);
           } finally {
             setLoading(submitBtn, false);
           }
@@ -262,7 +281,7 @@ function bindAuthElements(root = document) {
           const emailInput = targetForm.querySelector('[data-smoothr-input="email"]');
           const email = emailInput?.value || '';
           if (!isValidEmail(email)) {
-            showError(targetForm, 'Enter a valid email address', emailInput);
+            showError(targetForm, 'Enter a valid email address', emailInput, el);
             return;
           }
           const submitBtn = targetForm.querySelector('[type="submit"]');
@@ -270,12 +289,22 @@ function bindAuthElements(root = document) {
           try {
             const { error } = await requestPasswordReset(email);
             if (error) {
-              showError(targetForm, error.message || 'Error requesting password reset', emailInput);
+              showError(
+                targetForm,
+                error.message || 'Error requesting password reset',
+                emailInput,
+                el
+              );
             } else {
-              showSuccess(targetForm, 'Check your email for a reset link.');
+              showSuccess(targetForm, 'Check your email for a reset link.', el);
             }
           } catch (err) {
-            showError(targetForm, err.message || 'Error requesting password reset', emailInput);
+            showError(
+              targetForm,
+              err.message || 'Error requesting password reset',
+              emailInput,
+              el
+            );
           } finally {
             setLoading(submitBtn, false);
           }
@@ -370,11 +399,11 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
           const password = passwordInput?.value || '';
           const confirm = confirmInput?.value || '';
           if (passwordStrength(password) < 3) {
-            showError(form, 'Weak password', passwordInput);
+            showError(form, 'Weak password', passwordInput, form);
             return;
           }
           if (password !== confirm) {
-            showError(form, 'Passwords do not match', confirmInput);
+            showError(form, 'Passwords do not match', confirmInput, form);
             return;
           }
           const submitBtn = form.querySelector('[type="submit"]');
@@ -382,19 +411,19 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
           try {
             const { data, error } = await supabase.auth.updateUser({ password });
             if (error) {
-              showError(form, error.message || 'Password update failed', submitBtn);
+              showError(form, error.message || 'Password update failed', submitBtn, form);
             } else {
               if (typeof window !== 'undefined') {
                 window.smoothr = window.smoothr || {};
                 window.smoothr.auth = { user: data.user || null };
               }
-              showSuccess(form, 'Password updated');
+              showSuccess(form, 'Password updated', form);
               setTimeout(() => {
                 window.location.href = redirectTo;
               }, 1000);
             }
           } catch (err) {
-            showError(form, err.message || 'Password update failed', submitBtn);
+            showError(form, err.message || 'Password update failed', submitBtn, form);
           } finally {
             setLoading(submitBtn, false);
           }
