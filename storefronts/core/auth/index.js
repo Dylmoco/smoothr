@@ -113,12 +113,10 @@ export function initAuth({
     }
   });
   document.addEventListener('DOMContentLoaded', () => {
-    bindLoginDivs();
-    bindLoginForms();
+    bindAuthElements();
     bindLogoutButtons();
-    bindGoogleLoginButtons();
-    bindSignupForms();
-    bindPasswordResetForms();
+    const observer = new MutationObserver(() => bindAuthElements());
+    observer.observe(document.body, { childList: true, subtree: true });
   });
 }
 
@@ -127,134 +125,151 @@ export function initAuth({
 // This avoids Webflow's password field restrictions on staging domains by never
 // triggering a native submit event.
 //
-function bindLoginDivs() {
-  document.querySelectorAll('[data-smoothr="login"]').forEach(btn => {
-    btn.addEventListener('click', async evt => {
-      evt.preventDefault();
-      const form = btn.closest('form[data-smoothr="login-form"]');
-      if (!form) return;
-      const email = form.querySelector('[data-smoothr-input="email"]');
-      const passwordInput = form.querySelector('[data-smoothr-input="password"]');
-      const emailVal = email?.value || '';
-      const password = passwordInput?.value || '';
-      if (!isValidEmail(emailVal)) {
-        showError(form, 'Enter a valid email address', email);
-        return;
+function bindAuthElements(root = document) {
+  const selector =
+    '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+  root.querySelectorAll(selector).forEach(el => {
+    if (el.dataset.smoothrBoundAuth) return;
+    el.dataset.smoothrBoundAuth = '1';
+    const type = el.getAttribute('data-smoothr');
+    const attach = handler => {
+      if (el.tagName === 'FORM') {
+        el.addEventListener('submit', handler);
+      } else {
+        el.addEventListener('click', handler);
       }
-      setLoading(btn, true);
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: emailVal, password });
-        if (!error) {
-          showSuccess(form, 'Logged in, redirecting...');
-          document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-          const url = await lookupRedirectUrl('login');
-          setTimeout(() => {
-            window.location.href = url;
-          }, 1000);
-        } else {
-          showError(form, error.message || 'Invalid credentials', email);
+    };
+    const form = el.tagName === 'FORM' ? el : el.closest('form');
+
+    switch (type) {
+      case 'login': {
+        if (form && el !== form && !form.dataset.smoothrBoundLoginSubmit) {
+          form.dataset.smoothrBoundLoginSubmit = '1';
+          form.addEventListener('submit', evt => {
+            evt.preventDefault();
+            el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+          });
         }
-      } catch (err) {
-        showError(form, err.message || 'Network error', email);
-      } finally {
-        setLoading(btn, false);
+        attach(async evt => {
+          evt.preventDefault();
+          const targetForm = form;
+          if (!targetForm) return;
+          const email = targetForm.querySelector('[data-smoothr-input="email"]');
+          const passwordInput = targetForm.querySelector('[data-smoothr-input="password"]');
+          const emailVal = email?.value || '';
+          const password = passwordInput?.value || '';
+          if (!isValidEmail(emailVal)) {
+            showError(targetForm, 'Enter a valid email address', email);
+            return;
+          }
+          setLoading(el, true);
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email: emailVal, password });
+            if (!error) {
+              showSuccess(targetForm, 'Logged in, redirecting...');
+              document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+              const url = await lookupRedirectUrl('login');
+              setTimeout(() => {
+                window.location.href = url;
+              }, 1000);
+            } else {
+              showError(targetForm, error.message || 'Invalid credentials', email);
+            }
+          } catch (err) {
+            showError(targetForm, err.message || 'Network error', email);
+          } finally {
+            setLoading(el, false);
+          }
+        });
+        break;
       }
-    });
-  });
-}
-
-function bindLoginForms() {
-  document.querySelectorAll('form[data-smoothr="login-form"]').forEach(form => {
-    form.addEventListener('submit', evt => {
-      evt.preventDefault();
-      const btn = form.querySelector('[data-smoothr="login"]');
-      btn?.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
-    });
-  });
-}
-
-function bindGoogleLoginButtons() {
-  document.querySelectorAll('[data-smoothr="login-google"]').forEach(btn => {
-    btn.addEventListener('click', async evt => {
-      evt.preventDefault();
-      await signInWithGoogle();
-    });
-  });
-}
-
-function bindSignupForms() {
-  document.querySelectorAll('form[data-smoothr="signup"]').forEach(form => {
-    const passwordInput = form.querySelector('[data-smoothr-input="password"]');
-    passwordInput?.addEventListener('input', () => {
-      updateStrengthMeter(form, passwordInput.value);
-    });
-    form.addEventListener('submit', async evt => {
-      evt.preventDefault();
-      const emailInput = form.querySelector('[data-smoothr-input="email"]');
-      const confirmInput = form.querySelector('[data-smoothr-input="password-confirm"]');
-      const email = emailInput?.value || '';
-      const password = passwordInput?.value || '';
-      const confirm = confirmInput?.value || '';
-      if (!isValidEmail(email)) {
-        showError(form, 'Enter a valid email address', emailInput);
-        return;
+      case 'login-google': {
+        attach(async evt => {
+          evt.preventDefault();
+          await signInWithGoogle();
+        });
+        break;
       }
-      if (passwordStrength(password) < 3) {
-        showError(form, 'Weak password', passwordInput);
-        return;
-      }
-      if (password !== confirm) {
-        showError(form, 'Passwords do not match', confirmInput);
-        return;
-      }
-      const submitBtn = form.querySelector('[type="submit"]');
-      setLoading(submitBtn, true);
-      try {
-        const { data, error } = await signUp(email, password);
-        if (error) {
-          showError(form, error.message || 'Signup failed', emailInput);
-        } else {
-          document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-          showSuccess(form, 'Account created! Redirecting...');
-          const url = await lookupRedirectUrl('login');
-          setTimeout(() => {
-            window.location.href = url;
-          }, 1000);
+      case 'signup': {
+        if (form) {
+          const passwordInput = form.querySelector('[data-smoothr-input="password"]');
+          passwordInput?.addEventListener('input', () => {
+            updateStrengthMeter(form, passwordInput.value);
+          });
         }
-      } catch (err) {
-        showError(form, err.message || 'Network error', emailInput);
-      } finally {
-        setLoading(submitBtn, false);
+        attach(async evt => {
+          evt.preventDefault();
+          const targetForm = form;
+          if (!targetForm) return;
+          const emailInput = targetForm.querySelector('[data-smoothr-input="email"]');
+          const passwordInput = targetForm.querySelector('[data-smoothr-input="password"]');
+          const confirmInput = targetForm.querySelector('[data-smoothr-input="password-confirm"]');
+          const email = emailInput?.value || '';
+          const password = passwordInput?.value || '';
+          const confirm = confirmInput?.value || '';
+          if (!isValidEmail(email)) {
+            showError(targetForm, 'Enter a valid email address', emailInput);
+            return;
+          }
+          if (passwordStrength(password) < 3) {
+            showError(targetForm, 'Weak password', passwordInput);
+            return;
+          }
+          if (password !== confirm) {
+            showError(targetForm, 'Passwords do not match', confirmInput);
+            return;
+          }
+          const submitBtn = targetForm.querySelector('[type="submit"]');
+          setLoading(submitBtn, true);
+          try {
+            const { data, error } = await signUp(email, password);
+            if (error) {
+              showError(targetForm, error.message || 'Signup failed', emailInput);
+            } else {
+              document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+              showSuccess(targetForm, 'Account created! Redirecting...');
+              const url = await lookupRedirectUrl('login');
+              setTimeout(() => {
+                window.location.href = url;
+              }, 1000);
+            }
+          } catch (err) {
+            showError(targetForm, err.message || 'Network error', emailInput);
+          } finally {
+            setLoading(submitBtn, false);
+          }
+        });
+        break;
       }
-    });
-  });
-}
-
-function bindPasswordResetForms() {
-  document.querySelectorAll('form[data-smoothr="password-reset"]').forEach(form => {
-    form.addEventListener('submit', async evt => {
-      evt.preventDefault();
-      const emailInput = form.querySelector('[data-smoothr-input="email"]');
-      const email = emailInput?.value || '';
-      if (!isValidEmail(email)) {
-        showError(form, 'Enter a valid email address', emailInput);
-        return;
+      case 'password-reset': {
+        attach(async evt => {
+          evt.preventDefault();
+          const targetForm = form;
+          if (!targetForm) return;
+          const emailInput = targetForm.querySelector('[data-smoothr-input="email"]');
+          const email = emailInput?.value || '';
+          if (!isValidEmail(email)) {
+            showError(targetForm, 'Enter a valid email address', emailInput);
+            return;
+          }
+          const submitBtn = targetForm.querySelector('[type="submit"]');
+          setLoading(submitBtn, true);
+          try {
+            const { error } = await requestPasswordReset(email);
+            if (error) {
+              showError(targetForm, error.message || 'Error requesting password reset', emailInput);
+            } else {
+              showSuccess(targetForm, 'Check your email for a reset link.');
+            }
+          } catch (err) {
+            showError(targetForm, err.message || 'Error requesting password reset', emailInput);
+          } finally {
+            setLoading(submitBtn, false);
+          }
+        });
+        break;
       }
-      const submitBtn = form.querySelector('[type="submit"]');
-      setLoading(submitBtn, true);
-      try {
-        const { error } = await requestPasswordReset(email);
-        if (error) {
-          showError(form, error.message || 'Error requesting password reset', emailInput);
-        } else {
-          showSuccess(form, 'Check your email for a reset link.');
-        }
-      } catch (err) {
-        showError(form, err.message || 'Error requesting password reset', emailInput);
-      } finally {
-        setLoading(submitBtn, false);
-      }
-    });
+    }
   });
 }
 
