@@ -18,7 +18,7 @@ export async function handleRequest(
   req: Request,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
-  const token = Deno.env.get("OPENEXCHANGERATES_TOKEN") || "";
+  const token = "a45f3fb4ba674d089a2484adf5bd9262";
   console.log('🔑 Loaded token:', token);
 
   // 🧪 Dummy log to confirm redeploy
