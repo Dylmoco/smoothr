@@ -1,0 +1,141 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+let resetPasswordMock;
+let updateUserMock;
+let setSessionMock;
+let getUserMock;
+let createClientMock;
+
+vi.mock('@supabase/supabase-js', () => {
+  resetPasswordMock = vi.fn();
+  updateUserMock = vi.fn();
+  setSessionMock = vi.fn();
+  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
+  createClientMock = vi.fn(() => ({
+    auth: {
+      getUser: getUserMock,
+      signOut: vi.fn(),
+      signInWithOAuth: vi.fn(),
+      signUp: vi.fn(),
+      resetPasswordForEmail: resetPasswordMock,
+      updateUser: updateUserMock,
+      setSession: setSessionMock
+    }
+  }));
+  return { createClient: createClientMock };
+});
+
+import * as auth from '../index.js';
+
+vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue('/redirect');
+
+function flushPromises() {
+  return new Promise(setImmediate);
+}
+
+describe('password reset request', () => {
+  let submitHandler;
+  let emailValue;
+
+  beforeEach(() => {
+    emailValue = 'user@example.com';
+    submitHandler = undefined;
+    const form = {
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === 'submit') submitHandler = cb;
+      }),
+      querySelector: vi.fn(sel => {
+        if (sel === '[data-smoothr-input="email"]') return { value: emailValue };
+        return null;
+      })
+    };
+    global.window = { location: { href: '' } };
+    global.document = {
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === 'DOMContentLoaded') cb();
+      }),
+      querySelectorAll: vi.fn(sel =>
+        sel === 'form[data-smoothr="password-reset"]' ? [form] : []
+      )
+    };
+    global.window.alert = vi.fn();
+  });
+
+  it('sends reset email', async () => {
+    resetPasswordMock.mockResolvedValue({ data: {}, error: null });
+    auth.initAuth();
+    await flushPromises();
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(resetPasswordMock).toHaveBeenCalledWith('user@example.com', {
+      redirectTo: ''
+    });
+    expect(global.window.alert).toHaveBeenCalled();
+  });
+
+  it('handles failure', async () => {
+    resetPasswordMock.mockResolvedValue({ data: null, error: new Error('bad') });
+    auth.initAuth();
+    await flushPromises();
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(global.window.alert).toHaveBeenCalled();
+  });
+});
+
+describe('password reset confirmation', () => {
+  let submitHandler;
+  let passwordValue;
+  let confirmValue;
+
+  beforeEach(() => {
+    passwordValue = 'newpass123';
+    confirmValue = 'newpass123';
+    submitHandler = undefined;
+    const form = {
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === 'submit') submitHandler = cb;
+      }),
+      querySelector: vi.fn(sel => {
+        if (sel === '[data-smoothr-input="password"]') return { value: passwordValue };
+        if (sel === '[data-smoothr-input="password-confirm"]') return { value: confirmValue };
+        return null;
+      })
+    };
+    global.window = {
+      location: { href: '', hash: '#access_token=a&refresh_token=b' }
+    };
+    global.document = {
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === 'DOMContentLoaded') cb();
+      }),
+      querySelectorAll: vi.fn(sel =>
+        sel === 'form[data-smoothr="password-reset-confirm"]' ? [form] : []
+      )
+    };
+    global.window.alert = vi.fn();
+  });
+
+  it('updates password and redirects', async () => {
+    updateUserMock.mockResolvedValue({ data: {}, error: null });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    auth.initPasswordResetConfirmation({ redirectTo: '/login' });
+    await flushPromises();
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(setSessionMock).toHaveBeenCalledWith({ access_token: 'a', refresh_token: 'b' });
+    expect(updateUserMock).toHaveBeenCalledWith({ password: 'newpass123' });
+    expect(global.window.alert).toHaveBeenCalled();
+    expect(global.window.location.href).toBe('/login');
+  });
+
+  it('handles update failure', async () => {
+    updateUserMock.mockResolvedValue({ data: null, error: new Error('fail') });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    auth.initPasswordResetConfirmation({ redirectTo: '/login' });
+    await flushPromises();
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(global.window.alert).toHaveBeenCalled();
+  });
+});
