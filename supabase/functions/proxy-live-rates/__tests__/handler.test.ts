@@ -6,13 +6,12 @@ describe('handleRequest', () => {
     const mockRes = {
       ok: true,
       status: 200,
-      text: async () => JSON.stringify({
+      json: async () => ({
         timestamp: 2,
         rates: { USD: 2, EUR: 1, GBP: 1 }
       })
     }
     const fetchFn = vi.fn(async () => mockRes as any)
-    Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
     const req = new Request('https://example.com')
     const res = await handleRequest(req, fetchFn)
     const body = await res.json()
@@ -29,13 +28,12 @@ describe('handleRequest', () => {
     }
     const fetchFn = vi.fn(async (url: string, opts: any) => {
       expect(opts.method).toBe('GET')
-      expect(opts.headers.Authorization).toBe('Token token')
       expect(opts.headers.Accept).toBe('application/json')
       expect(opts.headers['User-Agent']).toBe('SmoothrProxy/1.0')
-      expect(opts.redirect).toBe('manual')
+      expect(opts.headers.Authorization).toBeUndefined()
+      expect(opts.redirect).toBeUndefined()
       return mockRes as any
     })
-    Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
     const req = new Request('https://example.com')
     await handleRequest(req, fetchFn)
     expect(fetchFn).toHaveBeenCalled()
@@ -43,7 +41,6 @@ describe('handleRequest', () => {
 
   it('falls back when fetch throws', async () => {
     const fetchFn = vi.fn(async () => { throw new Error('fail') })
-    Deno.env.set('OPENEXCHANGERATES_TOKEN', 'token')
     const req = new Request('https://example.com')
     const res = await handleRequest(req, fetchFn)
     const body = await res.json()
