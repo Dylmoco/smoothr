@@ -132,4 +132,21 @@ describe('handleRequest OpenExchangeRates integration', () => {
       detail: 'network'
     });
   });
+
+  it('surfaces non-200 responses', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      text: async () => 'Forbidden'
+    });
+    const req = new Request('https://example.com/');
+    req.headers.set('Authorization', AUTH_HEADER);
+    const res = await handleRequest(req, fetchFn);
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({
+      code: 500,
+      message: 'Fetch failed',
+      detail: 'Status 403: Forbidden'
+    });
+  });
 });

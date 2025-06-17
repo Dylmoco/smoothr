@@ -50,7 +50,7 @@ export async function handleRequest(
       response = await fetchFn(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'User-Agent': 'SmoothrProxy/1.0',
         },
       });
@@ -62,12 +62,19 @@ export async function handleRequest(
         { status: 500, headers: CORS_HEADERS },
       );
     }
-    console.log('✅ Fetch status:', response.status);
     if (!response.ok) {
-      const detail = await response.text();
-      console.log('❌ Fetch failed:', detail);
+      const errText = await response.text();
+      console.error(
+        '❌ OpenExchangeRates response:',
+        response.status,
+        errText,
+      );
       return new Response(
-        JSON.stringify({ code: 500, message: 'Fetch failed', detail }),
+        JSON.stringify({
+          code: 500,
+          message: 'Fetch failed',
+          detail: `Status ${response.status}: ${errText}`,
+        }),
         { status: 500, headers: CORS_HEADERS },
       );
     }
