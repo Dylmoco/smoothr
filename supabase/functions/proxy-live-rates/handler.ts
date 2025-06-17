@@ -36,7 +36,13 @@ export async function handleRequest(
   let payload;
 
   try {
-    const url = `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,GBP,EUR`;
+    const { searchParams } = new URL(req.url);
+    const base = searchParams.get('base') ?? 'GBP';
+    const symbolsParam = searchParams.get('symbols') ?? 'USD,EUR,GBP';
+    const requestedSymbols = symbolsParam.split(',').map((s) => s.trim()).filter(Boolean);
+    const oersSymbols = Array.from(new Set([...requestedSymbols, base])).join(',');
+
+    const url = `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=${oersSymbols}`;
 
     const response = await fetchFn(url, {
       method: 'GET',
@@ -53,16 +59,20 @@ export async function handleRequest(
     }
 
     const data = await response.json();
-    const gbpRate = data.rates.GBP;
-
-    const convertedRates = {
-      USD: data.rates.USD / gbpRate,
-      EUR: data.rates.EUR / gbpRate,
-      GBP: 1,
-    };
-
+    const baseRate = base === 'USD' ? 1 : data.rates[base];
+    const convertedRates: Record<string, number> = {};
+    for (const sym of requestedSymbols) {
+      if (sym === base) {
+        convertedRates[sym] = 1;
+      } else {
+        convertedRates[sym] = data.rates[sym] / baseRate;
+      }
+    }
+    if (!requestedSymbols.includes(base)) {
+      convertedRates[base] = 1;
+    }
     payload = {
-      base: 'GBP',
+      base,
       date: new Date(data.timestamp * 1000).toISOString(),
       rates: convertedRates,
     };

@@ -39,3 +39,17 @@ Authorization: Token eca2385f63504d80a624d130cce7e240
 
 Without this header the function will respond with a 401 error.
 
+### Query parameters
+
+`proxy-live-rates` accepts optional `base` and `symbols` parameters:
+
+- `base` – currency to convert other rates against. Defaults to `GBP`.
+- `symbols` – comma separated list of currencies to include in the response. Defaults to `USD,EUR,GBP`.
+
+For example to request rates relative to USD only for CAD:
+
+```http
+GET https://<project-ref>.functions.supabase.co/proxy-live-rates?base=USD&symbols=CAD
+Authorization: Token eca2385f63504d80a624d130cce7e240
+```
+
