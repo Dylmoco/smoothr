@@ -46,9 +46,15 @@ export async function fetchExchangeRates(
       'User-Agent': 'SmoothrCurrencyBot/1.0',
       Accept: 'application/json'
     };
-    if (url.startsWith(PROXY_LIVE_RATES_ENDPOINT)) {
-      headers.Authorization = 'Token eca2385f63504d80a624d130cce7e240';
-    }
+    try {
+      const { hostname, pathname } = new URL(url);
+      if (
+        hostname.endsWith('.functions.supabase.co') &&
+        pathname === '/proxy-live-rates'
+      ) {
+        headers.Authorization = 'Token eca2385f63504d80a624d130cce7e240';
+      }
+    } catch {}
     const res = await fetch(url, {
       headers,
       redirect: 'manual'
