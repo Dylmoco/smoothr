@@ -52,11 +52,29 @@ Markup example:
   <input type="password" data-smoothr-input="password" />
   <div data-smoothr="login">Sign In</div>
 </form>
+<form data-smoothr="signup">
+  <input type="email" data-smoothr-input="email" />
+  <input type="password" data-smoothr-input="password" />
+  <button type="submit">Create Account</button>
+</form>
 <div data-smoothr="login-google">Sign in with Google</div>
 <div data-smoothr="logout">Logout</div>
 ```
 
 Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
+
+## Signup
+
+Attach `[data-smoothr="signup"]` to a form containing `email` and `password`
+inputs. The SDK intercepts the submit event, validates the fields and calls
+`supabase.auth.signUp()` under the hood. On success the user is automatically
+logged in and redirected using the same logic as the login flow.
+
+Environment variables required are the same as for login:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`
 
 ## Google OAuth login
 
