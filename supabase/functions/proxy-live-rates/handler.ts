@@ -10,7 +10,6 @@ export async function handleRequest(
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
   const token = Deno.env.get('OPENEXCHANGERATES_TOKEN');
-  console.log('✅ Token loaded from env:', token);
 
   if (!token) {
     console.error('❌ OPENEXCHANGERATES_TOKEN is missing');
