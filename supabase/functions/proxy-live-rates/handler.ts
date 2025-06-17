@@ -18,8 +18,8 @@ export async function handleRequest(
   req: Request,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
-  const token = "a45f3fb4ba674d089a2484adf5bd9262";
-  console.log('🔑 Using hardcoded token:', token);
+  const token = "a45f3fb4ba674d089a2484adf5bd9262"; // hardcoded token
+  console.log('✅ Hardcoded token in use:', token);
 
   let usedFallback = false;
   let payload;
