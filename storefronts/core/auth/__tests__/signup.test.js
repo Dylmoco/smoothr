@@ -95,4 +95,14 @@ describe('signup flow', () => {
     await flushPromises();
     expect(signUpMock).not.toHaveBeenCalled();
   });
+
+  it('sets window.smoothr.auth.user on success', async () => {
+    const user = { id: '1' };
+    signUpMock.mockResolvedValue({ data: { user }, error: null });
+    auth.initAuth();
+    await flushPromises();
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(global.window.smoothr.auth.user).toEqual(user);
+  });
 });
