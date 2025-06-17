@@ -111,9 +111,10 @@ export async function handleRequest(
       date: new Date(data.timestamp * 1000).toISOString(),
       rates: filteredRates,
     };
-  } catch (_e) {
+  } catch (err) {
+    const detail = (err as Error).message;
     return new Response(
-      JSON.stringify({ code: 500, message: 'Live rate fetch failed' }),
+      JSON.stringify({ code: 500, message: 'Fetch failed', detail }),
       { status: 500, headers: CORS_HEADERS },
     );
   }
