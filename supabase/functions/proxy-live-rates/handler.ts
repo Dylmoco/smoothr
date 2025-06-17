@@ -21,6 +21,9 @@ export async function handleRequest(
   const token = "a45f3fb4ba674d089a2484adf5bd9262";
   console.log('🔑 Loaded token:', token);
 
+  // 🧪 Dummy log to trigger git change
+  console.log('💡 Smoothr deploy patch — force update');
+
   let usedFallback = false;
   let payload;
 
