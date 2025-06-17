@@ -18,53 +18,58 @@ export async function handleRequest(
   req: Request,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
-  const token = Deno.env.get('OPENEXCHANGERATES_TOKEN') || ''
-  console.log('🔑 Loaded token:', token)
-  let usedFallback = false
-  let payload
+  const token = "a45f3fb4ba674d089a2484adf5bd9262";
+  console.log('🔑 Loaded token:', token);
+
+  let usedFallback = false;
+  let payload;
+
   try {
-    console.log('🚀 About to fetch OpenExchangeRates')
+    console.log('🚀 About to fetch OpenExchangeRates');
     const response = await fetchFn(
-      `https://openexchangerates.org/api/latest.json?app_id=${token}&base=USD`,
+      `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`,
       {
         method: 'GET',
         headers: {
-          Authorization: `Token ${token}`,
           Accept: 'application/json',
           'User-Agent': 'SmoothrProxy/1.0',
         },
-        redirect: 'manual',
-      },
-    )
-    console.log('✅ Got response from OpenExchangeRates:', response.status)
+      }
+    );
+
+    console.log('✅ Got response from OpenExchangeRates:', response.status);
     if (!response.ok) {
-      console.log('❌ Live fetch failed', response.status, await response.text())
-      throw new Error('Fetch failed')
+      console.log('❌ Live fetch failed', response.status, await response.text());
+      throw new Error('Fetch failed');
     }
+
     const data = await response.json();
     if (!data.rates || typeof data.rates.USD !== 'number') {
       throw new Error('Invalid rates structure');
     }
+
     const gbpRate = data.rates.GBP;
     const convertedRates = {
       USD: data.rates.USD / gbpRate,
       EUR: data.rates.EUR / gbpRate,
       GBP: 1,
     };
+
     payload = {
       base: 'GBP',
       date: new Date(data.timestamp * 1000).toISOString(),
       rates: convertedRates,
-    }
+    };
   } catch (_e) {
-    usedFallback = true
-    payload = { ...FALLBACK, date: new Date().toISOString() }
+    usedFallback = true;
+    payload = { ...FALLBACK, date: new Date().toISOString() };
   }
 
   if (usedFallback) {
-    console.log('🚨 Using fallback rates')
+    console.log('🚨 Using fallback rates');
   } else {
-    console.log('✅ Using OpenExchangeRates live rates')
+    console.log('✅ Using OpenExchangeRates live rates');
   }
-  return new Response(JSON.stringify(payload), { headers: CORS_HEADERS })
+
+  return new Response(JSON.stringify(payload), { headers: CORS_HEADERS });
 }
