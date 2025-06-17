@@ -23,5 +23,19 @@ token:
 OPENEXCHANGERATES_TOKEN=your-token
 ```
 
-See `.env.example` for a template.
+See `.env.example` for a template. The Supabase CLI will also read `config.toml`
+in this folder. To disable JWT verification for these functions add:
+
+```toml
+[functions]
+verify_jwt = false
+```
+
+When invoking `proxy-live-rates` you must supply the custom authorization token:
+
+```http
+Authorization: Token eca2385f63504d80a624d130cce7e240
+```
+
+Without this header the function will respond with a 401 error.
 

@@ -2,7 +2,7 @@ export const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export const FALLBACK = {
@@ -18,8 +18,19 @@ export async function handleRequest(
   req: Request,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
-  const token = "a45f3fb4ba674d089a2484adf5bd9262"; // hardcoded token
-  console.log('✅ Hardcoded token in use:', token);
+  const token = Deno.env.get('OPENEXCHANGERATES_TOKEN');
+  console.log('✅ Token loaded from env:', token);
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: CORS_HEADERS });
+  }
+
+  if (req.headers.get('Authorization') !== 'Token eca2385f63504d80a624d130cce7e240') {
+    return new Response(
+      JSON.stringify({ message: 'Unauthorized' }),
+      { status: 401, headers: CORS_HEADERS },
+    );
+  }
 
   let usedFallback = false;
   let payload;
