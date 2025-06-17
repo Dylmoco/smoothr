@@ -72,6 +72,55 @@ back to `alert()` and logging a message to the console if none exists.
 
 Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
 
+## `[data-smoothr]` attributes
+
+Any element with a `[data-smoothr]` attribute can trigger an action. Place the
+required inputs (for example email and password fields) inside a parent form or
+container. The SDK automatically attaches handlers on page load and uses a
+`MutationObserver` so elements added later are also bound.
+
+### `[data-smoothr="login"]`
+
+```html
+<div data-smoothr="login">Sign In</div>
+<button data-smoothr="login">Sign In</button>
+<a href="#" data-smoothr="login">Sign In</a>
+```
+
+### `[data-smoothr="signup"]`
+
+```html
+<button data-smoothr="signup">Create Account</button>
+```
+
+### `[data-smoothr="login-google"]`
+
+```html
+<button data-smoothr="login-google">Sign in with Google</button>
+```
+
+### `[data-smoothr="logout"]`
+
+```html
+<a href="#" data-smoothr="logout">Logout</a>
+```
+
+### `[data-smoothr="password-reset"]`
+
+```html
+<button data-smoothr="password-reset">Send reset link</button>
+```
+
+### `[data-smoothr="password-reset-confirm"]`
+
+```html
+<form data-smoothr="password-reset-confirm">
+  <input type="password" data-smoothr-input="password" />
+  <input type="password" data-smoothr-input="password-confirm" />
+  <button type="submit">Set new password</button>
+</form>
+```
+
 ## Signup
 
 Attach `[data-smoothr="signup"]` to a form containing `email`, `password` and a
