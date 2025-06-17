@@ -78,7 +78,7 @@ describe('handleRequest missing token', () => {
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({
       code: 500,
-      message: 'Live rate fetch failed'
+      message: 'OPENEXCHANGERATES_TOKEN is not set'
     });
   });
 });
@@ -128,7 +128,8 @@ describe('handleRequest OpenExchangeRates integration', () => {
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({
       code: 500,
-      message: 'Live rate fetch failed'
+      message: 'Fetch failed',
+      detail: 'network'
     });
   });
 });
