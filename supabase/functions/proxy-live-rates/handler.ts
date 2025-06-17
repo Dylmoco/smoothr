@@ -12,6 +12,7 @@ export const FALLBACK = {
     EUR: 1.17,
     GBP: 1,
   },
+  fallback: true,
 };
 
 export async function handleRequest(

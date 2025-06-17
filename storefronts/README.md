@@ -126,6 +126,7 @@ If an error occurs the function returns a fallback object:
 {
   "base": "GBP",
   "date": "<timestamp>",
-  "rates": { "USD": 1.25, "EUR": 1.17, "GBP": 1 }
+  "rates": { "USD": 1.25, "EUR": 1.17, "GBP": 1 },
+  "fallback": true
 }
 ```
