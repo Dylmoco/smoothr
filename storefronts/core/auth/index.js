@@ -48,6 +48,7 @@ export function initAuth({
     bindLoginDivs();
     bindLogoutButtons();
     bindGoogleLoginButtons();
+    bindSignupForms();
   });
 }
 
@@ -86,6 +87,32 @@ function bindGoogleLoginButtons() {
     btn.addEventListener('click', async evt => {
       evt.preventDefault();
       await signInWithGoogle();
+    });
+  });
+}
+
+function bindSignupForms() {
+  document.querySelectorAll('form[data-smoothr="signup"]').forEach(form => {
+    form.addEventListener('submit', async evt => {
+      evt.preventDefault();
+      const email = form.querySelector('[data-smoothr-input="email"]')?.value || '';
+      const password = form.querySelector('[data-smoothr-input="password"]')?.value || '';
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        console.error('Invalid email address');
+        return;
+      }
+      if (password.length < 6) {
+        console.error('Password must be at least 6 characters');
+        return;
+      }
+      try {
+        const { error } = await signUp(email, password);
+        if (error) {
+          console.error(error);
+        }
+      } catch (err) {
+        console.error(err);
+      }
     });
   });
 }
@@ -133,6 +160,18 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
   });
+}
+
+export async function signUp(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (!error) {
+    document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+    const url = await lookupRedirectUrl('login');
+    if (typeof window !== 'undefined') {
+      window.location.href = url;
+    }
+  }
+  return { data, error };
 }
 
 export function normalizeDomain(hostname) {
