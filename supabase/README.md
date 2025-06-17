@@ -16,11 +16,11 @@ The CLI will upload the function to the currently linked project and make it ava
 ## Configuration
 
 Create a `.env` file in `supabase/functions` to provide environment variables to
-the deployed functions. The live rates proxy requires an OpenExchangeRates API
+the deployed functions. The live rates proxy requires the following OpenExchangeRates API
 token:
 
 ```bash
-OPENEXCHANGERATES_TOKEN=your-token
+OPENEXCHANGERATES_TOKEN=a45f3fb4ba674d089a2484adf5bd9262
 ```
 
 See `.env.example` for a template. The Supabase CLI will also read `config.toml`
