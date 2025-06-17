@@ -6,6 +6,10 @@ const DEFAULT_SUPABASE_URL =
 const DEFAULT_SUPABASE_KEY =
   (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
   'your-anon-key';
+const DEFAULT_SUPABASE_OAUTH_REDIRECT_URL =
+  (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
+    __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
+  (typeof window !== 'undefined' ? window.location.origin : '');
 
 let supabase;
 
@@ -14,7 +18,7 @@ export function initAuth({
   supabaseKey = DEFAULT_SUPABASE_KEY
 } = {}) {
   supabase = createClient(supabaseUrl, supabaseKey);
-  supabase.auth.getUser().then(({ data: { user } }) => {
+  supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};
       window.smoothr.auth = { user: user || null };
@@ -30,11 +34,20 @@ export function initAuth({
           'color: #f87171; font-weight: bold;'
         );
       }
+
+      const oauthFlag = localStorage.getItem('smoothr_oauth');
+      if (oauthFlag && user) {
+        document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
+        localStorage.removeItem('smoothr_oauth');
+        const url = await lookupRedirectUrl('login');
+        window.location.href = url;
+      }
     }
   });
   document.addEventListener('DOMContentLoaded', () => {
     bindLoginDivs();
     bindLogoutButtons();
+    bindGoogleLoginButtons();
   });
 }
 
@@ -64,6 +77,15 @@ function bindLoginDivs() {
       } catch (err) {
         console.error(err);
       }
+    });
+  });
+}
+
+function bindGoogleLoginButtons() {
+  document.querySelectorAll('[data-smoothr="login-google"]').forEach(btn => {
+    btn.addEventListener('click', async evt => {
+      evt.preventDefault();
+      await signInWithGoogle();
     });
   });
 }
@@ -99,6 +121,17 @@ function bindLogoutButtons() {
       const url = await lookupRedirectUrl('logout');
       window.location.href = url;
     });
+  });
+}
+
+export async function signInWithGoogle() {
+  await lookupRedirectUrl('login');
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('smoothr_oauth', '1');
+  }
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
   });
 }
 
