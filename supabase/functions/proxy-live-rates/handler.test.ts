@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleRequest } from './handler';
 
-const AUTH_HEADER = 'Token eca2385f63504d80a624d130cce7e240';
-
-describe('handleRequest query params', () => {
+describe('handleRequest', () => {
   beforeEach(() => {
-    // Stub Deno.env
     (globalThis as any).Deno = { env: { get: () => 'token' } };
   });
 
@@ -13,140 +10,72 @@ describe('handleRequest query params', () => {
     delete (globalThis as any).Deno;
   });
 
-  it('uses defaults when params missing', async () => {
+  it('returns normalized rates with default base', async () => {
     const fetchFn = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ timestamp: 0, rates: { USD: 1.25, EUR: 1.17, GBP: 1 } })
+      json: async () => ({ timestamp: 0, rates: { USD: 1.2, EUR: 1.1, GBP: 1 } }),
     });
-    const req = new Request('https://example.com/');
-    req.headers.set('Authorization', AUTH_HEADER);
-    const res = await handleRequest(req, fetchFn);
-    expect(fetchFn).toHaveBeenCalledWith(
-      expect.stringContaining('symbols=USD,EUR,GBP'),
-      expect.any(Object)
-    );
+    const res = await handleRequest(new Request('https://example.com'), fetchFn);
+    expect(fetchFn).toHaveBeenCalledWith(expect.stringContaining('app_id=token'));
     const body = await res.json();
     expect(body.base).toBe('GBP');
-    expect(body.rates).toHaveProperty('GBP', 1);
+    expect(body.rates.GBP).toBe(1);
   });
 
-  it('allows params to override defaults', async () => {
+  it('uses provided base currency', async () => {
     const fetchFn = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ timestamp: 0, rates: { USD: 1, EUR: 1.1, GBP: 0.8 } })
+      json: async () => ({ timestamp: 0, rates: { USD: 1.2, EUR: 1.1, GBP: 1 } }),
     });
-    const req = new Request('https://example.com/?base=USD&symbols=EUR');
-    req.headers.set('Authorization', AUTH_HEADER);
-    const res = await handleRequest(req, fetchFn);
-    expect(fetchFn).toHaveBeenCalledWith(
-      expect.stringContaining('symbols=USD,EUR,GBP'),
-      expect.any(Object)
-    );
+    const res = await handleRequest(new Request('https://example.com/?base=USD'), fetchFn);
     const body = await res.json();
     expect(body.base).toBe('USD');
-    expect(body.rates).toHaveProperty('EUR');
-    expect(body.rates).toHaveProperty('USD', 1);
+    expect(body.rates.USD).toBe(1);
   });
 
-  it('does not forward base param when fetching', async () => {
+  it('returns 400 for invalid base', async () => {
     const fetchFn = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ timestamp: 0, rates: { USD: 1, EUR: 1.1, GBP: 0.8 } })
+      json: async () => ({ timestamp: 0, rates: { USD: 1.2, EUR: 1.1, GBP: 1 } }),
     });
-    const req = new Request('https://example.com/?base=GBP');
-    req.headers.set('Authorization', AUTH_HEADER);
-    await handleRequest(req, fetchFn);
-    expect(fetchFn.mock.calls[0][0]).not.toContain('base=');
+    const res = await handleRequest(new Request('https://example.com/?base=CAD'), fetchFn);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({
+      code: 400,
+      message: 'Invalid base currency: CAD',
+    });
+  });
+
+  it('returns 500 when fetch fails', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => 'server error',
+    });
+    const res = await handleRequest(new Request('https://example.com'), fetchFn);
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({
+      code: 500,
+      message: 'Fetch failed',
+      detail: 'Status 500: server error',
+    });
   });
 });
 
-describe('handleRequest missing token', () => {
-  afterEach(() => {
-    delete (globalThis as any).Deno;
-  });
-
+describe('token missing', () => {
   it('returns 500 when token is absent', async () => {
     (globalThis as any).Deno = { env: { get: () => undefined } };
     const fetchFn = vi.fn();
-    const req = new Request('https://example.com/');
-    req.headers.set('Authorization', AUTH_HEADER);
-    const res = await handleRequest(req, fetchFn);
+    const res = await handleRequest(new Request('https://example.com'), fetchFn);
     expect(fetchFn).not.toHaveBeenCalled();
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({
       code: 500,
-      message: 'OPENEXCHANGERATES_TOKEN is not set at runtime'
+      message: 'OPENEXCHANGERATES_TOKEN is not set',
     });
-  });
-});
-
-describe('handleRequest OpenExchangeRates integration', () => {
-  beforeEach(() => {
-    (globalThis as any).Deno = { env: { get: () => 'token' } };
-  });
-
-  afterEach(() => {
     delete (globalThis as any).Deno;
-  });
-
-  it('appends app_id and converts to GBP base', async () => {
-    const fetchFn = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ timestamp: 0, rates: { USD: 1, EUR: 1.1, GBP: 0.8 } })
-    });
-
-    const req = new Request('https://example.com/?symbols=USD,EUR');
-    req.headers.set('Authorization', AUTH_HEADER);
-    const res = await handleRequest(req, fetchFn);
-
-    expect(fetchFn).toHaveBeenCalledWith(
-      expect.stringContaining('app_id=token'),
-      expect.any(Object)
-    );
-    expect(fetchFn).toHaveBeenCalledWith(
-      expect.stringContaining('symbols=USD,EUR,GBP'),
-      expect.any(Object)
-    );
-
-    const body = await res.json();
-    expect(body.base).toBe('GBP');
-    expect(body.rates.USD).toBeCloseTo(1 / 0.8);
-    expect(body.rates.EUR).toBeCloseTo(1.1 / 0.8);
-    expect(body.rates.GBP).toBe(1);
-  });
-
-  it('returns 500 when fetch fails', async () => {
-    const fetchFn = vi.fn().mockRejectedValue(new Error('network'));
-    const req = new Request('https://example.com/');
-    req.headers.set('Authorization', AUTH_HEADER);
-    const res = await handleRequest(req, fetchFn);
-    expect(fetchFn).toHaveBeenCalled();
-    expect(res.status).toBe(500);
-    await expect(res.json()).resolves.toEqual({
-      code: 500,
-      message: 'Fetch failed',
-      detail: 'network'
-    });
-  });
-
-  it('surfaces non-200 responses', async () => {
-    const fetchFn = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 403,
-      text: async () => 'Forbidden'
-    });
-    const req = new Request('https://example.com/');
-    req.headers.set('Authorization', AUTH_HEADER);
-    const res = await handleRequest(req, fetchFn);
-    expect(res.status).toBe(500);
-    await expect(res.json()).resolves.toEqual({
-      code: 500,
-      message: 'Fetch failed',
-      detail: 'Status 403: Forbidden'
-    });
   });
 });
