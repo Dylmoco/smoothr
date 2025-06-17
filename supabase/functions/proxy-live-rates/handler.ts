@@ -26,20 +26,19 @@ export async function handleRequest(
 
   try {
     console.log('🚀 About to fetch OpenExchangeRates');
-    const response = await fetchFn(
-      `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`,
-      {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'User-Agent': 'SmoothrProxy/1.0',
-        },
-      }
-    );
+    const url = `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,GBP,EUR`;
 
-    console.log('✅ Got response from OpenExchangeRates:', response.status);
+    const response = await fetchFn(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'SmoothrProxy/1.0',
+      },
+    });
+
+    console.log('✅ Fetch status:', response.status);
     if (!response.ok) {
-      console.log('❌ Live fetch failed', response.status, await response.text());
+      console.log('❌ Fetch failed:', await response.text());
       throw new Error('Fetch failed');
     }
 
