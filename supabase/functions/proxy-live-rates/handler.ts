@@ -1,3 +1,5 @@
+console.log('proxy-live-rates function started');
+
 export async function handleRequest(req: Request): Promise<Response> {
   try {
     const token = Deno.env.get('OPENEXCHANGERATES_TOKEN');
