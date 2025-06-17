@@ -50,3 +50,19 @@ describe('handleRequest query params', () => {
     expect(body.rates).toHaveProperty('USD', 1);
   });
 });
+
+describe('handleRequest missing token', () => {
+  afterEach(() => {
+    delete (globalThis as any).Deno;
+  });
+
+  it('returns 500 when token is absent', async () => {
+    (globalThis as any).Deno = { env: { get: () => undefined } };
+    const fetchFn = vi.fn();
+    const req = new Request('https://example.com/');
+    req.headers.set('Authorization', AUTH_HEADER);
+    const res = await handleRequest(req, fetchFn);
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(res.status).toBe(500);
+  });
+});

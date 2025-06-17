@@ -22,6 +22,14 @@ export async function handleRequest(
   const token = Deno.env.get('OPENEXCHANGERATES_TOKEN');
   console.log('✅ Token loaded from env:', token);
 
+  if (!token) {
+    console.error('❌ OPENEXCHANGERATES_TOKEN is missing');
+    return new Response(
+      JSON.stringify({ message: 'Missing token' }),
+      { status: 500, headers: CORS_HEADERS },
+    );
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS_HEADERS });
   }
