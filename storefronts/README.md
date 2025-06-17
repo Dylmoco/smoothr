@@ -120,8 +120,12 @@ Example response:
 { "rates": { "USD": 1.27, "EUR": 1.18, "GBP": 1 } }
 ```
 
-If an error occurs the function responds with status `500`:
+If an error occurs the function responds with status `500` and includes details:
 
 ```json
-{ "code": 500, "message": "Live rate fetch failed" }
+{
+  "code": 500,
+  "message": "Fetch failed",
+  "detail": "Status 403: Forbidden"
+}
 ```
