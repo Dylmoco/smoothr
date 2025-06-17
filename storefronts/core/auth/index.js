@@ -10,6 +10,10 @@ const DEFAULT_SUPABASE_OAUTH_REDIRECT_URL =
   (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
     __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
   (typeof window !== 'undefined' ? window.location.origin : '');
+const DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL =
+  (typeof __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__ !== 'undefined' &&
+    __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__) ||
+  (typeof window !== 'undefined' ? window.location.origin : '');
 
 let supabase;
 
@@ -49,6 +53,7 @@ export function initAuth({
     bindLogoutButtons();
     bindGoogleLoginButtons();
     bindSignupForms();
+    bindPasswordResetForms();
   });
 }
 
@@ -117,6 +122,29 @@ function bindSignupForms() {
   });
 }
 
+function bindPasswordResetForms() {
+  document.querySelectorAll('form[data-smoothr="password-reset"]').forEach(form => {
+    form.addEventListener('submit', async evt => {
+      evt.preventDefault();
+      const email = form.querySelector('[data-smoothr-input="email"]')?.value || '';
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        alert('Invalid email address');
+        return;
+      }
+      try {
+        const { error } = await requestPasswordReset(email);
+        if (error) {
+          alert(error.message || 'Error requesting password reset');
+        } else {
+          alert('Check your email for a reset link.');
+        }
+      } catch (err) {
+        alert(err.message || 'Error requesting password reset');
+      }
+    });
+  });
+}
+
 function bindLogoutButtons() {
   document.querySelectorAll('[data-smoothr="logout"]').forEach(btn => {
     btn.addEventListener('click', async evt => {
@@ -172,6 +200,57 @@ export async function signUp(email, password) {
     }
   }
   return { data, error };
+}
+
+export async function requestPasswordReset(email) {
+  return await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL
+  });
+}
+
+export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
+  if (!supabase) {
+    supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY);
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    if (access_token && refresh_token) {
+      supabase.auth.setSession({ access_token, refresh_token });
+    }
+    document
+      .querySelectorAll('form[data-smoothr="password-reset-confirm"]')
+      .forEach(form => {
+        form.addEventListener('submit', async evt => {
+          evt.preventDefault();
+          const password =
+            form.querySelector('[data-smoothr-input="password"]')?.value || '';
+          const confirm =
+            form.querySelector('[data-smoothr-input="password-confirm"]')?.value ||
+            '';
+          if (password.length < 6) {
+            alert('Password must be at least 6 characters');
+            return;
+          }
+          if (password !== confirm) {
+            alert('Passwords do not match');
+            return;
+          }
+          try {
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) {
+              alert(error.message || 'Password update failed');
+            } else {
+              alert('Password updated');
+              window.location.href = redirectTo;
+            }
+          } catch (err) {
+            alert(err.message || 'Password update failed');
+          }
+        });
+      });
+  });
 }
 
 export function normalizeDomain(hostname) {

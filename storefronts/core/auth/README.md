@@ -100,3 +100,46 @@ window.smoothr?.auth?.user !== null
 
 This property is `undefined` before initialization, so ensure `initAuth()` has
 completed before relying on it.
+
+## Password reset
+
+To send password reset emails the SDK provides a `requestPasswordReset` helper
+and binds forms marked with `[data-smoothr="password-reset"]`. The reset link in
+the email must point to a page that calls `initPasswordResetConfirmation()` so
+the user can set a new password.
+
+Set `NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL` in your `.env` file to
+the URL of that confirmation page:
+
+```bash
+NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
+```
+
+### Request form markup
+
+```html
+<form data-smoothr="password-reset">
+  <input type="email" data-smoothr-input="email" />
+  <button type="submit">Send reset link</button>
+</form>
+```
+
+### Confirmation page markup
+
+```html
+<form data-smoothr="password-reset-confirm">
+  <input type="password" data-smoothr-input="password" />
+  <input type="password" data-smoothr-input="password-confirm" />
+  <button type="submit">Set new password</button>
+</form>
+<script type="module">
+  import { initAuth, initPasswordResetConfirmation } from './auth/index.js';
+  initAuth();
+  initPasswordResetConfirmation({ redirectTo: '/' });
+</script>
+```
+
+Submitting the request form validates the email and displays an alert indicating
+success or failure. On the confirmation page the user must enter and confirm a
+new password. If the update succeeds they are redirected to the provided URL;
+otherwise an error message is shown.

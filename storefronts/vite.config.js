@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => {
       __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
       __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__: JSON.stringify(
         env.NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL
+      ),
+      __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__: JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL
       )
     },
     build: {
