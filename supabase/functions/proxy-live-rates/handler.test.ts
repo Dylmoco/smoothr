@@ -49,6 +49,18 @@ describe('handleRequest query params', () => {
     expect(body.rates).toHaveProperty('EUR');
     expect(body.rates).toHaveProperty('USD', 1);
   });
+
+  it('does not forward base param when fetching', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ timestamp: 0, rates: { USD: 1, EUR: 1.1, GBP: 0.8 } })
+    });
+    const req = new Request('https://example.com/?base=GBP');
+    req.headers.set('Authorization', AUTH_HEADER);
+    await handleRequest(req, fetchFn);
+    expect(fetchFn.mock.calls[0][0]).not.toContain('base=');
+  });
 });
 
 describe('handleRequest missing token', () => {
