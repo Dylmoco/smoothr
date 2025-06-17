@@ -1,6 +1,20 @@
 console.log('proxy-live-rates function started');
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*", // Change "*" to your Webflow domain for stricter security if needed
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+};
+
 export async function handleRequest(req: Request): Promise<Response> {
+  // Handle OPTIONS preflight request for CORS
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: CORS_HEADERS,
+    });
+  }
+
   try {
     const token = Deno.env.get('OPENEXCHANGERATES_TOKEN');
     if (!token) {
@@ -9,7 +23,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           code: 500,
           message: 'OPENEXCHANGERATES_TOKEN is not set',
         }),
-        { status: 500 },
+        { status: 500, headers: CORS_HEADERS },
       );
     }
 
@@ -24,7 +38,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           message: 'Fetch failed',
           detail: `Status ${res.status}: ${errorText}`,
         }),
-        { status: 500 },
+        { status: 500, headers: CORS_HEADERS },
       );
     }
 
@@ -40,7 +54,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           code: 400,
           message: `Invalid base currency: ${base}`,
         }),
-        { status: 400 },
+        { status: 400, headers: CORS_HEADERS },
       );
     }
 
@@ -57,7 +71,10 @@ export async function handleRequest(req: Request): Promise<Response> {
         date: new Date(data.timestamp * 1000).toISOString(),
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...CORS_HEADERS,
+        },
       },
     );
   } catch (err) {
@@ -68,7 +85,7 @@ export async function handleRequest(req: Request): Promise<Response> {
         message: 'Internal Server Error',
         detail: err instanceof Error ? err.message : String(err),
       }),
-      { status: 500 },
+      { status: 500, headers: CORS_HEADERS },
     );
   }
 }
