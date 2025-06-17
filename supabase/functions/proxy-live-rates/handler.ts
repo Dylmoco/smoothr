@@ -34,12 +34,15 @@ export async function handleRequest(
 
   try {
     const { searchParams } = new URL(req.url);
-    const base = searchParams.get('base') ?? 'GBP';
+    const base = (searchParams.get('base') ?? 'GBP').toUpperCase();
     const symbolsParam = searchParams.get('symbols') ?? 'USD,EUR,GBP';
-    const requestedSymbols = symbolsParam.split(',').map((s) => s.trim()).filter(Boolean);
-    const oersSymbols = Array.from(new Set([...requestedSymbols, base])).join(',');
+    const requestedSymbols = symbolsParam
+      .split(',')
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean);
 
-    const url = `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=${oersSymbols}`;
+    const url =
+      `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,EUR,GBP`;
 
     const response = await fetchFn(url, {
       method: 'GET',
@@ -59,22 +62,34 @@ export async function handleRequest(
     }
 
     const data = await response.json();
-    const baseRate = base === 'USD' ? 1 : data.rates[base];
-    const convertedRates: Record<string, number> = {};
+
+    let finalBase = 'USD';
+    let normalizedRates: Record<string, number> = { ...data.rates };
+    if (base === 'GBP' || base === 'EUR') {
+      const divider = data.rates[base];
+      normalizedRates = {
+        USD: data.rates.USD / divider,
+        EUR: data.rates.EUR / divider,
+        GBP: data.rates.GBP / divider,
+      };
+      normalizedRates[base] = 1;
+      finalBase = base;
+    }
+
+    const filteredRates: Record<string, number> = {};
     for (const sym of requestedSymbols) {
-      if (sym === base) {
-        convertedRates[sym] = 1;
-      } else {
-        convertedRates[sym] = data.rates[sym] / baseRate;
+      if (normalizedRates[sym] !== undefined) {
+        filteredRates[sym] = normalizedRates[sym];
       }
     }
-    if (!requestedSymbols.includes(base)) {
-      convertedRates[base] = 1;
+    if (!requestedSymbols.includes(finalBase)) {
+      filteredRates[finalBase] = 1;
     }
+
     payload = {
-      base,
+      base: finalBase,
       date: new Date(data.timestamp * 1000).toISOString(),
-      rates: convertedRates,
+      rates: filteredRates,
     };
   } catch (_e) {
     return new Response(

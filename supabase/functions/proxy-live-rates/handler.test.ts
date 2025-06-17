@@ -35,18 +35,18 @@ describe('handleRequest query params', () => {
     const fetchFn = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ timestamp: 0, rates: { USD: 1, CAD: 1.5 } })
+      json: async () => ({ timestamp: 0, rates: { USD: 1, EUR: 1.1, GBP: 0.8 } })
     });
-    const req = new Request('https://example.com/?base=USD&symbols=CAD');
+    const req = new Request('https://example.com/?base=USD&symbols=EUR');
     req.headers.set('Authorization', AUTH_HEADER);
     const res = await handleRequest(req, fetchFn);
     expect(fetchFn).toHaveBeenCalledWith(
-      expect.stringContaining('symbols=CAD,USD'),
+      expect.stringContaining('symbols=USD,EUR,GBP'),
       expect.any(Object)
     );
     const body = await res.json();
     expect(body.base).toBe('USD');
-    expect(body.rates).toHaveProperty('CAD');
+    expect(body.rates).toHaveProperty('EUR');
     expect(body.rates).toHaveProperty('USD', 1);
   });
 });
@@ -93,6 +93,10 @@ describe('handleRequest OpenExchangeRates integration', () => {
 
     expect(fetchFn).toHaveBeenCalledWith(
       expect.stringContaining('app_id=token'),
+      expect.any(Object)
+    );
+    expect(fetchFn).toHaveBeenCalledWith(
+      expect.stringContaining('symbols=USD,EUR,GBP'),
       expect.any(Object)
     );
 
