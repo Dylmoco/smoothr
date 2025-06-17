@@ -18,27 +18,24 @@ export async function handleRequest(
   req: Request,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response> {
-  const token = Deno.env.get('OPENEXCHANGERATES_TOKEN') || ''
+  const token = "a45f3fb4ba674d089a2484adf5bd9262"
   console.log('🔑 Loaded token:', token)
   let usedFallback = false
   let payload
   try {
     console.log('🚀 About to fetch OpenExchangeRates')
-    const response = await fetchFn(
-      `https://openexchangerates.org/api/latest.json?app_id=${token}&base=USD`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Token ${token}`,
-          Accept: 'application/json',
-          'User-Agent': 'SmoothrProxy/1.0',
-        },
-        redirect: 'manual',
+    const url = `https://openexchangerates.org/api/latest.json?app_id=${token}&symbols=USD,GBP,EUR`
+
+    const response = await fetchFn(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'SmoothrProxy/1.0',
       },
-    )
-    console.log('✅ Got response from OpenExchangeRates:', response.status)
+    })
+    console.log('✅ Fetch status:', response.status)
     if (!response.ok) {
-      console.log('❌ Live fetch failed', response.status, await response.text())
+      console.log('❌ Fetch failed:', await response.text())
       throw new Error('Fetch failed')
     }
     const data = await response.json();
