@@ -79,4 +79,14 @@ describe('login form', () => {
     await flushPromises();
     expect(signInMock).toHaveBeenCalled();
   });
+
+  it('sets window.smoothr.auth.user on success', async () => {
+    const user = { id: '1', email: 'user@example.com' };
+    signInMock.mockResolvedValue({ data: { user }, error: null });
+    auth.initAuth();
+    await flushPromises();
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(global.window.smoothr.auth.user).toEqual(user);
+  });
 });

@@ -164,10 +164,19 @@ function bindAuthElements(root = document) {
           }
           setLoading(el, true);
           try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email: emailVal, password });
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: emailVal,
+              password
+            });
             if (!error) {
+              if (typeof window !== 'undefined') {
+                window.smoothr = window.smoothr || {};
+                window.smoothr.auth = { user: data.user || null };
+              }
               showSuccess(targetForm, 'Logged in, redirecting...');
-              document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+              document.dispatchEvent(
+                new CustomEvent('smoothr:login', { detail: data })
+              );
               const url = await lookupRedirectUrl('login');
               setTimeout(() => {
                 window.location.href = url;
@@ -226,6 +235,10 @@ function bindAuthElements(root = document) {
             if (error) {
               showError(targetForm, error.message || 'Signup failed', emailInput);
             } else {
+              if (typeof window !== 'undefined') {
+                window.smoothr = window.smoothr || {};
+                window.smoothr.auth = { user: data.user || null };
+              }
               document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
               showSuccess(targetForm, 'Account created! Redirecting...');
               const url = await lookupRedirectUrl('login');
@@ -320,6 +333,10 @@ export async function signInWithGoogle() {
 
 export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password });
+  if (!error && typeof window !== 'undefined') {
+    window.smoothr = window.smoothr || {};
+    window.smoothr.auth = { user: data.user || null };
+  }
   return { data, error };
 }
 
@@ -363,10 +380,14 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
           const submitBtn = form.querySelector('[type="submit"]');
           setLoading(submitBtn, true);
           try {
-            const { error } = await supabase.auth.updateUser({ password });
+            const { data, error } = await supabase.auth.updateUser({ password });
             if (error) {
               showError(form, error.message || 'Password update failed', submitBtn);
             } else {
+              if (typeof window !== 'undefined') {
+                window.smoothr = window.smoothr || {};
+                window.smoothr.auth = { user: data.user || null };
+              }
               showSuccess(form, 'Password updated');
               setTimeout(() => {
                 window.location.href = redirectTo;

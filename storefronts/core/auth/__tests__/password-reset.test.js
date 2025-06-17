@@ -156,4 +156,15 @@ describe('password reset confirmation', () => {
     await flushPromises();
     expect(updateUserMock).not.toHaveBeenCalled();
   });
+
+  it('sets window.smoothr.auth.user after update', async () => {
+    const user = { id: '1', email: 'test@example.com' };
+    updateUserMock.mockResolvedValue({ data: { user }, error: null });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    auth.initPasswordResetConfirmation({ redirectTo: '/login' });
+    await flushPromises();
+    await submitHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(global.window.smoothr.auth.user).toEqual(user);
+  });
 });
