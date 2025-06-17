@@ -67,7 +67,7 @@ export async function fetchExchangeRates(
         rates[code] = data.rates[code];
       }
     });
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !data.fallback) {
       try {
         localStorage.setItem(
           CACHE_KEY,
