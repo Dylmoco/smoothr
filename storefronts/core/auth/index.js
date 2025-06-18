@@ -76,10 +76,8 @@ function showError(form, msg, input, trigger) {
     findMessageContainer(trigger || form, '[data-smoothr-error]') ||
     form.querySelector('[data-smoothr-error]');
   if (target) {
+    target.removeAttribute('hidden');
     target.textContent = msg;
-    if (target.hasAttribute('hidden')) {
-      target.removeAttribute('hidden');
-    }
     target.style.display = '';
     target.focus && target.focus();
   } else {
@@ -94,10 +92,8 @@ function showSuccess(form, msg, trigger) {
     findMessageContainer(trigger || form, '[data-smoothr-success]') ||
     form.querySelector('[data-smoothr-success]');
   if (target) {
+    target.removeAttribute('hidden');
     target.textContent = msg;
-    if (target.hasAttribute('hidden')) {
-      target.removeAttribute('hidden');
-    }
     target.style.display = '';
     target.focus && target.focus();
   } else {
