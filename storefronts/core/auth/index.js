@@ -77,6 +77,9 @@ function showError(form, msg, input, trigger) {
     form.querySelector('[data-smoothr-error]');
   if (target) {
     target.textContent = msg;
+    if (target.hasAttribute('hidden')) {
+      target.removeAttribute('hidden');
+    }
     target.style.display = '';
     target.focus && target.focus();
   } else {
@@ -92,6 +95,9 @@ function showSuccess(form, msg, trigger) {
     form.querySelector('[data-smoothr-success]');
   if (target) {
     target.textContent = msg;
+    if (target.hasAttribute('hidden')) {
+      target.removeAttribute('hidden');
+    }
     target.style.display = '';
     target.focus && target.focus();
   } else {
