@@ -196,8 +196,24 @@ describe('dynamic DOM bindings', () => {
 
   it('attaches listeners to added password reset elements and shows inline messages', async () => {
     const emailInput = { value: 'user@example.com' };
-    const successEl = { textContent: '', style: { display: 'none' } };
-    const errorEl = { textContent: '', style: { display: 'none' } };
+    const successEl = {
+      textContent: '',
+      style: { display: 'none' },
+      hidden: true,
+      hasAttribute: vi.fn(attr => attr === 'hidden' && 'hidden' in successEl),
+      removeAttribute: vi.fn(attr => {
+        if (attr === 'hidden') delete successEl.hidden;
+      })
+    };
+    const errorEl = {
+      textContent: '',
+      style: { display: 'none' },
+      hidden: true,
+      hasAttribute: vi.fn(attr => attr === 'hidden' && 'hidden' in errorEl),
+      removeAttribute: vi.fn(attr => {
+        if (attr === 'hidden') delete errorEl.hidden;
+      })
+    };
     const form = {
       querySelector: vi.fn(sel => {
         if (sel === '[data-smoothr-input="email"]') return emailInput;
@@ -232,11 +248,17 @@ describe('dynamic DOM bindings', () => {
     });
     expect(successEl.textContent).toBe('Check your email for a reset link.');
     expect(errorEl.textContent).toBe('');
+    expect(successEl.removeAttribute).toHaveBeenCalledWith('hidden');
+    expect(successEl.hidden).toBeUndefined();
+    expect(successEl.style.display).toBe('');
 
     resetPasswordMock.mockResolvedValue({ data: null, error: new Error('oops') });
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
     expect(errorEl.textContent).toBe('oops');
+    expect(errorEl.removeAttribute).toHaveBeenCalledWith('hidden');
+    expect(errorEl.hidden).toBeUndefined();
+    expect(errorEl.style.display).toBe('');
   });
 });
