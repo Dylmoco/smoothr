@@ -180,7 +180,7 @@ describe('dynamic DOM bindings', () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: (typeof global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' && global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) || (typeof global.window !== 'undefined' ? global.window.location.origin : '') }
+      options: { redirectTo: global.window.location.origin }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
@@ -228,10 +228,7 @@ describe('dynamic DOM bindings', () => {
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo:
-          (typeof global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
-            global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
-          (typeof global.window !== 'undefined' ? global.window.location.origin : '')
+        redirectTo: global.window.location.origin
       }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');

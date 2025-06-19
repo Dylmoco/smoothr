@@ -143,12 +143,10 @@ Environment variables required are the same as for login:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`
 
-If this value is empty, points to `smoothr.io`, or matches `window.location.origin`
-the SDK logs a warning when `initAuth()` runs. Set it to the exact URL that
-handles the Supabase OAuth callback for **each client domain**.
-
-When the Google button is clicked the SDK passes this value to Supabase as the
-`redirectTo` parameter. The URL must also appear in the Supabase dashboard under
+If this value is empty or points to `smoothr.io` the SDK logs a warning when
+`initAuth()` runs. `signInWithGoogle()` defaults to `window.location.origin`
+for its `redirectTo` parameter and falls back to this variable when `window` is
+not available. Ensure your origin appears in the Supabase dashboard under
 **Authentication → URL Configuration → Additional Redirect URLs** or the login
 will fail.
 
@@ -171,17 +169,18 @@ Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
 function directly or attach `[data-smoothr="login-google"]` or `[data-smoothr="signup-google"]` to any element as
 shown above.
 
-The SDK redirects users to the URL defined by the
-`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` environment variable. After Supabase
-completes authentication the user returns to that page, the login event fires,
-and the final redirect is determined by the store settings described earlier.
+By default `signInWithGoogle()` redirects users back to `window.location.origin`.
+If `window` is not available it falls back to the value of
+`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`. After Supabase completes
+authentication the login event fires and the final redirect is determined by the
+store settings described earlier.
 The helper `lookupRedirectUrl('login')` queries the `stores` table for the
 current domain and resolves the post-login URL. If no matching row exists the
 SDK falls back to `/` on the current site.
 
-If users are redirected to the wrong domain check the value of
-`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` and verify the `stores` table contains
-a row for your domain.
+If users are redirected to the wrong domain ensure `window.location.origin` is
+included in your Supabase redirect URLs or override it via
+`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`.
 
 ## Accessing the current user
 
