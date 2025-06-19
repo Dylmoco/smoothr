@@ -107,14 +107,21 @@ export function initAuth({
   supabaseKey = DEFAULT_SUPABASE_KEY
 } = {}) {
   supabase = createClient(supabaseUrl, supabaseKey);
-  if (
-    typeof window !== 'undefined' &&
-    (!DEFAULT_SUPABASE_OAUTH_REDIRECT_URL ||
-      DEFAULT_SUPABASE_OAUTH_REDIRECT_URL === window.location.origin)
-  ) {
-    console.warn(
-      'Smoothr Auth: set NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL to the URL of your OAuth callback page'
-    );
+  if (typeof window !== 'undefined') {
+    const url = DEFAULT_SUPABASE_OAUTH_REDIRECT_URL;
+    if (!url || url.trim() === '') {
+      console.warn(
+        'Smoothr Auth: NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL is not set'
+      );
+    } else if (url.includes('smoothr.io')) {
+      console.warn(
+        'Smoothr Auth: NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL points to smoothr.io. Update it to your domain'
+      );
+    } else if (url === window.location.origin) {
+      console.warn(
+        'Smoothr Auth: set NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL to the URL of your OAuth callback page'
+      );
+    }
   }
   supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
@@ -365,6 +372,10 @@ export async function signInWithGoogle() {
     localStorage.setItem('smoothr_oauth', '1');
   }
   try {
+    console.log(
+      'Smoothr Auth: using NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL',
+      DEFAULT_SUPABASE_OAUTH_REDIRECT_URL
+    );
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
@@ -461,18 +472,25 @@ export function normalizeDomain(hostname) {
 
 export async function lookupRedirectUrl(type) {
   const domain = normalizeDomain(window.location.hostname);
+  const fallback = '/';
   try {
     const { data, error } = await supabase
       .from('stores')
       .select(`${type}_redirect_url`)
       .eq('store_domain', domain)
       .single();
-    if (error || !data) {
-      throw error;
+    if (error || !data || !data[`${type}_redirect_url`]) {
+      console.warn(
+        `Smoothr Auth: no ${type} redirect configured for ${domain}, using ${fallback}`
+      );
+      return fallback;
     }
-    return data[`${type}_redirect_url`] || window.location.origin;
+    const url = data[`${type}_redirect_url`];
+    console.log(`Smoothr Auth: ${type} redirect resolved`, url);
+    return url;
   } catch (err) {
-    console.error(err);
-    return window.location.origin;
+    console.error('Smoothr Auth: redirect lookup failed', err);
+    console.warn(`Smoothr Auth: using fallback ${fallback}`);
+    return fallback;
   }
 }
