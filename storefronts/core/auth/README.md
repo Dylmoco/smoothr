@@ -62,6 +62,7 @@ Markup example:
   <button type="submit">Create Account</button>
 </form>
 <div data-smoothr="login-google">Sign in with Google</div>
+<div data-smoothr="signup-google">Sign up with Google</div>
 <div data-smoothr="logout">Logout</div>
 ```
 
@@ -97,6 +98,12 @@ container. The SDK automatically attaches handlers on page load and uses a
 
 ```html
 <button data-smoothr="login-google">Sign in with Google</button>
+```
+
+### `[data-smoothr="signup-google"]`
+
+```html
+<button data-smoothr="signup-google">Sign up with Google</button>
 ```
 
 ### `[data-smoothr="logout"]`
@@ -161,7 +168,7 @@ list or Supabase will reject the login attempt.
 ## Google OAuth login
 
 Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
-function directly or attach `[data-smoothr="login-google"]` to any element as
+function directly or attach `[data-smoothr="login-google"]` or `[data-smoothr="signup-google"]` to any element as
 shown above.
 
 The SDK redirects users to the URL defined by the

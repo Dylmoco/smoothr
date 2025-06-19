@@ -167,7 +167,7 @@ export function initAuth({
 //
 function bindAuthElements(root = document) {
   const selector =
-    '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+    '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="signup-google"], [data-smoothr="password-reset"]';
   root.querySelectorAll(selector).forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
     el.dataset.smoothrBoundAuth = '1';
@@ -233,6 +233,13 @@ function bindAuthElements(root = document) {
         break;
       }
       case 'login-google': {
+        attach(async evt => {
+          evt.preventDefault();
+          await signInWithGoogle(el);
+        });
+        break;
+      }
+      case 'signup-google': {
         attach(async evt => {
           evt.preventDefault();
           await signInWithGoogle(el);

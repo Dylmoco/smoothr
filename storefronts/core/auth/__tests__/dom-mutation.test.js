@@ -34,7 +34,7 @@ function flushPromises() {
 }
 
 const ATTR_SELECTOR =
-  '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+  '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="signup-google"], [data-smoothr="password-reset"]';
 
 describe('dynamic DOM bindings', () => {
   let mutationCallback;
@@ -181,6 +181,58 @@ describe('dynamic DOM bindings', () => {
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
       options: { redirectTo: (typeof global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' && global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) || (typeof global.window !== 'undefined' ? global.window.location.origin : '') }
+    });
+    expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
+
+    const user = { id: '3', email: 'google@example.com' };
+    getUserMock.mockResolvedValue({ data: { user } });
+    auth.initAuth();
+    await flushPromises();
+
+    expect(global.document.dispatchEvent).toHaveBeenCalled();
+    const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
+    expect(evt.type).toBe('smoothr:login');
+  });
+
+  it('attaches listeners to added google signup elements and dispatches login event', async () => {
+    let clickHandler;
+    let store = null;
+    global.localStorage = {
+      getItem: vi.fn(() => store),
+      setItem: vi.fn((k, v) => {
+        store = v;
+      }),
+      removeItem: vi.fn(() => {
+        store = null;
+      })
+    };
+    const btn = {
+      tagName: 'DIV',
+      dataset: {},
+      closest: vi.fn(() => null),
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === 'click') clickHandler = cb;
+      })
+    };
+
+    auth.initAuth();
+    await flushPromises();
+    elements.push(btn);
+    mutationCallback();
+    expect(btn.addEventListener).toHaveBeenCalled();
+
+    signInWithOAuthMock.mockResolvedValue({});
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+
+    expect(signInWithOAuthMock).toHaveBeenCalledWith({
+      provider: 'google',
+      options: {
+        redirectTo:
+          (typeof global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
+            global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
+          (typeof global.window !== 'undefined' ? global.window.location.origin : '')
+      }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
