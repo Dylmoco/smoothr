@@ -142,10 +142,13 @@ export function initAuth({
 
       const oauthFlag = localStorage.getItem('smoothr_oauth');
       if (oauthFlag && user) {
+        showSuccess(document, 'Logged in, redirecting...');
         document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
         localStorage.removeItem('smoothr_oauth');
         const url = await lookupRedirectUrl('login');
-        window.location.href = url;
+        setTimeout(() => {
+          window.location.href = url;
+        }, 1000);
       }
     }
   });
@@ -232,7 +235,7 @@ function bindAuthElements(root = document) {
       case 'login-google': {
         attach(async evt => {
           evt.preventDefault();
-          await signInWithGoogle();
+          await signInWithGoogle(el);
         });
         break;
       }
@@ -367,10 +370,11 @@ function bindLogoutButtons() {
   });
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(trigger) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
+  setLoading(trigger, true);
   try {
     console.log(
       'Smoothr Auth: using NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL',
@@ -391,6 +395,11 @@ export async function signInWithGoogle() {
         target.focus && target.focus();
       }
     }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('smoothr_oauth');
+    }
+  } finally {
+    setLoading(trigger, false);
   }
 }
 
