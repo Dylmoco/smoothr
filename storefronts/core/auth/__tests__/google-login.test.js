@@ -28,6 +28,8 @@ function flushPromises() {
 describe('google login button', () => {
   let clickHandler;
   let store;
+  let btn;
+  let successEl;
 
   beforeEach(() => {
     clickHandler = undefined;
@@ -40,13 +42,25 @@ describe('google login button', () => {
       }),
       removeItem: vi.fn()
     };
+    successEl = {
+      textContent: '',
+      style: { display: 'none' },
+      hidden: true,
+      removeAttribute: vi.fn(attr => {
+        if (attr === 'hidden') delete successEl.hidden;
+      }),
+      focus: vi.fn()
+    };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === 'DOMContentLoaded') cb();
       }),
       querySelectorAll: vi.fn(selector => {
         if (selector === '[data-smoothr="login-google"]') {
-          const btn = {
+          btn = {
+            textContent: 'Google',
+            disabled: false,
+            dataset: {},
             addEventListener: vi.fn((ev, cb) => {
               if (ev === 'click') clickHandler = cb;
             })
@@ -55,7 +69,7 @@ describe('google login button', () => {
         }
         return [];
       }),
-      querySelector: vi.fn(() => null),
+      querySelector: vi.fn(sel => (sel === '[data-smoothr-success]' ? successEl : null)),
       dispatchEvent: vi.fn()
     };
   });
@@ -64,8 +78,14 @@ describe('google login button', () => {
     initAuth();
     await flushPromises();
 
-    await clickHandler({ preventDefault: () => {} });
+    const p = clickHandler({ preventDefault: () => {} });
+    expect(btn.textContent).toBe('Loading...');
+    expect(btn.disabled).toBe(true);
+    await p;
     await flushPromises();
+
+    expect(btn.textContent).toBe('Google');
+    expect(btn.disabled).toBe(false);
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
@@ -104,7 +124,7 @@ describe('google login button', () => {
       focus: vi.fn()
     };
     global.document.querySelector.mockImplementation(sel =>
-      sel === '[data-smoothr-error]' ? errorEl : null
+      sel === '[data-smoothr-error]' ? errorEl : sel === '[data-smoothr-success]' ? successEl : null
     );
     const errorSpy = vi
       .spyOn(console, 'error')
@@ -112,14 +132,19 @@ describe('google login button', () => {
 
     initAuth();
     await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
+    const p = clickHandler({ preventDefault: () => {} });
+    expect(btn.textContent).toBe('Loading...');
+    expect(btn.disabled).toBe(true);
+    await p;
     await flushPromises();
+    expect(btn.textContent).toBe('Google');
+    expect(btn.disabled).toBe(false);
 
     expect(errorSpy).toHaveBeenCalledWith('Google OAuth failed', err);
     expect(errorEl.textContent).toBe('bad');
     expect(errorEl.removeAttribute).toHaveBeenCalledWith('hidden');
-    expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
-    expect(global.localStorage.removeItem).not.toHaveBeenCalled();
+    expect(global.localStorage.getItem('smoothr_oauth')).toBe(null);
+    expect(global.localStorage.removeItem).toHaveBeenCalledWith('smoothr_oauth');
     errorSpy.mockRestore();
   });
 
@@ -138,6 +163,9 @@ describe('google login button', () => {
     initAuth();
     await flushPromises();
 
+    expect(successEl.textContent).toBe('Logged in, redirecting...');
+    expect(successEl.removeAttribute).toHaveBeenCalledWith('hidden');
+    expect(successEl.style.display).toBe('');
     expect(global.localStorage.removeItem).toHaveBeenCalledWith('smoothr_oauth');
     expect(global.window.location.href).toBe('/redirect');
   });
