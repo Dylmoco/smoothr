@@ -180,7 +180,7 @@ describe('dynamic DOM bindings', () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: '' }
+      options: { redirectTo: (typeof global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' && global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) || (typeof global.window !== 'undefined' ? global.window.location.origin : '') }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
