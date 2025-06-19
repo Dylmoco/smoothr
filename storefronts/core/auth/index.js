@@ -361,7 +361,6 @@ function bindLogoutButtons() {
 }
 
 export async function signInWithGoogle() {
-  await lookupRedirectUrl('login');
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
