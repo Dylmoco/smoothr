@@ -142,7 +142,14 @@ export function initAuth({
 
       const oauthFlag = localStorage.getItem('smoothr_oauth');
       if (oauthFlag && user) {
-        showSuccess(document, 'Logged in, redirecting...');
+        const isNewUser =
+          user.created_at &&
+          user.updated_at &&
+          user.created_at === user.updated_at;
+        showSuccess(
+          document,
+          isNewUser ? 'Account created! Redirecting...' : 'Logged in, redirecting...'
+        );
         document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
         localStorage.removeItem('smoothr_oauth');
         const url = await lookupRedirectUrl('login');

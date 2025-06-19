@@ -148,7 +148,7 @@ describe('google login button', () => {
     errorSpy.mockRestore();
   });
 
-  it('clears oauth flag after redirect', async () => {
+  it('clears oauth flag after redirect for existing users', async () => {
     signInWithOAuthMock.mockResolvedValue({});
     initAuth();
     await flushPromises();
@@ -158,12 +158,44 @@ describe('google login button', () => {
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
     expect(global.localStorage.removeItem).not.toHaveBeenCalled();
 
-    const user = { id: '1', email: 'g@example.com' };
+    const user = {
+      id: '1',
+      email: 'g@example.com',
+      created_at: '2023-01-01T00:00:00.000Z',
+      updated_at: '2023-01-02T00:00:00.000Z'
+    };
     getUserMock.mockResolvedValue({ data: { user } });
     initAuth();
     await flushPromises();
 
     expect(successEl.textContent).toBe('Logged in, redirecting...');
+    expect(successEl.removeAttribute).toHaveBeenCalledWith('hidden');
+    expect(successEl.style.display).toBe('');
+    expect(global.localStorage.removeItem).toHaveBeenCalledWith('smoothr_oauth');
+    expect(global.window.location.href).toBe('/redirect');
+  });
+
+  it('shows signup message when OAuth creates a new user', async () => {
+    signInWithOAuthMock.mockResolvedValue({});
+    initAuth();
+    await flushPromises();
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+
+    expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
+    expect(global.localStorage.removeItem).not.toHaveBeenCalled();
+
+    const user = {
+      id: '2',
+      email: 'new@example.com',
+      created_at: '2023-01-03T00:00:00.000Z',
+      updated_at: '2023-01-03T00:00:00.000Z'
+    };
+    getUserMock.mockResolvedValue({ data: { user } });
+    initAuth();
+    await flushPromises();
+
+    expect(successEl.textContent).toBe('Account created! Redirecting...');
     expect(successEl.removeAttribute).toHaveBeenCalledWith('hidden');
     expect(successEl.style.display).toBe('');
     expect(global.localStorage.removeItem).toHaveBeenCalledWith('smoothr_oauth');
