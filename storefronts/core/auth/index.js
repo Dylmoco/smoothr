@@ -364,10 +364,23 @@ export async function signInWithGoogle() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
-  await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
-  });
+  try {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
+    });
+  } catch (err) {
+    console.error('Google OAuth failed', err);
+    if (typeof document !== 'undefined') {
+      const target = document.querySelector('[data-smoothr-error]');
+      if (target) {
+        target.removeAttribute('hidden');
+        target.textContent = err.message || 'Google OAuth failed';
+        target.style.display = '';
+        target.focus && target.focus();
+      }
+    }
+  }
 }
 
 export async function signUp(email, password) {
