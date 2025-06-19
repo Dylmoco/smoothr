@@ -390,13 +390,17 @@ export async function signInWithGoogle(trigger) {
   }
   setLoading(trigger, true);
   try {
+    const redirectTo =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : DEFAULT_SUPABASE_OAUTH_REDIRECT_URL;
     console.log(
       'Smoothr Auth: using NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL',
-      DEFAULT_SUPABASE_OAUTH_REDIRECT_URL
+      redirectTo
     );
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
+      options: { redirectTo }
     });
   } catch (err) {
     if (typeof window !== 'undefined') {
