@@ -107,6 +107,15 @@ export function initAuth({
   supabaseKey = DEFAULT_SUPABASE_KEY
 } = {}) {
   supabase = createClient(supabaseUrl, supabaseKey);
+  if (
+    typeof window !== 'undefined' &&
+    (!DEFAULT_SUPABASE_OAUTH_REDIRECT_URL ||
+      DEFAULT_SUPABASE_OAUTH_REDIRECT_URL === window.location.origin)
+  ) {
+    console.warn(
+      'Smoothr Auth: set NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL to the URL of your OAuth callback page'
+    );
+  }
   supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};

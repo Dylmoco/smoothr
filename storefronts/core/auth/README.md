@@ -136,6 +136,10 @@ Environment variables required are the same as for login:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`
 
+If this value is empty or matches `window.location.origin` the SDK logs a
+warning when `initAuth()` runs. Set it to the URL that handles the Supabase
+OAuth callback.
+
 ## Google OAuth login
 
 Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
