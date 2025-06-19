@@ -385,6 +385,9 @@ export async function signInWithGoogle(trigger) {
       options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
     });
   } catch (err) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('smoothr_oauth');
+    }
     console.error('Google OAuth failed', err);
     if (typeof document !== 'undefined') {
       const target = document.querySelector('[data-smoothr-error]');
@@ -394,9 +397,6 @@ export async function signInWithGoogle(trigger) {
         target.style.display = '';
         target.focus && target.focus();
       }
-    }
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('smoothr_oauth');
     }
   } finally {
     setLoading(trigger, false);
