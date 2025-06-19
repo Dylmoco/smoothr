@@ -74,6 +74,23 @@ describe('google login button', () => {
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
   });
 
+  it('logs redirect url used for OAuth', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    initAuth();
+    await flushPromises();
+
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+
+    expect(logSpy).toHaveBeenCalledWith(
+      'Smoothr Auth: using NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL',
+      (typeof global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
+        global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
+        (typeof global.window !== 'undefined' ? global.window.location.origin : '')
+    );
+    logSpy.mockRestore();
+  });
+
   it('logs and displays errors', async () => {
     const err = new Error('bad');
     signInWithOAuthMock.mockRejectedValue(err);

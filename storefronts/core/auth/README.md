@@ -136,9 +136,14 @@ Environment variables required are the same as for login:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`
 
-If this value is empty or matches `window.location.origin` the SDK logs a
-warning when `initAuth()` runs. Set it to the URL that handles the Supabase
-OAuth callback.
+If this value is empty, points to `smoothr.io`, or matches `window.location.origin`
+the SDK logs a warning when `initAuth()` runs. Set it to the exact URL that
+handles the Supabase OAuth callback for **each client domain**.
+
+When the Google button is clicked the SDK passes this value to Supabase as the
+`redirectTo` parameter. The URL must also appear in the Supabase dashboard under
+**Authentication → URL Configuration → Additional Redirect URLs** or the login
+will fail.
 
 ## Supabase URL configuration
 
@@ -163,6 +168,13 @@ The SDK redirects users to the URL defined by the
 `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` environment variable. After Supabase
 completes authentication the user returns to that page, the login event fires,
 and the final redirect is determined by the store settings described earlier.
+The helper `lookupRedirectUrl('login')` queries the `stores` table for the
+current domain and resolves the post-login URL. If no matching row exists the
+SDK falls back to `/` on the current site.
+
+If users are redirected to the wrong domain check the value of
+`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` and verify the `stores` table contains
+a row for your domain.
 
 ## Accessing the current user
 
@@ -220,3 +232,9 @@ Submitting the request form validates the email and shows an inline success or
 error message. On the confirmation page the password strength meter updates as
 the user types. The new password must be strong and match the confirmation
 field. After a successful update the page redirects after a short delay.
+
+## Rebuilding and deploying
+
+After updating environment variables run `vite build` from the `storefronts`
+workspace to rebuild `dist/smoothr-sdk.js`. Deploy the updated file to your
+hosting platform so clients receive the corrected redirect settings.
