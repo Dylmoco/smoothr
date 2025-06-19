@@ -140,6 +140,19 @@ If this value is empty or matches `window.location.origin` the SDK logs a
 warning when `initAuth()` runs. Set it to the URL that handles the Supabase
 OAuth callback.
 
+## Supabase URL configuration
+
+Open your Supabase project and navigate to **Authentication → URL Configuration**.
+Add your client domain in the **Site URL** field and include the full path that
+handles the OAuth callback under **Additional Redirect URLs**, for example:
+
+```
+https://your-site.com/auth/callback
+```
+
+The value set for `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` must appear in this
+list or Supabase will reject the login attempt.
+
 ## Google OAuth login
 
 Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
