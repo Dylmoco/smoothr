@@ -1,17 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-
-const DEFAULT_SUPABASE_URL =
-  (typeof __NEXT_PUBLIC_SUPABASE_URL__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_URL__) ||
-  'https://your-project.supabase.co';
-const DEFAULT_SUPABASE_KEY =
-  (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
-  'your-anon-key';
+import { supabase } from '../../supabase.browserClient.js';
 const DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL =
   (typeof __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__ !== 'undefined' &&
     __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__) ||
   (typeof window !== 'undefined' ? window.location.origin : '');
-
-let supabase;
 
 function isValidEmail(email) {
   return /^\S+@\S+\.\S+$/.test(email);
@@ -100,11 +91,7 @@ function showSuccess(form, msg, trigger) {
   }
 }
 
-export function initAuth({
-  supabaseUrl = DEFAULT_SUPABASE_URL,
-  supabaseKey = DEFAULT_SUPABASE_KEY
-} = {}) {
-  supabase = createClient(supabaseUrl, supabaseKey);
+export function initAuth() {
   supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};
@@ -421,9 +408,6 @@ export async function requestPasswordReset(email) {
 }
 
 export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
-  if (!supabase) {
-    supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY);
-  }
   document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.hash.slice(1));
     const access_token = params.get('access_token');
