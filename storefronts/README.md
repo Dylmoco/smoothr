@@ -24,9 +24,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 An `.env.example` file is included for reference.
 
-OAuth flow: `Client → Google OAuth → https://www.smoothr.io/oauth-callback → redirect back with smoothr_token`.
-Add `https://www.smoothr.io/oauth-callback` to your Supabase project's **Additional Redirect URLs**.
-The callback page will call `supabase.auth.setSession()` when available or append tokens as query parameters.
+Authentication flows and OAuth callback behaviour are documented in `/supabase/README.md`.
 
 ## Core modules
 

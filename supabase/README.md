@@ -1,6 +1,6 @@
-# Supabase Edge Functions
+# Supabase
 
-This folder contains Supabase edge functions for Smoothr. The only function at present is `proxy-live-rates` which serves currency exchange rates.
+This folder contains Supabase edge functions and authentication helpers for Smoothr. The only edge function at present is `proxy-live-rates` which serves currency exchange rates.
 
 ## Deploying
 
@@ -56,4 +56,34 @@ For example to request rates relative to USD only for CAD:
 GET https://<project-ref>.functions.supabase.co/proxy-live-rates?base=USD&symbols=CAD
 Authorization: Token <your-authorization-token>
 ```
+
+## Authentication flows
+
+Smoothr supports traditional email/password sign&nbsp;in alongside Google OAuth.
+The utilities in `auth.js` expose `signInWithPassword()` and `signInWithOAuth()`
+helpers for these flows.
+
+1. **Email/password** – form inputs collect the credentials and pass them to
+   `signInWithPassword()`.
+2. **Google OAuth** – `signInWithOAuth()` redirects users to Google. Supabase
+   sends them back to `/oauth-callback` after authentication.
+
+### `/oauth-callback`
+
+This page receives the OAuth response from Supabase. It attempts to call
+`supabase.auth.setSession()` using the access and refresh tokens provided in the
+URL fragment. If this fails (for example when running on a different subdomain)
+the page redirects to the original `redirect_uri` with the tokens appended as
+`smoothr_token` and `refresh_token` query parameters.
+
+Add `https://www.smoothr.io/oauth-callback` to your Supabase project's
+**Additional Redirect URLs** so Google OAuth can return to this page.
+
+### Restoring sessions
+
+Application pages should call `initAuth()` on load. This helper checks for
+`smoothr_token` and `refresh_token` parameters in the URL. When present it calls
+`supabase.auth.setSession()` to establish the session and then cleans the query
+string. It falls back to `supabase.auth.getSession()` to restore any existing
+cookie‑based session.
 
