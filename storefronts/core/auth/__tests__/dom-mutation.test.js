@@ -180,7 +180,7 @@ describe('dynamic DOM bindings', () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: global.window.location.origin }
+      options: { redirectTo: global.window.location.origin + '/login.html' }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
@@ -228,7 +228,7 @@ describe('dynamic DOM bindings', () => {
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo: global.window.location.origin
+        redirectTo: global.window.location.origin + '/login.html'
       }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
