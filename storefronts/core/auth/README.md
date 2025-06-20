@@ -142,8 +142,9 @@ Environment variables required are the same as for login:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-`signInWithGoogle()` sets the `redirectTo` parameter to `window.location.origin`,
-so Google OAuth returns users to the same subdomain. Ensure this origin appears
+`signInWithGoogle()` sets the `redirectTo` parameter to
+`\`${window.location.origin}/auth/callback\``, so Google OAuth returns users to
+the same subdomain. Ensure this origin appears
 in the Supabase dashboard under **Authentication → URL Configuration → Additional Redirect URLs** or the login will fail.
 
 ## Supabase URL configuration
