@@ -161,3 +161,8 @@ Make sure you include the SDK script exactly once via:
 <script src="https://sdk.smoothr.io/smoothr-sdk.js" defer></script>
 ```
 
+After a successful login the SDK dispatches a `smoothr:login` event on
+`document` and redirects to the URL configured for the current store. The
+redirect location is read from the `login_redirect_url` column of the `stores`
+table using the page hostname. If no entry exists, the user is sent to `/`.
+
