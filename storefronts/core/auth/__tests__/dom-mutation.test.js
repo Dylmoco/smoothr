@@ -180,7 +180,11 @@ describe('dynamic DOM bindings', () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: global.window.location.origin + '/auth/callback' }
+      options: {
+        redirectTo:
+          'https://www.smoothr.io/oauth-callback?redirect_uri=' +
+          encodeURIComponent(global.window.location.origin)
+      }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
@@ -228,7 +232,9 @@ describe('dynamic DOM bindings', () => {
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo: global.window.location.origin + '/auth/callback'
+        redirectTo:
+          'https://www.smoothr.io/oauth-callback?redirect_uri=' +
+          encodeURIComponent(global.window.location.origin)
       }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');

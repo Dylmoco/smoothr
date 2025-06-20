@@ -372,9 +372,10 @@ export async function signInWithGoogle(trigger) {
   try {
     const redirectTo =
       typeof window !== 'undefined'
-        ? `${window.location.origin}/auth/callback`
+        ? `https://www.smoothr.io/oauth-callback?redirect_uri=${encodeURIComponent(
+            window.location.origin
+          )}`
         : undefined;
-    console.log('Smoothr Auth: OAuth redirect', redirectTo);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo }
