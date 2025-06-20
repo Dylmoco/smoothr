@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 let resetPasswordMock;
 let updateUserMock;
 let setSessionMock;
+let getSessionMock;
 let getUserMock;
 let createClientMock;
 
@@ -10,9 +11,11 @@ vi.mock('@supabase/supabase-js', () => {
   resetPasswordMock = vi.fn();
   updateUserMock = vi.fn();
   setSessionMock = vi.fn();
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   createClientMock = vi.fn(() => ({
     auth: {
+      getSession: getSessionMock,
       getUser: getUserMock,
       signOut: vi.fn(),
       signInWithOAuth: vi.fn(),
@@ -49,7 +52,7 @@ describe('password reset request', () => {
         return null;
       })
     };
-    global.window = { location: { href: '' } };
+    global.window = { location: { href: '', search: '', pathname: '', hash: '' } };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === 'DOMContentLoaded') cb();
@@ -103,7 +106,7 @@ describe('password reset confirmation', () => {
       })
     };
     global.window = {
-      location: { href: '', hash: '#access_token=a&refresh_token=b' }
+      location: { href: '', search: '', pathname: '', hash: '#access_token=a&refresh_token=b' }
     };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {

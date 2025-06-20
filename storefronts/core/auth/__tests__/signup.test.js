@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signUpMock;
-let getUserMock;
+let getSessionMock;
 let createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   signUpMock = vi.fn();
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   createClientMock = vi.fn(() => ({
-    auth: { getUser: getUserMock, signUp: signUpMock, signOut: vi.fn(), signInWithOAuth: vi.fn() }
+    auth: { getSession: getSessionMock, signUp: signUpMock, signOut: vi.fn(), signInWithOAuth: vi.fn() }
   }));
   return { createClient: createClientMock };
 });
@@ -44,7 +44,7 @@ describe('signup flow', () => {
       })
     };
 
-    global.window = { location: { href: '' } };
+    global.window = { location: { href: '', search: '', pathname: '', hash: '' } };
     global.document = {
       addEventListener: vi.fn((evt, cb) => { if (evt === 'DOMContentLoaded') cb(); }),
       querySelectorAll: vi.fn(sel => sel === 'form[data-smoothr="signup"]' ? [form] : []),

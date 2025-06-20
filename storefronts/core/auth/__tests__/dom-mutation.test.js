@@ -5,6 +5,7 @@ let signInMock;
 let signUpMock;
 let signInWithOAuthMock;
 let resetPasswordMock;
+let getSessionMock;
 let getUserMock;
 let createClientMock;
 
@@ -13,9 +14,11 @@ vi.mock('@supabase/supabase-js', () => {
   signUpMock = vi.fn();
   signInWithOAuthMock = vi.fn();
   resetPasswordMock = vi.fn();
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   createClientMock = vi.fn(() => ({
     auth: {
+      getSession: getSessionMock,
       getUser: getUserMock,
       signOut: vi.fn(),
       signInWithPassword: signInMock,
@@ -63,7 +66,7 @@ describe('dynamic DOM bindings', () => {
       }),
       dispatchEvent: vi.fn()
     };
-    win = { location: { href: '' } };
+    win = { location: { href: '', search: '', pathname: '', hash: '' } };
     global.document = doc;
     global.window = win;
   });
@@ -189,7 +192,7 @@ describe('dynamic DOM bindings', () => {
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
     const user = { id: '3', email: 'google@example.com' };
-    getUserMock.mockResolvedValue({ data: { user } });
+    getSessionMock.mockResolvedValue({ data: { session: { user } } });
     auth.initAuth();
     await flushPromises();
 
@@ -240,7 +243,7 @@ describe('dynamic DOM bindings', () => {
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
 
     const user = { id: '3', email: 'google@example.com' };
-    getUserMock.mockResolvedValue({ data: { user } });
+    getSessionMock.mockResolvedValue({ data: { session: { user } } });
     auth.initAuth();
     await flushPromises();
 

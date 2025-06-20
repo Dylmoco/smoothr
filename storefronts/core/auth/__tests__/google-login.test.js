@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+let getSessionMock;
 let getUserMock;
 let signInWithOAuthMock;
 let createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   signInWithOAuthMock = vi.fn(() => Promise.resolve());
   createClientMock = vi.fn(() => ({
     auth: {
+      getSession: getSessionMock,
       getUser: getUserMock,
       signOut: vi.fn(),
       signInWithOAuth: signInWithOAuthMock
@@ -34,7 +37,7 @@ describe('google login button', () => {
   beforeEach(() => {
     clickHandler = undefined;
     store = null;
-    global.window = { location: { href: '' } };
+    global.window = { location: { href: '', search: '', pathname: '', hash: '' } };
     global.localStorage = {
       getItem: vi.fn(() => store),
       setItem: vi.fn((k, v) => {
@@ -163,7 +166,7 @@ describe('google login button', () => {
       created_at: '2023-01-01T00:00:00.000Z',
       updated_at: '2023-01-02T00:00:00.000Z'
     };
-    getUserMock.mockResolvedValue({ data: { user } });
+    getSessionMock.mockResolvedValue({ data: { session: { user } } });
     initAuth();
     await flushPromises();
 
@@ -190,7 +193,7 @@ describe('google login button', () => {
       created_at: '2023-01-03T00:00:00.000Z',
       updated_at: '2023-01-03T00:00:00.000Z'
     };
-    getUserMock.mockResolvedValue({ data: { user } });
+    getSessionMock.mockResolvedValue({ data: { session: { user } } });
     initAuth();
     await flushPromises();
 
