@@ -69,6 +69,12 @@ repository root with:
 npm test
 ```
 
+If your environment uses archived dependencies, unpack them first with:
+
+```bash
+bash scripts/extract-deps.sh
+```
+
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later (run `node --version` to verify).

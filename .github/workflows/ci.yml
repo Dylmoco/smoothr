@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Extract prebuilt dependencies
+        run: ./scripts/extract-deps.sh
+      - name: Install root dependencies
+        run: npm install --ignore-scripts
+      - name: Run tests
+        run: npm test
