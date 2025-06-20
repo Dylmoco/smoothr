@@ -35,7 +35,7 @@ describe('bindLoginUI', () => {
       closest: vi.fn(() => form),
     };
     document.querySelectorAll = vi.fn(sel => {
-      if (sel === 'form[data-smoothr="auth-form"]') return [form];
+      if (sel === 'form[data-smoothr="login-form"]') return [form];
       return [];
     });
 

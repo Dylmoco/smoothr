@@ -64,7 +64,7 @@ export async function initAuth() {
 }
 
 export function bindLoginUI() {
-  const forms = document.querySelectorAll('form[data-smoothr="auth-form"]');
+  const forms = document.querySelectorAll('form[data-smoothr="login-form"]');
   console.log('[Smoothr Auth] Found auth forms:', forms.length);
 
   forms.forEach(form => {
@@ -88,7 +88,7 @@ export function bindLoginUI() {
           e.preventDefault();
           e.stopPropagation();
           el.__smoothrClicked = true;
-          const currForm = el.closest('form[data-smoothr="auth-form"]');
+          const currForm = el.closest('form[data-smoothr="login-form"]');
           const emailEl = currForm?.querySelector('[data-smoothr-input="email"]');
           const passEl = currForm?.querySelector('[data-smoothr-input="password"]');
           const email = emailEl?.value;
