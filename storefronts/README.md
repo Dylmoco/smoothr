@@ -14,13 +14,18 @@ Webflow. Simply include
 and authentication will initialize automatically.
 
 Create a `.env` file in this directory and provide your Supabase project details.
-These variables are injected at build time so the final SDK has no
-`process.env` references:
+These variables are injected at build time by Vite (see `vite.config.js`) so the
+final SDK has no `process.env` references:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+**Warning**: if `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+are omitted the SDK will fall back to the placeholder values
+`https://your-project.supabase.co` and `your-anon-key` from
+`../supabase/client.js`. Login requests sent to these defaults will fail.
 
 An `.env.example` file is included for reference.
 
