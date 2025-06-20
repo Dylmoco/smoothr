@@ -131,3 +131,33 @@ If an error occurs the function responds with status `500` and includes details:
   "detail": "Status 403: Forbidden"
 }
 ```
+
+## Authentication
+
+To wire up login in your Webflow or Framer site, paste this HTML snippet where you want the login form:
+
+```html
+<!-- Login Form Clonable for Smoothr SDK -->
+<form data-smoothr-login-form>
+  <input type="email" data-smoothr-login-email placeholder="Email" required />
+  <input type="password" data-smoothr-login-password placeholder="Password" required />
+  <button type="submit">Log In</button>
+  <button type="button" data-smoothr-login-google>Log In with Google</button>
+</form>
+<!-- Include the Smoothr SDK once per page -->
+<script src="https://sdk.smoothr.io/smoothr-sdk.js" defer></script>
+```
+
+The Smoothr SDK will automatically bind:
+
+- `data-smoothr-login-form` → your `<form>` element
+- `data-smoothr-login-email` → your email `<input>`
+- `data-smoothr-login-password` → your password `<input>`
+- `data-smoothr-login-google` → your Google login `<button>`
+
+Make sure you include the SDK script exactly once via:
+
+```html
+<script src="https://sdk.smoothr.io/smoothr-sdk.js" defer></script>
+```
+
