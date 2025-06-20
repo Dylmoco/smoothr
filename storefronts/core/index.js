@@ -11,7 +11,7 @@ import * as orders from './orders/index.js';
 import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
-import * as auth from './auth/index.js';
+import { initAuth } from '../../supabase/auth.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
 
 // Default endpoint for retrieving live exchange rates via Supabase proxy.
@@ -29,7 +29,6 @@ export {
   returns,
   reviews,
   subscriptions,
-  auth
 };
 
 const Smoothr = {
@@ -43,7 +42,6 @@ const Smoothr = {
   returns,
   reviews,
   subscriptions,
-  auth
 };
 
 let setSelectedCurrency = setDomCurrency;
@@ -85,7 +83,7 @@ if (typeof window !== 'undefined') {
     setSelectedCurrency = setCmsCurrency;
   }
   window.Smoothr = Smoothr;
-  auth.initAuth();
+  initAuth();
 }
 
 export default Smoothr;
