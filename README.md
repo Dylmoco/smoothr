@@ -15,6 +15,7 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 - **/smoothr/** – Next.js admin dashboard application.
   - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, dashboard, abandoned cart, and subscriptions.
 - **/infrastructure/workers/** – Cloudflare Workers used by Smoothr.
+- All `*.smoothr.io` SDK traffic is routed via the `smoothr-wildcard-proxy` Worker, deployed using Wrangler to allow Google OAuth redirects to subdomains.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
 The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience. Google OAuth signups display the same "Account created! Redirecting..." message as email signups when a new account is created.
