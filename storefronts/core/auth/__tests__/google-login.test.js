@@ -103,7 +103,7 @@ describe('google login button', () => {
     await flushPromises();
 
     expect(logSpy).toHaveBeenCalledWith(
-      'Smoothr Auth: using NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL',
+      'Smoothr Auth: OAuth redirect',
       global.window.location.origin
     );
     logSpy.mockRestore();
