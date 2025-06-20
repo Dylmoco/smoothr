@@ -65,8 +65,11 @@ export async function initAuth() {
 
 export function bindLoginUI() {
   const loginBtns = document.querySelectorAll(
-    'form[data-smoothr="login-form"] [data-smoothr="login"]'
+    'div[data-smoothr="login"], button[data-smoothr="login"]'
   );
+  if (loginBtns.length === 0) {
+    console.warn('Smoothr Auth: no login trigger found');
+  }
   loginBtns.forEach(btn => {
     btn.addEventListener('click', async e => {
       e.preventDefault();
