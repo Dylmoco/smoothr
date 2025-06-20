@@ -2,11 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signInWithOAuthMock;
 let createClientMock;
+let getSessionMock;
 
 vi.mock('@supabase/supabase-js', () => {
   signInWithOAuthMock = vi.fn(() => Promise.resolve());
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   createClientMock = vi.fn(() => ({
     auth: {
+      getSession: getSessionMock,
       getUser: vi.fn(() => Promise.resolve({ data: { user: null } })),
       signOut: vi.fn(),
       signInWithOAuth: signInWithOAuthMock
@@ -31,7 +34,7 @@ describe('google signup button', () => {
   beforeEach(() => {
     clickHandler = undefined;
     store = null;
-    global.window = { location: { href: '' } };
+    global.window = { location: { href: '', search: '', pathname: '', hash: '' } };
     global.localStorage = {
       getItem: vi.fn(() => store),
       setItem: vi.fn((k, v) => {

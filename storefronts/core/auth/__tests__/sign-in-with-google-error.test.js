@@ -2,11 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signInWithOAuthMock;
 let createClientMock;
+let getSessionMock;
 
 vi.mock('@supabase/supabase-js', () => {
   signInWithOAuthMock = vi.fn();
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   createClientMock = vi.fn(() => ({
     auth: {
+      getSession: getSessionMock,
       getUser: vi.fn(() => Promise.resolve({ data: { user: null } })),
       signOut: vi.fn(),
       signInWithOAuth: signInWithOAuthMock
@@ -23,7 +26,7 @@ function flushPromises() {
 
 describe('signInWithGoogle errors', () => {
   beforeEach(() => {
-    global.window = {};
+    global.window = { location: { search: '', pathname: '', hash: '' } };
     global.localStorage = {
       getItem: vi.fn(),
       setItem: vi.fn(),

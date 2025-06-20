@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+let getSessionMock;
 let getUserMock;
 let createClientMock;
 let fromSingleMock;
 
 vi.mock('@supabase/supabase-js', () => {
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   fromSingleMock = vi.fn();
   const fromMock = vi.fn(() => ({
@@ -15,7 +17,7 @@ vi.mock('@supabase/supabase-js', () => {
     }))
   }));
   createClientMock = vi.fn(() => ({
-    auth: { getUser: getUserMock, signOut: vi.fn(), signInWithOAuth: vi.fn() },
+    auth: { getSession: getSessionMock, getUser: getUserMock, signOut: vi.fn(), signInWithOAuth: vi.fn() },
     from: fromMock
   }));
   return { createClient: createClientMock };

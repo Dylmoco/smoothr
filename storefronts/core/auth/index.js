@@ -92,7 +92,28 @@ function showSuccess(form, msg, trigger) {
 }
 
 export function initAuth() {
-  supabase.auth.getUser().then(async ({ data: { user } }) => {
+  (async () => {
+    const params = new URLSearchParams(window.location.search);
+    const smoothr_token = params.get('smoothr_token');
+    const refresh_token = params.get('refresh_token');
+    if (smoothr_token && refresh_token) {
+      await supabase.auth.setSession({
+        access_token: smoothr_token,
+        refresh_token
+      });
+      if (window.SMOOTHR_CONFIG?.debug) {
+        console.log('[Smoothr Auth] Restored session from OAuth token');
+      }
+      window.history.replaceState(
+        {},
+        '',
+        window.location.pathname + window.location.hash
+      );
+    }
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    const user = session?.user;
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};
       window.smoothr.auth = { user: user || null };
@@ -129,7 +150,7 @@ export function initAuth() {
         }, 1000);
       }
     }
-  });
+  })();
   document.addEventListener('DOMContentLoaded', () => {
     bindAuthElements();
     bindLogoutButtons();

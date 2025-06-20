@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signInMock;
-let getUserMock;
+let getSessionMock;
 let createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   signInMock = vi.fn();
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: { user: null } } }));
   createClientMock = vi.fn(() => ({
-    auth: { getUser: getUserMock, signInWithPassword: signInMock, signOut: vi.fn() }
+    auth: { getSession: getSessionMock, signInWithPassword: signInMock, signOut: vi.fn() }
   }));
   return { createClient: createClientMock };
 });
@@ -52,7 +52,7 @@ describe('login form', () => {
       textContent: 'Login'
     };
 
-    global.window = { location: { href: '' } };
+    global.window = { location: { href: '', search: '', pathname: '', hash: '' } };
     global.document = {
       addEventListener: vi.fn((evt, cb) => { if (evt === 'DOMContentLoaded') cb(); }),
       querySelectorAll: vi.fn(sel => {
