@@ -9,6 +9,9 @@ const DEFAULT_RATE_SOURCE =
 // Endpoint requiring auth token
 const PROXY_LIVE_RATES_ENDPOINT =
   'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
+// Token used when hitting PROXY_LIVE_RATES_ENDPOINT. Inject via env var at build time.
+const PROXY_AUTH_TOKEN =
+  typeof process !== 'undefined' ? process.env.PROXY_LIVE_RATES_TOKEN : undefined;
 
 export async function fetchExchangeRates(
   base = 'GBP',
@@ -50,9 +53,10 @@ export async function fetchExchangeRates(
       const { hostname, pathname } = new URL(url);
       if (
         hostname.endsWith('.functions.supabase.co') &&
-        pathname === '/proxy-live-rates'
+        pathname === '/proxy-live-rates' &&
+        PROXY_AUTH_TOKEN
       ) {
-        headers.Authorization = 'Token eca2385f63504d80a624d130cce7e240';
+        headers.Authorization = `Token ${PROXY_AUTH_TOKEN}`;
       }
     } catch {}
     const res = await fetch(url, {

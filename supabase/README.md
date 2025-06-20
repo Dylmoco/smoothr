@@ -16,11 +16,11 @@ The CLI will upload the function to the currently linked project and make it ava
 ## Configuration
 
 Create a `.env` file in `supabase/functions` to provide environment variables to
-the deployed functions. The live rates proxy requires the following OpenExchangeRates API
+the deployed functions. The live rates proxy requires your OpenExchangeRates API
 token:
 
 ```bash
-OPENEXCHANGERATES_TOKEN=a45f3fb4ba674d089a2484adf5bd9262
+OPENEXCHANGERATES_TOKEN=<your-openexchangerates-token>
 ```
 
 See `.env.example` for a template. The Supabase CLI will also read `config.toml`
@@ -34,10 +34,14 @@ verify_jwt = false
 When invoking `proxy-live-rates` you must supply the custom authorization token:
 
 ```http
-Authorization: Token eca2385f63504d80a624d130cce7e240
+Authorization: Token <your-authorization-token>
 ```
 
 Without this header the function will respond with a 401 error.
+
+When building the storefront SDK, provide this token via the
+`PROXY_LIVE_RATES_TOKEN` environment variable so requests include the
+correct header.
 
 ### Query parameters
 
@@ -50,6 +54,6 @@ For example to request rates relative to USD only for CAD:
 
 ```http
 GET https://<project-ref>.functions.supabase.co/proxy-live-rates?base=USD&symbols=CAD
-Authorization: Token eca2385f63504d80a624d130cce7e240
+Authorization: Token <your-authorization-token>
 ```
 
