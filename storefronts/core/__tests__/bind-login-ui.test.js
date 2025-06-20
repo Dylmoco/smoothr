@@ -26,7 +26,7 @@ describe('bindLoginUI', () => {
       closest: vi.fn(() => form),
     };
     document.querySelectorAll = vi.fn(sel => {
-      if (sel === 'form[data-smoothr="login-form"] [data-smoothr="login"]') return [btn];
+      if (sel === 'div[data-smoothr="login"], button[data-smoothr="login"]') return [btn];
       return [];
     });
 
@@ -42,5 +42,13 @@ describe('bindLoginUI', () => {
       expect.objectContaining({ type: 'smoothr:login', detail: { user: {} } })
     );
     expect(window.location.replace).toHaveBeenCalledWith('/next');
+  });
+
+  it('logs a warning when no login trigger exists', async () => {
+    document.querySelectorAll = vi.fn(() => []);
+    const auth = await import('../../../supabase/auth.js');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    auth.bindLoginUI();
+    expect(warnSpy).toHaveBeenCalled();
   });
 });

@@ -158,8 +158,8 @@ The Smoothr SDK will automatically bind:
 - `data-smoothr="login-form"` → your `<form>` element
 - `data-smoothr-input="email"` → your email `<input>`
 - `data-smoothr-input="password"` → your password `<input>`
-- `data-smoothr="login"` → your login `<div>` or button
-- `data-smoothr="login-google"` → your Google login `<div>` or button
+- `data-smoothr="login"` → your login trigger `<div>` or `<button>` (a warning is logged if none are found)
+- `data-smoothr="login-google"` → your Google login `<div>` or `<button>`
 
 Make sure you include the SDK script exactly once via:
 
