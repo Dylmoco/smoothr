@@ -143,22 +143,21 @@ Environment variables required are the same as for login:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 `signInWithGoogle()` sets the `redirectTo` parameter to
-`\`${window.location.origin}/auth/callback\``, so Google OAuth returns users to
-the same subdomain. Ensure this origin appears
-in the Supabase dashboard under **Authentication → URL Configuration → Additional Redirect URLs** or the login will fail.
+`https://www.smoothr.io/oauth-callback?redirect_uri=\${window.location.origin}`.
+All OAuth flows go through this central callback page. Ensure
+`https://www.smoothr.io/oauth-callback` appears in the Supabase dashboard under
+**Authentication → URL Configuration → Additional Redirect URLs** or the login will fail.
 
 ## Supabase URL configuration
 
 Open your Supabase project and navigate to **Authentication → URL Configuration**.
-Add your client domain in the **Site URL** field and include the full path that
-handles the OAuth callback under **Additional Redirect URLs**, for example:
-
-```
-https://your-site.com/auth/callback
-```
-
-Ensure this callback URL appears in the list or Supabase will reject the login
-attempt.
+Add your client domain in the **Site URL** field and include
+`https://www.smoothr.io/oauth-callback` under **Additional Redirect URLs**.
+Supabase sends users there after Google OAuth, and the page redirects back to
+`redirect_uri` on your domain.
+The callback page attempts `supabase.auth.setSession()` if the SDK is loaded;
+otherwise it appends `smoothr_token` and `refresh_token` query parameters for
+your own handling.
 
 ## Google OAuth login
 
