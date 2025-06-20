@@ -1,4 +1,4 @@
-import { createClient } from '../../supabase/client.js';
+import { createClient } from '../../../supabase/client.js';
 const supabase = createClient();
 import { SMOOTHR_CONFIG } from '../config.js';
 
