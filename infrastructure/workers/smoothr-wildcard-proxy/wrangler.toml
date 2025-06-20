@@ -4,4 +4,4 @@ compatibility_date = "2025-06-20"
 account_id = "7131ca40f960ede4fc7f78e697b18de4"
 workers_dev = false
 
-routes = ["*.smoothr.io/*"]
+routes = ["*.smoothr.io/*", "sdk.smoothr.io/*"]
