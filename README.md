@@ -14,8 +14,6 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 - **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, abandoned cart, subscriptions, and Supabase helpers.
 - **/smoothr/** – Next.js admin dashboard application.
   - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, dashboard, abandoned cart, and subscriptions.
-- **/infrastructure/workers/** – Cloudflare Workers used by Smoothr.
-- All `*.smoothr.io` SDK traffic is routed via the `smoothr-wildcard-proxy` Worker, deployed using Wrangler to allow Google OAuth redirects to subdomains.
 - `https://www.smoothr.io/oauth-callback` must be added to your Supabase project's **Additional Redirect URLs**.
 - See `/supabase/README.md` for full details on authentication flows and the `/oauth-callback` helper.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.

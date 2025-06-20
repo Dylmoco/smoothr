@@ -14,7 +14,6 @@ Core storefront modules for Smoothr.
 - returns
 - reviews
 - subscriptions
-- auth
 
 ### Usage
 
