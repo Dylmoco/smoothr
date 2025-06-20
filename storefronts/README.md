@@ -143,11 +143,11 @@ To wire up login in your Webflow or Framer site, paste this HTML snippet where y
 
 ```html
 <!-- Login Form Clonable for Smoothr SDK -->
-<form data-smoothr-login-form>
-  <input type="email" data-smoothr-login-email placeholder="Email" required />
-  <input type="password" data-smoothr-login-password placeholder="Password" required />
-  <button type="submit">Log In</button>
-  <button type="button" data-smoothr-login-google>Log In with Google</button>
+<form data-smoothr="login-form">
+  <input type="email" data-smoothr-input="email" placeholder="Email" required />
+  <input type="password" data-smoothr-input="password" placeholder="Password" required />
+  <div data-smoothr="login">Log In</div>
+  <div data-smoothr="login-google">Log In with Google</div>
 </form>
 <!-- Include the Smoothr SDK once per page -->
 <script src="https://sdk.smoothr.io/smoothr-sdk.js" defer></script>
@@ -155,10 +155,11 @@ To wire up login in your Webflow or Framer site, paste this HTML snippet where y
 
 The Smoothr SDK will automatically bind:
 
-- `data-smoothr-login-form` → your `<form>` element
-- `data-smoothr-login-email` → your email `<input>`
-- `data-smoothr-login-password` → your password `<input>`
-- `data-smoothr-login-google` → your Google login `<button>`
+- `data-smoothr="login-form"` → your `<form>` element
+- `data-smoothr-input="email"` → your email `<input>`
+- `data-smoothr-input="password"` → your password `<input>`
+- `data-smoothr="login"` → your login `<div>` or button
+- `data-smoothr="login-google"` → your Google login `<div>` or button
 
 Make sure you include the SDK script exactly once via:
 
