@@ -77,6 +77,8 @@ npm test
 - **Coding style**: follow the existing style—two space indentation, single
   quotes and trailing semicolons. Keep the code free of unused variables and
   prefer small, focused commits.
+- **Offline setup**: see [CONTRIBUTING.md](CONTRIBUTING.md) for installing
+  dependencies without internet access.
 
 ## License
 
