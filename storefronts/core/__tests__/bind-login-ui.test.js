@@ -18,15 +18,22 @@ beforeEach(() => {
 describe('bindLoginUI', () => {
   it('redirects using lookupRedirectUrl and emits event on success', async () => {
     const listeners = {};
+    const emailInput = { value: 'a@b.com' };
+    const passInput = { value: 'pass' };
     const form = {
-      querySelector: vi.fn(sel => ({ value: sel.includes('email') ? 'a@b.com' : 'pass' })),
+      querySelectorAll: vi.fn(sel => {
+        if (sel === '[data-smoothr="login"]') return [btn];
+        if (sel === '[data-smoothr="login-google"]') return [];
+        return [];
+      }),
+      querySelector: vi.fn(sel => (sel.includes('email') ? emailInput : passInput)),
     };
     const btn = {
       addEventListener: vi.fn((evt, handler) => { listeners[evt] = handler; }),
       closest: vi.fn(() => form),
     };
     document.querySelectorAll = vi.fn(sel => {
-      if (sel === 'div[data-smoothr="login"], button[data-smoothr="login"]') return [btn];
+      if (sel === 'form[data-smoothr="auth-form"]') return [form];
       return [];
     });
 
@@ -45,7 +52,8 @@ describe('bindLoginUI', () => {
   });
 
   it('logs a warning when no login trigger exists', async () => {
-    document.querySelectorAll = vi.fn(() => []);
+    const form = { querySelectorAll: vi.fn(() => []), querySelector: vi.fn() };
+    document.querySelectorAll = vi.fn(() => [form]);
     const auth = await import('../../../supabase/auth.js');
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     auth.bindLoginUI();
