@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Smoothr OAuth Callback</title>
+  <script>
+    (function() {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectUri = searchParams.get('redirect_uri') || '/';
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = hashParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token');
+
+      function go(url) {
+        window.location.replace(url);
+      }
+
+      if (access_token && refresh_token) {
+        const next = `${redirectUri}?smoothr_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`;
+        if (window.supabase?.auth?.setSession) {
+          window.supabase.auth
+            .setSession({ access_token, refresh_token })
+            .then(() => go(redirectUri))
+            .catch(() => go(next));
+        } else {
+          go(next);
+        }
+      } else {
+        go(redirectUri);
+      }
+    })();
+  </script>
+</head>
+<body>
+  Redirecting...
+</body>
+</html>
