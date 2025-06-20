@@ -1,6 +1,10 @@
-{  "name": "smoothr-admin",
-    "version": "1.0.0",
-    "scripts": {
-      "build": "echo 'Nothing to build yet'"
-    }
+{
+  "name": "smoothr-admin",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "echo 'Nothing to build yet'"
+  }
 }
