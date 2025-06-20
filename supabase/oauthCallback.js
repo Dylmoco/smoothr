@@ -13,8 +13,9 @@ export default async function handleOAuthCallback() {
     const next = `${redirectUri}?smoothr_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`;
     try {
       await setSession({ access_token, refresh_token });
-      go(redirectUri);
-    } catch {
+    } catch (err) {
+      console.error('OAuth callback: setSession failed', err);
+    } finally {
       go(next);
     }
   } else {
