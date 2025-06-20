@@ -89,12 +89,16 @@ describe('google login button', () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: global.window.location.origin + '/auth/callback' }
+      options: {
+        redirectTo:
+          'https://www.smoothr.io/oauth-callback?redirect_uri=' +
+          encodeURIComponent(global.window.location.origin)
+      }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
   });
 
-  it('logs redirect url used for OAuth', async () => {
+  it('does not log redirect url used for OAuth', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     initAuth();
     await flushPromises();
@@ -102,10 +106,7 @@ describe('google login button', () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(logSpy).toHaveBeenCalledWith(
-      'Smoothr Auth: OAuth redirect',
-      global.window.location.origin + '/auth/callback'
-    );
+    expect(logSpy).not.toHaveBeenCalled();
     logSpy.mockRestore();
   });
 
