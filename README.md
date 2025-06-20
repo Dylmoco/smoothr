@@ -70,7 +70,7 @@ npm test
 
 ## Contribution Guidelines
 
-- **Node.js**: use version 20 or later.
+- **Node.js**: use version 20 or later (run `node --version` to verify).
 - **Tests**: run `npm test` from the repository root to execute tests in all
   workspaces.
 - **Coding style**: follow the existing style—two space indentation, single

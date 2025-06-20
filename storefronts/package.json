@@ -1,6 +1,9 @@
 {
     "name": "storefronts",
     "version": "1.0.0",
+    "engines": {
+        "node": ">=20"
+    },
     "type": "module",
     "scripts": {
         "build": "vite build",
