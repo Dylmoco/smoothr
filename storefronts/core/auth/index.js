@@ -372,7 +372,7 @@ export async function signInWithGoogle(trigger) {
   try {
     const redirectTo =
       typeof window !== 'undefined'
-        ? window.location.origin + '/login.html'
+        ? `${window.location.origin}/auth/callback`
         : undefined;
     console.log('Smoothr Auth: OAuth redirect', redirectTo);
     await supabase.auth.signInWithOAuth({
