@@ -1,0 +1,6 @@
+name = "smoothr-wildcard-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+account_id = "<your-account-id>"
+zone_id = "<your-zone-id>"
+routes = ["*.smoothr.io/*"]
