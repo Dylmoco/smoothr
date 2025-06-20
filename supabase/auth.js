@@ -68,11 +68,3 @@ export function bindLoginUI() {
     });
   }
 }
-
-export {
-  signInWithPassword,
-  signInWithOAuth,
-  initAuth,
-  bindLoginUI,
-  supabase
-};
