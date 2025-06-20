@@ -36,19 +36,7 @@ describe('redirect url configuration', () => {
     };
   });
 
-  it('warns when oauth redirect url points to smoothr.io', async () => {
-    global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ = 'https://smoothr.io/callback';
-    vi.resetModules();
-    const { initAuth } = await import('../index.js');
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    initAuth();
-    await flushPromises();
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
-  });
-
   it('resolves login redirect from stores', async () => {
-    global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ = 'https://example.com/callback';
     vi.resetModules();
     const { initAuth, lookupRedirectUrl } = await import('../index.js');
     fromSingleMock.mockResolvedValue({ data: { login_redirect_url: '/home' }, error: null });
@@ -62,7 +50,6 @@ describe('redirect url configuration', () => {
   });
 
   it('falls back to root when redirect not found', async () => {
-    global.__NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ = 'https://example.com/callback';
     vi.resetModules();
     const { initAuth, lookupRedirectUrl } = await import('../index.js');
     fromSingleMock.mockResolvedValue({ data: null, error: new Error('bad') });

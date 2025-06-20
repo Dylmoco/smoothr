@@ -6,10 +6,6 @@ const DEFAULT_SUPABASE_URL =
 const DEFAULT_SUPABASE_KEY =
   (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
   'your-anon-key';
-const DEFAULT_SUPABASE_OAUTH_REDIRECT_URL =
-  (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
-    __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
-  (typeof window !== 'undefined' ? window.location.origin : '');
 const DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL =
   (typeof __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__ !== 'undefined' &&
     __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__) ||
@@ -107,22 +103,6 @@ export function initAuth({
   supabaseKey = DEFAULT_SUPABASE_KEY
 } = {}) {
   supabase = createClient(supabaseUrl, supabaseKey);
-  if (typeof window !== 'undefined') {
-    const url = DEFAULT_SUPABASE_OAUTH_REDIRECT_URL;
-    if (!url || url.trim() === '') {
-      console.warn(
-        'Smoothr Auth: NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL is not set'
-      );
-    } else if (url.includes('smoothr.io')) {
-      console.warn(
-        'Smoothr Auth: NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL points to smoothr.io. Update it to your domain'
-      );
-    } else if (url === window.location.origin) {
-      console.warn(
-        'Smoothr Auth: set NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL to the URL of your OAuth callback page'
-      );
-    }
-  }
   supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};
@@ -391,13 +371,8 @@ export async function signInWithGoogle(trigger) {
   setLoading(trigger, true);
   try {
     const redirectTo =
-      typeof window !== 'undefined'
-        ? window.location.origin
-        : DEFAULT_SUPABASE_OAUTH_REDIRECT_URL;
-    console.log(
-      'Smoothr Auth: using NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL',
-      redirectTo
-    );
+      typeof window !== 'undefined' ? window.location.origin : undefined;
+    console.log('Smoothr Auth: OAuth redirect', redirectTo);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo }

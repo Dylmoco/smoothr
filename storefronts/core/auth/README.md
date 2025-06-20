@@ -141,14 +141,10 @@ Environment variables required are the same as for login:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`
 
-If this value is empty or points to `smoothr.io` the SDK logs a warning when
-`initAuth()` runs. `signInWithGoogle()` defaults to `window.location.origin`
-for its `redirectTo` parameter and falls back to this variable when `window` is
-not available. Ensure your origin appears in the Supabase dashboard under
-**Authentication → URL Configuration → Additional Redirect URLs** or the login
-will fail.
+`signInWithGoogle()` redirects back to `window.location.origin`. Ensure this
+origin appears in the Supabase dashboard under **Authentication → URL
+Configuration → Additional Redirect URLs** or the login will fail.
 
 ## Supabase URL configuration
 
@@ -160,8 +156,8 @@ handles the OAuth callback under **Additional Redirect URLs**, for example:
 https://your-site.com/auth/callback
 ```
 
-The value set for `NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` must appear in this
-list or Supabase will reject the login attempt.
+Ensure this callback URL appears in the list or Supabase will reject the login
+attempt.
 
 ## Google OAuth login
 
@@ -169,18 +165,15 @@ Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
 function directly or attach `[data-smoothr="login-google"]` or `[data-smoothr="signup-google"]` to any element as
 shown above.
 
-By default `signInWithGoogle()` redirects users back to `window.location.origin`.
-If `window` is not available it falls back to the value of
-`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`. After Supabase completes
-authentication the login event fires and the final redirect is determined by the
-store settings described earlier.
+`signInWithGoogle()` always redirects users back to `window.location.origin`.
+After Supabase completes authentication the login event fires and the final
+redirect is determined by the store settings described earlier.
 The helper `lookupRedirectUrl('login')` queries the `stores` table for the
 current domain and resolves the post-login URL. If no matching row exists the
 SDK falls back to `/` on the current site.
 
 If users are redirected to the wrong domain ensure `window.location.origin` is
-included in your Supabase redirect URLs or override it via
-`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL`.
+included in your Supabase redirect URLs.
 
 ## Accessing the current user
 
