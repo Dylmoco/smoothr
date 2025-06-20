@@ -89,7 +89,7 @@ describe('google login button', () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: global.window.location.origin }
+      options: { redirectTo: global.window.location.origin + '/login.html' }
     });
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
   });
@@ -104,7 +104,7 @@ describe('google login button', () => {
 
     expect(logSpy).toHaveBeenCalledWith(
       'Smoothr Auth: OAuth redirect',
-      global.window.location.origin
+      global.window.location.origin + '/login.html'
     );
     logSpy.mockRestore();
   });
