@@ -4,7 +4,7 @@ beforeEach(() => {
   vi.resetModules();
   global.window = { location: { replace: vi.fn() } };
   global.document = {
-    querySelector: vi.fn(),
+    querySelectorAll: vi.fn(),
     dispatchEvent: vi.fn(),
   };
   global.CustomEvent = class {
@@ -20,16 +20,22 @@ describe('bindLoginUI', () => {
     const listeners = {};
     const form = {
       querySelector: vi.fn(sel => ({ value: sel.includes('email') ? 'a@b.com' : 'pass' })),
-      addEventListener: vi.fn((evt, handler) => { listeners[evt] = handler; }),
     };
-    document.querySelector = vi.fn(sel => sel === '[data-smoothr-login-form]' ? form : null);
+    const btn = {
+      addEventListener: vi.fn((evt, handler) => { listeners[evt] = handler; }),
+      closest: vi.fn(() => form),
+    };
+    document.querySelectorAll = vi.fn(sel => {
+      if (sel === 'form[data-smoothr="login-form"] [data-smoothr="login"]') return [btn];
+      return [];
+    });
 
     const auth = await import('../../../supabase/auth.js');
     vi.spyOn(auth, 'signInWithPassword').mockResolvedValue({ data: { user: {} }, error: null });
     vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue('/next');
 
     auth.bindLoginUI();
-    await listeners.submit({ preventDefault: vi.fn() });
+    await listeners.click({ preventDefault: vi.fn() });
 
     expect(auth.lookupRedirectUrl).toHaveBeenCalledWith('login');
     expect(document.dispatchEvent).toHaveBeenCalledWith(

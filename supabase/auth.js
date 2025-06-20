@@ -64,12 +64,16 @@ export async function initAuth() {
 }
 
 export function bindLoginUI() {
-  const form = document.querySelector('[data-smoothr-login-form]');
-  if (form) {
-    form.addEventListener('submit', async e => {
+  const loginBtns = document.querySelectorAll(
+    'form[data-smoothr="login-form"] [data-smoothr="login"]'
+  );
+  loginBtns.forEach(btn => {
+    btn.addEventListener('click', async e => {
       e.preventDefault();
-      const emailEl = form.querySelector('[data-smoothr-login-email]');
-      const passEl = form.querySelector('[data-smoothr-login-password]');
+      const form = btn.closest('form[data-smoothr="login-form"]');
+      if (!form) return;
+      const emailEl = form.querySelector('[data-smoothr-input="email"]');
+      const passEl = form.querySelector('[data-smoothr-input="password"]');
       const email = emailEl?.value;
       const password = passEl?.value;
       if (!email || !password) {
@@ -83,12 +87,12 @@ export function bindLoginUI() {
       const url = await lookupRedirectUrl('login');
       window.location.replace(url);
     });
-  }
+  });
 
-  const googleBtn = document.querySelector('[data-smoothr-login-google]');
-  if (googleBtn) {
-    googleBtn.addEventListener('click', () => {
+  const googleBtns = document.querySelectorAll('[data-smoothr="login-google"]');
+  googleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
       signInWithOAuth({ provider: 'google' });
     });
-  }
+  });
 }
