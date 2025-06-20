@@ -43,4 +43,36 @@ export async function initAuth() {
   return data.session;
 }
 
-export { supabase };
+export function bindLoginUI() {
+  const form = document.querySelector('[data-smoothr-login-form]');
+  if (form) {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const emailEl = form.querySelector('[data-smoothr-login-email]');
+      const passEl = form.querySelector('[data-smoothr-login-password]');
+      const email = emailEl?.value;
+      const password = passEl?.value;
+      if (!email || !password) {
+        return console.error('Smoothr Auth: missing email or password');
+      }
+      const { error } = await signInWithPassword({ email, password });
+      if (error) return alert(error.message);
+      window.location.reload();
+    });
+  }
+
+  const googleBtn = document.querySelector('[data-smoothr-login-google]');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', () => {
+      signInWithOAuth({ provider: 'google' });
+    });
+  }
+}
+
+export {
+  signInWithPassword,
+  signInWithOAuth,
+  initAuth,
+  bindLoginUI,
+  supabase
+};
