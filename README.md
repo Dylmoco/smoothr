@@ -17,10 +17,10 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 - **/infrastructure/workers/** – Cloudflare Workers used by Smoothr.
 - All `*.smoothr.io` SDK traffic is routed via the `smoothr-wildcard-proxy` Worker, deployed using Wrangler to allow Google OAuth redirects to subdomains.
 - `https://www.smoothr.io/oauth-callback` must be added to your Supabase project's **Additional Redirect URLs**.
-- OAuth flow: `Client → Google OAuth → https://www.smoothr.io/oauth-callback → redirect back with smoothr_token`. The callback page attempts `supabase.auth.setSession()` when possible, otherwise it appends the token to the query string.
+- See `/supabase/README.md` for full details on authentication flows and the `/oauth-callback` helper.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
-The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience. Google OAuth signups display the same "Account created! Redirecting..." message as email signups when a new account is created.
+Authentication helpers include client-side validation and consistent signup messages. See `/supabase/README.md` for more information.
 
 This README serves as the source of truth for new developers on how the repository is organized and where modules belong.
 
