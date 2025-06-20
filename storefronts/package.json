@@ -8,7 +8,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "pretest": "npm install",
+        "pretest": "[ -d node_modules ] || npm install",
         "test": "vitest run"
     },
     "dependencies": {
