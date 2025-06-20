@@ -22,6 +22,26 @@ export async function logout() {
   return supabase.auth.signOut();
 }
 
+export async function lookupRedirectUrl(action) {
+  if (typeof window === 'undefined') return '/';
+  try {
+    const hostname = window.location.hostname;
+    const { data, error } = await supabase
+      .from('stores')
+      .select('login_redirect_url')
+      .eq('hostname', hostname)
+      .maybeSingle();
+    if (error) {
+      console.error('lookupRedirectUrl error:', error);
+      return '/';
+    }
+    return data?.login_redirect_url || '/';
+  } catch (err) {
+    console.error('lookupRedirectUrl unexpected error:', err);
+    return '/';
+  }
+}
+
 export async function initAuth() {
   if (typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
@@ -55,9 +75,13 @@ export function bindLoginUI() {
       if (!email || !password) {
         return console.error('Smoothr Auth: missing email or password');
       }
-      const { error } = await signInWithPassword({ email, password });
+      const { data, error } = await signInWithPassword({ email, password });
       if (error) return alert(error.message);
-      window.location.reload();
+      document.dispatchEvent(
+        new CustomEvent('smoothr:login', { detail: data })
+      );
+      const url = await lookupRedirectUrl('login');
+      window.location.replace(url);
     });
   }
 
