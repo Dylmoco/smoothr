@@ -93,7 +93,9 @@ function showSuccess(form, msg, trigger) {
     target.style.display = '';
     target.focus && target.focus();
   } else {
-    console.log('No [data-smoothr-success] container found');
+    if (window.SMOOTHR_CONFIG?.debug) {
+      console.log('No [data-smoothr-success] container found');
+    }
     alert(msg);
   }
 }
@@ -108,16 +110,18 @@ export function initAuth({
       window.smoothr = window.smoothr || {};
       window.smoothr.auth = { user: user || null };
 
-      if (user) {
-        console.log(
-          `%c✅ Smoothr Auth: Logged in as ${user.email}`,
-          'color: #22c55e; font-weight: bold;'
-        );
-      } else {
-        console.log(
-          '%c🔒 Smoothr Auth: Not logged in',
-          'color: #f87171; font-weight: bold;'
-        );
+      if (window.SMOOTHR_CONFIG?.debug) {
+        if (user) {
+          console.log(
+            `%c✅ Smoothr Auth: Logged in as ${user.email}`,
+            'color: #22c55e; font-weight: bold;'
+          );
+        } else {
+          console.log(
+            '%c🔒 Smoothr Auth: Not logged in',
+            'color: #f87171; font-weight: bold;'
+          );
+        }
       }
 
       const oauthFlag = localStorage.getItem('smoothr_oauth');
@@ -345,16 +349,18 @@ function bindLogoutButtons() {
         window.smoothr = window.smoothr || {};
         window.smoothr.auth = { user: user || null };
 
-        if (user) {
-          console.log(
-            `%c✅ Smoothr Auth: Logged in as ${user.email}`,
-            'color: #22c55e; font-weight: bold;'
-          );
-        } else {
-          console.log(
-            '%c🔒 Smoothr Auth: Not logged in',
-            'color: #f87171; font-weight: bold;'
-          );
+        if (window.SMOOTHR_CONFIG?.debug) {
+          if (user) {
+            console.log(
+              `%c✅ Smoothr Auth: Logged in as ${user.email}`,
+              'color: #22c55e; font-weight: bold;'
+            );
+          } else {
+            console.log(
+              '%c🔒 Smoothr Auth: Not logged in',
+              'color: #f87171; font-weight: bold;'
+            );
+          }
         }
       }
       document.dispatchEvent(new CustomEvent('smoothr:logout'));
@@ -491,7 +497,9 @@ export async function lookupRedirectUrl(type) {
       return fallback;
     }
     const url = data[`${type}_redirect_url`];
-    console.log(`Smoothr Auth: ${type} redirect resolved`, url);
+    if (window.SMOOTHR_CONFIG?.debug) {
+      console.log(`Smoothr Auth: ${type} redirect resolved`, url);
+    }
     return url;
   } catch (err) {
     console.error('Smoothr Auth: redirect lookup failed', err);

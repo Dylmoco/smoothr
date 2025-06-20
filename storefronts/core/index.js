@@ -1,4 +1,6 @@
-console.log('Smoothr SDK loaded');
+if (typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug) {
+  console.log('Smoothr SDK loaded');
+}
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
 import * as analytics from './analytics/index.js';
