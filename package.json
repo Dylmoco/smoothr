@@ -12,5 +12,8 @@
   "scripts": {
     "test": "npm --workspace storefronts test && npm run test:supabase",
     "test:supabase": "npm --workspace storefronts exec vitest run ../supabase/functions/**/*.test.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.34.0"
   }
 }
