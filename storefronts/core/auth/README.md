@@ -142,9 +142,9 @@ Environment variables required are the same as for login:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-`signInWithGoogle()` redirects back to `window.location.origin`. Ensure this
-origin appears in the Supabase dashboard under **Authentication → URL
-Configuration → Additional Redirect URLs** or the login will fail.
+`signInWithGoogle()` sets the `redirectTo` parameter to `window.location.origin`,
+so Google OAuth returns users to the same subdomain. Ensure this origin appears
+in the Supabase dashboard under **Authentication → URL Configuration → Additional Redirect URLs** or the login will fail.
 
 ## Supabase URL configuration
 
@@ -165,9 +165,10 @@ Call `signInWithGoogle()` to start an OAuth flow with Google. You can invoke the
 function directly or attach `[data-smoothr="login-google"]` or `[data-smoothr="signup-google"]` to any element as
 shown above.
 
-`signInWithGoogle()` always redirects users back to `window.location.origin`.
-After Supabase completes authentication the login event fires and the final
-redirect is determined by the store settings described earlier.
+Because the `redirectTo` URL is set to the current subdomain, the OAuth flow
+automatically returns to whatever site the user started on. After Supabase
+completes authentication the login event fires and the final redirect is
+determined by the store settings described earlier.
 The helper `lookupRedirectUrl('login')` queries the `stores` table for the
 current domain and resolves the post-login URL. If no matching row exists the
 SDK falls back to `/` on the current site.
