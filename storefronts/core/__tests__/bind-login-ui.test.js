@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 beforeEach(() => {
   vi.resetModules();
-  global.window = { location: { replace: vi.fn() } };
+  global.window = { location: { replace: vi.fn() }, addEventListener: vi.fn() };
   global.document = {
     querySelectorAll: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -29,7 +29,9 @@ describe('bindLoginUI', () => {
       querySelector: vi.fn(sel => (sel.includes('email') ? emailInput : passInput)),
     };
     const btn = {
-      addEventListener: vi.fn((evt, handler) => { listeners[evt] = handler; }),
+      addEventListener: vi.fn((evt, handler, capture) => {
+        listeners[evt] = handler;
+      }),
       closest: vi.fn(() => form),
     };
     document.querySelectorAll = vi.fn(sel => {
@@ -42,7 +44,7 @@ describe('bindLoginUI', () => {
     vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue('/next');
 
     auth.bindLoginUI();
-    await listeners.click({ preventDefault: vi.fn() });
+    await listeners.click({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
     expect(auth.lookupRedirectUrl).toHaveBeenCalledWith('login');
     expect(document.dispatchEvent).toHaveBeenCalledWith(

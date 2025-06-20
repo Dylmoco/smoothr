@@ -65,45 +65,82 @@ export async function initAuth() {
 
 export function bindLoginUI() {
   const forms = document.querySelectorAll('form[data-smoothr="auth-form"]');
+  console.log('[Smoothr Auth] Found auth forms:', forms.length);
 
   forms.forEach(form => {
     const loginBtns = form.querySelectorAll('[data-smoothr="login"]');
+    console.log(
+      '[Smoothr Auth] Found',
+      loginBtns.length,
+      'login triggers in form',
+      form
+    );
     if (loginBtns.length === 0) {
-      console.warn('[Smoothr Auth] No login trigger found in form:', form);
+      console.warn('[Smoothr Auth] No login triggers found in form:', form);
     }
 
     loginBtns.forEach(el => {
       console.log('[Smoothr Auth] Bound login handler to', el);
-      el.addEventListener('click', async e => {
-        e.preventDefault();
-        const currForm = el.closest('form[data-smoothr="auth-form"]');
-        const emailEl = currForm?.querySelector('[data-smoothr-input="email"]');
-        const passEl = currForm?.querySelector('[data-smoothr-input="password"]');
-        const email = emailEl?.value;
-        const password = passEl?.value;
-        console.log(
-          '[Smoothr Auth] Login trigger clicked, found email/password:',
-          { email, password }
-        );
-        if (!email || !password) {
-          console.warn('[Smoothr Auth] Missing input:', { email, password });
-          return;
-        }
-        const { data, error } = await signInWithPassword({ email, password });
-        if (error) return alert(error.message);
-        document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-        const url = await lookupRedirectUrl('login');
-        window.location.replace(url);
-      });
+      el.__smoothrClicked = false;
+      el.addEventListener(
+        'click',
+        async e => {
+          e.preventDefault();
+          e.stopPropagation();
+          el.__smoothrClicked = true;
+          const currForm = el.closest('form[data-smoothr="auth-form"]');
+          const emailEl = currForm?.querySelector('[data-smoothr-input="email"]');
+          const passEl = currForm?.querySelector('[data-smoothr-input="password"]');
+          const email = emailEl?.value;
+          const password = passEl?.value;
+          console.log(
+            '[Smoothr Auth] Login trigger clicked, found email/password:',
+            { email, password }
+          );
+          if (!email || !password) {
+            console.warn('[Smoothr Auth] Missing input:', { email, password });
+            return;
+          }
+          const { data, error } = await signInWithPassword({ email, password });
+          if (error) return alert(error.message);
+          document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+          const url = await lookupRedirectUrl('login');
+          window.location.replace(url);
+        },
+        false
+      );
     });
 
     const googleBtns = form.querySelectorAll('[data-smoothr="login-google"]');
     googleBtns.forEach(el => {
       console.log('[Smoothr Auth] Bound login handler to', el);
-      el.addEventListener('click', () => {
-        console.log('[Smoothr Auth] Google login trigger clicked');
-        signInWithOAuth({ provider: 'google' });
-      });
+      el.__smoothrClicked = false;
+      el.addEventListener(
+        'click',
+        () => {
+          el.__smoothrClicked = true;
+          console.log('[Smoothr Auth] Google login trigger clicked');
+          signInWithOAuth({ provider: 'google' });
+        },
+        false
+      );
     });
   });
+
+  window.addEventListener(
+    'click',
+    e => {
+      const target = e.target?.closest(
+        '[data-smoothr="login"], [data-smoothr="login-google"]'
+      );
+      if (target) {
+        console.log('[Smoothr Auth] Global login click detected', target);
+        if (!target.__smoothrClicked) {
+          console.warn('[Smoothr Auth] Click event did not fire (Safari bug?)');
+        }
+        target.__smoothrClicked = false;
+      }
+    },
+    false
+  );
 }
