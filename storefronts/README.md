@@ -160,6 +160,16 @@ The Smoothr SDK will automatically bind:
 - `data-smoothr-input="password"` → your password `<input>`
 - `data-smoothr="login"` → your login trigger `<div>` or `<button>` (a warning is logged if none are found)
 - `data-smoothr="login-google"` → your Google login `<div>` or `<button>`
+- `data-smoothr="logout"` → your logout trigger `<div>` or `<button>`
+
+To add a logout button elsewhere on the page:
+
+```html
+<div data-smoothr="logout">Log Out</div>
+```
+
+Clicking this element logs the user out, dispatches a `smoothr:logout` event,
+and then redirects using the configured logout URL when available.
 
 Make sure you include the SDK script exactly once via:
 

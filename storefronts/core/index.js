@@ -11,7 +11,7 @@ import * as orders from './orders/index.js';
 import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
-import { initAuth, bindLoginUI } from '../../supabase/auth.js';
+import { initAuth, bindLoginUI, bindLogoutUI } from '../../supabase/auth.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
 
 // Default endpoint for retrieving live exchange rates via Supabase proxy.
@@ -85,6 +85,7 @@ if (typeof window !== 'undefined') {
   window.Smoothr = Smoothr;
   initAuth();
   bindLoginUI();
+  bindLogoutUI();
 }
 
 export default Smoothr;

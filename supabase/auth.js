@@ -144,3 +144,44 @@ export function bindLoginUI() {
     false
   );
 }
+
+export function bindLogoutUI() {
+  const logoutEls = document.querySelectorAll('[data-smoothr="logout"]');
+  console.log('[Smoothr Auth] Found logout triggers:', logoutEls.length);
+  if (logoutEls.length === 0) {
+    console.warn('[Smoothr Auth] No logout triggers found');
+  }
+
+  const handler = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget;
+    target.__smoothrClicked = true;
+    await logout();
+    document.dispatchEvent(new CustomEvent('smoothr:logout'));
+    const url = await lookupRedirectUrl('logout');
+    if (url) window.location.replace(url);
+  };
+
+  logoutEls.forEach(el => {
+    console.log('[Smoothr Auth] Bound logout handler to', el);
+    el.__smoothrClicked = false;
+    el.addEventListener('click', handler, false);
+    el.addEventListener('touchend', handler, false);
+  });
+
+  window.addEventListener(
+    'click',
+    e => {
+      const target = e.target?.closest('[data-smoothr="logout"]');
+      if (target) {
+        console.log('[Smoothr Auth] Global logout click detected', target);
+        if (!target.__smoothrClicked) {
+          console.warn('[Smoothr Auth] Click event did not fire (Safari bug?)');
+        }
+        target.__smoothrClicked = false;
+      }
+    },
+    false
+  );
+}
