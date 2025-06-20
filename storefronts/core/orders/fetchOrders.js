@@ -1,4 +1,5 @@
-import { supabase } from '../../supabase.browserClient.js';
+import { createClient } from '../../supabase/client.js';
+const supabase = createClient();
 import { SMOOTHR_CONFIG } from '../config.js';
 
 export async function fetchOrders() {

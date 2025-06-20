@@ -1,4 +1,5 @@
-import { supabase } from '../../supabase.browserClient.js';
+import { createClient } from '../../supabase/client.js';
+const supabase = createClient();
 const DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL =
   (typeof __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__ !== 'undefined' &&
     __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__) ||
