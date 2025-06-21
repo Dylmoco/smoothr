@@ -1,3 +1,4 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('../auth/index.js', () => ({ initAuth: vi.fn() }));
@@ -7,7 +8,9 @@ beforeEach(() => {
   global.fetch = vi.fn(() =>
     Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
   );
-  global.window = {};
+  global.window = {
+    location: { origin: '', href: '', hostname: '' }
+  };
 });
 
 describe('global smoothr alias', () => {
