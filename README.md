@@ -64,6 +64,23 @@ The [DEPLOY_LOG.md](DEPLOY_LOG.md) file lists the commit hash and timestamp of
 the most recent Cloudflare deployment. Check this log to see which version is
 currently live.
 
+## Cloudflare Pages Deployment
+
+`wrangler.toml` is used for both Workers and Pages. When deploying to Pages,
+the file should **not** include a `[build]` section. Instead, set these options
+in the Pages dashboard:
+
+- **Build command**: `npm run build`
+- **Output directory**: `dist`
+
+The minimal `wrangler.toml` looks like:
+
+```toml
+name = "smoothr"
+account_id = "your_account_id_here"
+compatibility_date = "2025-06-21"
+```
+
 ## Running Tests
 
 Vitest is used for unit testing across the workspace. Run all tests from the
