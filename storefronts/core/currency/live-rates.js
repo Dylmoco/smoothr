@@ -43,9 +43,11 @@ export async function fetchExchangeRates(
       url += (source.includes('?') ? '&' : '?') + params.join('&');
     }
     const headers = {
-      'User-Agent': 'SmoothrCurrencyBot/1.0',
       Accept: 'application/json'
     };
+    if (typeof window === 'undefined') {
+      headers['User-Agent'] = 'SmoothrCurrencyBot/1.0';
+    }
     try {
       const { hostname, pathname } = new URL(url);
       if (
