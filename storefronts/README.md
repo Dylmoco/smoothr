@@ -139,3 +139,15 @@ If an error occurs the function responds with status `500` and includes details:
   "detail": "Status 403: Forbidden"
 }
 ```
+
+## Deployment
+
+Cloudflare Pages is used to host the compiled SDK. A `wrangler.toml` file is located at the repository root and defines the build command and publish directory.
+
+Run the following command from the project root to build and deploy:
+
+```bash
+wrangler pages deploy
+```
+
+The command executes `npm --workspace storefronts run build` and uploads the contents of the `dist` directory. The resulting site serves the bundled `smoothr-sdk.js` from `dist/smoothr-sdk.js`.
