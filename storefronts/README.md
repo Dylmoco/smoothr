@@ -106,7 +106,8 @@ npm run build
 
 The compiled file will be written to `dist/smoothr-sdk.js`. After the build
 completes, a script checks the bundle for the `fetchOrderHistory` and
-`renderOrders` exports to ensure they are included.
+`renderOrders` exports to ensure they are included. The postbuild step uses
+top‑level `await`, so run the build with **Node.js 20 or later**.
 
 ## Running tests
 
