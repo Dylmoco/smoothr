@@ -93,6 +93,10 @@ repository root with:
 npm test
 ```
 
+All tests rely on a shared setup file that polyfills browser globals like
+`window`, `document` and `localStorage` for Node environments. The setup is
+configured in `storefronts/vitest.config.js` and runs automatically.
+
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later with ECMAScript Modules enabled.

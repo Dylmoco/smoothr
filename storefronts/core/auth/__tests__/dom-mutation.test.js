@@ -1,12 +1,13 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as auth from '../index.js';
 
-let signInMock;
-let signUpMock;
-let signInWithOAuthMock;
-let resetPasswordMock;
-let getUserMock;
-let createClientMock;
+var signInMock;
+var signUpMock;
+var signInWithOAuthMock;
+var resetPasswordMock;
+var getUserMock;
+var createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   signInMock = vi.fn();
@@ -81,7 +82,8 @@ describe('dynamic DOM bindings', () => {
     let clickHandler;
     const btn = {
       tagName: 'DIV',
-      dataset: {},
+      dataset: { smoothr: 'login' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'login' : null),
       closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'click') clickHandler = cb;
@@ -123,7 +125,8 @@ describe('dynamic DOM bindings', () => {
     let clickHandler;
     const btn = {
       tagName: 'BUTTON',
-      dataset: {},
+      dataset: { smoothr: 'signup' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'signup' : null),
       closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'click') clickHandler = cb;
@@ -161,7 +164,8 @@ describe('dynamic DOM bindings', () => {
     };
     const btn = {
       tagName: 'DIV',
-      dataset: {},
+      dataset: { smoothr: 'login-google' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'login-google' : null),
       closest: vi.fn(() => null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'click') clickHandler = cb;
@@ -226,7 +230,8 @@ describe('dynamic DOM bindings', () => {
     let clickHandler;
     const btn = {
       tagName: 'BUTTON',
-      dataset: {},
+      dataset: { smoothr: 'password-reset' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'password-reset' : null),
       closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'click') clickHandler = cb;

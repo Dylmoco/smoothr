@@ -1,3 +1,4 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fetchExchangeRates } from '../live-rates.js';
 
@@ -17,7 +18,7 @@ describe('fetchExchangeRates auth header', () => {
 
   it('omits Authorization header for other urls', async () => {
     await fetchExchangeRates('USD', ['USD'], 'https://example.com/proxy-live-rates');
-    const [, options] = global.fetch.mock.calls[1];
+    const [, options] = global.fetch.mock.calls[0];
     expect(options.headers.Authorization).toBeUndefined();
   });
 });

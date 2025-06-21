@@ -15,6 +15,15 @@ beforeEach(() => {
       debug: true
     }
   };
+  global.document = {
+    addEventListener: vi.fn(),
+    querySelectorAll: vi.fn(() => [])
+  };
+  global.localStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn()
+  };
 });
 
 describe('SMOOTHR_CONFIG integration', () => {
@@ -24,7 +33,8 @@ describe('SMOOTHR_CONFIG integration', () => {
     expect(currency.baseCurrency).toBe('EUR');
     expect(currency.rates.EUR).toBe(0.8);
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://example.com/api/live-rates?base=EUR&symbols=USD,EUR'
+      'https://example.com/api/live-rates?base=EUR&symbols=USD,EUR',
+      expect.any(Object)
     );
   });
 });
