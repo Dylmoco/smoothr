@@ -2,16 +2,7 @@
  * Handles order workflows and UI widgets for the storefront.
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-const DEFAULT_SUPABASE_URL =
-  (typeof __NEXT_PUBLIC_SUPABASE_URL__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_URL__) ||
-  'https://your-project.supabase.co';
-const DEFAULT_SUPABASE_KEY =
-  (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
-  'your-anon-key';
-
-const supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY);
+import supabase from '../auth/client.js';
 
 export async function fetchOrderHistory(customer_id) {
   if (!customer_id) return [];
