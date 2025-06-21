@@ -1,7 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const filePath = path.join(__dirname, '..', 'dist', 'smoothr-sdk.js');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const filePath = join(__dirname, '..', 'dist', 'smoothr-sdk.js');
 
 if (!fs.existsSync(filePath)) {
   console.error(`File not found: ${filePath}`);
