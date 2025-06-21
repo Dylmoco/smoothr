@@ -1,3 +1,4 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let getUserMock;
@@ -24,7 +25,9 @@ describe('global auth', () => {
 
   beforeEach(() => {
     logoutHandler = undefined;
-    global.window = {};
+    global.window = {
+      location: { origin: '', href: '', hostname: '' }
+    };
     global.document = {
       addEventListener: vi.fn((evt, cb) => cb()),
       querySelectorAll: vi.fn(selector => {

@@ -1,8 +1,11 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 beforeEach(() => {
   vi.resetModules();
-  global.window = {};
+  global.window = {
+    location: { origin: '', href: '', hostname: '' }
+  };
 });
 
 describe('global currency helper', () => {

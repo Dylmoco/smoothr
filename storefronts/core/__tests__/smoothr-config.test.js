@@ -1,3 +1,4 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 beforeEach(() => {
@@ -6,6 +7,7 @@ beforeEach(() => {
     Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: { USD: 1, EUR: 0.8 } }) })
   );
   global.window = {
+    location: { origin: '', href: '', hostname: '' },
     SMOOTHR_CONFIG: {
       baseCurrency: 'EUR',
       rates: { USD: 1, EUR: 0.8 },
