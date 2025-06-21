@@ -58,6 +58,12 @@ npm run dev
 Build the SDK for production with `npm run build` which outputs
 `dist/smoothr-sdk.js`.
 
+### Deployment Log
+
+The [DEPLOY_LOG.md](DEPLOY_LOG.md) file lists the commit hash and timestamp of
+the most recent Cloudflare deployment. Check this log to see which version is
+currently live.
+
 ## Running Tests
 
 Vitest is used for unit testing across the workspace. Run all tests from the
