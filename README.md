@@ -31,6 +31,11 @@ two workspaces:
 Running `npm install` from the repository root installs dependencies for all
 packages in one step.
 
+All scripts in the repository are written using ECMAScript Module (ESM)
+syntax and require **Node.js 20 or later**. Update any local builds or
+Cloudflare/Vercel deploy commands that specify a Node version to ensure they
+use Node 20+.
+
 ## Running the Admin Dashboard
 
 The admin dashboard lives in `/smoothr`. After installing dependencies you can
@@ -92,7 +97,7 @@ npm test
 
 ## Contribution Guidelines
 
-- **Node.js**: use version 20 or later.
+- **Node.js**: use version 20 or later with ECMAScript Modules enabled.
 - **Tests**: run `npm test` from the repository root to execute tests in all
   workspaces.
 - **Coding style**: follow the existing style—two space indentation, single

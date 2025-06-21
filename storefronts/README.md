@@ -4,6 +4,8 @@ Client-facing storefront code and widgets.
 
 This package contains the core storefront modules located in `./core`.
 
+All build scripts use ECMAScript Module (ESM) syntax and require **Node.js 20 or later**. Update any local builds or Cloudflare/Vercel deployment commands to use Node 20+ if they specify an older version.
+
 The bundled SDK is designed for zero‑config installation on platforms like
 Webflow. Simply include
 
@@ -152,3 +154,5 @@ directory through the Pages dashboard:
 
 After each push, Cloudflare builds the project and serves the bundled
 `smoothr-sdk.js` from `dist/smoothr-sdk.js`.
+
+If you embed the SDK on your site, perform a hard refresh after each deploy so browsers load the latest bundle.
