@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "postbuild": "node scripts/check-sdk.js",
         "dev": "vite",
         "pretest": "npm install",
         "test": "vitest run"
