@@ -47,6 +47,14 @@ import * as core from './core/index.js';
 core.discounts; // example access
 ```
 
+### Orders
+
+Display a logged in customer's order history:
+
+```javascript
+smoothr.orders.renderOrders();
+```
+
 ## Currency Conversion
 
 Define a global `SMOOTHR_CONFIG` before loading the SDK to set the base
