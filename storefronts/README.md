@@ -99,10 +99,12 @@ persisted in `localStorage`.
 Generate the production bundle with:
 
 ```bash
-vite build
+npm run build
 ```
 
-The compiled file will be written to `dist/smoothr-sdk.js`.
+The compiled file will be written to `dist/smoothr-sdk.js`. After the build
+completes, a script checks the bundle for the `fetchOrderHistory` and
+`renderOrders` exports to ensure they are included.
 
 ## Running tests
 
