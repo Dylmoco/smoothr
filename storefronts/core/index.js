@@ -83,6 +83,7 @@ if (typeof window !== 'undefined') {
     setSelectedCurrency = setCmsCurrency;
   }
   window.Smoothr = Smoothr;
+  window.smoothr = window.smoothr || Smoothr;
   auth.initAuth();
 }
 

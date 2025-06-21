@@ -11,7 +11,8 @@ Webflow. Simply include
 <script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
 ```
 
-and authentication will initialize automatically.
+and authentication will initialize automatically. The SDK is available as
+`window.Smoothr` or the lowercase `window.smoothr`.
 
 Create a `.env` file in this directory and provide your Supabase project details.
 These variables are injected at build time so the final SDK has no
