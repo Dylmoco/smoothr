@@ -3,7 +3,7 @@ console.log('proxy-live-rates function started');
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*", // Change "*" to your Webflow domain for stricter security if needed
   "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
 };
 
 export async function handleRequest(req: Request): Promise<Response> {
