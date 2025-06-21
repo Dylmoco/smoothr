@@ -36,8 +36,19 @@ When invoking `proxy-live-rates` you must supply the custom authorization token:
 ```http
 Authorization: Token eca2385f63504d80a624d130cce7e240
 ```
-
 Without this header the function will respond with a 401 error.
+
+### CORS configuration
+
+All responses from `proxy-live-rates` include the following headers to allow cross-origin requests:
+
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Content-Type, Authorization, User-Agent
+Access-Control-Allow-Methods: GET, OPTIONS
+```
+
+These headers are also returned for `OPTIONS` preflight requests.
 
 ### Query parameters
 

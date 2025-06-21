@@ -10,6 +10,14 @@ describe('handleRequest', () => {
     delete (globalThis as any).Deno;
   });
 
+  it('returns CORS headers for preflight', async () => {
+    const res = await handleRequest(new Request('https://example.com', { method: 'OPTIONS' }));
+    expect(res.status).toBe(204);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, OPTIONS');
+    expect(res.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type, Authorization, User-Agent');
+  });
+
   it('returns normalized rates with default base', async () => {
     const fetchFn = vi.fn().mockResolvedValue({
       ok: true,
@@ -18,6 +26,7 @@ describe('handleRequest', () => {
     });
     const res = await handleRequest(new Request('https://example.com'), fetchFn);
     expect(fetchFn).toHaveBeenCalledWith(expect.stringContaining('app_id=token'));
+    expect(res.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type, Authorization, User-Agent');
     const body = await res.json();
     expect(body.base).toBe('GBP');
     expect(body.rates.GBP).toBe(1);
