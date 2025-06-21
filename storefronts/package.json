@@ -13,6 +13,7 @@
         "@supabase/supabase-js": "^2.50.0"
     },
     "devDependencies": {
+        "happy-dom": "^18.0.1",
         "vite": "^5.4.19",
         "vitest": "^1.5.0"
     }

@@ -1,10 +1,11 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-let resetPasswordMock;
-let updateUserMock;
-let setSessionMock;
-let getUserMock;
-let createClientMock;
+var resetPasswordMock;
+var updateUserMock;
+var setSessionMock;
+var getUserMock;
+var createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   resetPasswordMock = vi.fn();
@@ -41,6 +42,8 @@ describe('password reset request', () => {
     emailValue = 'user@example.com';
     submitHandler = undefined;
     const form = {
+      dataset: { smoothr: 'password-reset' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'password-reset' : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'submit') submitHandler = cb;
       }),
@@ -92,13 +95,17 @@ describe('password reset confirmation', () => {
     passwordValue = 'newpass123';
     confirmValue = 'newpass123';
     submitHandler = undefined;
+    const passwordInputObj = { value: passwordValue, addEventListener: vi.fn() };
+    const confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
     const form = {
+      dataset: { smoothr: 'password-reset-confirm' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'password-reset-confirm' : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'submit') submitHandler = cb;
       }),
       querySelector: vi.fn(sel => {
-        if (sel === '[data-smoothr-input="password"]') return { value: passwordValue };
-        if (sel === '[data-smoothr-input="password-confirm"]') return { value: confirmValue };
+        if (sel === '[data-smoothr-input="password"]') return passwordInputObj;
+        if (sel === '[data-smoothr-input="password-confirm"]') return confirmInputObj;
         return null;
       })
     };

@@ -1,9 +1,9 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-let getUserMock;
-let signOutMock;
-let createClientMock;
+var getUserMock;
+var signOutMock;
+var createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   getUserMock = vi.fn();
@@ -30,6 +30,7 @@ describe('global auth', () => {
     };
     global.document = {
       addEventListener: vi.fn((evt, cb) => cb()),
+      dispatchEvent: vi.fn(),
       querySelectorAll: vi.fn(selector => {
         if (selector === '[data-smoothr="logout"]') {
           const btn = {

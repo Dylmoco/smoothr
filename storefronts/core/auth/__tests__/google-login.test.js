@@ -1,8 +1,9 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-let getUserMock;
-let signInWithOAuthMock;
-let createClientMock;
+var getUserMock;
+var signInWithOAuthMock;
+var createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
@@ -30,7 +31,7 @@ describe('google login button', () => {
   beforeEach(() => {
     clickHandler = undefined;
     store = null;
-    global.window = {};
+    global.window = { location: { origin: '', href: '', hostname: '' } };
     global.localStorage = {
       getItem: vi.fn(() => store),
       setItem: vi.fn((k, v) => {
@@ -45,6 +46,8 @@ describe('google login button', () => {
       querySelectorAll: vi.fn(selector => {
         if (selector === '[data-smoothr="login-google"]') {
           const btn = {
+            dataset: { smoothr: 'login-google' },
+            getAttribute: attr => (attr === 'data-smoothr' ? 'login-google' : null),
             addEventListener: vi.fn((ev, cb) => {
               if (ev === 'click') clickHandler = cb;
             })

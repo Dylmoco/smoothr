@@ -6,6 +6,15 @@ beforeEach(() => {
   global.window = {
     location: { origin: '', href: '', hostname: '' }
   };
+  global.document = {
+    addEventListener: vi.fn(),
+    querySelectorAll: vi.fn(() => [])
+  };
+  global.localStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn()
+  };
 });
 
 describe('global currency helper', () => {

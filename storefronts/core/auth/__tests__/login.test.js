@@ -1,8 +1,9 @@
+// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-let signInMock;
-let getUserMock;
-let createClientMock;
+var signInMock;
+var getUserMock;
+var createClientMock;
 
 vi.mock('@supabase/supabase-js', () => {
   signInMock = vi.fn();
@@ -33,6 +34,7 @@ describe('login form', () => {
     passwordValue = 'Password1';
 
     const form = {
+      dataset: {},
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'submit') submitHandler = cb;
       }),
@@ -46,6 +48,8 @@ describe('login form', () => {
 
     const btn = {
       closest: vi.fn(() => form),
+      dataset: { smoothr: 'login' },
+      getAttribute: attr => (attr === 'data-smoothr' ? 'login' : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'click') clickHandler = cb;
       }),
