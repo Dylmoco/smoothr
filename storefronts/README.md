@@ -144,12 +144,11 @@ If an error occurs the function responds with status `500` and includes details:
 
 ## Deployment
 
-Cloudflare Pages is used to host the compiled SDK. A `wrangler.toml` file is located at the repository root and defines the build command and publish directory.
+Cloudflare Pages hosts the compiled SDK. Configure the build command and output
+directory through the Pages dashboard:
 
-Run the following command from the project root to build and deploy:
+- **Build command:** `npm run build`
+- **Output directory:** `dist`
 
-```bash
-wrangler pages deploy
-```
-
-The command executes `npm --workspace storefronts run build` and uploads the contents of the `dist` directory. The resulting site serves the bundled `smoothr-sdk.js` from `dist/smoothr-sdk.js`.
+After each push, Cloudflare builds the project and serves the bundled
+`smoothr-sdk.js` from `dist/smoothr-sdk.js`.
