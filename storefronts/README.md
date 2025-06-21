@@ -96,18 +96,23 @@ a dropdown and mark prices using `data-smoothr-price`:
 Prices update automatically when the currency changes and the selection is
 persisted in `localStorage`.
 
-## Building the SDK
 
-Generate the production bundle with:
+## CI/CD
 
-```bash
-npm run build
-```
+The SDK is built and deployed automatically whenever code is pushed to the
+`main` branch. The GitHub Actions workflow installs dependencies with `npm ci`,
+runs the test suite, builds the bundle, performs the postbuild check and then
+deploys `dist` to Cloudflare Pages. The deployed commit and timestamp are
+recorded in the repository's `DEPLOY_LOG.md` file.
 
-The compiled file will be written to `dist/smoothr-sdk.js`. After the build
-completes, a script checks the bundle for the `fetchOrderHistory` and
-`renderOrders` exports to ensure they are included. The postbuild step uses
-top‑level `await`, so run the build with **Node.js 20 or later**.
+Configure the workflow secrets under **Settings → Secrets and variables →
+Actions** in GitHub:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_PROJECT_NAME`
+
+Deployment status can be monitored in the GitHub Actions tab.
 
 ## Running tests
 
@@ -147,13 +152,7 @@ If an error occurs the function responds with status `500` and includes details:
 
 ## Deployment
 
-Cloudflare Pages hosts the compiled SDK. Configure the build command and output
-directory through the Pages dashboard:
-
-- **Build command:** `npm run build`
-- **Output directory:** `dist`
-
-After each push, Cloudflare builds the project and serves the bundled
-`smoothr-sdk.js` from `dist/smoothr-sdk.js`.
-
-If you embed the SDK on your site, perform a hard refresh after each deploy so browsers load the latest bundle.
+The workflow automatically publishes `storefronts/dist` to Cloudflare Pages.
+The latest deployed commit can be found in `DEPLOY_LOG.md`. When embedding the
+SDK on your site, perform a hard refresh after each deploy so browsers load the
+new bundle.

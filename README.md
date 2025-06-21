@@ -60,31 +60,29 @@ npm install
 npm run dev
 ```
 
-Build the SDK for production with `npm run build` which outputs
-`dist/smoothr-sdk.js`.
+The storefront SDK is automatically built and deployed by GitHub Actions so no
+manual build step is required.
 
 ### Deployment Log
 
-The [DEPLOY_LOG.md](DEPLOY_LOG.md) file lists the commit hash and timestamp of
-the most recent Cloudflare deployment. Check this log to see which version is
-currently live.
+The [DEPLOY_LOG.md](DEPLOY_LOG.md) file is updated automatically after each
+successful deployment with the commit hash and UTC timestamp.
 
-## Cloudflare Pages Deployment
+## CI/CD with GitHub Actions
 
-`wrangler.toml` is used for both Workers and Pages. When deploying to Pages,
-the file should **not** include a `[build]` section. Instead, set these options
-in the Pages dashboard:
+All pushes to the `main` branch trigger the workflow defined at
+`.github/workflows/build-and-deploy.yml`. The workflow uses Node.js 20,
+installs dependencies, runs tests, builds the storefront SDK, performs the
+postbuild check, and deploys `storefronts/dist` to Cloudflare Pages.
 
-- **Build command**: `npm run build`
-- **Output directory**: `dist`
+To configure deployment secrets go to **Settings → Secrets and variables →
+Actions** in GitHub and add:
 
-The minimal `wrangler.toml` looks like:
+- `CLOUDFLARE_API_TOKEN` – a Pages API token
+- `CLOUDFLARE_ACCOUNT_ID` – your Cloudflare account ID
+- `CLOUDFLARE_PROJECT_NAME` – the Pages project name
 
-```toml
-name = "smoothr"
-account_id = "your_account_id_here"
-compatibility_date = "2025-06-21"
-```
+Deployment logs and status can be monitored in the GitHub Actions tab.
 
 ## Running Tests
 
