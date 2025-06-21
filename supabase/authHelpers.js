@@ -38,13 +38,21 @@ export function updateStrengthMeter(form, password) {
 export function setLoading(el, loading) {
   if (!el) return;
   if (loading) {
-    el.dataset.originalText = el.textContent;
+    try {
+      el.dataset.originalText = el.textContent;
+    } catch {
+      // dataset may be readonly
+    }
     el.textContent = 'Loading...';
     el.disabled = true;
   } else {
-    if (el.dataset.originalText) {
-      el.textContent = el.dataset.originalText;
-      delete el.dataset.originalText;
+    try {
+      if (el.dataset.originalText) {
+        el.textContent = el.dataset.originalText;
+        delete el.dataset.originalText;
+      }
+    } catch {
+      // ignore
     }
     el.disabled = false;
   }
