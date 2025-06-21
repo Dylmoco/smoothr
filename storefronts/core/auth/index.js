@@ -16,12 +16,20 @@ import {
   registerDOMBindings
 } from '../../../supabase/authHelpers.js';
 
+function safeSetDataset(el, key, val) {
+  try {
+    if (el && el.dataset) el.dataset[key] = val;
+  } catch (err) {
+    // dataset might be readonly
+  }
+}
+
 function bindAuthElements(root = document) {
   const selector =
     '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
   root.querySelectorAll(selector).forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
-    el.dataset.smoothrBoundAuth = '1';
+    safeSetDataset(el, 'smoothrBoundAuth', '1');
     const type = el.getAttribute('data-smoothr');
     const attach = handler => {
       if (el.tagName === 'FORM') {
@@ -35,7 +43,7 @@ function bindAuthElements(root = document) {
     switch (type) {
       case 'login': {
         if (form && el !== form && !form.dataset?.smoothrBoundLoginSubmit) {
-          form.dataset.smoothrBoundLoginSubmit = '1';
+          safeSetDataset(form, 'smoothrBoundLoginSubmit', '1');
           form.addEventListener('submit', evt => {
             evt.preventDefault();
             el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
