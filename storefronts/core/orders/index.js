@@ -2,7 +2,7 @@
  * Handles order workflows and UI widgets for the storefront.
  */
 
-import supabase from '../auth/client.js';
+import supabase from '../../../supabase/supabaseClient.js';
 
 export async function fetchOrderHistory(customer_id) {
   if (!customer_id) return [];

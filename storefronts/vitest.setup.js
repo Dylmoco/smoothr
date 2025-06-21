@@ -23,12 +23,14 @@ if (typeof globalThis.localStorage === 'undefined') {
     })
   };
 }
-if (typeof globalThis.MutationObserver === 'undefined') {
-  globalThis.MutationObserver = class {
-    constructor(cb) {
-      this.cb = cb;
-    }
-    observe() {}
-    disconnect() {}
-  };
+globalThis.MutationObserver = class {
+  constructor(cb) {
+    this.cb = cb;
+  }
+  observe() {}
+  disconnect() {}
+};
+
+if (typeof globalThis.alert === 'undefined') {
+  globalThis.alert = vi.fn();
 }
