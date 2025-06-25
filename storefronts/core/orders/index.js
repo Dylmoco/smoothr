@@ -80,7 +80,17 @@ export async function renderOrders(container) {
       if (el) el.textContent = val ?? '';
     };
 
-    setText('[data-smoothr="order-date"]', order.order_date);
+    const dateEl = card.querySelector('[data-smoothr="order-date"]');
+    if (dateEl) {
+      const date = new Date(order.order_date);
+      const locale = navigator.language || 'en-GB';
+      const formattedDate = date.toLocaleDateString(locale, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      dateEl.textContent = formattedDate;
+    }
     setText('[data-smoothr="order-number"]', order.order_number);
     setText('[data-smoothr="customer-name"]', order.customer_name);
     console.log('smoothr:orders customer email', order.customer_email);
