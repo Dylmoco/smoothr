@@ -1,7 +1,1 @@
-{  "name": "smoothr-admin",
-    "version": "1.0.0",
-    "type": "module",
-    "scripts": {
-      "build": "echo 'Nothing to build yet'"
-    }
-}
+{"name":"smoothr-admin","version":"1.0.0","type":"module","scripts":{"build":"echo 'Nothing to build yet'"},"dependencies":{"@supabase/supabase-js":"^2.50.0","stripe":"^12.16.0"}}
