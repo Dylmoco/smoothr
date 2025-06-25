@@ -62,8 +62,13 @@ export async function renderOrders(container) {
     setText('[data-smoothr="order-date"]', order.order_date);
     setText('[data-smoothr="order-number"]', order.order_number);
     setText('[data-smoothr="customer-name"]', order.customer_name);
-    setText('[data-smoothr="customer-email"]', order.customer_email);
-    setText('[data-smoothr="order-total"]', order.total_price);
+    console.log('smoothr:orders customer email', order.customer_email);
+    console.log('smoothr:orders order price', order.total_price);
+    setText('[data-smoothr="order-email"]', order.customer_email);
+    setText(
+      '[data-smoothr="order-price"]',
+      `£${Number(order.total_price).toFixed(2)}`
+    );
     setText('[data-smoothr="order-status"]', order.status);
 
     list.appendChild(card);
