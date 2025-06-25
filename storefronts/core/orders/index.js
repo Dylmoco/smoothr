@@ -30,11 +30,13 @@ export async function renderOrders(container) {
     typeof container === 'string'
       ? document.querySelector(container)
       : container || document;
+
   const list = root.querySelector('[data-smoothr="order-list"]');
   if (!list) {
     console.warn('smoothr:orders container not found');
     return;
   }
+
   const template = list.querySelector('[data-smoothr="order-card"]');
   if (!template) {
     console.warn('smoothr:orders template not found');
@@ -52,13 +54,14 @@ export async function renderOrders(container) {
   if (!orders.length) {
     if (empty) empty.removeAttribute('hidden');
     list.setAttribute('hidden', '');
-    console.log('smoothr:orders no orders found');
     return;
   }
+
   if (empty) empty.setAttribute('hidden', '');
   list.removeAttribute('hidden');
 
   template.setAttribute('hidden', '');
+
   orders.forEach(order => {
     const card = template.cloneNode(true);
     card.removeAttribute('hidden');
@@ -70,21 +73,19 @@ export async function renderOrders(container) {
     const numberEl = card.querySelector('[data-smoothr="order-number"]');
     if (numberEl) numberEl.textContent = order.order_number;
 
-    const nameEl = card.querySelector('[data-smoothr="order-name"]');
+    const nameEl = card.querySelector('[data-smoothr="customer-name"]');
     if (nameEl) nameEl.textContent = order.customer_name;
 
-    const emailEl = card.querySelector('[data-smoothr="order-email"]');
+    const emailEl = card.querySelector('[data-smoothr="customer-email"]');
     if (emailEl) emailEl.textContent = order.customer_email;
 
-    const priceEl = card.querySelector('[data-smoothr="order-price"]');
-    if (priceEl) priceEl.textContent = order.total_price;
+    const totalEl = card.querySelector('[data-smoothr="order-total"]');
+    if (totalEl) totalEl.textContent = order.total_price;
 
     const statusEl = card.querySelector('[data-smoothr="order-status"]');
     if (statusEl) statusEl.textContent = order.status;
 
-    console.log('smoothr:rendered order', order.order_number);
     list.appendChild(card);
   });
-  console.log('smoothr:orders final DOM state', list.innerHTML);
 }
 
