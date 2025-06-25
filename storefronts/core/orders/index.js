@@ -51,6 +51,7 @@ export async function renderOrders(container) {
   const orders = await fetchOrderHistory(user?.id);
 
   orders.forEach(order => {
+    console.log('rendering order object', order);
     const card = template.cloneNode(true);
 
     const setText = (sel, val) => {
