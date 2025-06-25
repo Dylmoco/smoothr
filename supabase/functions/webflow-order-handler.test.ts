@@ -55,9 +55,19 @@ describe('webflow-order-handler', () => {
       body: JSON.stringify(payload)
     }));
     expect(createClientMock).toHaveBeenCalledWith('https://example.supabase.co', 'service-key');
-    expect(insertMock).toHaveBeenCalled();
+    expect(insertMock).toHaveBeenCalledWith({
+      customer_email: 'user@example.com',
+      customer_id: null,
+      store_id: 'site',
+      raw_data: payload,
+      tracking_number: null,
+      label_url: null,
+      problem_flag: false,
+      flag_reason: null,
+      updated_at: expect.any(String),
+    });
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ success: true });
+    await expect(res.json()).resolves.toEqual({ success: true, site_id: 'site' });
   });
 });
 

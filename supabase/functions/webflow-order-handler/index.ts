@@ -31,17 +31,21 @@ export async function handleRequest(req: Request): Promise<Response> {
 
   console.log('Payload:', payload);
 
-  const { orderId, customerInfo, lineItems, total, siteId, createdOn } = payload;
+  const { siteId } = payload;
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // Insert the incoming Webflow order into the existing `orders` table
   const { error } = await supabase.from('orders').insert({
-    order_id: orderId,
-    email: customerInfo?.email,
-    line_items: lineItems,
-    total,
-    site_id: siteId,
-    created_at: createdOn ? new Date(createdOn).toISOString() : new Date().toISOString(),
+    customer_email: payload.customerInfo?.email || null,
+    customer_id: null,
+    store_id: siteId,
+    raw_data: payload,
+    tracking_number: null,
+    label_url: null,
+    problem_flag: false,
+    flag_reason: null,
+    updated_at: new Date().toISOString(),
   });
 
   if (error) {
@@ -53,7 +57,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   }
 
   return new Response(
-    JSON.stringify({ success: true }),
+    JSON.stringify({ success: true, site_id: siteId }),
     { headers: { 'Content-Type': 'application/json' } },
   );
 }
