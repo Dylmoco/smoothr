@@ -125,7 +125,7 @@ export async function lookupRedirectUrl(type) {
 }
 
 export function initAuth() {
-  supabase.auth.getUser().then(async ({ data: { user } }) => {
+  const p = supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};
       window.smoothr.auth = { user: user || null };
@@ -157,6 +157,7 @@ export function initAuth() {
     const observer = new MutationObserver(() => bindAuthElements());
     observer.observe(document.body, { childList: true, subtree: true });
   });
+  return p;
 }
 
 export async function signInWithGoogle() {
