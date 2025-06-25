@@ -53,6 +53,8 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    const webhookUrl = process.env.WEBFLOW_WEBHOOK_URL!;
+
     await fetch(`https://api.webflow.com/sites/${site_id}/webhooks`, {
       method: 'POST',
       headers: {
@@ -62,7 +64,7 @@ export default async function handler(req: any, res: any) {
       },
       body: JSON.stringify({
         triggerType: 'order_created',
-        url: 'https://YOUR_EDGE_URL/functions/v1/webflow-order-handler',
+        url: webhookUrl,
       }),
     });
 
