@@ -46,7 +46,7 @@ export async function renderOrders(container) {
   const noOrders = root.querySelector('[data-smoothr="no-orders"]');
 
   // Ensure the template card stays hidden and ready for cloning
-  template.hidden = true;
+  template.setAttribute('hidden', '');
   template.style.display = 'none';
 
   list.querySelectorAll('[data-smoothr="order-card"]').forEach(el => {
@@ -57,19 +57,23 @@ export async function renderOrders(container) {
   const orders = await fetchOrderHistory(user?.id);
 
   if (!orders.length) {
-    if (noOrders) noOrders.style.display = '';
-    list.style.display = 'none';
+    if (noOrders) {
+      noOrders.removeAttribute('hidden');
+      noOrders.style.display = '';
+    }
     return;
-  } else {
-    if (noOrders) noOrders.style.display = 'none';
-    list.style.display = '';
+  }
+
+  if (noOrders) {
+    noOrders.setAttribute('hidden', '');
+    noOrders.style.display = 'none';
   }
 
   orders.forEach(order => {
     console.log('rendering order object', order);
     const card = template.cloneNode(true);
 
-    card.hidden = false;
+    card.removeAttribute('hidden');
     card.style.display = '';
 
     const setText = (sel, val) => {
