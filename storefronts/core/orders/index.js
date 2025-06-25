@@ -61,19 +61,26 @@ export async function renderOrders(container) {
   template.setAttribute('hidden', '');
   orders.forEach(order => {
     const card = template.cloneNode(true);
-    const dateEl = card.querySelector('[data-smoothr="order-date"]');
-    const numEl = card.querySelector('[data-smoothr="order-number"]');
-    const nameEl = card.querySelector('[data-smoothr="order-name"]');
-    const emailEl = card.querySelector('[data-smoothr="order-email"]');
-    const priceEl = card.querySelector('[data-smoothr="order-price"]');
-    const statusEl = card.querySelector('[data-smoothr="order-status"]');
-    if (dateEl) dateEl.textContent = order.order_date;
-    if (numEl) numEl.textContent = order.order_number;
-    if (nameEl) nameEl.textContent = order.customer_name;
-    if (emailEl) emailEl.textContent = order.customer_email;
-    if (priceEl) priceEl.textContent = order.total_price;
-    if (statusEl) statusEl.textContent = order.order_status;
     card.removeAttribute('hidden');
+
+    const dateEl = card.querySelector('[data-smoothr="order-date"]');
+    if (dateEl) dateEl.textContent = order.order_date;
+
+    const numberEl = card.querySelector('[data-smoothr="order-number"]');
+    if (numberEl) numberEl.textContent = order.order_number;
+
+    const nameEl = card.querySelector('[data-smoothr="order-name"]');
+    if (nameEl) nameEl.textContent = order.customer_name;
+
+    const emailEl = card.querySelector('[data-smoothr="order-email"]');
+    if (emailEl) emailEl.textContent = order.customer_email;
+
+    const priceEl = card.querySelector('[data-smoothr="order-price"]');
+    if (priceEl) priceEl.textContent = order.total_price;
+
+    const statusEl = card.querySelector('[data-smoothr="order-status"]');
+    if (statusEl) statusEl.textContent = order.status;
+
     list.appendChild(card);
   });
 }
