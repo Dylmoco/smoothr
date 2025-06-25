@@ -50,40 +50,20 @@ export async function renderOrders(container) {
   const user = window.smoothr?.auth?.user;
   const orders = await fetchOrderHistory(user?.id);
 
-  const empty = root.querySelector('[data-smoothr="no-orders"]');
-  if (!orders.length) {
-    if (empty) empty.removeAttribute('hidden');
-    list.setAttribute('hidden', '');
-    return;
-  }
-
-  if (empty) empty.setAttribute('hidden', '');
-  list.removeAttribute('hidden');
-
-  template.setAttribute('hidden', '');
-
   orders.forEach(order => {
     const card = template.cloneNode(true);
-    card.removeAttribute('hidden');
-    card.style.display = '';
 
-    const dateEl = card.querySelector('[data-smoothr="order-date"]');
-    if (dateEl) dateEl.textContent = order.order_date;
+    const setText = (sel, val) => {
+      const el = card.querySelector(sel);
+      if (el) el.textContent = val ?? '';
+    };
 
-    const numberEl = card.querySelector('[data-smoothr="order-number"]');
-    if (numberEl) numberEl.textContent = order.order_number;
-
-    const nameEl = card.querySelector('[data-smoothr="customer-name"]');
-    if (nameEl) nameEl.textContent = order.customer_name;
-
-    const emailEl = card.querySelector('[data-smoothr="customer-email"]');
-    if (emailEl) emailEl.textContent = order.customer_email;
-
-    const totalEl = card.querySelector('[data-smoothr="order-total"]');
-    if (totalEl) totalEl.textContent = order.total_price;
-
-    const statusEl = card.querySelector('[data-smoothr="order-status"]');
-    if (statusEl) statusEl.textContent = order.status;
+    setText('[data-smoothr="order-date"]', order.order_date);
+    setText('[data-smoothr="order-number"]', order.order_number);
+    setText('[data-smoothr="customer-name"]', order.customer_name);
+    setText('[data-smoothr="customer-email"]', order.customer_email);
+    setText('[data-smoothr="order-total"]', order.total_price);
+    setText('[data-smoothr="order-status"]', order.status);
 
     list.appendChild(card);
   });
