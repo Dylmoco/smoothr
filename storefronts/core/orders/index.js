@@ -81,7 +81,9 @@ export async function renderOrders(container) {
     const statusEl = card.querySelector('[data-smoothr="order-status"]');
     if (statusEl) statusEl.textContent = order.status;
 
+    console.log('smoothr:rendered order', order.order_number);
     list.appendChild(card);
   });
+  console.log('smoothr:orders final DOM state', list.innerHTML);
 }
 
