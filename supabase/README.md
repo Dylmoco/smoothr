@@ -1,6 +1,8 @@
 # Supabase Edge Functions
 
-This folder contains Supabase edge functions for Smoothr. The only function at present is `proxy-live-rates` which serves currency exchange rates.
+This folder contains Supabase edge functions for Smoothr. It currently includes
+`proxy-live-rates` for currency exchange rates and `webflow-order-handler` for
+processing orders sent from Webflow.
 
 ## Deploying
 
@@ -9,9 +11,11 @@ Deploy a function with:
 
 ```bash
 supabase functions deploy proxy-live-rates
+supabase functions deploy webflow-order-handler
 ```
 
-The CLI will upload the function to the currently linked project and make it available at `https://<project-ref>.functions.supabase.co/proxy-live-rates`.
+The CLI will upload each function to the currently linked project and make them
+available at `https://<project-ref>.functions.supabase.co/<function-name>`.
 
 ## Configuration
 
@@ -36,7 +40,29 @@ When invoking `proxy-live-rates` you must supply the custom authorization token:
 ```http
 Authorization: Token eca2385f63504d80a624d130cce7e240
 ```
+
 Without this header the function will respond with a 401 error.
+
+## webflow-order-handler
+
+This function accepts Webflow `order_created` webhooks and records the order
+details in the `orders` table. Headers and payloads are logged to the Supabase
+function logs for troubleshooting.
+
+### Deploy
+
+```bash
+supabase functions deploy webflow-order-handler
+```
+
+### Environment variables
+
+Add the following to `.env`:
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
 
 ### CORS configuration
 
