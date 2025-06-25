@@ -73,6 +73,7 @@ export async function renderOrders(container) {
     if (emailEl) emailEl.textContent = order.customer_email;
     if (priceEl) priceEl.textContent = order.total_price;
     if (statusEl) statusEl.textContent = order.order_status;
+    card.removeAttribute('hidden');
     list.appendChild(card);
   });
 }
