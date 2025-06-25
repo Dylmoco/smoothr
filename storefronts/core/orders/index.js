@@ -62,6 +62,7 @@ export async function renderOrders(container) {
   orders.forEach(order => {
     const card = template.cloneNode(true);
     card.removeAttribute('hidden');
+    card.style.display = '';
 
     const dateEl = card.querySelector('[data-smoothr="order-date"]');
     if (dateEl) dateEl.textContent = order.order_date;
