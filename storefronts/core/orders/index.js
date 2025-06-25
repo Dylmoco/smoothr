@@ -58,8 +58,9 @@ export async function renderOrders(container) {
   if (empty) empty.setAttribute('hidden', '');
   list.removeAttribute('hidden');
 
-  orders.forEach((order, idx) => {
-    const card = idx === 0 ? template : template.cloneNode(true);
+  template.setAttribute('hidden', '');
+  orders.forEach(order => {
+    const card = template.cloneNode(true);
     const dateEl = card.querySelector('[data-smoothr="order-date"]');
     const numEl = card.querySelector('[data-smoothr="order-number"]');
     const nameEl = card.querySelector('[data-smoothr="order-name"]');
@@ -72,7 +73,7 @@ export async function renderOrders(container) {
     if (emailEl) emailEl.textContent = order.customer_email;
     if (priceEl) priceEl.textContent = order.total_price;
     if (statusEl) statusEl.textContent = order.order_status;
-    if (idx > 0) list.appendChild(card);
+    list.appendChild(card);
   });
 }
 
