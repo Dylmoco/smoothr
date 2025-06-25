@@ -1,4 +1,5 @@
-import { createClient } from '../storefronts/node_modules/@supabase/supabase-js';
+// Use workspace dependency if available, fallback for browser builds
+import { createClient } from '@supabase/supabase-js';
 
 export const DEFAULT_SUPABASE_URL =
   (typeof __NEXT_PUBLIC_SUPABASE_URL__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_URL__) ||
