@@ -47,7 +47,6 @@ export async function renderOrders(container) {
 
   // Ensure the template card stays hidden and ready for cloning
   template.setAttribute('hidden', '');
-  template.style.display = 'none';
 
   list.querySelectorAll('[data-smoothr="order-card"]').forEach(el => {
     if (el !== template) el.remove();
@@ -74,7 +73,7 @@ export async function renderOrders(container) {
     const card = template.cloneNode(true);
 
     card.removeAttribute('hidden');
-    card.style.display = '';
+    card.style.display = 'flex';
 
     const setText = (sel, val) => {
       const el = card.querySelector(sel);
