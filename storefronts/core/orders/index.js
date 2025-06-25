@@ -56,13 +56,15 @@ export async function renderOrders(container) {
   const orders = await fetchOrderHistory(user?.id);
 
   if (!orders.length) {
+    list.setAttribute('hidden', '');
     if (noOrders) {
       noOrders.removeAttribute('hidden');
-      noOrders.style.display = '';
+      noOrders.style.display = 'flex';
     }
     return;
   }
 
+  list.removeAttribute('hidden');
   if (noOrders) {
     noOrders.setAttribute('hidden', '');
     noOrders.style.display = 'none';
