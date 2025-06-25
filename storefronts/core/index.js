@@ -84,7 +84,11 @@ if (typeof window !== 'undefined') {
   }
   window.Smoothr = Smoothr;
   window.smoothr = window.smoothr || Smoothr;
-  auth.initAuth();
+  Promise.resolve(auth.initAuth()).then(() => {
+    if (window.smoothr?.auth?.user) {
+      orders.renderOrders();
+    }
+  });
 }
 
 export default Smoothr;
