@@ -1,2 +1,5 @@
 [functions.proxy-live-rates]
 verify_jwt = false
+
+[functions.webflow-order-handler]
+verify_jwt = false
