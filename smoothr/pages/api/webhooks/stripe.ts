@@ -2,7 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import supabase from '../../../../shared/supabase/serverClient';
 
-export const config = { api: { bodyParser: false } };
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
