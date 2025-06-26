@@ -2,6 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import supabase from '../../../../shared/supabase/serverClient';
 
+// Debug log to confirm route hit
+console.log('🔔 Stripe webhook hit');
+
 export const config = {
   api: {
     bodyParser: false,
@@ -21,10 +24,16 @@ async function readBuffer(readable: NodeJS.ReadableStream) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('📩 Request method:', req.method);
+
   if (req.method !== 'POST') {
+    console.error('⛔️ Invalid method');
     res.status(405).end('Method not allowed');
     return;
   }
+
+  // Add one more log here to catch unexpected crashes early
+  console.log('✅ POST method received. Proceeding to read Stripe payload...');
 
   let event: Stripe.Event;
   try {
