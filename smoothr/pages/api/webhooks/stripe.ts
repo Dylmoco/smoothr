@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import Stripe from 'stripe';
-import supabase from '../../../../shared/supabase/serverClient';
+import type { NextApiRequest, NextApiResponse } from "next";
+import Stripe from "stripe";
+import supabase from "../../../../shared/supabase/serverClient";
 
 // Debug log to confirm route hit
-console.log('🔔 Stripe webhook hit');
+console.log("🔔 Stripe webhook hit");
 
 export const config = {
   api: {
@@ -11,80 +11,82 @@ export const config = {
   },
 };
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
+const stripeSecret = process.env.STRIPE_SECRET_KEY || "";
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+const stripe = new Stripe(stripeSecret, { apiVersion: "2022-11-15" });
 
 async function readBuffer(readable: NodeJS.ReadableStream) {
   const chunks: Buffer[] = [];
   for await (const chunk of readable) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
   return Buffer.concat(chunks);
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('📩 Request method:', req.method);
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  console.log("📩 Request method:", req.method);
 
-  if (req.method !== 'POST') {
-    console.error('⛔️ Invalid method');
-    res.status(405).end('Method not allowed');
+  if (req.method !== "POST") {
+    console.error("⛔️ Invalid method");
+    res.status(405).end("Method not allowed");
     return;
   }
 
   // Add one more log here to catch unexpected crashes early
-  console.log('✅ POST method received. Proceeding to read Stripe payload...');
+  console.log("✅ POST method received. Proceeding to read Stripe payload...");
 
   let event: Stripe.Event;
   try {
     const buf = await readBuffer(req);
-    const signature = req.headers['stripe-signature'] || '';
+    const signature = req.headers["stripe-signature"] || "";
 
-    console.log('🧾 Raw buffer length:', buf.length);
-    console.log('📫 Stripe signature header:', signature);
+    console.log("🧾 Raw buffer length:", buf.length);
+    console.log("📫 Stripe signature header:", signature);
 
     event = stripe.webhooks.constructEvent(
       buf,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET || ''
+      process.env.STRIPE_WEBHOOK_SECRET || "",
     );
-    console.log('✅ Stripe event constructed:', event.type);
+    console.log("✅ Stripe event constructed:", event.type);
   } catch (err: any) {
-    console.error(
-      '❌ Stripe webhook verification failed:',
-      err.message || err
-    );
-    res.status(400).send(`Webhook Error: ${err.message || 'Invalid payload'}`);
+    console.error("❌ Stripe webhook verification failed. Full error:", err);
+    res
+      .status(400)
+      .json({ error: err.message || "Unknown verification failure" });
     return;
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Stripe webhook event:', event.type);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Stripe webhook event:", event.type);
   }
 
-  if (event.type === 'payment_intent.succeeded') {
+  if (event.type === "payment_intent.succeeded") {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     const id = paymentIntent.id;
     try {
       const { data, error } = await supabase
-        .from('orders')
-        .update({ status: 'paid', paid_at: new Date().toISOString() })
-        .eq('payment_intent_id', id)
-        .select('id');
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Webhook Supabase Update Result:', { id, data, error });
+        .from("orders")
+        .update({ status: "paid", paid_at: new Date().toISOString() })
+        .eq("payment_intent_id", id)
+        .select("id");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Webhook Supabase Update Result:", { id, data, error });
       }
       if (error) throw error;
       if (!data || data.length === 0) {
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== "production") {
           console.warn(`Order not found for payment_intent ${id}`);
         }
       }
     } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Supabase update error:', err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Supabase update error:", err);
       }
-      res.status(400).send('Webhook processing error');
+      res.status(400).send("Webhook processing error");
       return;
     }
   }
