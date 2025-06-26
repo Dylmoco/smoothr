@@ -39,11 +39,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const buf = await readBuffer(req);
     const signature = req.headers['stripe-signature'] || '';
-    event = stripe.webhooks.constructEvent(buf, signature, webhookSecret);
+
+    console.log('🧾 Raw buffer length:', buf.length);
+    console.log('📫 Stripe signature header:', signature);
+
+    event = stripe.webhooks.constructEvent(
+      buf,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET || ''
+    );
+    console.log('✅ Stripe event constructed:', event.type);
   } catch (err: any) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('Stripe webhook error', err);
-    }
+    console.error(
+      '❌ Stripe webhook verification failed:',
+      err.message || err
+    );
     res.status(400).send(`Webhook Error: ${err.message || 'Invalid payload'}`);
     return;
   }
