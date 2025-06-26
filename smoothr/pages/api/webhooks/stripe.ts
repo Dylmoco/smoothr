@@ -6,7 +6,7 @@ export const config = { api: { bodyParser: false } };
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-const stripe = new Stripe(stripeSecret, { apiVersion: '2024-04-10' });
+const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
 async function readBuffer(readable: NodeJS.ReadableStream) {
   const chunks: Buffer[] = [];
