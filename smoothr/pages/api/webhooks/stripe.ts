@@ -73,6 +73,7 @@ export default async function handler(
         .update({ status: "paid", paid_at: new Date().toISOString() })
         .eq("payment_intent_id", id)
         .select("id");
+      console.log('🧮 Supabase update result:', { id, data, error });
       if (process.env.NODE_ENV !== "production") {
         console.log("Webhook Supabase Update Result:", { id, data, error });
       }
