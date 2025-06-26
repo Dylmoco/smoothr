@@ -52,6 +52,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .update({ status: 'paid', paid_at: new Date().toISOString() })
         .eq('payment_intent_id', id)
         .select('id');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Webhook Supabase Update Result:', { id, data, error });
+      }
       if (error) throw error;
       if (!data || data.length === 0) {
         if (process.env.NODE_ENV !== 'production') {
