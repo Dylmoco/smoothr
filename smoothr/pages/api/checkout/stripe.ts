@@ -6,7 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // `payment_gateways` table to track purchases and gateway configs.
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
-const stripe = new Stripe(stripeSecret, { apiVersion: '2024-04-10' });
+const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
