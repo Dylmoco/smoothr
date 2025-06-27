@@ -6,13 +6,16 @@ export async function initCheckout() {
   if (!block) return;
 
   const productId = block.dataset.smoothrProductId;
-  const emailField = block.querySelector('[data-smoothr-email]');
-  const totalEl = block.querySelector('[data-smoothr-total]');
+  const emailField = document.querySelector('[data-smoothr-email]');
+  const amountEl = document.querySelector('[data-smoothr-total], [data-smoothr-price]');
   const paymentContainer = block.querySelector('[data-smoothr-gateway]');
   const submitBtn = block.querySelector('[data-smoothr-submit]');
 
-  const total = parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
-  const email = emailField?.value?.trim() || '';
+  const amountAttr =
+    amountEl?.getAttribute('data-smoothr-total') ||
+    amountEl?.getAttribute('data-smoothr-price');
+  const total = parseInt(amountAttr || '', 10);
+  const email = emailField?.getAttribute('data-smoothr-email')?.trim() || '';
 
   if (!email) {
     console.warn('⚠️ Missing email; aborting checkout init');

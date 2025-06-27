@@ -6,7 +6,7 @@ export async function initCheckout() {
   if (!block) return;
 
   const productId = block.dataset.smoothrProductId;
-  const emailField = block.querySelector('[data-smoothr-email]');
+  const emailField = document.querySelector('[data-smoothr-email]');
   const amountEl = document.querySelector('[data-smoothr-total], [data-smoothr-price]');
   const paymentContainer = block.querySelector('[data-smoothr-gateway]');
   const submitBtn = block.querySelector('[data-smoothr-submit]');
