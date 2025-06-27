@@ -5,10 +5,24 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // Reminder: ensure your Supabase project has an `orders` table and
 // `payment_gateways` table to track purchases and gateway configs.
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+} as const;
+
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200, CORS_HEADERS);
+    res.end();
+    return;
+  }
+
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
