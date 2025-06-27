@@ -33,7 +33,11 @@ export function initCheckout() {
 
       const elements = stripe.elements({ clientSecret: client_secret });
       const paymentElement = elements.create('payment');
-      paymentElement.mount(paymentContainer);
+      if (paymentContainer) {
+        paymentElement.mount(paymentContainer);
+      } else {
+        console.warn('Payment container not found, skipping mount');
+      }
 
       const { error } = await stripe.confirmPayment({
         elements,
