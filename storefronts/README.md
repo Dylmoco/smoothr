@@ -79,7 +79,7 @@ To allow shoppers to pick a currency, pair the `setSelectedCurrency` helper with
 a dropdown and mark prices using `data-smoothr-price`:
 
 ```html
-<span data-smoothr-price="10"></span>
+<span data-smoothr-price="{{ price }}"></span>
 <select id="currency-picker">
   <option value="USD">USD</option>
   <option value="EUR">EUR</option>

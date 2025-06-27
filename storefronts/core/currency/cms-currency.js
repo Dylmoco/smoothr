@@ -1,6 +1,6 @@
 import { convertPrice, formatPrice, baseCurrency } from './index.js';
 
-const PRICE_SELECTOR = '[data-smoothr-price], [data-smoothr="price"]';
+const PRICE_SELECTOR = '[data-smoothr-price]';
 
 function parsePriceText(text) {
   return parseFloat(text.replace(/[£$€]/g, '').replace(/[\,\s]/g, ''));

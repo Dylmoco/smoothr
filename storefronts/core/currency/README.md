@@ -32,13 +32,10 @@ before loading the bundle:
 
 The Webflow adapter exports `setSelectedCurrency` which updates displayed prices
 and persists the choice in `localStorage`. Pair it with a select element and add
-`data-smoothr-price` (or `data-smoothr="price"`) to any elements containing raw
-amounts.
+`data-smoothr-price` to any elements containing raw amounts.
 
 ```html
-<span data-smoothr-price="25"></span>
-<!-- Or -->
-<span data-smoothr="price">25</span>
+<span data-smoothr-price="{{ price }}"></span>
 <select id="currency">
   <option value="USD">USD</option>
   <option value="EUR">EUR</option>
