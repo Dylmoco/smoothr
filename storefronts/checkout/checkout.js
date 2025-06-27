@@ -21,7 +21,8 @@ export function initCheckout() {
     submitBtn.disabled = true;
     const email = emailField?.value || '';
     try {
-      const res = await fetch('/api/checkout/stripe', {
+      const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
+      const res = await fetch(`${apiBase}/api/checkout/stripe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: total, email, product_id: productId })
