@@ -52,6 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       receipt_email: email,
       automatic_payment_methods: { enabled: true }
     });
+    console.log('✅ Stripe PaymentIntent created:', intent.id);
 
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -68,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json({ client_secret: intent.client_secret });
   } catch (err: any) {
-    console.error('❌ Stripe handler error:', err);
-    res.status(500).json({ error: err.message || String(err) });
+    console.error('❌ Stripe creation error:', err);
+    return res.status(500).json({ error: err.message || String(err) });
   }
 }
