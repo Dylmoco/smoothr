@@ -43,9 +43,10 @@ export async function initCheckout() {
     submitBtn?.addEventListener('click', async () => {
       submitBtn.disabled = true;
       console.log('🚀 submit triggered');
-      const email = emailField?.value || '';
       try {
         await elements.submit();
+        console.log('🧱 elements.submit() called before confirmPayment');
+        const email = emailField?.value || '';
         const { error } = await stripe.confirmPayment({
           elements,
           clientSecret: client_secret,
