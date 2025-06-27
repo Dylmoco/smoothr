@@ -101,9 +101,10 @@ persisted in `localStorage`.
 
 The SDK is built and deployed automatically whenever code is pushed to the
 `main` branch. The GitHub Actions workflow installs dependencies with `npm ci`,
-runs the test suite, builds the bundle, performs the postbuild check and then
-deploys `dist` to Cloudflare Pages. The deployed commit and timestamp are
-recorded in the repository's `DEPLOY_LOG.md` file.
+runs the test suite, builds the bundle, copies the checkout script into
+`dist`, performs the postbuild check and then deploys `dist` to Cloudflare Pages.
+The deployed commit and timestamp are recorded in the repository's `DEPLOY_LOG.md`
+file.
 
 Configure the workflow secrets under **Settings → Secrets and variables →
 Actions** in GitHub:
