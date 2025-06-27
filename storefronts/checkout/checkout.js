@@ -14,10 +14,11 @@ export async function initCheckout() {
   const total = parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
 
   // TODO: Support multiple gateways besides Stripe
-  const stripePk = window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+  const stripePk = window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
   const stripe = Stripe(stripePk);
 
   const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
+  console.log('🌐 creating PaymentIntent via', `${apiBase}/api/checkout/stripe`);
   const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,36 +39,37 @@ export async function initCheckout() {
   if (paymentContainer) {
     paymentElement.mount(paymentContainer);
     console.log('✅ Stripe Elements mounted');
+
+    submitBtn?.addEventListener('click', async () => {
+      submitBtn.disabled = true;
+      console.log('🚀 submit triggered');
+      const email = emailField?.value || '';
+      try {
+        await elements.submit();
+        const { error } = await stripe.confirmPayment({
+          elements,
+          clientSecret: client_secret,
+          confirmParams: {
+            return_url: `${window.location.origin}/checkout-success`
+          }
+        });
+
+        if (error) {
+          console.error(error);
+        } else {
+          block.innerHTML = '<p>Payment successful!</p>';
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        submitBtn.disabled = false;
+        console.log('✅ submit handler complete');
+      }
+    });
+    console.log('🖱️ Submit handler attached');
   } else {
     console.error('❌ Cannot mount Stripe: [data-smoothr-gateway] not found.');
   }
-
-  submitBtn?.addEventListener('click', async () => {
-    submitBtn.disabled = true;
-    console.log('🚀 submit triggered');
-    const email = emailField?.value || '';
-    try {
-      await elements.submit();
-      const { error } = await stripe.confirmPayment({
-        elements,
-        clientSecret: client_secret,
-        confirmParams: {
-          return_url: `${window.location.origin}/checkout-success`
-        }
-      });
-
-      if (error) {
-        console.error(error);
-      } else {
-        block.innerHTML = '<p>Payment successful!</p>';
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      submitBtn.disabled = false;
-      console.log('✅ submit handler complete');
-    }
-  });
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);
