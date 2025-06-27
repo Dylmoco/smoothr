@@ -7,12 +7,17 @@ export async function initCheckout() {
 
   const productId = block.dataset.smoothrProductId;
   const emailField = block.querySelector('[data-smoothr-email]');
-  const totalEl = block.querySelector('[data-smoothr-total]');
+  const amountEl = document.querySelector('[data-smoothr-total], [data-smoothr-price]');
   const paymentContainer = block.querySelector('[data-smoothr-gateway]');
   const submitBtn = block.querySelector('[data-smoothr-submit]');
 
-  const total = parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
-  const email = emailField?.value?.trim() || '';
+  const email = emailField?.getAttribute('data-smoothr-email')?.trim() || '';
+  const total = parseInt(
+    amountEl?.getAttribute('data-smoothr-total') ||
+      amountEl?.getAttribute('data-smoothr-price') ||
+      '',
+    10
+  );
 
   if (!email) {
     console.warn('⚠️ Missing email; aborting checkout init');
@@ -24,8 +29,8 @@ export async function initCheckout() {
     return;
   }
 
-  // TODO: Support multiple gateways besides Stripe
-  const stripePk = window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+  const stripePk =
+    window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
   const stripe = Stripe(stripePk);
 
   const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
