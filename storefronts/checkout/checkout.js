@@ -33,10 +33,13 @@ export function initCheckout() {
 
       const elements = stripe.elements({ clientSecret: client_secret });
       const paymentElement = elements.create('payment');
+      console.log('🧱 Mounting Stripe Elements...');
+      console.log('📦 Mount target:', paymentContainer);
       if (paymentContainer) {
         paymentElement.mount(paymentContainer);
+        console.log('✅ Stripe Elements mounted.');
       } else {
-        console.warn('Payment container not found, skipping mount');
+        console.error('❌ Cannot mount Stripe: [data-smoothr-gateway] not found.');
       }
 
       const { error } = await stripe.confirmPayment({
