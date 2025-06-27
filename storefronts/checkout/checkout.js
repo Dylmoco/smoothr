@@ -16,9 +16,6 @@ export function initCheckout() {
   // TODO: Support multiple gateways besides Stripe
   const stripePk = window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
   const stripe = Stripe(stripePk);
-  const elements = stripe.elements();
-  const paymentElement = elements.create('payment');
-  paymentElement.mount(paymentContainer);
 
   submitBtn?.addEventListener('click', async () => {
     submitBtn.disabled = true;
@@ -29,14 +26,20 @@ export function initCheckout() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: total, email, product_id: productId })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Payment failed');
-      const { client_secret } = data;
+
+      const { client_secret } = await res.json();
+      if (!res.ok || !client_secret) throw new Error('Missing client_secret');
+
+      const elements = stripe.elements({ clientSecret: client_secret });
+      const paymentElement = elements.create('payment');
+      paymentElement.mount(paymentContainer);
+
       const { error } = await stripe.confirmPayment({
         elements,
         clientSecret: client_secret,
         confirmParams: { receipt_email: email }
       });
+
       if (error) {
         console.error(error);
       } else {
