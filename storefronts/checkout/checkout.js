@@ -42,7 +42,9 @@ export function initCheckout() {
       const { error } = await stripe.confirmPayment({
         elements,
         clientSecret: client_secret,
-        confirmParams: { receipt_email: email }
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout-success`
+        }
       });
 
       if (error) {
