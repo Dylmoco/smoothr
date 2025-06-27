@@ -1,5 +1,7 @@
 import { convertPrice, formatPrice, baseCurrency } from '../core/currency/index.js';
 
+const PRICE_ATTR_SELECTOR = '[data-smoothr-price], [data-smoothr="price"]';
+
 const PRICE_SELECTORS = [
   '.w-commerce-commerceproductprice',
   '.w-commerce-commercecartitemprice',
@@ -28,7 +30,13 @@ export function setSelectedCurrency(currency) {
 }
 
 function formatElement(el) {
-  const amt = parseFloat(el.getAttribute('data-smoothr-price'));
+  let amt = parseFloat(el.getAttribute('data-smoothr-price'));
+  if (isNaN(amt)) {
+    amt = parsePriceText(el.textContent || '');
+    if (!isNaN(amt)) {
+      el.setAttribute('data-smoothr-price', amt);
+    }
+  }
   if (isNaN(amt)) return;
   const currency = getSelectedCurrency();
   const converted = convertPrice(amt, currency, baseCurrency);
@@ -38,12 +46,14 @@ function formatElement(el) {
 function bindPriceElements(root = document) {
   const els = [];
   if (root.matches) {
-    if (PRICE_SELECTORS.some(sel => root.matches(sel))) {
+    if (PRICE_SELECTORS.some(sel => root.matches(sel)) || root.matches(PRICE_ATTR_SELECTOR)) {
       els.push(root);
     }
   }
   if (root.querySelectorAll) {
-    root.querySelectorAll(PRICE_SELECTORS.join(',')).forEach(el => els.push(el));
+    root
+      .querySelectorAll([...PRICE_SELECTORS, PRICE_ATTR_SELECTOR].join(','))
+      .forEach(el => els.push(el));
   }
   els.forEach(el => {
     if (!el.hasAttribute('data-smoothr-price')) {
@@ -61,7 +71,7 @@ function bindPriceElements(root = document) {
 
 function replacePrices(root = document) {
   bindPriceElements(root);
-  root.querySelectorAll('[data-smoothr-price]').forEach(formatElement);
+  root.querySelectorAll(PRICE_ATTR_SELECTOR).forEach(formatElement);
 }
 
 function bindCurrencyButtons(root = document) {
@@ -90,7 +100,7 @@ export function initWebflowEcomCurrency() {
             m.addedNodes.forEach(node => {
               if (node.nodeType !== 1) return;
               bindPriceElements(node);
-              if (node.matches && node.matches('[data-smoothr-price]')) {
+              if (node.matches && node.matches(PRICE_ATTR_SELECTOR)) {
                 formatElement(node);
               }
               if (node.matches && node.id?.startsWith('currency-')) {
@@ -98,7 +108,7 @@ export function initWebflowEcomCurrency() {
               }
               if (node.querySelectorAll) {
                 node
-                  .querySelectorAll('[data-smoothr-price]')
+                  .querySelectorAll(PRICE_ATTR_SELECTOR)
                   .forEach(formatElement);
                 node
                   .querySelectorAll('[id^="currency-"]')
