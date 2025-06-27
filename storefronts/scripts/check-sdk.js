@@ -5,16 +5,20 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const filePath = join(__dirname, '..', 'dist', 'smoothr-sdk.js');
+const sdkPath = join(__dirname, '..', 'dist', 'smoothr-sdk.js');
+const checkoutPath = join(__dirname, '..', 'dist', 'checkout.js');
 
 try {
-  await access(filePath, constants.F_OK);
+  await access(sdkPath, constants.F_OK);
+  await access(checkoutPath, constants.F_OK);
 } catch {
-  console.error(`File not found: ${filePath}`);
+  console.error(
+    `File not found: ${sdkPath} or ${checkoutPath}`
+  );
   process.exit(1);
 }
 
-const content = await readFile(filePath, 'utf8');
+const content = await readFile(sdkPath, 'utf8');
 const missing = [];
 if (!content.includes('fetchOrderHistory')) missing.push('fetchOrderHistory');
 if (!content.includes('renderOrders')) missing.push('renderOrders');

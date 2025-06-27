@@ -1,20 +1,20 @@
 {
-    "name": "storefronts",
-    "version": "1.0.0",
-    "type": "module",
-    "scripts": {
-        "build": "vite build",
-        "postbuild": "node scripts/check-sdk.js",
-        "dev": "vite",
-        "pretest": "npm install",
-        "test": "vitest run"
-    },
-    "dependencies": {
-        "@supabase/supabase-js": "^2.50.0"
-    },
-    "devDependencies": {
-        "happy-dom": "^18.0.1",
-        "vite": "^5.4.19",
-        "vitest": "^1.5.0"
-    }
+  "name": "storefronts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "postbuild": "node scripts/copy-checkout.js && node scripts/check-sdk.js",
+    "dev": "vite",
+    "pretest": "npm install",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0"
+  },
+  "devDependencies": {
+    "happy-dom": "^18.0.1",
+    "vite": "^5.4.19",
+    "vitest": "^1.5.0"
+  }
 }
