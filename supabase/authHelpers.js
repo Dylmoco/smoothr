@@ -103,6 +103,7 @@ export function showSuccess(form, msg, trigger) {
 }
 
 export function normalizeDomain(hostname) {
+  hostname = hostname || '';
   return hostname.replace(/^www\./, '').toLowerCase();
 }
 

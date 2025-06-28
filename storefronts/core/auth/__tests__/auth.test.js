@@ -6,4 +6,8 @@ describe('auth utils', () => {
     expect(normalizeDomain('www.Example.COM')).toBe('example.com');
     expect(normalizeDomain('Sub.Domain.com')).toBe('sub.domain.com');
   });
+
+  it('handles undefined hostname', () => {
+    expect(normalizeDomain(undefined)).toBe('');
+  });
 });
