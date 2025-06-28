@@ -12,6 +12,7 @@ import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
 import * as auth from './auth/index.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
+import { initCartBindings } from '../platforms/webflow/addToCart.js';
 
 // Default endpoint for retrieving live exchange rates via Supabase proxy.
 const DEFAULT_RATE_SOURCE =
@@ -87,6 +88,11 @@ if (typeof window !== 'undefined') {
   }
   window.Smoothr = Smoothr;
   window.smoothr = window.smoothr || Smoothr;
+  window.initCartBindings = initCartBindings;
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM ready – calling initCartBindings');
+    initCartBindings();
+  });
   Promise.resolve(auth.initAuth()).then(() => {
     if (window.smoothr?.auth?.user) {
       orders.renderOrders();
