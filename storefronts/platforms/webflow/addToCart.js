@@ -24,8 +24,8 @@ export function initCartBindings() {
     btn.__smoothrBound = true;
 
     btn.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
       console.log('🛒 Add to cart clicked:', btn);
       try {
         const rawPrice = btn.getAttribute('data-product-price') || '0';

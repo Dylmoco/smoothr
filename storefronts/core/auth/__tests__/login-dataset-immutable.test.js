@@ -10,7 +10,13 @@ vi.mock('@supabase/supabase-js', () => {
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   createClientMock = vi.fn(() => ({
     auth: { getUser: getUserMock, signInWithPassword: signInMock, signOut: vi.fn() },
-    from: vi.fn(() => ({ select: vi.fn().mockResolvedValue({ data: null, error: null }) }))
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }))
+    }))
   }));
   return { createClient: createClientMock };
 });
@@ -27,6 +33,7 @@ describe('login with immutable dataset', () => {
   let submitHandler;
   let emailValue;
   let passwordValue;
+  let btn;
 
   beforeEach(() => {
     clickHandler = undefined;
@@ -47,7 +54,7 @@ describe('login with immutable dataset', () => {
     };
     Object.freeze(form.dataset);
 
-    const btn = {
+    btn = {
       closest: vi.fn(() => form),
       dataset: { smoothr: 'login' },
       getAttribute: attr => (attr === 'data-smoothr' ? 'login' : null),
@@ -66,8 +73,8 @@ describe('login with immutable dataset', () => {
     global.document = {
       addEventListener: vi.fn((evt, cb) => { if (evt === 'DOMContentLoaded') cb(); }),
       querySelectorAll: vi.fn(sel => {
-        if (sel === '[data-smoothr="login"]') return [btn];
-        if (sel === 'form[data-smoothr="login-form"]') return [form];
+        if (sel.includes('[data-smoothr="login"]')) return [btn];
+        if (sel.includes('form[data-smoothr="login-form"]')) return [form];
         return [];
       }),
       dispatchEvent: vi.fn()

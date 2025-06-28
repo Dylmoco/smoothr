@@ -60,9 +60,10 @@ describe('webflow add-to-cart binding', () => {
     expect(addItemMock).toHaveBeenCalledWith({
       product_id: '1',
       name: 'Test',
-      price: 100,
+      price: 10000,
       options: { size: 'L' },
-      subscription: true
+      isSubscription: true,
+      quantity: 1
     });
     expect(global.window.dispatchEvent).toHaveBeenCalled();
   });

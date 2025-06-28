@@ -24,7 +24,13 @@ vi.mock('@supabase/supabase-js', () => {
       signUp: signUpMock,
       resetPasswordForEmail: resetPasswordMock
     },
-    from: vi.fn(() => ({ select: vi.fn().mockResolvedValue({ data: null, error: null }) }))
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }))
+    }))
   }));
   return { createClient: createClientMock };
 });

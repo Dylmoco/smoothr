@@ -7,6 +7,12 @@ beforeEach(() => {
   global.fetch = vi.fn(() =>
     Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: { USD: 1 } }) })
   );
+  let store = null;
+  global.localStorage = {
+    getItem: vi.fn(() => store),
+    setItem: vi.fn((k, v) => { store = v; }),
+    removeItem: vi.fn(() => { store = null; })
+  };
 });
 
 describe('fetchExchangeRates auth header', () => {

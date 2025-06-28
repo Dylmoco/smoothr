@@ -14,7 +14,13 @@ vi.mock('@supabase/supabase-js', () => {
       signOut: vi.fn(),
       signInWithOAuth: signInWithOAuthMock
     },
-    from: vi.fn(() => ({ select: vi.fn().mockResolvedValue({ data: null, error: null }) }))
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }))
+    }))
   }));
   return { createClient: createClientMock };
 });
@@ -45,13 +51,14 @@ describe('google login button', () => {
         if (evt === 'DOMContentLoaded') cb();
       }),
       querySelectorAll: vi.fn(selector => {
-        if (selector === '[data-smoothr="login-google"]') {
+        if (selector.includes('[data-smoothr="login-google"]')) {
           const btn = {
             dataset: { smoothr: 'login-google' },
             getAttribute: attr => (attr === 'data-smoothr' ? 'login-google' : null),
             addEventListener: vi.fn((ev, cb) => {
               if (ev === 'click') clickHandler = cb;
-            })
+            }),
+            closest: vi.fn(() => null)
           };
           return [btn];
         }

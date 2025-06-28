@@ -1,13 +1,19 @@
 import supabase from './supabaseClient.js';
 
-export const DEFAULT_SUPABASE_OAUTH_REDIRECT_URL =
-  (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
-    __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
-  (typeof window !== 'undefined' ? window.location.origin : '');
-export const DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL =
-  (typeof __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__ !== 'undefined' &&
-    __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__) ||
-  (typeof window !== 'undefined' ? window.location.origin : '');
+export function getOAuthRedirectUrl() {
+  return (
+    (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
+      __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__) ||
+    (typeof window !== 'undefined' ? window.location.origin : '')
+  );
+}
+export function getPasswordResetRedirectUrl() {
+  return (
+    (typeof __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__ !== 'undefined' &&
+      __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__) ||
+    (typeof window !== 'undefined' ? window.location.origin : '')
+  );
+}
 
 export function isValidEmail(email) {
   return /^\S+@\S+\.\S+$/.test(email);
@@ -143,10 +149,16 @@ export function initAuth() {
         );
       }
 
-      const oauthFlag = localStorage.getItem('smoothr_oauth');
+      const storage =
+        typeof localStorage !== 'undefined'
+          ? localStorage
+          : typeof globalThis !== 'undefined'
+            ? globalThis.localStorage
+            : undefined;
+      const oauthFlag = storage?.getItem?.('smoothr_oauth');
       if (oauthFlag && user) {
         document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
-        localStorage.removeItem('smoothr_oauth');
+        storage?.removeItem?.('smoothr_oauth');
         const url = await lookupRedirectUrl('login');
         window.location.href = url;
       }
@@ -155,8 +167,10 @@ export function initAuth() {
   document.addEventListener('DOMContentLoaded', () => {
     bindAuthElements();
     bindLogoutButtons();
-    const observer = new MutationObserver(() => bindAuthElements());
-    observer.observe(document.body, { childList: true, subtree: true });
+    if (typeof MutationObserver !== 'undefined') {
+      const observer = new MutationObserver(() => bindAuthElements());
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
   });
   return p;
 }
@@ -168,7 +182,7 @@ export async function signInWithGoogle() {
   }
   await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: DEFAULT_SUPABASE_OAUTH_REDIRECT_URL }
+    options: { redirectTo: getOAuthRedirectUrl() }
   });
 }
 
@@ -183,7 +197,7 @@ export async function signUp(email, password) {
 
 export async function requestPasswordReset(email) {
   return await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: DEFAULT_SUPABASE_PASSWORD_RESET_REDIRECT_URL
+    redirectTo: getPasswordResetRedirectUrl()
   });
 }
 
@@ -199,10 +213,12 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
       .querySelectorAll('form[data-smoothr="password-reset-confirm"]')
       .forEach(form => {
         const passwordInput = form.querySelector('[data-smoothr-input="password"]');
-        passwordInput?.addEventListener('input', () => {
-          updateStrengthMeter(form, passwordInput.value);
-        });
-        form.addEventListener('submit', async evt => {
+        if (passwordInput && passwordInput.addEventListener) {
+          passwordInput.addEventListener('input', () => {
+            updateStrengthMeter(form, passwordInput.value);
+          });
+        }
+        form.addEventListener && form.addEventListener('submit', async evt => {
           evt.preventDefault();
           const confirmInput = form.querySelector('[data-smoothr-input="password-confirm"]');
           const password = passwordInput?.value || '';
