@@ -11,49 +11,56 @@ export async function initCheckout() {
   const paymentContainer = block.querySelector('[data-smoothr-gateway]');
   const submitBtn = block.querySelector('[data-smoothr-submit]');
 
-  const total = parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
-  const email = emailField?.value?.trim() || '';
-
-  if (!email) {
-    console.warn('⚠️ Missing email; aborting checkout init');
-    return;
-  }
-
-  if (!total) {
-    console.warn('⚠️ Missing amount; aborting checkout init');
-    return;
-  }
-
   // TODO: Support multiple gateways besides Stripe
-  const stripePk = window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+  const stripePk =
+    window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
   const stripe = Stripe(stripePk);
 
-  const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
-  console.log('🌐 creating PaymentIntent via', `${apiBase}/api/checkout/stripe`);
-  const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: total, product_id: productId, email })
-  });
+  submitBtn?.addEventListener('click', async () => {
+    submitBtn.disabled = true;
+    console.log('🚀 submit triggered');
 
-  const { client_secret } = await initRes.json();
-  console.log('🔑 client_secret:', client_secret);
-  if (!initRes.ok || !client_secret) {
-    console.error('❌ Missing client_secret; aborting checkout init');
-    return;
-  }
+    const email =
+      emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
+    const total =
+      parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
 
-  const elements = stripe.elements({ clientSecret: client_secret });
-  const paymentElement = elements.create('payment');
-  console.log('🧱 Mounting Stripe Elements...');
-  console.log('📦 Mount target:', paymentContainer);
-  if (paymentContainer) {
-    paymentElement.mount(paymentContainer);
-    console.log('✅ Stripe Elements mounted');
+    if (!email) {
+      console.warn('⚠️ Missing email; aborting checkout');
+      submitBtn.disabled = false;
+      return;
+    }
 
-    submitBtn?.addEventListener('click', async () => {
-      submitBtn.disabled = true;
-      console.log('🚀 submit triggered');
+    if (!total) {
+      console.warn('⚠️ Missing amount; aborting checkout');
+      submitBtn.disabled = false;
+      return;
+    }
+
+    const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
+    console.log('🌐 creating PaymentIntent via', `${apiBase}/api/checkout/stripe`);
+    const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: total, product_id: productId, email })
+    });
+
+    const { client_secret } = await initRes.json();
+    console.log('🔑 client_secret:', client_secret);
+    if (!initRes.ok || !client_secret) {
+      console.error('❌ Missing client_secret; aborting checkout');
+      submitBtn.disabled = false;
+      return;
+    }
+
+    const elements = stripe.elements({ clientSecret: client_secret });
+    const paymentElement = elements.create('payment');
+    console.log('🧱 Mounting Stripe Elements...');
+    console.log('📦 Mount target:', paymentContainer);
+    if (paymentContainer) {
+      paymentElement.mount(paymentContainer);
+      console.log('✅ Stripe Elements mounted');
+
       try {
         await elements.submit();
         console.log('🧱 elements.submit() called before confirmPayment');
@@ -76,11 +83,12 @@ export async function initCheckout() {
         submitBtn.disabled = false;
         console.log('✅ submit handler complete');
       }
-    });
-    console.log('🖱️ Submit handler attached');
-  } else {
-    console.error('❌ Cannot mount Stripe: [data-smoothr-gateway] not found.');
-  }
+    } else {
+      console.error('❌ Cannot mount Stripe: [data-smoothr-gateway] not found.');
+      submitBtn.disabled = false;
+    }
+  });
+  console.log('🖱️ Submit handler attached');
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);
