@@ -56,11 +56,12 @@ export function renderCart() {
       });
 
       clone.querySelectorAll('[data-smoothr-price]').forEach(el => {
-        el.setAttribute('data-smoothr-price', item.price);
+        const displayPrice = item.price / 100;
+        el.setAttribute('data-smoothr-price', displayPrice);
         if (formatter) {
-          el.textContent = formatter(item.price);
+          el.textContent = formatter(displayPrice);
         } else {
-          el.textContent = String(item.price);
+          el.textContent = String(displayPrice);
         }
       });
 
