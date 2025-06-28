@@ -22,7 +22,13 @@ vi.mock('@supabase/supabase-js', () => {
       updateUser: updateUserMock,
       setSession: setSessionMock
     },
-    from: vi.fn(() => ({ select: vi.fn().mockResolvedValue({ data: null, error: null }) }))
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }))
+    }))
   }));
   return { createClient: createClientMock };
 });
@@ -44,6 +50,7 @@ describe('password reset request', () => {
     submitHandler = undefined;
     const form = {
       dataset: { smoothr: 'password-reset' },
+      tagName: 'FORM',
       getAttribute: attr => (attr === 'data-smoothr' ? 'password-reset' : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'submit') submitHandler = cb;
@@ -59,7 +66,7 @@ describe('password reset request', () => {
         if (evt === 'DOMContentLoaded') cb();
       }),
       querySelectorAll: vi.fn(sel =>
-        sel === 'form[data-smoothr="password-reset"]' ? [form] : []
+        sel.includes('[data-smoothr="password-reset"]') ? [form] : []
       )
     };
     global.window.alert = vi.fn();
@@ -100,6 +107,7 @@ describe('password reset confirmation', () => {
     const confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
     const form = {
       dataset: { smoothr: 'password-reset-confirm' },
+      tagName: 'FORM',
       getAttribute: attr => (attr === 'data-smoothr' ? 'password-reset-confirm' : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'submit') submitHandler = cb;
@@ -118,7 +126,7 @@ describe('password reset confirmation', () => {
         if (evt === 'DOMContentLoaded') cb();
       }),
       querySelectorAll: vi.fn(sel =>
-        sel === 'form[data-smoothr="password-reset-confirm"]' ? [form] : []
+        sel.includes('[data-smoothr="password-reset-confirm"]') ? [form] : []
       )
     };
     global.window.alert = vi.fn();

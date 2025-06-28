@@ -10,7 +10,13 @@ vi.mock('@supabase/supabase-js', () => {
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   createClientMock = vi.fn(() => ({
     auth: { getUser: getUserMock, signInWithPassword: signInMock, signOut: vi.fn() },
-    from: vi.fn(() => ({ select: vi.fn().mockResolvedValue({ data: null, error: null }) }))
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }))
+    }))
   }));
   return { createClient: createClientMock };
 });
@@ -59,10 +65,12 @@ describe('login form', () => {
 
     global.window = { location: { href: '' } };
     global.document = {
-      addEventListener: vi.fn((evt, cb) => { if (evt === 'DOMContentLoaded') cb(); }),
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === 'DOMContentLoaded') cb();
+      }),
       querySelectorAll: vi.fn(sel => {
-        if (sel === '[data-smoothr="login"]') return [btn];
-        if (sel === 'form[data-smoothr="login-form"]') return [form];
+        if (sel.includes('[data-smoothr="login"]')) return [btn];
+        if (sel.includes('form[data-smoothr="login-form"]')) return [form];
         return [];
       }),
       dispatchEvent: vi.fn()

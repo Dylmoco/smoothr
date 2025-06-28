@@ -33,9 +33,9 @@ function bindAuthElements(root = document) {
     const type = el.getAttribute('data-smoothr');
     const attach = handler => {
       if (el.tagName === 'FORM') {
-        el.addEventListener('submit', handler);
+        el.addEventListener && el.addEventListener('submit', handler);
       } else {
-        el.addEventListener('click', handler);
+        el.addEventListener && el.addEventListener('click', handler);
       }
     };
     const form = el.tagName === 'FORM' ? el : el.closest('form');
@@ -44,9 +44,10 @@ function bindAuthElements(root = document) {
       case 'login': {
         if (form && el !== form && !form.dataset?.smoothrBoundLoginSubmit) {
           safeSetDataset(form, 'smoothrBoundLoginSubmit', '1');
-          form.addEventListener('submit', evt => {
+          form.addEventListener && form.addEventListener('submit', evt => {
             evt.preventDefault();
-            el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+            el.dispatchEvent &&
+              el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
           });
         }
         attach(async evt => {
@@ -101,9 +102,11 @@ function bindAuthElements(root = document) {
       case 'signup': {
         if (form) {
           const passwordInput = form.querySelector('[data-smoothr-input="password"]');
-          passwordInput?.addEventListener('input', () => {
-            updateStrengthMeter(form, passwordInput.value);
-          });
+          if (passwordInput && passwordInput.addEventListener) {
+            passwordInput.addEventListener('input', () => {
+              updateStrengthMeter(form, passwordInput.value);
+            });
+          }
         }
         attach(async evt => {
           evt.preventDefault();

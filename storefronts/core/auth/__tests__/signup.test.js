@@ -10,7 +10,13 @@ vi.mock('@supabase/supabase-js', () => {
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   createClientMock = vi.fn(() => ({
     auth: { getUser: getUserMock, signUp: signUpMock, signOut: vi.fn(), signInWithOAuth: vi.fn() },
-    from: vi.fn(() => ({ select: vi.fn().mockResolvedValue({ data: null, error: null }) }))
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
+        }))
+      }))
+    }))
   }));
   return { createClient: createClientMock };
 });
@@ -36,6 +42,7 @@ describe('signup flow', () => {
     submitHandler = undefined;
     const form = {
       dataset: { smoothr: 'signup' },
+      tagName: 'FORM',
       getAttribute: attr => (attr === 'data-smoothr' ? 'signup' : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === 'submit') submitHandler = cb;
@@ -51,7 +58,7 @@ describe('signup flow', () => {
     global.window = { location: { href: '' } };
     global.document = {
       addEventListener: vi.fn((evt, cb) => { if (evt === 'DOMContentLoaded') cb(); }),
-      querySelectorAll: vi.fn(sel => sel === 'form[data-smoothr="signup"]' ? [form] : []),
+      querySelectorAll: vi.fn(sel => (sel.includes('[data-smoothr="signup"]') ? [form] : [])),
       dispatchEvent: vi.fn()
     };
   });
