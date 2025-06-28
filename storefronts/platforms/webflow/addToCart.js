@@ -7,7 +7,10 @@ export function initAddToCart() {
   }
   document.querySelectorAll('[data-smoothr-add]').forEach(btn => {
     if (btn.__smoothrBound) return;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🛒 Add to cart intercepted, product added');
       try {
         const id = btn.getAttribute('data-product-id') || '';
         const name = btn.getAttribute('data-product-name') || '';
