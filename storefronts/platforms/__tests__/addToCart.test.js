@@ -12,6 +12,7 @@ describe("webflow add-to-cart binding", () => {
   let btn;
   let events;
   let addItemMock;
+  let wrapper;
 
   beforeEach(() => {
     events = {};
@@ -34,6 +35,14 @@ describe("webflow add-to-cart binding", () => {
       }),
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "click") events.click = cb;
+      }),
+      closest: vi.fn(() => wrapper),
+    };
+    const img = { src: "img1.jpg" };
+    wrapper = {
+      querySelector: vi.fn((sel) => {
+        if (sel === ".product-image") return img;
+        return null;
       }),
     };
     addItemMock = vi.fn();
@@ -70,6 +79,7 @@ describe("webflow add-to-cart binding", () => {
       options: { size: "L" },
       isSubscription: true,
       quantity: 1,
+      image: "img1.jpg",
     });
     expect(global.window.dispatchEvent).toHaveBeenCalled();
   });
