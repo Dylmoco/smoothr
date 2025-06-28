@@ -6,8 +6,19 @@ export function initAddToCart() {
     return;
   }
 
-  const bindButtons = () => {
-    document.querySelectorAll('[data-smoothr-add]').forEach(btn => {
+  const initCartBindings = () => {
+    const buttons = document.querySelectorAll('[data-smoothr-add]');
+    console.log(
+      `smoothr:addToCart found ${buttons.length} [data-smoothr-add] elements`
+    );
+
+    if (buttons.length === 0) {
+      console.warn('smoothr:addToCart no buttons found; retrying...');
+      setTimeout(initCartBindings, 500);
+      return;
+    }
+
+    buttons.forEach(btn => {
       console.log('🔗 binding [data-smoothr-add] button', btn);
       if (btn.__smoothrBound) return;
       btn.__smoothrBound = true;
@@ -22,7 +33,8 @@ export function initAddToCart() {
           const product_id = btn.getAttribute('data-product-id');
           const name = btn.getAttribute('data-product-name');
           const options = btn.getAttribute('data-product-options');
-          const isSubscription = btn.getAttribute('data-product-subscription') === 'true';
+          const isSubscription =
+            btn.getAttribute('data-product-subscription') === 'true';
 
           if (!product_id || !name || isNaN(price)) {
             console.warn('🧨 Missing required cart attributes on:', btn);
@@ -45,9 +57,9 @@ export function initAddToCart() {
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindButtons);
+    document.addEventListener('DOMContentLoaded', initCartBindings);
   } else {
-    bindButtons();
+    initCartBindings();
   }
 }
 
