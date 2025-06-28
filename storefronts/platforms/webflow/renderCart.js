@@ -22,42 +22,71 @@ export function renderCart() {
   });
 
   document.querySelectorAll('[data-smoothr-cart]').forEach(container => {
-    container.innerHTML = '';
+    container.querySelectorAll('.cart-rendered').forEach(el => el.remove());
+
+    const template = container.querySelector('[data-smoothr-template]');
+    if (!template) {
+      if (debug)
+        console.warn('renderCart: no [data-smoothr-template] found', container);
+      return;
+    }
+
     cart.items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'smoothr-cart-item';
+      const clone = template.cloneNode(true);
+      clone.classList.add('cart-rendered');
 
-      const name = document.createElement('div');
-      name.textContent = item.name || '';
-      row.appendChild(name);
+      clone.querySelectorAll('[data-smoothr-name]').forEach(el => {
+        el.textContent = item.name || '';
+      });
 
-      if (item.options) {
-        const opts = document.createElement('div');
-        if (Array.isArray(item.options)) {
-          opts.textContent = item.options.join(', ');
-        } else if (typeof item.options === 'object') {
-          opts.textContent = Object.values(item.options).join(', ');
-        } else {
-          opts.textContent = item.options;
+      clone.querySelectorAll('[data-smoothr-options]').forEach(el => {
+        if (item.options) {
+          if (Array.isArray(item.options)) {
+            el.textContent = item.options.join(', ');
+          } else if (typeof item.options === 'object') {
+            el.textContent = Object.values(item.options).join(', ');
+          } else {
+            el.textContent = item.options;
+          }
         }
-        row.appendChild(opts);
-      }
+      });
 
-      const qty = document.createElement('div');
-      qty.textContent = String(item.quantity);
-      row.appendChild(qty);
+      clone.querySelectorAll('[data-smoothr-quantity]').forEach(el => {
+        el.textContent = String(item.quantity);
+      });
 
-      const sub = document.createElement('div');
-      const subtotal = item.price * item.quantity;
-      sub.textContent = formatter ? formatter(subtotal) : String(subtotal);
-      row.appendChild(sub);
+      clone.querySelectorAll('[data-smoothr-price]').forEach(el => {
+        el.setAttribute('data-smoothr-price', item.price);
+        if (formatter) {
+          el.textContent = formatter(item.price);
+        } else {
+          el.textContent = String(item.price);
+        }
+      });
 
-      const remove = document.createElement('button');
-      remove.setAttribute('data-smoothr-remove', item.product_id);
-      remove.textContent = 'Remove';
-      row.appendChild(remove);
+      clone.querySelectorAll('[data-smoothr-subtotal]').forEach(el => {
+        const subtotal = item.price * item.quantity;
+        el.setAttribute('data-smoothr-subtotal', subtotal);
+        el.textContent = formatter ? formatter(subtotal) : String(subtotal);
+      });
 
-      container.appendChild(row);
+      clone.querySelectorAll('[data-smoothr-image]').forEach(el => {
+        if (el.tagName === 'IMG') {
+          el.src = item.image || '';
+        } else {
+          el.style.backgroundImage = `url(${item.image || ''})`;
+        }
+      });
+
+      clone.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
+        btn.setAttribute('data-smoothr-remove', item.product_id);
+        if (!btn.__smoothrBound) {
+          btn.addEventListener('click', () => Smoothr.cart.removeItem(item.product_id));
+          btn.__smoothrBound = true;
+        }
+      });
+
+      template.parentNode.insertBefore(clone, template.nextSibling);
     });
   });
 
