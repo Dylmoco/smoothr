@@ -1,34 +1,38 @@
 // [Codex Fix] New test for immutable dataset
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 var signInMock;
 var getUserMock;
 var createClientMock;
 
-vi.mock('@supabase/supabase-js', () => {
+vi.mock("@supabase/supabase-js", () => {
   signInMock = vi.fn();
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   createClientMock = vi.fn(() => ({
-    auth: { getUser: getUserMock, signInWithPassword: signInMock, signOut: vi.fn() },
+    auth: {
+      getUser: getUserMock,
+      signInWithPassword: signInMock,
+      signOut: vi.fn(),
+    },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null })
-        }))
-      }))
-    }))
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+    })),
   }));
   return { createClient: createClientMock };
 });
 
-import * as auth from '../index.js';
-vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue('/redirect');
+import * as auth from "../index.js";
+vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
 
 function flushPromises() {
   return new Promise(setImmediate);
 }
 
-describe('login with immutable dataset', () => {
+describe("login with immutable dataset", () => {
   let clickHandler;
   let submitHandler;
   let emailValue;
@@ -37,52 +41,60 @@ describe('login with immutable dataset', () => {
 
   beforeEach(() => {
     clickHandler = undefined;
-    emailValue = 'user@example.com';
-    passwordValue = 'Password1';
+    emailValue = "user@example.com";
+    passwordValue = "Password1";
     submitHandler = undefined;
 
     const form = {
       dataset: {},
       addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'submit') submitHandler = cb;
+        if (ev === "submit") submitHandler = cb;
       }),
-      querySelector: vi.fn(sel => {
-        if (sel === '[data-smoothr-input="email"]') return { value: emailValue };
-        if (sel === '[data-smoothr-input="password"]') return { value: passwordValue };
+      querySelector: vi.fn((sel) => {
+        if (sel === '[data-smoothr-input="email"]')
+          return { value: emailValue };
+        if (sel === '[data-smoothr-input="password"]')
+          return { value: passwordValue };
         return null;
-      })
+      }),
     };
     Object.freeze(form.dataset);
 
     btn = {
       closest: vi.fn(() => form),
-      dataset: { smoothr: 'login' },
-      getAttribute: attr => (attr === 'data-smoothr' ? 'login' : null),
+      dataset: { smoothr: "login" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
       addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'click') clickHandler = cb;
+        if (ev === "click") clickHandler = cb;
       }),
-      textContent: 'Login'
+      textContent: "Login",
     };
     Object.freeze(btn.dataset);
 
     form.addEventListener.mockImplementation((ev, cb) => {
-      if (ev === 'submit') cb({ preventDefault: () => {} });
+      if (ev === "submit") cb({ preventDefault: () => {} });
     });
 
-    global.window = { location: { href: '' } };
+    global.window = {
+      location: { href: "" },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
     global.document = {
-      addEventListener: vi.fn((evt, cb) => { if (evt === 'DOMContentLoaded') cb(); }),
-      querySelectorAll: vi.fn(sel => {
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === "DOMContentLoaded") cb();
+      }),
+      querySelectorAll: vi.fn((sel) => {
         if (sel.includes('[data-smoothr="login"]')) return [btn];
         if (sel.includes('form[data-smoothr="login-form"]')) return [form];
         return [];
       }),
-      dispatchEvent: vi.fn()
+      dispatchEvent: vi.fn(),
     };
   });
 
-  it('logs in even when dataset is immutable', async () => {
-    signInMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+  it("logs in even when dataset is immutable", async () => {
+    signInMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
     auth.initAuth();
     await flushPromises();
 
