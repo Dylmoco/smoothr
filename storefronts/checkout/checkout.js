@@ -1,4 +1,5 @@
 export async function initCheckout() {
+  const debug = window.SMOOTHR_CONFIG?.debug;
   let block = document.querySelector('[data-smoothr-checkout]');
   if (!block) {
     block = document.querySelector('.smoothr-checkout');
@@ -18,7 +19,7 @@ export async function initCheckout() {
 
   submitBtn?.addEventListener('click', async () => {
     submitBtn.disabled = true;
-    console.log('🚀 submit triggered');
+    if (debug) console.log('🚀 submit triggered');
 
     const email =
       emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
@@ -38,7 +39,11 @@ export async function initCheckout() {
     }
 
     const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
-    console.log('🌐 creating PaymentIntent via', `${apiBase}/api/checkout/stripe`);
+    if (debug)
+      console.log(
+        '🌐 creating PaymentIntent via',
+        `${apiBase}/api/checkout/stripe`
+      );
     const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -46,7 +51,7 @@ export async function initCheckout() {
     });
 
     const { client_secret } = await initRes.json();
-    console.log('🔑 client_secret:', client_secret);
+    if (debug) console.log('🔑 client_secret:', client_secret);
     if (!initRes.ok || !client_secret) {
       console.error('❌ Missing client_secret; aborting checkout');
       submitBtn.disabled = false;
@@ -55,15 +60,15 @@ export async function initCheckout() {
 
     const elements = stripe.elements({ clientSecret: client_secret });
     const paymentElement = elements.create('payment');
-    console.log('🧱 Mounting Stripe Elements...');
-    console.log('📦 Mount target:', paymentContainer);
+    if (debug) console.log('🧱 Mounting Stripe Elements...');
+    if (debug) console.log('📦 Mount target:', paymentContainer);
     if (paymentContainer) {
       paymentElement.mount(paymentContainer);
-      console.log('✅ Stripe Elements mounted');
+      if (debug) console.log('✅ Stripe Elements mounted');
 
       try {
         await elements.submit();
-        console.log('🧱 elements.submit() called before confirmPayment');
+        if (debug) console.log('🧱 elements.submit() called before confirmPayment');
         const { error } = await stripe.confirmPayment({
           elements,
           clientSecret: client_secret,
@@ -81,14 +86,14 @@ export async function initCheckout() {
         console.error(err);
       } finally {
         submitBtn.disabled = false;
-        console.log('✅ submit handler complete');
+        if (debug) console.log('✅ submit handler complete');
       }
     } else {
       console.error('❌ Cannot mount Stripe: [data-smoothr-gateway] not found.');
       submitBtn.disabled = false;
     }
   });
-  console.log('🖱️ Submit handler attached');
+  if (debug) console.log('🖱️ Submit handler attached');
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);
