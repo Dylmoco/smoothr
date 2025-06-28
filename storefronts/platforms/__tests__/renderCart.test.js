@@ -32,10 +32,21 @@ beforeEach(() => {
   const subtotalEl = document.createElement('span');
   subtotalEl.setAttribute('data-smoothr-subtotal', '');
 
+  const imageEl = document.createElement('img');
+  imageEl.setAttribute('data-smoothr-image', '');
+
   const removeBtn = document.createElement('button');
   removeBtn.setAttribute('data-smoothr-remove', '');
 
-  template.append(nameEl, optionsEl, qtyEl, priceEl, subtotalEl, removeBtn);
+  template.append(
+    imageEl,
+    nameEl,
+    optionsEl,
+    qtyEl,
+    priceEl,
+    subtotalEl,
+    removeBtn
+  );
   container.appendChild(template);
   document.body.appendChild(container);
 
@@ -62,8 +73,7 @@ beforeEach(() => {
             name: 'Item Two',
             price: 50,
             quantity: 1,
-            options: { size: 'L' },
-            image: 'img2.jpg'
+            options: { size: 'L' }
           }
         ]
       }),
@@ -105,5 +115,23 @@ describe('renderCart', () => {
     const btn = container.querySelector('[data-smoothr-remove]');
     btn.click();
     expect(removeItemMock).toHaveBeenCalledWith('p1');
+  });
+
+  it('sets image src and alt when provided', async () => {
+    const renderCart = await loadRenderCart();
+    renderCart();
+    const clone = container.querySelector('.cart-rendered');
+    const img = clone.querySelector('[data-smoothr-image]');
+    expect(img.getAttribute('src')).toBe('img1.jpg');
+    expect(img.alt).toBe('Item One');
+  });
+
+  it('handles missing image gracefully', async () => {
+    const renderCart = await loadRenderCart();
+    renderCart();
+    const second = container.querySelectorAll('.cart-rendered')[1];
+    const img = second.querySelector('[data-smoothr-image]');
+    expect(img.getAttribute('src')).toBe('');
+    expect(img.alt).toBe('Item Two');
   });
 });

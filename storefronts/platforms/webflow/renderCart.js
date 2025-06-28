@@ -70,13 +70,15 @@ export function renderCart() {
         el.textContent = formatter ? formatter(subtotal) : String(subtotal);
       });
 
-      clone.querySelectorAll('[data-smoothr-image]').forEach(el => {
-        if (el.tagName === 'IMG') {
-          el.src = item.image || '';
+      const imageEl = clone.querySelector('[data-smoothr-image]');
+      if (imageEl) {
+        if (imageEl.tagName === 'IMG') {
+          imageEl.src = item.image || '';
+          imageEl.alt = item.name || '';
         } else {
-          el.style.backgroundImage = `url(${item.image || ''})`;
+          imageEl.style.backgroundImage = `url(${item.image || ''})`;
         }
-      });
+      }
 
       clone.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
         btn.setAttribute('data-smoothr-remove', item.product_id);
