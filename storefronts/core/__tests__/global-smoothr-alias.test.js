@@ -19,5 +19,6 @@ describe('global smoothr alias', () => {
     expect(global.window.Smoothr).toBe(core.default);
     expect(global.window.smoothr).toBe(core.default);
     expect(typeof global.window.smoothr.orders.renderOrders).toBe('function');
+    expect(typeof global.window.smoothr.cart.addItem).toBe('function');
   });
 });
