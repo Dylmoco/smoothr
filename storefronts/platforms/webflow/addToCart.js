@@ -1,3 +1,13 @@
+import * as cart from '../../core/cart.js';
+
+// Ensure the cart module is available on the global Smoothr object before any
+// DOM bindings are attached. This prevents addItem calls from failing when the
+// module isn't imported elsewhere.
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.cart = cart;
+}
+
 export function initCartBindings() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   if (debug) console.log('🧩 initCartBindings loaded and executing');
@@ -65,11 +75,10 @@ export function initCartBindings() {
 }
 
 export function initAddToCart() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCartBindings);
-  } else {
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM ready – calling initCartBindings');
     initCartBindings();
-  }
+  });
 }
 
 if (typeof window !== 'undefined') {
