@@ -64,7 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       product_id,
       amount,
       gateway: 'stripe',
-      status: 'pending'
+      status: 'pending',
+      payment_intent_id: intent.id
     });
 
     res.status(200).json({ client_secret: intent.client_secret });
