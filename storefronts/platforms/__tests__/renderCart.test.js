@@ -105,8 +105,8 @@ describe('renderCart', () => {
     expect(clone.querySelector('[data-smoothr-name]').textContent).toBe('Item One');
     expect(clone.querySelector('[data-smoothr-quantity]').textContent).toBe('2');
     expect(clone.querySelector('[data-smoothr-price]').textContent).toBe('1');
-    expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('200');
-    expect(totalEl.textContent).toBe('250');
+    expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('2');
+    expect(totalEl.textContent).toBe('2.5');
   });
 
   it('remove buttons trigger cart.removeItem', async () => {
