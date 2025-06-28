@@ -70,5 +70,5 @@ export function renderCart() {
 if (typeof window !== 'undefined') {
   document.addEventListener('DOMContentLoaded', renderCart);
   window.addEventListener('smoothr:cart:updated', renderCart);
-  window.renderCart = window.renderCart || renderCart;
+  window.renderCart = renderCart;
 }
