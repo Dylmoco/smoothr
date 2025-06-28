@@ -34,7 +34,9 @@ export function renderCart() {
 
     cart.items.forEach(item => {
       const clone = template.cloneNode(true);
-      clone.classList.add('cart-rendered');
+      clone.classList.add('cart-rendered', 'smoothr-cart-rendered');
+      clone.removeAttribute('data-smoothr-template');
+      clone.style.display = '';
 
       clone.querySelectorAll('[data-smoothr-name]').forEach(el => {
         el.textContent = item.name || '';
