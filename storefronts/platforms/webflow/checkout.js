@@ -22,12 +22,12 @@ export async function initCheckout() {
 
     const email =
       emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
-    const total = parseInt(
+    const rawAmount =
       amountEl?.getAttribute('data-smoothr-total') ||
-        amountEl?.getAttribute('data-smoothr-price') ||
-        '',
-      10
-    );
+      amountEl?.getAttribute('data-smoothr-price') ||
+      '';
+    const parsed = parseFloat(rawAmount);
+    const total = isNaN(parsed) ? 0 : Math.round(parsed * 100);
 
     if (!email) {
       console.warn('⚠️ Missing email; aborting checkout');
