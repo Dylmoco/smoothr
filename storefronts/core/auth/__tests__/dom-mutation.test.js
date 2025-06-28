@@ -1,6 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as auth from '../index.js';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import * as auth from "../index.js";
 
 var signInMock;
 var signUpMock;
@@ -9,7 +9,7 @@ var resetPasswordMock;
 var getUserMock;
 var createClientMock;
 
-vi.mock('@supabase/supabase-js', () => {
+vi.mock("@supabase/supabase-js", () => {
   signInMock = vi.fn();
   signUpMock = vi.fn();
   signInWithOAuthMock = vi.fn();
@@ -22,20 +22,20 @@ vi.mock('@supabase/supabase-js', () => {
       signInWithPassword: signInMock,
       signInWithOAuth: signInWithOAuthMock,
       signUp: signUpMock,
-      resetPasswordForEmail: resetPasswordMock
+      resetPasswordForEmail: resetPasswordMock,
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null })
-        }))
-      }))
-    }))
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+    })),
   }));
   return { createClient: createClientMock };
 });
 
-vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue('/redirect');
+vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -44,7 +44,7 @@ function flushPromises() {
 const ATTR_SELECTOR =
   '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
 
-describe('dynamic DOM bindings', () => {
+describe("dynamic DOM bindings", () => {
   let mutationCallback;
   let elements;
   let doc;
@@ -62,39 +62,43 @@ describe('dynamic DOM bindings', () => {
     };
     doc = {
       addEventListener: vi.fn((evt, cb) => {
-        if (evt === 'DOMContentLoaded') cb();
+        if (evt === "DOMContentLoaded") cb();
       }),
-      querySelectorAll: vi.fn(selector => {
+      querySelectorAll: vi.fn((selector) => {
         if (selector === ATTR_SELECTOR) return elements;
         if (selector === '[data-smoothr="logout"]') return [];
         return [];
       }),
-      dispatchEvent: vi.fn()
+      dispatchEvent: vi.fn(),
     };
-    win = { location: { href: '' } };
+    win = {
+      location: { href: "" },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
     global.document = doc;
     global.window = win;
   });
 
-  it('attaches listeners to added login elements and updates auth state', async () => {
-    const emailInput = { value: 'user@example.com' };
-    const passwordInput = { value: 'Password1' };
+  it("attaches listeners to added login elements and updates auth state", async () => {
+    const emailInput = { value: "user@example.com" };
+    const passwordInput = { value: "Password1" };
     const form = {
-      querySelector: vi.fn(sel => {
+      querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr-input="email"]') return emailInput;
         if (sel === '[data-smoothr-input="password"]') return passwordInput;
         return null;
-      })
+      }),
     };
     let clickHandler;
     const btn = {
-      tagName: 'DIV',
-      dataset: { smoothr: 'login' },
-      getAttribute: attr => (attr === 'data-smoothr' ? 'login' : null),
+      tagName: "DIV",
+      dataset: { smoothr: "login" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
       closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'click') clickHandler = cb;
-      })
+        if (ev === "click") clickHandler = cb;
+      }),
     };
 
     auth.initAuth();
@@ -105,7 +109,7 @@ describe('dynamic DOM bindings', () => {
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
-    const user = { id: '1', email: 'user@example.com' };
+    const user = { id: "1", email: "user@example.com" };
     signInMock.mockResolvedValue({ data: { user }, error: null });
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -113,31 +117,32 @@ describe('dynamic DOM bindings', () => {
     expect(global.window.smoothr.auth.user).toEqual(user);
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
-    expect(evt.type).toBe('smoothr:login');
+    expect(evt.type).toBe("smoothr:login");
   });
 
-  it('attaches listeners to added signup elements and updates auth state', async () => {
-    const emailInput = { value: 'new@example.com' };
-    const passwordInput = { value: 'Password1' };
-    const confirmInput = { value: 'Password1' };
+  it("attaches listeners to added signup elements and updates auth state", async () => {
+    const emailInput = { value: "new@example.com" };
+    const passwordInput = { value: "Password1" };
+    const confirmInput = { value: "Password1" };
     const form = {
-      querySelector: vi.fn(sel => {
+      querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr-input="email"]') return emailInput;
         if (sel === '[data-smoothr-input="password"]') return passwordInput;
-        if (sel === '[data-smoothr-input="password-confirm"]') return confirmInput;
+        if (sel === '[data-smoothr-input="password-confirm"]')
+          return confirmInput;
         if (sel === '[type="submit"]') return {};
         return null;
-      })
+      }),
     };
     let clickHandler;
     const btn = {
-      tagName: 'BUTTON',
-      dataset: { smoothr: 'signup' },
-      getAttribute: attr => (attr === 'data-smoothr' ? 'signup' : null),
+      tagName: "BUTTON",
+      dataset: { smoothr: "signup" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
       closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'click') clickHandler = cb;
-      })
+        if (ev === "click") clickHandler = cb;
+      }),
     };
 
     auth.initAuth();
@@ -146,7 +151,7 @@ describe('dynamic DOM bindings', () => {
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
-    const user = { id: '2', email: 'new@example.com' };
+    const user = { id: "2", email: "new@example.com" };
     signUpMock.mockResolvedValue({ data: { user }, error: null });
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -154,10 +159,10 @@ describe('dynamic DOM bindings', () => {
     expect(global.window.smoothr.auth.user).toEqual(user);
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
-    expect(evt.type).toBe('smoothr:login');
+    expect(evt.type).toBe("smoothr:login");
   });
 
-  it('attaches listeners to added google login elements and dispatches login event', async () => {
+  it("attaches listeners to added google login elements and dispatches login event", async () => {
     let clickHandler;
     let store = null;
     global.localStorage = {
@@ -167,16 +172,16 @@ describe('dynamic DOM bindings', () => {
       }),
       removeItem: vi.fn(() => {
         store = null;
-      })
+      }),
     };
     const btn = {
-      tagName: 'DIV',
-      dataset: { smoothr: 'login-google' },
-      getAttribute: attr => (attr === 'data-smoothr' ? 'login-google' : null),
+      tagName: "DIV",
+      dataset: { smoothr: "login-google" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "login-google" : null),
       closest: vi.fn(() => null),
       addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'click') clickHandler = cb;
-      })
+        if (ev === "click") clickHandler = cb;
+      }),
     };
 
     auth.initAuth();
@@ -190,59 +195,60 @@ describe('dynamic DOM bindings', () => {
     await flushPromises();
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
-      provider: 'google',
-      options: { redirectTo: '' }
+      provider: "google",
+      options: { redirectTo: "" },
     });
-    expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
+    expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
-    const user = { id: '3', email: 'google@example.com' };
+    const user = { id: "3", email: "google@example.com" };
     getUserMock.mockResolvedValue({ data: { user } });
     auth.initAuth();
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
-    expect(evt.type).toBe('smoothr:login');
+    expect(evt.type).toBe("smoothr:login");
   });
 
-  it('attaches listeners to added password reset elements and shows inline messages', async () => {
-    const emailInput = { value: 'user@example.com' };
+  it("attaches listeners to added password reset elements and shows inline messages", async () => {
+    const emailInput = { value: "user@example.com" };
     const successEl = {
-      textContent: '',
-      style: { display: 'none' },
+      textContent: "",
+      style: { display: "none" },
       hidden: true,
-      hasAttribute: vi.fn(attr => attr === 'hidden' && 'hidden' in successEl),
-      removeAttribute: vi.fn(attr => {
-        if (attr === 'hidden') delete successEl.hidden;
-      })
+      hasAttribute: vi.fn((attr) => attr === "hidden" && "hidden" in successEl),
+      removeAttribute: vi.fn((attr) => {
+        if (attr === "hidden") delete successEl.hidden;
+      }),
     };
     const errorEl = {
-      textContent: '',
-      style: { display: 'none' },
+      textContent: "",
+      style: { display: "none" },
       hidden: true,
-      hasAttribute: vi.fn(attr => attr === 'hidden' && 'hidden' in errorEl),
-      removeAttribute: vi.fn(attr => {
-        if (attr === 'hidden') delete errorEl.hidden;
-      })
+      hasAttribute: vi.fn((attr) => attr === "hidden" && "hidden" in errorEl),
+      removeAttribute: vi.fn((attr) => {
+        if (attr === "hidden") delete errorEl.hidden;
+      }),
     };
     const form = {
-      querySelector: vi.fn(sel => {
+      querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr-input="email"]') return emailInput;
-        if (sel === '[data-smoothr-success]') return successEl;
-        if (sel === '[data-smoothr-error]') return errorEl;
+        if (sel === "[data-smoothr-success]") return successEl;
+        if (sel === "[data-smoothr-error]") return errorEl;
         if (sel === '[type="submit"]') return {};
         return null;
-      })
+      }),
     };
     let clickHandler;
     const btn = {
-      tagName: 'BUTTON',
-      dataset: { smoothr: 'password-reset' },
-      getAttribute: attr => (attr === 'data-smoothr' ? 'password-reset' : null),
+      tagName: "BUTTON",
+      dataset: { smoothr: "password-reset" },
+      getAttribute: (attr) =>
+        attr === "data-smoothr" ? "password-reset" : null,
       closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'click') clickHandler = cb;
-      })
+        if (ev === "click") clickHandler = cb;
+      }),
     };
 
     auth.initAuth();
@@ -255,22 +261,25 @@ describe('dynamic DOM bindings', () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(resetPasswordMock).toHaveBeenCalledWith('user@example.com', {
-      redirectTo: ''
+    expect(resetPasswordMock).toHaveBeenCalledWith("user@example.com", {
+      redirectTo: "",
     });
-    expect(successEl.textContent).toBe('Check your email for a reset link.');
-    expect(errorEl.textContent).toBe('');
-    expect(successEl.removeAttribute).toHaveBeenCalledWith('hidden');
+    expect(successEl.textContent).toBe("Check your email for a reset link.");
+    expect(errorEl.textContent).toBe("");
+    expect(successEl.removeAttribute).toHaveBeenCalledWith("hidden");
     expect(successEl.hidden).toBeUndefined();
-    expect(successEl.style.display).toBe('');
+    expect(successEl.style.display).toBe("");
 
-    resetPasswordMock.mockResolvedValue({ data: null, error: new Error('oops') });
+    resetPasswordMock.mockResolvedValue({
+      data: null,
+      error: new Error("oops"),
+    });
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(errorEl.textContent).toBe('oops');
-    expect(errorEl.removeAttribute).toHaveBeenCalledWith('hidden');
+    expect(errorEl.textContent).toBe("oops");
+    expect(errorEl.removeAttribute).toHaveBeenCalledWith("hidden");
     expect(errorEl.hidden).toBeUndefined();
-    expect(errorEl.style.display).toBe('');
+    expect(errorEl.style.display).toBe("");
   });
 });
