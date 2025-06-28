@@ -13,11 +13,12 @@ export function renderCart() {
     Smoothr.currency?.formatCurrency;
 
   document.querySelectorAll('[data-smoothr-total]').forEach(el => {
-    el.setAttribute('data-smoothr-total', total);
+    const displayTotal = total / 100;
+    el.setAttribute('data-smoothr-total', displayTotal);
     if (formatter) {
-      el.textContent = formatter(total);
+      el.textContent = formatter(displayTotal);
     } else {
-      el.textContent = String(total);
+      el.textContent = String(displayTotal);
     }
   });
 
@@ -66,7 +67,7 @@ export function renderCart() {
       });
 
       clone.querySelectorAll('[data-smoothr-subtotal]').forEach(el => {
-        const subtotal = item.price * item.quantity;
+        const subtotal = (item.price * item.quantity) / 100;
         el.setAttribute('data-smoothr-subtotal', subtotal);
         el.textContent = formatter ? formatter(subtotal) : String(subtotal);
       });
