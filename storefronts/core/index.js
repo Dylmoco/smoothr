@@ -13,6 +13,7 @@ import * as subscriptions from './subscriptions/index.js';
 import * as auth from './auth/index.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
 import { initCartBindings } from '../platforms/webflow/addToCart.js';
+import { renderCart } from '../platforms/webflow/renderCart.js';
 
 // Default endpoint for retrieving live exchange rates via Supabase proxy.
 const DEFAULT_RATE_SOURCE =
@@ -88,6 +89,11 @@ if (typeof window !== 'undefined') {
   }
   window.Smoothr = Smoothr;
   window.smoothr = window.smoothr || Smoothr;
+  window.renderCart = renderCart;
+  console.log('🎨 renderCart registered in SDK');
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.cart = window.Smoothr.cart || {};
+  window.Smoothr.cart.renderCart = renderCart;
   window.initCartBindings = initCartBindings;
   document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ DOM ready – calling initCartBindings');
