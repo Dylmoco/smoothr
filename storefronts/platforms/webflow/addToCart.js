@@ -49,6 +49,12 @@ export function initCartBindings() {
           options: options ? JSON.parse(options) : undefined,
           isSubscription
         });
+        if (typeof window.renderCart === 'function') {
+          console.log('🧼 Calling renderCart() to update UI');
+          window.renderCart();
+        } else {
+          console.warn('⚠️ renderCart not found');
+        }
       } catch (err) {
         console.error('smoothr:addToCart failed', err);
       }
