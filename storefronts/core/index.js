@@ -5,6 +5,7 @@ import * as analytics from './analytics/index.js';
 import * as currency from './currency/index.js';
 import * as dashboard from './dashboard/index.js';
 import * as discounts from './discounts/index.js';
+import * as cart from './cart.js';
 import * as orders from './orders/index.js';
 import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
@@ -23,6 +24,7 @@ export {
   currency,
   dashboard,
   discounts,
+  cart,
   orders,
   returns,
   reviews,
@@ -37,6 +39,7 @@ const Smoothr = {
   currency,
   dashboard,
   discounts,
+  cart,
   orders,
   returns,
   reviews,

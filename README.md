@@ -8,12 +8,12 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
   - _Note: the older `/client` folder was removed in favor of `/storefronts`. Any
     Cloudflare `_headers` configuration previously under `client/dist` is no
     longer required._
-  - **/core/** – Core storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, customer dashboard, abandoned cart, and subscriptions.
+  - **/core/** – Core storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, cart, customer dashboard, abandoned cart, and subscriptions.
   - **/platforms/** – Adapters for various web builder platforms.
   - **/clonables/** – Embeddable widgets and plug‑and‑play code.
-- **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, abandoned cart, subscriptions, and Supabase helpers.
+ - **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, abandoned cart, subscriptions, and Supabase helpers.
 - **/smoothr/** – Next.js admin dashboard application.
-  - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, dashboard, abandoned cart, and subscriptions.
+  - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, dashboard, abandoned cart, and subscriptions.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
 The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience.

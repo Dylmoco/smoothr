@@ -10,6 +10,7 @@ Core storefront modules for Smoothr.
 - currency
 - dashboard
 - discounts
+- cart
 - orders
 - returns
 - reviews

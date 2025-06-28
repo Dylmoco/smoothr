@@ -36,6 +36,7 @@ An `.env.example` file is included for reference.
 - currency
 - dashboard
 - discounts
+- cart
 - orders
 - returns
 - reviews
