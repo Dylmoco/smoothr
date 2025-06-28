@@ -36,20 +36,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { amount, email, product_id } = req.body as {
       amount: number;
-      email: string;
+      email?: string;
       product_id: string;
     };
 
-    if (!email || !amount) {
-      console.error('❌ Missing required fields:', { email, amount });
-      res.status(400).json({ error: 'Missing required fields: email and amount' });
+    if (!amount) {
+      console.error('❌ Missing required fields:', { amount });
+      res.status(400).json({ error: 'Missing required field: amount' });
       return;
     }
 
     const intent = await stripe.paymentIntents.create({
       amount,
       currency: 'usd',
-      receipt_email: email,
+      ...(email ? { receipt_email: email } : {}),
       automatic_payment_methods: { enabled: true }
     });
     console.log('✅ Stripe PaymentIntent created:', intent.id);
@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await supabase.from('orders').insert({
       user_id: null,
-      email,
+      email: email || null,
       product_id,
       amount,
       gateway: 'stripe',

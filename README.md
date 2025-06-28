@@ -63,6 +63,15 @@ npm run dev
 The storefront SDK is automatically built and deployed by GitHub Actions so no
 manual build step is required.
 
+## Stripe Checkout API
+
+The admin dashboard exposes a minimal endpoint at
+`/api/checkout/stripe` for creating Stripe PaymentIntents. The request
+body should include a numeric `amount` and optional `email`. When an
+email is provided it will be used for Stripe receipts, otherwise the
+intent is created without a receipt email.
+
+
 ### Deployment Log
 
 The [DEPLOY_LOG.md](DEPLOY_LOG.md) file is updated automatically after each
