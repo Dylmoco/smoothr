@@ -11,8 +11,15 @@ export function initAddToCart() {
       try {
         const id = btn.getAttribute('data-product-id') || '';
         const name = btn.getAttribute('data-product-name') || '';
-        const priceAttr = btn.getAttribute('data-product-price') || '0';
-        const price = parseInt(priceAttr, 10) || 0;
+        const rawPrice = btn.getAttribute('data-product-price') || '0';
+        const price = Math.round(parseFloat(rawPrice) * 100);
+        if (isNaN(price)) {
+          console.warn(
+            'Smoothr: Invalid price format on add-to-cart element',
+            btn
+          );
+          return;
+        }
         const optAttr = btn.getAttribute('data-product-options');
         let options;
         if (optAttr) {
