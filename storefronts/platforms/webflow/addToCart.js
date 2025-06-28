@@ -1,5 +1,6 @@
 export function initCartBindings() {
-  console.log('🧩 initCartBindings loaded and executing');
+  const debug = window.SMOOTHR_CONFIG?.debug;
+  if (debug) console.log('🧩 initCartBindings loaded and executing');
   if (typeof document === 'undefined') return;
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart?.addItem) {
@@ -8,9 +9,10 @@ export function initCartBindings() {
   }
 
   const buttons = document.querySelectorAll('[data-smoothr-add]');
-  console.log(
-    `smoothr:addToCart found ${buttons.length} [data-smoothr-add] elements`
-  );
+  if (debug)
+    console.log(
+      `smoothr:addToCart found ${buttons.length} [data-smoothr-add] elements`
+    );
 
   if (buttons.length === 0) {
     console.warn('smoothr:addToCart no buttons found; retrying...');
@@ -19,14 +21,14 @@ export function initCartBindings() {
   }
 
   buttons.forEach(btn => {
-    console.log('🔗 binding [data-smoothr-add] button', btn);
+    if (debug) console.log('🔗 binding [data-smoothr-add] button', btn);
     if (btn.__smoothrBound) return;
     btn.__smoothrBound = true;
 
     btn.addEventListener('click', e => {
       e?.preventDefault?.();
       e?.stopPropagation?.();
-      console.log('🛒 Add to cart clicked:', btn);
+      if (debug) console.log('🛒 Add to cart clicked:', btn);
       try {
         const rawPrice = btn.getAttribute('data-product-price') || '0';
         const price = Math.round(parseFloat(rawPrice) * 100);
@@ -50,7 +52,7 @@ export function initCartBindings() {
           isSubscription
         });
         if (typeof window.renderCart === 'function') {
-          console.log('🧼 Calling renderCart() to update UI');
+          if (debug) console.log('🧼 Calling renderCart() to update UI');
           window.renderCart();
         } else {
           console.warn('⚠️ renderCart not found');
