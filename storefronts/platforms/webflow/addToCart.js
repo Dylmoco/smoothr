@@ -53,13 +53,18 @@ export function initCartBindings() {
           return;
         }
 
+        const wrapper = btn.closest('[data-smoothr-product]');
+        const imageEl = wrapper ? wrapper.querySelector('.product-image') : null;
+        const image = imageEl?.src || '';
+
         Smoothr.cart.addItem({
           product_id,
           name,
           price,
           quantity: 1,
           options: options ? JSON.parse(options) : undefined,
-          isSubscription
+          isSubscription,
+          image
         });
         if (typeof window.renderCart === 'function') {
           if (debug) console.log('🧼 Calling renderCart() to update UI');
