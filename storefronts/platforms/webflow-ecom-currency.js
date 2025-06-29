@@ -1,6 +1,7 @@
 import { convertPrice, formatPrice, baseCurrency } from '../core/currency/index.js';
 
-const PRICE_ATTR_SELECTOR = '[data-smoothr-price], [data-smoothr="price"]';
+const PRICE_ATTR_SELECTOR =
+  '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]';
 
 const PRICE_SELECTORS = [
   '.w-commerce-commerceproductprice',
@@ -30,17 +31,21 @@ export function setSelectedCurrency(currency) {
 }
 
 function formatElement(el) {
-  let amt = parseFloat(el.getAttribute('data-smoothr-price'));
+  const attr = el.hasAttribute('data-smoothr-total')
+    ? 'data-smoothr-total'
+    : 'data-smoothr-price';
+  let amt = parseFloat(el.getAttribute(attr));
   if (isNaN(amt)) {
     amt = parsePriceText(el.textContent || '');
     if (!isNaN(amt)) {
-      el.setAttribute('data-smoothr-price', amt);
+      el.setAttribute(attr, amt);
     }
   }
   if (isNaN(amt)) return;
   const currency = getSelectedCurrency();
   const converted = convertPrice(amt, currency, baseCurrency);
   el.textContent = formatPrice(converted, currency);
+  el.setAttribute(attr, converted);
 }
 
 function bindPriceElements(root = document) {
@@ -56,10 +61,13 @@ function bindPriceElements(root = document) {
       .forEach(el => els.push(el));
   }
   els.forEach(el => {
-    if (!el.hasAttribute('data-smoothr-price')) {
+    const attr = el.hasAttribute('data-smoothr-total')
+      ? 'data-smoothr-total'
+      : 'data-smoothr-price';
+    if (!el.hasAttribute(attr)) {
       const amt = parsePriceText(el.textContent || '');
       if (!isNaN(amt)) {
-        el.setAttribute('data-smoothr-price', amt);
+        el.setAttribute(attr, amt);
         if (window.SMOOTHR_CONFIG?.debug) {
           console.log('smoothr:bind-price', el, amt);
         }
