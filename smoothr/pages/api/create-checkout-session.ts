@@ -1,0 +1,96 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import Stripe from 'stripe';
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+} as const;
+
+const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
+const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
+
+const SUPPORTED_CURRENCIES = new Set([
+  'USD', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'NZD', 'SGD',
+  'CHF', 'HKD', 'SEK', 'DKK', 'NOK'
+]);
+
+interface CartItem {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(200, CORS_HEADERS);
+      res.end();
+      return;
+    }
+
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+
+    const { baseCurrency, cart } = req.body as {
+      baseCurrency: string;
+      cart: CartItem[];
+    };
+
+    const currency = baseCurrency?.toUpperCase();
+    if (!currency || !SUPPORTED_CURRENCIES.has(currency)) {
+      res.status(400).json({ error: 'Invalid or unsupported baseCurrency' });
+      return;
+    }
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+      res.status(400).json({ error: 'Cart is required' });
+      return;
+    }
+
+    for (const item of cart) {
+      if (!item.product_id || !item.name) {
+        res.status(400).json({ error: 'Invalid cart item' });
+        return;
+      }
+      if (!Number.isInteger(item.price) || item.price <= 0) {
+        res.status(400).json({ error: 'Invalid item price' });
+        return;
+      }
+      if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+        res.status(400).json({ error: 'Invalid item quantity' });
+        return;
+      }
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      currency: currency.toLowerCase(),
+      line_items: cart.map(item => ({
+        price_data: {
+          currency: currency.toLowerCase(),
+          product_data: { name: item.name },
+          unit_amount: item.price,
+        },
+        quantity: item.quantity,
+      })),
+      success_url:
+        'https://yourdomain.com/order-success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://yourdomain.com/cart',
+      metadata: {
+        baseCurrency: currency,
+        cart: JSON.stringify(cart),
+      },
+    });
+
+    res.status(200).json({ url: session.url });
+  } catch (err: any) {
+    console.error('❌ Stripe session error:', err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+}
