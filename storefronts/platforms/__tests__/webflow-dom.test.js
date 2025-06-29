@@ -28,8 +28,34 @@ describe("webflow adapter price replacement", () => {
 
     events = {};
     els = [
-      { getAttribute: vi.fn(() => "10"), textContent: "", dataset: {} },
-      { getAttribute: vi.fn(() => "20.5"), textContent: "", dataset: {} },
+      {
+        attributes: { "data-smoothr-price": "10" },
+        getAttribute: vi.fn(function (attr) {
+          return this.attributes[attr];
+        }),
+        setAttribute: vi.fn(function (attr, val) {
+          this.attributes[attr] = String(val);
+        }),
+        hasAttribute: vi.fn(function (attr) {
+          return attr in this.attributes;
+        }),
+        textContent: "",
+        dataset: {},
+      },
+      {
+        attributes: { "data-smoothr-price": "20.5" },
+        getAttribute: vi.fn(function (attr) {
+          return this.attributes[attr];
+        }),
+        setAttribute: vi.fn(function (attr, val) {
+          this.attributes[attr] = String(val);
+        }),
+        hasAttribute: vi.fn(function (attr) {
+          return attr in this.attributes;
+        }),
+        textContent: "",
+        dataset: {},
+      },
     ];
 
     global.document = {
@@ -60,5 +86,12 @@ describe("webflow adapter price replacement", () => {
     setSelectedCurrency("EUR");
     expect(els[0].textContent).toBe("€5.00");
     expect(els[1].textContent).toBe("€10.25");
+  });
+
+  it("does not compound on repeated currency changes", () => {
+    setSelectedCurrency("EUR");
+    setSelectedCurrency("USD");
+    expect(els[0].textContent).toBe("$10.00");
+    expect(els[1].textContent).toBe("$20.50");
   });
 });
