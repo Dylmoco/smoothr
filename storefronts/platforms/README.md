@@ -25,6 +25,10 @@ the chosen currency in `localStorage`.
 </script>
 ```
 
+The attribute value (`data-smoothr-price` or `data-smoothr-total`) is also
+updated when the currency changes so you can access the converted amount via
+JavaScript.
+
 ### Automatic price detection
 
 `webflow-ecom-currency.js` searches for common Webflow price classes

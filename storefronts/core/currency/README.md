@@ -47,3 +47,6 @@ and persists the choice in `localStorage`. Pair it with a select element and add
     .addEventListener('change', e => setSelectedCurrency(e.target.value));
 </script>
 ```
+
+Both `data-smoothr-price` and `data-smoothr-total` attributes update to the
+converted amount whenever the currency changes.

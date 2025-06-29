@@ -1,6 +1,7 @@
 import { convertPrice, formatPrice, baseCurrency } from '../core/currency/index.js';
 
-const PRICE_SELECTOR = '[data-smoothr-price], [data-smoothr="price"]';
+const PRICE_SELECTOR =
+  '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]';
 
 function parsePriceText(text) {
   return parseFloat(text.replace(/[£$€]/g, '').replace(/[\,\s]/g, ''));
@@ -22,16 +23,20 @@ export function setSelectedCurrency(currency) {
 function replacePrices() {
   const currency = getSelectedCurrency();
   document.querySelectorAll(PRICE_SELECTOR).forEach(el => {
-    let amt = parseFloat(el.getAttribute('data-smoothr-price'));
+    const attr = el.hasAttribute('data-smoothr-total')
+      ? 'data-smoothr-total'
+      : 'data-smoothr-price';
+    let amt = parseFloat(el.getAttribute(attr));
     if (isNaN(amt)) {
       amt = parsePriceText(el.textContent || '');
       if (!isNaN(amt)) {
-        el.setAttribute('data-smoothr-price', amt);
+        el.setAttribute(attr, amt);
       }
     }
     if (isNaN(amt)) return;
     const converted = convertPrice(amt, currency, baseCurrency);
     el.textContent = formatPrice(converted, currency);
+    el.setAttribute(attr, converted);
   });
 }
 
