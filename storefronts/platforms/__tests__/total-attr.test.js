@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { initCurrencyDom } from '../webflow-dom.js';
+import { initCurrencyDom, setSelectedCurrency } from '../webflow-dom.js';
 import { setBaseCurrency, updateRates } from '../../core/currency/index.js';
 
 class CustomEvt {
@@ -12,12 +12,14 @@ class CustomEvt {
 describe('data-smoothr-total updates', () => {
   let events;
   let el;
+  let store;
 
   beforeEach(() => {
     setBaseCurrency('USD');
     updateRates({ USD: 1, EUR: 0.5 });
 
     events = {};
+    store = null;
     el = {
       attributes: { 'data-smoothr-total': '20' },
       getAttribute: vi.fn(attr => el.attributes[attr]),
@@ -26,12 +28,21 @@ describe('data-smoothr-total updates', () => {
       }),
       hasAttribute: vi.fn(attr => attr in el.attributes),
       textContent: '',
-      dataset: {}
+      dataset: {
+        get smoothrBase() {
+          return this._smoothrBase;
+        },
+        set smoothrBase(val) {
+          this._smoothrBase = String(val);
+        }
+      }
     };
 
     global.localStorage = {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn()
+      getItem: vi.fn(() => store),
+      setItem: vi.fn((k, v) => {
+        store = v;
+      })
     };
 
     global.document = {
@@ -56,9 +67,14 @@ describe('data-smoothr-total updates', () => {
 
   it('converts totals on currency change', () => {
     expect(el.textContent).toBe('$20.00');
-    const evt = new CustomEvt('smoothr:currencychange', { detail: { currency: 'EUR' } });
-    events['smoothr:currencychange'](evt);
+    expect(el.dataset.smoothrBase).toBe('20');
+
+    setSelectedCurrency('EUR');
     expect(el.textContent).toBe('€10.00');
     expect(el.getAttribute('data-smoothr-total')).toBe('10');
+
+    setSelectedCurrency('USD');
+    expect(el.textContent).toBe('$20.00');
+    expect(el.dataset.smoothrBase).toBe('20');
   });
 });
