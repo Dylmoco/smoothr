@@ -5,7 +5,8 @@ import * as cart from '../../core/cart.js';
 // module isn't imported elsewhere.
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {};
-  window.Smoothr.cart = cart;
+  // Use a shallow copy so the cart object remains extensible
+  window.Smoothr.cart = { ...cart };
 }
 
 export function initCartBindings() {
