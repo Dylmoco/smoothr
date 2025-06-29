@@ -1,3 +1,14 @@
+function getSelectedCurrency(Smoothr) {
+  if (typeof window === 'undefined') {
+    return Smoothr?.currency?.baseCurrency || 'USD';
+  }
+  return (
+    localStorage.getItem('smoothr:currency') ||
+    Smoothr?.currency?.baseCurrency ||
+    'USD'
+  );
+}
+
 export function renderCart() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   if (debug) console.log('🎨 renderCart() triggered');
@@ -13,10 +24,24 @@ export function renderCart() {
     Smoothr.currency?.formatCurrency;
 
   document.querySelectorAll('[data-smoothr-total]').forEach(el => {
-    const displayTotal = total / 100;
+    const baseTotal = total / 100;
+    const currencyCode = getSelectedCurrency(Smoothr);
+    let displayTotal = baseTotal;
+    if (Smoothr.currency?.convertPrice) {
+      displayTotal = Smoothr.currency.convertPrice(
+        baseTotal,
+        currencyCode,
+        Smoothr.currency.baseCurrency
+      );
+    }
+    el.dataset.smoothrBase = baseTotal;
     el.setAttribute('data-smoothr-total', displayTotal);
     if (formatter) {
-      el.textContent = formatter(displayTotal);
+      if (formatter.length >= 2) {
+        el.textContent = formatter(displayTotal, currencyCode);
+      } else {
+        el.textContent = formatter(displayTotal);
+      }
     } else {
       el.textContent = String(displayTotal);
     }
