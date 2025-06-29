@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const src = join(__dirname, '..', 'checkout', 'checkout.js');
+const src = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
 const dest = join(__dirname, '..', 'dist', 'checkout.js');
 
 try {
