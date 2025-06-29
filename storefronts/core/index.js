@@ -92,7 +92,8 @@ if (typeof window !== 'undefined') {
   window.renderCart = renderCart;
   console.log('🎨 renderCart registered in SDK');
   window.Smoothr = window.Smoothr || {};
-  window.Smoothr.cart = window.Smoothr.cart || {};
+  // Clone the cart module so additional properties can be assigned
+  window.Smoothr.cart = { ...cart, ...(window.Smoothr.cart || {}) };
   window.Smoothr.cart.renderCart = renderCart;
   window.initCartBindings = initCartBindings;
   document.addEventListener('DOMContentLoaded', () => {
