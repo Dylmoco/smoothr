@@ -16,6 +16,7 @@ beforeEach(() => {
 
   template = document.createElement('div');
   template.setAttribute('data-smoothr-template', '');
+  template.style.display = 'none';
 
   const nameEl = document.createElement('span');
   nameEl.setAttribute('data-smoothr-name', '');
@@ -96,6 +97,15 @@ describe('renderCart', () => {
     renderCart();
     const clones = container.querySelectorAll('.cart-rendered');
     expect(clones.length).toBe(2);
+  });
+
+  it('clones remove template attribute and show rows', async () => {
+    const renderCart = await loadRenderCart();
+    renderCart();
+    const clone = container.querySelector('.cart-rendered');
+    expect(clone.hasAttribute('data-smoothr-template')).toBe(false);
+    expect(clone.style.display).toBe('');
+    expect(template.style.display).toBe('none');
   });
 
   it('populates template bindings with item data', async () => {
