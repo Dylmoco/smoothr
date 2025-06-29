@@ -1,102 +1,107 @@
-export async function initCheckout() {
-  const debug = window.SMOOTHR_CONFIG?.debug;
-  let block = document.querySelector('[data-smoothr-checkout]');
-  if (!block) {
-    block = document.querySelector('.smoothr-checkout');
-  }
-  if (!block) return;
+export function initCheckout() {
+  const Smoothr = window.Smoothr || window.smoothr;
+  if (!Smoothr?.cart) return;
 
-  const productId = block.dataset.smoothrProductId;
-  const emailField = block.querySelector('[data-smoothr-email]');
-  const amountEl = document.querySelector('[data-smoothr-total], [data-smoothr-price]');
-  const paymentContainer = block.querySelector('[data-smoothr-gateway]');
-  const submitBtn = block.querySelector('[data-smoothr-submit]');
+  const cart = Smoothr.cart.getCart();
+  const list = document.querySelector('[data-smoothr-list]');
+  const template = list?.querySelector('[data-smoothr-template]');
 
-  const stripePk =
-    window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-  const stripe = Stripe(stripePk);
+  if (list && template) {
+    // clear previous items
+    list.querySelectorAll('.smoothr-checkout-item').forEach(el => el.remove());
 
-  submitBtn?.addEventListener('click', async () => {
-    submitBtn.disabled = true;
-    if (debug) console.log('🚀 submit triggered');
+    cart.items.forEach(item => {
+      const clone = template.cloneNode(true);
+      clone.classList.add('smoothr-checkout-item');
+      clone.removeAttribute('data-smoothr-template');
+      clone.style.display = '';
 
-    const email =
-      emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
-    const rawAmount =
-      amountEl?.getAttribute('data-smoothr-total') ||
-      amountEl?.getAttribute('data-smoothr-price') ||
-      '';
-    const parsed = parseFloat(rawAmount);
-    const total = isNaN(parsed) ? 0 : Math.round(parsed * 100);
+      clone.querySelectorAll('[data-smoothr-name]').forEach(el => {
+        el.textContent = item.name || '';
+      });
 
-    if (!email) {
-      console.warn('⚠️ Missing email; aborting checkout');
-      submitBtn.disabled = false;
-      return;
-    }
+      clone.querySelectorAll('[data-smoothr-price]').forEach(el => {
+        const price = item.price / 100;
+        const converted = Smoothr.currency?.convertPrice
+          ? Smoothr.currency.convertPrice(price)
+          : price;
+        el.textContent = String(converted);
+      });
 
-    if (!total) {
-      console.warn('⚠️ Missing amount; aborting checkout');
-      submitBtn.disabled = false;
-      return;
-    }
-
-    const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
-    if (debug)
-      console.log(
-        '🌐 creating PaymentIntent via',
-        `${apiBase}/api/checkout/stripe`
-      );
-    const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: total, product_id: productId, email })
-    });
-
-    const { client_secret } = await initRes.json();
-    if (debug) console.log('🔑 client_secret:', client_secret);
-    if (!initRes.ok || !client_secret) {
-      console.error('❌ Missing client_secret; aborting checkout');
-      submitBtn.disabled = false;
-      return;
-    }
-
-    const elements = stripe.elements({ clientSecret: client_secret });
-    const paymentElement = elements.create('payment');
-    if (debug) console.log('🧱 Mounting Stripe Elements...');
-    if (debug) console.log('📦 Mount target:', paymentContainer);
-    if (paymentContainer) {
-      paymentElement.mount(paymentContainer);
-      if (debug) console.log('✅ Stripe Elements mounted');
-
-      try {
-        await elements.submit();
-        if (debug) console.log('🧱 elements.submit() called before confirmPayment');
-        const { error } = await stripe.confirmPayment({
-          elements,
-          clientSecret: client_secret,
-          confirmParams: {
-            return_url: `${window.location.origin}/checkout-success`
-          }
-        });
-
-        if (error) {
-          console.error(error);
+      clone.querySelectorAll('[data-smoothr-image]').forEach(el => {
+        if (el.tagName === 'IMG') {
+          el.src = item.image || '';
+          el.alt = item.name || '';
         } else {
-          block.innerHTML = '<p>Payment successful!</p>';
+          el.style.backgroundImage = `url(${item.image || ''})`;
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        submitBtn.disabled = false;
-        if (debug) console.log('✅ submit handler complete');
+      });
+
+      clone.querySelectorAll('[data-smoothr-quantity]').forEach(el => {
+        el.textContent = String(item.quantity);
+      });
+
+      list.appendChild(clone);
+    });
+  }
+
+  const subtotalEl = document.querySelector('[data-smoothr-subtotal]');
+  const totalEl = document.querySelector('[data-smoothr-total]');
+
+  if (subtotalEl && totalEl) {
+    const baseSubtotal = Smoothr.cart.getTotal() / 100;
+    const convertedSubtotal = Smoothr.currency?.convertPrice
+      ? Smoothr.currency.convertPrice(baseSubtotal)
+      : baseSubtotal;
+    subtotalEl.textContent = String(convertedSubtotal);
+    totalEl.textContent = String(convertedSubtotal);
+  }
+
+  const disclaimerText =
+    'You will be charged in GBP. Displayed prices are approximate.';
+  const disclaimerEl = document.querySelector('[data-smoothr-disclaimer]');
+  if (disclaimerEl) {
+    disclaimerEl.textContent = disclaimerText;
+  } else if (totalEl) {
+    const p = document.createElement('p');
+    p.textContent = disclaimerText;
+    totalEl.parentNode?.insertBefore(p, totalEl.nextSibling);
+  }
+
+  const checkoutBtn = document.querySelector('[data-smoothr-checkout]');
+  checkoutBtn?.addEventListener('click', async () => {
+    if (!window.SMOOTHR_CONFIG?.baseCurrency) {
+      alert('Base currency not configured');
+      return;
+    }
+    checkoutBtn.disabled = true;
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          baseCurrency: window.SMOOTHR_CONFIG.baseCurrency,
+          cart: Smoothr.cart.getCart()
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to start checkout');
       }
-    } else {
-      console.error('❌ Cannot mount Stripe: [data-smoothr-gateway] not found.');
-      submitBtn.disabled = false;
+    } catch (err) {
+      alert('Failed to start checkout');
+    } finally {
+      checkoutBtn.disabled = false;
     }
   });
-  if (debug) console.log('🖱️ Submit handler attached');
+
+  if (!cart.items.length) {
+    subtotalEl?.closest('[data-smoothr-totals]')?.classList.add('hidden');
+    const emptyEl = document.querySelector('[data-smoothr-empty]');
+    if (emptyEl) emptyEl.style.display = '';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);

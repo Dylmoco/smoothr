@@ -1,58 +1,61 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-let container;
-let emailInput;
-let totalEl;
-let gatewayEl;
-let submitBtn;
 let fetchMock;
-let stripeMock;
 
 beforeEach(() => {
   vi.resetModules();
   document.body.innerHTML = '';
 
-  container = document.createElement('div');
-  container.setAttribute('data-smoothr-checkout', '');
-  container.dataset.smoothrProductId = 'prod1';
+  const list = document.createElement('div');
+  list.setAttribute('data-smoothr-list', '');
+  const template = document.createElement('div');
+  template.setAttribute('data-smoothr-template', '');
+  template.style.display = 'none';
+  const nameEl = document.createElement('span');
+  nameEl.setAttribute('data-smoothr-name', '');
+  template.appendChild(nameEl);
+  list.appendChild(template);
+  document.body.appendChild(list);
 
-  emailInput = document.createElement('input');
-  emailInput.setAttribute('data-smoothr-email', '');
-  emailInput.value = 'test@example.com';
+  const subtotalEl = document.createElement('span');
+  subtotalEl.setAttribute('data-smoothr-subtotal', '');
+  document.body.appendChild(subtotalEl);
 
-  totalEl = document.createElement('span');
-  totalEl.setAttribute('data-smoothr-total', '12.34');
+  const totalEl = document.createElement('span');
+  totalEl.setAttribute('data-smoothr-total', '');
+  document.body.appendChild(totalEl);
 
-  gatewayEl = document.createElement('div');
-  gatewayEl.setAttribute('data-smoothr-gateway', '');
+  const btn = document.createElement('button');
+  btn.setAttribute('data-smoothr-checkout', '');
+  document.body.appendChild(btn);
 
-  submitBtn = document.createElement('button');
-  submitBtn.setAttribute('data-smoothr-submit', '');
+  const cart = {
+    items: [
+      { product_id: 'p1', name: 'Item', price: 100, image: '', quantity: 1 }
+    ]
+  };
 
-  container.append(emailInput, totalEl, gatewayEl, submitBtn);
-  document.body.appendChild(container);
+  const Smoothr = {
+    cart: {
+      getCart: () => cart,
+      getTotal: () => 100
+    },
+    currency: { convertPrice: amt => amt }
+  };
+
+  global.window.Smoothr = Smoothr;
+  global.window.smoothr = Smoothr;
+  global.window.SMOOTHR_CONFIG = { baseCurrency: 'GBP' };
 
   fetchMock = vi.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ client_secret: 'cs_test' })
+    json: async () => ({ url: 'http://example.com' })
   });
   global.fetch = fetchMock;
-
-  stripeMock = {
-    elements: vi.fn(() => ({
-      create: vi.fn(() => ({ mount: vi.fn() })),
-      submit: vi.fn()
-    })),
-    confirmPayment: vi.fn(() => ({}))
-  };
-  global.Stripe = vi.fn(() => stripeMock);
-
-  global.window.SMOOTHR_CONFIG = { stripeKey: 'pk_test' };
 });
 
 afterEach(() => {
   delete global.fetch;
-  delete global.Stripe;
   delete global.window.SMOOTHR_CONFIG;
 });
 
@@ -61,13 +64,25 @@ async function loadCheckout() {
   return mod.initCheckout;
 }
 
-describe('checkout amount parsing', () => {
-  it('converts decimal totals to cents', async () => {
+describe('checkout', () => {
+  it('posts cart and currency on click', async () => {
     const initCheckout = await loadCheckout();
-    await initCheckout();
-    submitBtn.click();
+    initCheckout();
+    document.querySelector('[data-smoothr-checkout]').click();
     await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalled();
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.amount).toBe(1234);
+    expect(body.baseCurrency).toBe('GBP');
+    expect(body.cart.items.length).toBe(1);
+  });
+
+  it('renders cart items from template', async () => {
+    const initCheckout = await loadCheckout();
+    initCheckout();
+    const clones = document.querySelectorAll('.smoothr-checkout-item');
+    expect(clones.length).toBe(1);
+    expect(clones[0].querySelector('[data-smoothr-name]').textContent).toBe(
+      'Item'
+    );
   });
 });
