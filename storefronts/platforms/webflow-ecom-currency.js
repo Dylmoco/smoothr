@@ -17,6 +17,17 @@ function parsePriceText(text) {
   );
 }
 
+function getBaseAmount(el, attr) {
+  let base = parseFloat(el.dataset.smoothrBase);
+  if (isNaN(base)) {
+    base =
+      parseFloat(el.getAttribute(attr)) ||
+      parsePriceText(el.textContent || '');
+    if (!isNaN(base)) el.dataset.smoothrBase = base;
+  }
+  return base;
+}
+
 function getSelectedCurrency() {
   if (typeof window === 'undefined') return baseCurrency;
   return localStorage.getItem('smoothr:currency') || baseCurrency;
@@ -34,16 +45,10 @@ function formatElement(el) {
   const attr = el.hasAttribute('data-smoothr-total')
     ? 'data-smoothr-total'
     : 'data-smoothr-price';
-  let amt = parseFloat(el.getAttribute(attr));
-  if (isNaN(amt)) {
-    amt = parsePriceText(el.textContent || '');
-    if (!isNaN(amt)) {
-      el.setAttribute(attr, amt);
-    }
-  }
-  if (isNaN(amt)) return;
+  const base = getBaseAmount(el, attr);
+  if (isNaN(base)) return;
   const currency = getSelectedCurrency();
-  const converted = convertPrice(amt, currency, baseCurrency);
+  const converted = convertPrice(base, currency, baseCurrency);
   el.textContent = formatPrice(converted, currency);
   el.setAttribute(attr, converted);
 }
@@ -67,7 +72,7 @@ function bindPriceElements(root = document) {
     if (!el.hasAttribute(attr)) {
       const amt = parsePriceText(el.textContent || '');
       if (!isNaN(amt)) {
-        el.setAttribute(attr, amt);
+        el.dataset.smoothrBase = amt;
         if (window.SMOOTHR_CONFIG?.debug) {
           console.log('smoothr:bind-price', el, amt);
         }

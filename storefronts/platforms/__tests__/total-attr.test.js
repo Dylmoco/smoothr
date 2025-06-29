@@ -25,7 +25,8 @@ describe('data-smoothr-total updates', () => {
         el.attributes[attr] = String(val);
       }),
       hasAttribute: vi.fn(attr => attr in el.attributes),
-      textContent: ''
+      textContent: '',
+      dataset: {}
     };
 
     global.localStorage = {

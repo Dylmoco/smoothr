@@ -28,8 +28,8 @@ describe("webflow adapter price replacement", () => {
 
     events = {};
     els = [
-      { getAttribute: vi.fn(() => "10"), textContent: "" },
-      { getAttribute: vi.fn(() => "20.5"), textContent: "" },
+      { getAttribute: vi.fn(() => "10"), textContent: "", dataset: {} },
+      { getAttribute: vi.fn(() => "20.5"), textContent: "", dataset: {} },
     ];
 
     global.document = {
