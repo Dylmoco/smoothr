@@ -4,6 +4,10 @@ export async function initCheckout() {
   const warn = (...args) => console.warn('smoothr:checkout', ...args);
   const err = (...args) => console.error('smoothr:checkout', ...args);
 
+  let stripeReady = false;
+  let hasShownCheckoutError = false;
+  let elements;
+
   let block = document.querySelector('[data-smoothr-checkout]');
   if (!block) {
     block = document.querySelector('.smoothr-checkout');
@@ -45,7 +49,9 @@ export async function initCheckout() {
   const stripe = Stripe(stripePk);
   log('Stripe PK loaded', stripePk);
 
-  submitBtn?.addEventListener('click', async () => {
+  submitBtn?.addEventListener('click', async event => {
+    event.preventDefault();
+    event.stopPropagation();
     submitBtn.disabled = true;
     log('submit clicked');
 
@@ -84,17 +90,31 @@ export async function initCheckout() {
     log('client_secret', client_secret);
     if (!initRes.ok || !client_secret) {
       err('Missing client_secret; aborting checkout');
+      if (!hasShownCheckoutError) {
+        alert('Failed to start checkout');
+        hasShownCheckoutError = true;
+      }
       submitBtn.disabled = false;
       return;
     }
 
-    const elements = stripe.elements({ clientSecret: client_secret });
+    elements = stripe.elements({ clientSecret: client_secret });
     const paymentElement = elements.create('payment');
     log('mounting Stripe Elements');
     log('mount target', paymentContainer);
     if (paymentContainer) {
+
       paymentElement.mount(paymentContainer);
+      stripeReady = true;
       log('Stripe Elements mounted');
+
+      if (!stripeReady) {
+        console.warn(
+          '[Smoothr Checkout] Stripe not ready. Blocking premature submit.'
+        );
+        submitBtn.disabled = false;
+        return;
+      }
 
       try {
         await elements.submit();
@@ -109,18 +129,30 @@ export async function initCheckout() {
 
         if (error) {
           err('tokenization failed', error);
+          if (!hasShownCheckoutError) {
+            alert('Failed to start checkout');
+            hasShownCheckoutError = true;
+          }
         } else {
           log('tokenization success');
           block.innerHTML = '<p>Payment successful!</p>';
         }
       } catch (err) {
         err(err);
+        if (!hasShownCheckoutError) {
+          alert('Failed to start checkout');
+          hasShownCheckoutError = true;
+        }
       } finally {
         submitBtn.disabled = false;
         log('submit handler complete');
       }
     } else {
       err('Cannot mount Stripe: [data-smoothr-gateway] not found.');
+      if (!hasShownCheckoutError) {
+        alert('Failed to start checkout');
+        hasShownCheckoutError = true;
+      }
       submitBtn.disabled = false;
     }
   });
