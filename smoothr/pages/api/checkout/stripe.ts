@@ -1,76 +1,132 @@
-import { createClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
 import type { NextApiRequest, NextApiResponse } from 'next';
-
-// Reminder: ensure your Supabase project has an `orders` table and
-// `payment_gateways` table to track purchases and gateway configs.
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-} as const;
+import Stripe from 'stripe';
+import supabase from '../../../../shared/supabase/serverClient';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
+interface ShippingInfo {
+  line1: string;
+  line2?: string;
+  city: string;
+  postcode: string;
+  state: string;
+  country: string;
+}
+
+interface CheckoutPayload {
+  payment_method: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  shipping: ShippingInfo;
+  cart: any[];
+  total: number;
+  currency: string;
+  description?: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('🔥 Checkout API hit');
-  console.log('✅ Method: ', req.method);
-  console.log('🧾 Body: ', req.body);
-  console.log('🔑 STRIPE_SECRET_KEY present: ', !!process.env.STRIPE_SECRET_KEY);
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
 
   try {
-    if (req.method === 'OPTIONS') {
-      res.writeHead(200, CORS_HEADERS);
-      res.end();
+    const {
+      payment_method,
+      email,
+      first_name,
+      last_name,
+      shipping,
+      cart,
+      total,
+      currency,
+      description
+    } = req.body as CheckoutPayload;
+
+    if (
+      !payment_method ||
+      !email ||
+      !first_name ||
+      !last_name ||
+      !shipping ||
+      !cart ||
+      typeof total !== 'number' ||
+      !currency
+    ) {
+      res.status(400).json({ error: 'Missing required fields' });
       return;
     }
 
-    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
-
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'Method not allowed' });
+    if (!Array.isArray(cart) || cart.length === 0) {
+      res.status(400).json({ error: 'Cart cannot be empty' });
       return;
     }
 
-    const { amount, email, product_id } = req.body as {
-      amount: number;
-      email?: string;
-      product_id: string;
-    };
+    if (total <= 0) {
+      res.status(400).json({ error: 'Invalid total' });
+      return;
+    }
 
-    if (!amount) {
-      console.error('❌ Missing required fields:', { amount });
-      res.status(400).json({ error: 'Missing required field: amount' });
+    const { line1, line2, city, postcode, state, country } = shipping;
+    if (!line1 || !city || !postcode || !state || !country) {
+      res.status(400).json({ error: 'Invalid shipping details' });
       return;
     }
 
     const intent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
-      ...(email ? { receipt_email: email } : {}),
-      automatic_payment_methods: { enabled: true }
+      amount: total,
+      currency,
+      payment_method,
+      confirm: true,
+      ...(description ? { description } : {}),
+      metadata: {
+        email,
+        first_name,
+        last_name,
+        cart: JSON.stringify(cart)
+      },
+      shipping: {
+        name: `${first_name} ${last_name}`,
+        address: {
+          line1,
+          line2: line2 || undefined,
+          city,
+          postal_code: postcode,
+          state,
+          country
+        }
+      }
     });
-    console.log('✅ Stripe PaymentIntent created:', intent.id);
 
-    const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        status: 'processing',
+        payment_provider: 'stripe',
+        raw_data: req.body,
+        total,
+        currency,
+        email,
+        cart,
+        payment_intent_id: intent.id
+      })
+      .select('id')
+      .single();
 
-    await supabase.from('orders').insert({
-      user_id: null,
-      email: email || null,
-      product_id,
-      amount,
-      gateway: 'stripe',
-      status: 'pending',
+    if (error) {
+      console.error('Supabase insert error:', error);
+    }
+
+    res.status(200).json({
+      success: true,
+      order_id: data?.id,
       payment_intent_id: intent.id
     });
-
-    res.status(200).json({ client_secret: intent.client_secret });
-  } catch (err: any) {
-    console.error('❌ Stripe creation error:', err);
-    return res.status(500).json({ error: err.message || String(err) });
+  } catch (err) {
+    console.error('Payment processing error:', err);
+    res.status(500).json({ error: 'Failed to process payment' });
   }
 }
