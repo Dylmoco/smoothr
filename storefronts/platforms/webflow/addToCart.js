@@ -9,9 +9,16 @@ if (typeof window !== 'undefined') {
   window.Smoothr.cart = { ...cart };
 }
 
+let initLogShown = false;
+let noButtonsWarned = false;
+let foundLogShown = false;
+
 export function initCartBindings() {
   const debug = window.SMOOTHR_CONFIG?.debug;
-  if (debug) console.log('🧩 initCartBindings loaded and executing');
+  if (debug && !initLogShown) {
+    console.log('🧩 initCartBindings loaded and executing');
+    initLogShown = true;
+  }
   if (typeof document === 'undefined') return;
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart?.addItem) {
@@ -20,10 +27,11 @@ export function initCartBindings() {
   }
 
   const buttons = document.querySelectorAll('[data-smoothr-add]');
-  if (debug)
+  if (debug && !foundLogShown)
     console.log(
       `smoothr:addToCart found ${buttons.length} [data-smoothr-add] elements`
     );
+  foundLogShown = true;
 
   if (buttons.length === 0) {
     const path = window.location?.pathname || '';
@@ -31,7 +39,10 @@ export function initCartBindings() {
       if (debug) console.log('🧩 addToCart polling disabled on checkout page');
       return;
     }
-    console.warn('smoothr:addToCart no buttons found; retrying...');
+    if (!noButtonsWarned) {
+      console.warn('smoothr:addToCart no buttons found; retrying...');
+      noButtonsWarned = true;
+    }
     setTimeout(initCartBindings, 500);
     return;
   }
