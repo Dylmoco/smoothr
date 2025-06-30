@@ -27,11 +27,23 @@ interface CheckoutPayload {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const origin = req.headers.origin || '*';
+
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  res.setHeader('Access-Control-Allow-Origin', origin);
 
   try {
     const {
