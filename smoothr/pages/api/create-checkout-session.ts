@@ -1,12 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-} as const;
-
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
@@ -23,19 +17,22 @@ interface CartItem {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const origin = req.headers.origin || '*';
   try {
     if (req.method === 'OPTIONS') {
-      res.writeHead(200, CORS_HEADERS);
-      res.end();
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.status(200).end();
       return;
     }
-
-    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method not allowed' });
       return;
     }
+
+    res.setHeader('Access-Control-Allow-Origin', origin);
 
     const { baseCurrency, cart } = req.body as {
       baseCurrency: string;
