@@ -1,12 +1,22 @@
+let stripeFieldsMounted = false;
+
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   const log = (...args) => debug && console.log('smoothr:checkout', ...args);
   const warn = (...args) => console.warn('smoothr:checkout', ...args);
   const err = (...args) => console.error('smoothr:checkout', ...args);
 
+  const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+  if (!stripeKey) {
+    console.log('[Smoothr Checkout] No Stripe key provided');
+    return;
+  }
+
+  const stripe = Stripe(stripeKey);
+  let elements = stripe.elements();
+
   let stripeReady = false;
   let hasShownCheckoutError = false;
-  let elements;
 
   let block = document.querySelector('[data-smoothr-checkout]');
   if (!block) {
@@ -44,10 +54,32 @@ export async function initCheckout() {
   log('no polling loops active');
 
   // TODO: Support multiple gateways besides Stripe
-  const stripePk =
-    window.SMOOTHR_CONFIG?.stripeKey || window.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-  const stripe = Stripe(stripePk);
+  const stripePk = stripeKey;
   log('Stripe PK loaded', stripePk);
+
+  if (!stripeFieldsMounted) {
+    stripeFieldsMounted = true;
+    const cardNumberElement = elements.create('cardNumber');
+    const cardExpiryElement = elements.create('cardExpiry');
+    const cardCvcElement = elements.create('cardCvc');
+
+    if (cardNumberEl) {
+      cardNumberElement.mount(cardNumberEl);
+    } else {
+      console.warn('[Smoothr Checkout] Missing [data-smoothr-card-number]');
+    }
+    if (cardExpiryEl) {
+      cardExpiryElement.mount(cardExpiryEl);
+    } else {
+      console.warn('[Smoothr Checkout] Missing [data-smoothr-card-expiry]');
+    }
+    if (cardCvcEl) {
+      cardCvcElement.mount(cardCvcEl);
+    } else {
+      console.warn('[Smoothr Checkout] Missing [data-smoothr-card-cvc]');
+    }
+    console.log('[Smoothr Checkout] Mounted Stripe card fields');
+  }
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
