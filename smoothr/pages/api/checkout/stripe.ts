@@ -38,6 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   applyCors(res, origin);
 
+  console.log('[Smoothr Checkout] Incoming payload:', req.body);
+  if (!req.body.email) console.warn('Missing email');
+  if (!req.body.payment_method) console.warn('Missing payment_method');
+  if (!Array.isArray(req.body.cart) || req.body.cart.length === 0)
+    console.warn('Invalid or empty cart');
+  if (!req.body.total || req.body.total <= 0)
+    console.warn('Missing or invalid total');
+  if (!req.body.currency) console.warn('Missing currency');
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     res.status(405).json({ error: 'Method not allowed' });
@@ -67,22 +76,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       typeof total !== 'number' ||
       !currency
     ) {
+      console.warn('[Smoothr Checkout] Rejecting request: missing required fields');
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
 
     if (!Array.isArray(cart) || cart.length === 0) {
+      console.warn('[Smoothr Checkout] Rejecting request: empty cart');
       res.status(400).json({ error: 'Cart cannot be empty' });
       return;
     }
 
     if (total <= 0) {
+      console.warn('[Smoothr Checkout] Rejecting request: invalid total');
       res.status(400).json({ error: 'Invalid total' });
       return;
     }
 
     const { line1, line2, city, postcode, state, country } = shipping;
     if (!line1 || !city || !postcode || !state || !country) {
+      console.warn('[Smoothr Checkout] Rejecting request: invalid shipping details');
       res.status(400).json({ error: 'Invalid shipping details' });
       return;
     }
