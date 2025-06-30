@@ -97,6 +97,13 @@ a dropdown and mark prices using `data-smoothr-price`:
 Prices update automatically when the currency changes and the selection is
 persisted in `localStorage`.
 
+## Checkout
+
+`initCheckout` now mounts Stripe card fields automatically. Provide elements
+with the attributes `data-smoothr-card-number`, `data-smoothr-card-expiry` and
+`data-smoothr-card-cvc` where the fields should render. If any target is missing
+the script retries mounting every 200ms for up to five attempts.
+
 
 ## CI/CD
 

@@ -1,4 +1,41 @@
 let stripeFieldsMounted = false;
+let stripeMountAttempts = 0;
+let stripe;
+let elements;
+
+function initStripeElements() {
+  const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+  if (!stripeKey) return;
+
+  const numberTarget = document.querySelector('[data-smoothr-card-number]');
+  const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
+  const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
+
+  if (!numberTarget || !expiryTarget || !cvcTarget) {
+    if (stripeMountAttempts < 5) {
+      stripeMountAttempts++;
+      setTimeout(initStripeElements, 200);
+    }
+    return;
+  }
+
+  if (!stripe) {
+    stripe = Stripe(stripeKey);
+    elements = stripe.elements();
+  }
+
+  console.log('[Smoothr Checkout] Mounting Stripe card fields...');
+  const numberElement = elements.create('cardNumber');
+  const expiryElement = elements.create('cardExpiry');
+  const cvcElement = elements.create('cardCvc');
+
+  numberElement.mount(numberTarget);
+  console.log('[Smoothr Checkout] Stripe mounted into card-number');
+  expiryElement.mount(expiryTarget);
+  cvcElement.mount(cvcTarget);
+
+  stripeFieldsMounted = true;
+}
 
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
@@ -17,10 +54,7 @@ export async function initCheckout() {
     return;
   }
 
-  const stripe = Stripe(stripeKey);
-  log('Stripe initialized');
-  let elements = stripe.elements();
-  log('Elements instance created');
+  log('Stripe key confirmed');
 
   let stripeReady = false;
   let hasShownCheckoutError = false;
@@ -66,42 +100,7 @@ export async function initCheckout() {
   log('Stripe PK loaded', stripePk);
 
   if (!stripeFieldsMounted) {
-    stripeFieldsMounted = true;
-    const cardNumberElement = elements.create('cardNumber');
-    const cardExpiryElement = elements.create('cardExpiry');
-    const cardCvcElement = elements.create('cardCvc');
-
-    if (cardNumberEl) {
-      try {
-        cardNumberElement.mount(cardNumberEl);
-        log('Mounted [data-smoothr-card-number]');
-      } catch (e) {
-        err(`\u274C Failed at mount card-number: ${e.message}`);
-      }
-    } else {
-      warn('Missing [data-smoothr-card-number]');
-    }
-    if (cardExpiryEl) {
-      try {
-        cardExpiryElement.mount(cardExpiryEl);
-        log('Mounted [data-smoothr-card-expiry]');
-      } catch (e) {
-        err(`\u274C Failed at mount card-expiry: ${e.message}`);
-      }
-    } else {
-      warn('Missing [data-smoothr-card-expiry]');
-    }
-    if (cardCvcEl) {
-      try {
-        cardCvcElement.mount(cardCvcEl);
-        log('Mounted [data-smoothr-card-cvc]');
-      } catch (e) {
-        err(`\u274C Failed at mount card-cvc: ${e.message}`);
-      }
-    } else {
-      warn('Missing [data-smoothr-card-cvc]');
-    }
-    log('Mounted Stripe card fields');
+    initStripeElements();
   }
 
   submitBtn?.addEventListener('click', async event => {
