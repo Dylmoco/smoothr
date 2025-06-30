@@ -67,9 +67,20 @@ manual build step is required.
 
 The admin dashboard exposes a minimal endpoint at
 `/api/checkout/stripe` for creating Stripe PaymentIntents. The request
-body should include a numeric `amount` and optional `email`. When an
-email is provided it will be used for Stripe receipts, otherwise the
-intent is created without a receipt email.
+body must include the following fields:
+
+- `payment_method` – the ID of the payment method to charge
+- `email` – customer email for receipts
+- `first_name` – customer's first name
+- `last_name` – customer's last name
+- `shipping` – shipping address object
+- `cart` – array of cart items
+- `total` – numeric order total
+- `currency` – ISO currency code
+- `description` *(optional)* – order description
+
+On success the endpoint responds with the created order ID and Stripe
+PaymentIntent ID.
 
 
 ### Deployment Log
