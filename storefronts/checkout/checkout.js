@@ -2,18 +2,25 @@ let stripeFieldsMounted = false;
 
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
-  const log = (...args) => debug && console.log('smoothr:checkout', ...args);
-  const warn = (...args) => console.warn('smoothr:checkout', ...args);
-  const err = (...args) => console.error('smoothr:checkout', ...args);
+  const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
+  const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
+  const err = (...args) => debug && console.error('[Smoothr Checkout]', ...args);
+
+  log('SDK initialized');
+  log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
 
   const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+  log(`stripeKey: ${stripeKey}`);
   if (!stripeKey) {
+    warn('❌ Failed at Stripe Key Check: missing key');
     console.log('[Smoothr Checkout] No Stripe key provided');
     return;
   }
 
   const stripe = Stripe(stripeKey);
+  log('Stripe initialized');
   let elements = stripe.elements();
+  log('Elements instance created');
 
   let stripeReady = false;
   let hasShownCheckoutError = false;
@@ -39,18 +46,19 @@ export async function initCheckout() {
   const cardCvcEl = block.querySelector('[data-smoothr-card-cvc]');
   const postalEl = block.querySelector('[data-smoothr-postal]');
   const themeEl = document.querySelector('#smoothr-checkout-theme');
-  log('parsed inputs', {
-    productId,
-    emailField,
-    totalEl,
-    paymentContainer,
-    submitBtn,
-    cardNumberEl,
-    cardExpiryEl,
-    cardCvcEl,
-    postalEl,
-    theme: !!themeEl
-  });
+  const fields = [
+    ['[data-smoothr-email]', emailField?.value || ''],
+    ['[data-smoothr-total]', totalEl?.textContent || ''],
+    ['[data-smoothr-gateway]', paymentContainer ? 'found' : 'missing'],
+    ['[data-smoothr-submit]', submitBtn ? 'found' : 'missing'],
+    ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
+    ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
+    ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
+    ['[data-smoothr-postal]', postalEl ? 'found' : 'missing']
+  ];
+  fields.forEach(([name, val]) => log(`${name} = ${val}`));
+  if (!emailField) warn('missing [data-smoothr-email]');
+  if (!totalEl) warn('missing [data-smoothr-total]');
   log('no polling loops active');
 
   // TODO: Support multiple gateways besides Stripe
@@ -64,28 +72,43 @@ export async function initCheckout() {
     const cardCvcElement = elements.create('cardCvc');
 
     if (cardNumberEl) {
-      cardNumberElement.mount(cardNumberEl);
+      try {
+        cardNumberElement.mount(cardNumberEl);
+        log('Mounted [data-smoothr-card-number]');
+      } catch (e) {
+        err(`\u274C Failed at mount card-number: ${e.message}`);
+      }
     } else {
-      console.warn('[Smoothr Checkout] Missing [data-smoothr-card-number]');
+      warn('Missing [data-smoothr-card-number]');
     }
     if (cardExpiryEl) {
-      cardExpiryElement.mount(cardExpiryEl);
+      try {
+        cardExpiryElement.mount(cardExpiryEl);
+        log('Mounted [data-smoothr-card-expiry]');
+      } catch (e) {
+        err(`\u274C Failed at mount card-expiry: ${e.message}`);
+      }
     } else {
-      console.warn('[Smoothr Checkout] Missing [data-smoothr-card-expiry]');
+      warn('Missing [data-smoothr-card-expiry]');
     }
     if (cardCvcEl) {
-      cardCvcElement.mount(cardCvcEl);
+      try {
+        cardCvcElement.mount(cardCvcEl);
+        log('Mounted [data-smoothr-card-cvc]');
+      } catch (e) {
+        err(`\u274C Failed at mount card-cvc: ${e.message}`);
+      }
     } else {
-      console.warn('[Smoothr Checkout] Missing [data-smoothr-card-cvc]');
+      warn('Missing [data-smoothr-card-cvc]');
     }
-    console.log('[Smoothr Checkout] Mounted Stripe card fields');
+    log('Mounted Stripe card fields');
   }
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
     event.stopPropagation();
     submitBtn.disabled = true;
-    log('submit clicked');
+    log('[data-smoothr-submit] clicked');
 
     const email =
       emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
@@ -106,14 +129,15 @@ export async function initCheckout() {
 
     const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
     const payload = { amount: total, product_id: productId, email };
-    log('POST', `${apiBase}/api/checkout/stripe`, payload);
+    log('payload', payload);
+    log('POST', `${apiBase}/api/checkout/stripe`);
     const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     const resBody = await initRes.clone().json().catch(() => ({}));
-    log('response', initRes.status, resBody);
+    log('fetch response', initRes.status, resBody);
     if (initRes.status === 405) {
       warn('method not allowed; used', 'POST');
     }
@@ -121,7 +145,7 @@ export async function initCheckout() {
     const { client_secret } = resBody;
     log('client_secret', client_secret);
     if (!initRes.ok || !client_secret) {
-      err('Missing client_secret; aborting checkout');
+      err('\u274C Failed at API fetch: missing client_secret');
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
         hasShownCheckoutError = true;
@@ -160,7 +184,7 @@ export async function initCheckout() {
         });
 
         if (error) {
-          err('tokenization failed', error);
+          err(`\u274C Failed at confirmPayment: ${error.message}`);
           if (!hasShownCheckoutError) {
             alert('Failed to start checkout');
             hasShownCheckoutError = true;
@@ -170,7 +194,7 @@ export async function initCheckout() {
           block.innerHTML = '<p>Payment successful!</p>';
         }
       } catch (err) {
-        err(err);
+        err(`\u274C Failed at confirmPayment: ${err.message}`);
         if (!hasShownCheckoutError) {
           alert('Failed to start checkout');
           hasShownCheckoutError = true;
@@ -180,7 +204,7 @@ export async function initCheckout() {
         log('submit handler complete');
       }
     } else {
-      err('Cannot mount Stripe: [data-smoothr-gateway] not found.');
+      err('\u274C Failed at mount: [data-smoothr-gateway] not found');
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
         hasShownCheckoutError = true;
