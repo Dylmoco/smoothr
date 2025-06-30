@@ -176,7 +176,8 @@ export async function initCheckout() {
         currency
       };
 
-      console.log('[Smoothr Checkout] Submitting payload:', payload);
+      window.__latestSmoothrPayload = payload;
+      console.log('[Smoothr Checkout] Submitting payload:', window.__latestSmoothrPayload);
       const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
       log('POST', `${apiBase}/api/checkout/stripe`);
       const res = await fetch(`${apiBase}/api/checkout/stripe`, {
