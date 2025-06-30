@@ -2,6 +2,7 @@ let stripeFieldsMounted = false;
 let stripeMountAttempts = 0;
 let stripe;
 let elements;
+let cardNumberElement;
 
 function initStripeElements() {
   const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
@@ -25,11 +26,11 @@ function initStripeElements() {
   }
 
   console.log('[Smoothr Checkout] Mounting Stripe card fields...');
-  const numberElement = elements.create('cardNumber');
+  cardNumberElement = elements.create('cardNumber');
   const expiryElement = elements.create('cardExpiry');
   const cvcElement = elements.create('cardCvc');
 
-  numberElement.mount(numberTarget);
+  cardNumberElement.mount(numberTarget);
   console.log('[Smoothr Checkout] Stripe mounted into card-number');
   expiryElement.mount(expiryTarget);
   cvcElement.mount(cvcTarget);
@@ -110,105 +111,99 @@ export async function initCheckout() {
     log('[data-smoothr-submit] clicked');
 
     const email =
-      emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
+      emailField?.value?.trim() ||
+      emailField?.getAttribute('data-smoothr-email')?.trim() || '';
+    const first_name =
+      block.querySelector('[data-smoothr-first-name]')?.value?.trim() || '';
+    const last_name =
+      block.querySelector('[data-smoothr-last-name]')?.value?.trim() || '';
+    const shipping = {
+      line1: block.querySelector('[data-smoothr-shipping-line1]')?.value?.trim() || '',
+      line2: block.querySelector('[data-smoothr-shipping-line2]')?.value?.trim() || '',
+      city: block.querySelector('[data-smoothr-shipping-city]')?.value?.trim() || '',
+      postcode:
+        block.querySelector('[data-smoothr-shipping-postcode]')?.value?.trim() || '',
+      state: block.querySelector('[data-smoothr-shipping-state]')?.value?.trim() || '',
+      country:
+        block.querySelector('[data-smoothr-shipping-country]')?.value?.trim() || ''
+    };
+
+    const Smoothr = window.Smoothr || window.smoothr;
+    const cart = Smoothr?.cart?.getCart() || { items: [] };
     const total =
-      parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      Smoothr?.cart?.getTotal?.() ||
+      parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) ||
+      0;
+    const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
 
-    if (!email) {
-      warn('Missing email; aborting checkout');
+    if (!email || !first_name || !last_name || !total) {
+      warn('Missing required fields; aborting checkout');
       submitBtn.disabled = false;
       return;
     }
 
-    if (!total) {
-      warn('Missing amount; aborting checkout');
+    if (!stripeFieldsMounted) initStripeElements();
+    if (!stripe || !cardNumberElement) {
+      err('Stripe not ready');
       submitBtn.disabled = false;
       return;
     }
 
-    const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
-    const payload = { amount: total, product_id: productId, email };
-    log('payload', payload);
-    log('POST', `${apiBase}/api/checkout/stripe`);
-    const initRes = await fetch(`${apiBase}/api/checkout/stripe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const resBody = await initRes.clone().json().catch(() => ({}));
-    log('fetch response', initRes.status, resBody);
-    if (initRes.status === 405) {
-      warn('method not allowed; used', 'POST');
-    }
+    try {
+      const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardNumberElement,
+        billing_details: {
+          name: `${first_name} ${last_name}`,
+          email
+        }
+      });
 
-    const { client_secret } = resBody;
-    log('client_secret', client_secret);
-    if (!initRes.ok || !client_secret) {
-      err('\u274C Failed at API fetch: missing client_secret');
-      if (!hasShownCheckoutError) {
-        alert('Failed to start checkout');
-        hasShownCheckoutError = true;
-      }
-      submitBtn.disabled = false;
-      return;
-    }
-
-    elements = stripe.elements({ clientSecret: client_secret });
-    const paymentElement = elements.create('payment');
-    log('mounting Stripe Elements');
-    log('mount target', paymentContainer);
-    if (paymentContainer) {
-
-      paymentElement.mount(paymentContainer);
-      stripeReady = true;
-      log('Stripe Elements mounted');
-
-      if (!stripeReady) {
-        console.warn(
-          '[Smoothr Checkout] Stripe not ready. Blocking premature submit.'
-        );
+      if (pmError || !paymentMethod) {
+        err(`\u274C Failed to create payment method: ${pmError?.message}`);
         submitBtn.disabled = false;
         return;
       }
 
-      try {
-        await elements.submit();
-        log('elements.submit() called before confirmPayment');
-        const { error } = await stripe.confirmPayment({
-          elements,
-          clientSecret: client_secret,
-          confirmParams: {
-            return_url: `${window.location.origin}/checkout-success`
-          }
-        });
+      const payload = {
+        email,
+        payment_method: paymentMethod.id,
+        first_name,
+        last_name,
+        shipping,
+        cart: cart.items,
+        total,
+        currency
+      };
 
-        if (error) {
-          err(`\u274C Failed at confirmPayment: ${error.message}`);
-          if (!hasShownCheckoutError) {
-            alert('Failed to start checkout');
-            hasShownCheckoutError = true;
-          }
-        } else {
-          log('tokenization success');
-          block.innerHTML = '<p>Payment successful!</p>';
-        }
-      } catch (err) {
-        err(`\u274C Failed at confirmPayment: ${err.message}`);
+      console.log('[Smoothr Checkout] Submitting payload:', payload);
+      const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
+      log('POST', `${apiBase}/api/checkout/stripe`);
+      const res = await fetch(`${apiBase}/api/checkout/stripe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.clone().json().catch(() => ({}));
+      log('fetch response', res.status, data);
+      if (res.ok && data.success) {
+        block.innerHTML = '<p>Payment successful!</p>';
+      } else {
+        err('Checkout failed');
         if (!hasShownCheckoutError) {
           alert('Failed to start checkout');
           hasShownCheckoutError = true;
         }
-      } finally {
-        submitBtn.disabled = false;
-        log('submit handler complete');
       }
-    } else {
-      err('\u274C Failed at mount: [data-smoothr-gateway] not found');
+    } catch (err) {
+      err(`\u274C ${err.message}`);
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
         hasShownCheckoutError = true;
       }
+    } finally {
       submitBtn.disabled = false;
+      log('submit handler complete');
     }
   });
   log('submit handler attached');
