@@ -76,7 +76,8 @@ export function initCheckout() {
     }
     checkoutBtn.disabled = true;
     try {
-      const res = await fetch('/api/create-checkout-session', {
+      const base = window?.SMOOTHR_CONFIG?.apiBase || '';
+      const res = await fetch(`${base}/api/checkout/stripe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
