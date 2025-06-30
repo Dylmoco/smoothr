@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import { applyCors } from '../../utils/cors';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
@@ -20,19 +21,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const origin = req.headers.origin || '*';
   try {
     if (req.method === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      applyCors(res, origin);
       res.status(200).end();
       return;
     }
+
+    applyCors(res, origin);
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method not allowed' });
       return;
     }
-
-    res.setHeader('Access-Control-Allow-Origin', origin);
 
     const { baseCurrency, cart } = req.body as {
       baseCurrency: string;
