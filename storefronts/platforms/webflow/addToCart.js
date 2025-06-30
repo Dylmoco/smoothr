@@ -26,6 +26,11 @@ export function initCartBindings() {
     );
 
   if (buttons.length === 0) {
+    const path = window.location?.pathname || '';
+    if (path.includes('/checkout')) {
+      if (debug) console.log('🧩 addToCart polling disabled on checkout page');
+      return;
+    }
     console.warn('smoothr:addToCart no buttons found; retrying...');
     setTimeout(initCartBindings, 500);
     return;
