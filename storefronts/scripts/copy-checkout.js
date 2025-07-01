@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const src = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
+// Use the generic checkout script that mounts individual card fields
+const src = join(__dirname, '..', 'checkout', 'checkout.js');
 const dest = join(__dirname, '..', 'dist', 'checkout.js');
 
 try {
