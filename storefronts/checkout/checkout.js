@@ -12,7 +12,7 @@ function initStripeElements() {
   const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
   const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
 
-  if (!numberTarget || !expiryTarget || !cvcTarget) {
+  if (!numberTarget && !expiryTarget && !cvcTarget) {
     if (stripeMountAttempts < 5) {
       stripeMountAttempts++;
       setTimeout(initStripeElements, 200);
@@ -26,16 +26,30 @@ function initStripeElements() {
   }
 
   console.log('[Smoothr Checkout] Mounting Stripe card fields...');
-  cardNumberElement = elements.create('cardNumber');
-  const expiryElement = elements.create('cardExpiry');
-  const cvcElement = elements.create('cardCvc');
 
-  cardNumberElement.mount(numberTarget);
-  console.log('[Smoothr Checkout] Stripe mounted into card-number');
-  expiryElement.mount(expiryTarget);
-  cvcElement.mount(cvcTarget);
+  if (numberTarget) {
+    cardNumberElement = elements.create('cardNumber');
+    cardNumberElement.mount('[data-smoothr-card-number]');
+    stripeFieldsMounted = true;
+  } else {
+    console.warn('[Smoothr Checkout] Missing [data-smoothr-card-number] container');
+  }
 
-  stripeFieldsMounted = true;
+  if (expiryTarget) {
+    const cardExpiryElement = elements.create('cardExpiry');
+    cardExpiryElement.mount('[data-smoothr-card-expiry]');
+  } else {
+    console.warn('[Smoothr Checkout] Missing [data-smoothr-card-expiry] container');
+  }
+
+  if (cvcTarget) {
+    const cardCvcElement = elements.create('cardCvc');
+    cardCvcElement.mount('[data-smoothr-card-cvc]');
+  } else {
+    console.warn('[Smoothr Checkout] Missing [data-smoothr-card-cvc] container');
+  }
+
+  console.log('[Smoothr Checkout] Stripe fields mounted into individual containers');
 }
 
 export async function initCheckout() {
