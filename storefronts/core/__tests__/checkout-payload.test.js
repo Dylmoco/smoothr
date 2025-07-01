@@ -48,12 +48,12 @@ beforeEach(() => {
         '[data-smoothr-card-expiry]': cardExpiryEl,
         '[data-smoothr-card-cvc]': cardCvcEl,
         '[data-smoothr-postal]': { value: '12345' },
-        '[data-smoothr-shipping-line1]': { value: '' },
-        '[data-smoothr-shipping-line2]': { value: '' },
-        '[data-smoothr-shipping-city]': { value: '' },
-        '[data-smoothr-shipping-postcode]': { value: '' },
-        '[data-smoothr-shipping-state]': { value: '' },
-        '[data-smoothr-shipping-country]': { value: '' }
+        '[data-smoothr-ship-line1]': { value: '' },
+        '[data-smoothr-ship-line2]': { value: '' },
+        '[data-smoothr-ship-city]': { value: '' },
+        '[data-smoothr-ship-postal]': { value: '' },
+        '[data-smoothr-ship-state]': { value: '' },
+        '[data-smoothr-ship-country]': { value: '' }
       };
       return map[sel] || null;
     })
@@ -108,6 +108,19 @@ describe('checkout payload', () => {
         cart: [{ id: 1 }],
         total: 5000,
         currency: 'USD'
+      })
+    );
+    expect(payload.shipping).toEqual(
+      expect.objectContaining({
+        name: 'Jane Doe',
+        address: expect.objectContaining({
+          line1: '',
+          line2: '',
+          city: '',
+          state: '',
+          postal_code: '',
+          country: ''
+        })
       })
     );
   });
