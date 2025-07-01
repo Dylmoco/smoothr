@@ -6,13 +6,18 @@ import { applyCors } from '../../../utils/cors';
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
-interface ShippingInfo {
+interface ShippingAddress {
   line1: string;
   line2?: string;
   city: string;
-  postcode: string;
   state: string;
+  postal_code: string;
   country: string;
+}
+
+interface ShippingInfo {
+  name: string;
+  address: ShippingAddress;
 }
 
 interface CheckoutPayload {
@@ -93,8 +98,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const { line1, line2, city, postcode, state, country } = shipping;
-    if (!line1 || !city || !postcode || !state || !country) {
+    const { name, address } = shipping;
+    const { line1, line2, city, state, postal_code, country } = address || {};
+    if (!name || !line1 || !city || !postal_code || !state || !country) {
       console.warn('[Smoothr Checkout] Rejecting request: invalid shipping details');
       res.status(400).json({ error: 'Invalid shipping details' });
       return;
@@ -113,13 +119,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cart: JSON.stringify(cart)
       },
       shipping: {
-        name: `${first_name} ${last_name}`,
+        name,
         address: {
           line1,
           line2: line2 || undefined,
           city,
-          postal_code: postcode,
           state,
+          postal_code,
           country
         }
       }

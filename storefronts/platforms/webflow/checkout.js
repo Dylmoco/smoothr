@@ -98,13 +98,15 @@ export function initCheckout() {
       const email = document.querySelector('[data-smoothr-email]')?.value?.trim() || '';
       const first_name = document.querySelector('[data-smoothr-first-name]')?.value?.trim() || '';
       const last_name = document.querySelector('[data-smoothr-last-name]')?.value?.trim() || '';
+      const line1 = document.querySelector('[data-smoothr-ship-line1]')?.value?.trim() || '';
+      const line2 = document.querySelector('[data-smoothr-ship-line2]')?.value?.trim() || '';
+      const city = document.querySelector('[data-smoothr-ship-city]')?.value?.trim() || '';
+      const state = document.querySelector('[data-smoothr-ship-state]')?.value?.trim() || '';
+      const postal_code = document.querySelector('[data-smoothr-ship-postal]')?.value?.trim() || '';
+      const country = document.querySelector('[data-smoothr-ship-country]')?.value?.trim() || '';
       const shipping = {
-        line1: document.querySelector('[data-smoothr-shipping-line1]')?.value?.trim() || '',
-        line2: document.querySelector('[data-smoothr-shipping-line2]')?.value?.trim() || '',
-        city: document.querySelector('[data-smoothr-shipping-city]')?.value?.trim() || '',
-        postcode: document.querySelector('[data-smoothr-shipping-postcode]')?.value?.trim() || '',
-        state: document.querySelector('[data-smoothr-shipping-state]')?.value?.trim() || '',
-        country: document.querySelector('[data-smoothr-shipping-country]')?.value?.trim() || ''
+        name: `${first_name} ${last_name}`,
+        address: { line1, line2, city, state, postal_code, country }
       };
 
       const cart = Smoothr.cart.getCart();

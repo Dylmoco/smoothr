@@ -131,15 +131,21 @@ export async function initCheckout() {
       block.querySelector('[data-smoothr-first-name]')?.value?.trim() || '';
     const last_name =
       block.querySelector('[data-smoothr-last-name]')?.value?.trim() || '';
+    const line1 =
+      block.querySelector('[data-smoothr-ship-line1]')?.value?.trim() || '';
+    const line2 =
+      block.querySelector('[data-smoothr-ship-line2]')?.value?.trim() || '';
+    const city =
+      block.querySelector('[data-smoothr-ship-city]')?.value?.trim() || '';
+    const state =
+      block.querySelector('[data-smoothr-ship-state]')?.value?.trim() || '';
+    const postal_code =
+      block.querySelector('[data-smoothr-ship-postal]')?.value?.trim() || '';
+    const country =
+      block.querySelector('[data-smoothr-ship-country]')?.value?.trim() || '';
     const shipping = {
-      line1: block.querySelector('[data-smoothr-shipping-line1]')?.value?.trim() || '',
-      line2: block.querySelector('[data-smoothr-shipping-line2]')?.value?.trim() || '',
-      city: block.querySelector('[data-smoothr-shipping-city]')?.value?.trim() || '',
-      postcode:
-        block.querySelector('[data-smoothr-shipping-postcode]')?.value?.trim() || '',
-      state: block.querySelector('[data-smoothr-shipping-state]')?.value?.trim() || '',
-      country:
-        block.querySelector('[data-smoothr-shipping-country]')?.value?.trim() || ''
+      name: `${first_name} ${last_name}`,
+      address: { line1, line2, city, state, postal_code, country }
     };
 
     const Smoothr = window.Smoothr || window.smoothr;
