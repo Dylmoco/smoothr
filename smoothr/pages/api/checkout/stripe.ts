@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import supabase from '../../../../shared/supabase/serverClient';
-import { findOrCreateCustomer } from '../../../../shared/customers/findOrCreate';
+import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import { applyCors } from '../../../utils/cors';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
