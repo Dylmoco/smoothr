@@ -1299,131 +1299,135 @@ GRANT ALL ON FUNCTION "public"."update_updated_at"() TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."abandoned_carts" TO "anon";
-GRANT ALL ON TABLE "public"."abandoned_carts" TO "authenticated";
 GRANT ALL ON TABLE "public"."abandoned_carts" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."affiliate_usages" TO "authenticated";
 GRANT ALL ON TABLE "public"."affiliate_usages" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."affiliates" TO "authenticated";
 GRANT ALL ON TABLE "public"."affiliates" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."audit_logs" TO "anon";
-GRANT ALL ON TABLE "public"."audit_logs" TO "authenticated";
 GRANT ALL ON TABLE "public"."audit_logs" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."discount_usages" TO "authenticated";
 GRANT ALL ON TABLE "public"."discount_usages" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."discounts" TO "authenticated";
 GRANT ALL ON TABLE "public"."discounts" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."exchange_rates" TO "anon";
-GRANT ALL ON TABLE "public"."exchange_rates" TO "authenticated";
 GRANT ALL ON TABLE "public"."exchange_rates" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."notifications" TO "anon";
-GRANT ALL ON TABLE "public"."notifications" TO "authenticated";
 GRANT ALL ON TABLE "public"."notifications" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."order_items" TO "anon";
-GRANT ALL ON TABLE "public"."order_items" TO "authenticated";
 GRANT ALL ON TABLE "public"."order_items" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."orders" TO "anon";
-GRANT ALL ON TABLE "public"."orders" TO "authenticated";
 GRANT ALL ON TABLE "public"."orders" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."payment_gateways" TO "anon";
-GRANT ALL ON TABLE "public"."payment_gateways" TO "authenticated";
 GRANT ALL ON TABLE "public"."payment_gateways" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."profiles" TO "anon";
-GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."referrals" TO "anon";
-GRANT ALL ON TABLE "public"."referrals" TO "authenticated";
 GRANT ALL ON TABLE "public"."referrals" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."returns" TO "anon";
-GRANT ALL ON TABLE "public"."returns" TO "authenticated";
 GRANT ALL ON TABLE "public"."returns" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."reviews" TO "anon";
-GRANT ALL ON TABLE "public"."reviews" TO "authenticated";
 GRANT ALL ON TABLE "public"."reviews" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."store_integrations" TO "anon";
-GRANT ALL ON TABLE "public"."store_integrations" TO "authenticated";
 GRANT ALL ON TABLE "public"."store_integrations" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."store_settings" TO "anon";
-GRANT ALL ON TABLE "public"."store_settings" TO "authenticated";
 GRANT ALL ON TABLE "public"."store_settings" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."stores" TO "anon";
-GRANT ALL ON TABLE "public"."stores" TO "authenticated";
 GRANT ALL ON TABLE "public"."stores" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."subscriptions" TO "anon";
-GRANT ALL ON TABLE "public"."subscriptions" TO "authenticated";
 GRANT ALL ON TABLE "public"."subscriptions" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."user_stores" TO "anon";
-GRANT ALL ON TABLE "public"."user_stores" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_stores" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."users" TO "anon";
-GRANT ALL ON TABLE "public"."users" TO "authenticated";
 GRANT ALL ON TABLE "public"."users" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."webflow_connections" TO "anon";
-GRANT ALL ON TABLE "public"."webflow_connections" TO "authenticated";
 GRANT ALL ON TABLE "public"."webflow_connections" TO "service_role";
+REVOKE ALL ON TABLE public.abandoned_carts FROM anon;
+REVOKE ALL ON TABLE public.abandoned_carts FROM authenticated;
+REVOKE ALL ON TABLE public.affiliate_usages FROM anon;
+REVOKE ALL ON TABLE public.affiliate_usages FROM authenticated;
+REVOKE ALL ON TABLE public.affiliates FROM anon;
+REVOKE ALL ON TABLE public.affiliates FROM authenticated;
+REVOKE ALL ON TABLE public.audit_logs FROM anon;
+REVOKE ALL ON TABLE public.audit_logs FROM authenticated;
+REVOKE ALL ON TABLE public.discount_usages FROM anon;
+REVOKE ALL ON TABLE public.discount_usages FROM authenticated;
+REVOKE ALL ON TABLE public.discounts FROM anon;
+REVOKE ALL ON TABLE public.discounts FROM authenticated;
+REVOKE ALL ON TABLE public.exchange_rates FROM anon;
+REVOKE ALL ON TABLE public.exchange_rates FROM authenticated;
+REVOKE ALL ON TABLE public.notifications FROM anon;
+REVOKE ALL ON TABLE public.notifications FROM authenticated;
+REVOKE ALL ON TABLE public.order_items FROM anon;
+REVOKE ALL ON TABLE public.order_items FROM authenticated;
+REVOKE ALL ON TABLE public.orders FROM anon;
+REVOKE ALL ON TABLE public.orders FROM authenticated;
+REVOKE ALL ON TABLE public.payment_gateways FROM anon;
+REVOKE ALL ON TABLE public.payment_gateways FROM authenticated;
+REVOKE ALL ON TABLE public.profiles FROM anon;
+REVOKE ALL ON TABLE public.profiles FROM authenticated;
+REVOKE ALL ON TABLE public.referrals FROM anon;
+REVOKE ALL ON TABLE public.referrals FROM authenticated;
+REVOKE ALL ON TABLE public.returns FROM anon;
+REVOKE ALL ON TABLE public.returns FROM authenticated;
+REVOKE ALL ON TABLE public.reviews FROM anon;
+REVOKE ALL ON TABLE public.reviews FROM authenticated;
+REVOKE ALL ON TABLE public.store_integrations FROM anon;
+REVOKE ALL ON TABLE public.store_integrations FROM authenticated;
+REVOKE ALL ON TABLE public.store_settings FROM anon;
+REVOKE ALL ON TABLE public.store_settings FROM authenticated;
+REVOKE ALL ON TABLE public.stores FROM anon;
+REVOKE ALL ON TABLE public.stores FROM authenticated;
+REVOKE ALL ON TABLE public.subscriptions FROM anon;
+REVOKE ALL ON TABLE public.subscriptions FROM authenticated;
+REVOKE ALL ON TABLE public.user_stores FROM anon;
+REVOKE ALL ON TABLE public.user_stores FROM authenticated;
+REVOKE ALL ON TABLE public.users FROM anon;
+REVOKE ALL ON TABLE public.users FROM authenticated;
+REVOKE ALL ON TABLE public.webflow_connections FROM anon;
+REVOKE ALL ON TABLE public.webflow_connections FROM authenticated;
 
 
 
@@ -1448,8 +1452,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUN
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "anon";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "service_role";
 
 -- Migrate existing data from orders.items into order_items then drop the column
