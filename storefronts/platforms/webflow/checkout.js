@@ -140,6 +140,9 @@ export function initCheckout() {
       const cart = Smoothr.cart.getCart();
       const total = Smoothr.cart.getTotal();
       const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
+      const customer_id = window.smoothr?.auth?.user?.id || null;
+      const store_id = window.SMOOTHR_CONFIG?.storeId;
+      const platform = 'webflow';
 
       if (!email || !first_name || !last_name || !total) {
         alert('Missing required fields');
@@ -176,7 +179,10 @@ export function initCheckout() {
         shipping,
         cart: cart.items,
         total,
-        currency
+        currency,
+        customer_id,
+        store_id,
+        platform
       };
 
       console.log('[Smoothr Checkout] Submitting payload:', payload);
