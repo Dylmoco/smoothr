@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS "public"."returns" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
-ALTER TABLE ONLY "public"."returns" FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.returns DISABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."returns" OWNER TO "postgres";
@@ -831,635 +831,447 @@ ALTER TABLE ONLY "public"."webflow_connections"
 
 
 
-CREATE POLICY "Allow logged-in users to insert reviews" ON "public"."reviews" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id"));
+DROP POLICY IF EXISTS "Allow logged-in users to insert reviews" ON public.reviews;
 
 
 
 
 
 
-CREATE POLICY "Customers can insert their own orders" ON "public"."orders" FOR INSERT WITH CHECK (("customer_id" = ("auth"."uid"())::"text"));
+DROP POLICY IF EXISTS "Customers can insert their own orders" ON public.orders;
 
 
 
-CREATE POLICY "Customers can read their own orders" ON "public"."orders" FOR SELECT USING (("customer_id" = ("auth"."uid"())::"text"));
+DROP POLICY IF EXISTS "Customers can read their own orders" ON public.orders;
 
 
 
-CREATE POLICY "Customers can update their own orders" ON "public"."orders" FOR UPDATE USING (("customer_id" = ("auth"."uid"())::"text"));
+DROP POLICY IF EXISTS "Customers can update their own orders" ON public.orders;
 
 
 
-CREATE POLICY "Customers can view their own orders" ON "public"."orders" FOR SELECT USING (("customer_id" = ("auth"."uid"())::"text"));
+DROP POLICY IF EXISTS "Customers can view their own orders" ON public.orders;
 
 
 
-CREATE POLICY "Store owners can insert store" ON "public"."stores" FOR INSERT WITH CHECK (("auth"."uid"() = "owner_user_id"));
+DROP POLICY IF EXISTS "Store owners can insert store" ON public.stores;
 
 
 
-CREATE POLICY "Store owners can read their store" ON "public"."stores" FOR SELECT USING (("auth"."uid"() = "owner_user_id"));
+DROP POLICY IF EXISTS "Store owners can read their store" ON public.stores;
 
 
 
-CREATE POLICY "Store owners can update their store" ON "public"."stores" FOR UPDATE USING (("auth"."uid"() = "owner_user_id"));
+DROP POLICY IF EXISTS "Store owners can update their store" ON public.stores;
 
 
 
-CREATE POLICY "Users can insert own profile" ON "public"."profiles" FOR INSERT WITH CHECK (("auth"."uid"() = "id"));
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
 
 
 
-CREATE POLICY "Users can insert their own data" ON "public"."users" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "id"));
+DROP POLICY IF EXISTS "Users can insert their own data" ON public.users;
 
 
 
-CREATE POLICY "Users can select own profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
+DROP POLICY IF EXISTS "Users can select own profile" ON public.profiles;
 
 
 
-CREATE POLICY "Users can select their own data" ON "public"."users" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "id"));
+DROP POLICY IF EXISTS "Users can select their own data" ON public.users;
 
 
 
-CREATE POLICY "Users can update own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 
 
 
-CREATE POLICY "Users can update their own data" ON "public"."users" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "id")) WITH CHECK (("auth"."uid"() = "id"));
+DROP POLICY IF EXISTS "Users can update their own data" ON public.users;
 
 
 
-ALTER TABLE "public"."abandoned_carts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.abandoned_carts DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "abandoned_carts_insert_policy" ON "public"."abandoned_carts" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR ("customer_id" = "auth"."uid"())));
+DROP POLICY IF EXISTS "abandoned_carts_insert_policy" ON public.abandoned_carts;
 
 
 
-CREATE POLICY "abandoned_carts_select_customer" ON "public"."abandoned_carts" FOR SELECT USING (("customer_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "abandoned_carts_select_customer" ON public.abandoned_carts;
 
 
 
-CREATE POLICY "abandoned_carts_select_staff" ON "public"."abandoned_carts" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "abandoned_carts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "abandoned_carts_select_staff" ON public.abandoned_carts;
 
 
 
-CREATE POLICY "abandoned_carts_update_policy" ON "public"."abandoned_carts" FOR UPDATE USING ((("auth"."role"() = 'service_role'::"text") OR ("customer_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "abandoned_carts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])))))));
+DROP POLICY IF EXISTS "abandoned_carts_update_policy" ON public.abandoned_carts;
 
 
 
-ALTER TABLE "public"."affiliate_usages" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliate_usages DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "affiliate_usages_insert_policy" ON "public"."affiliate_usages" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."affiliates" "a"
-     JOIN "public"."stores" "s" ON (("s"."id" = "a"."store_id")))
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "affiliate_usages_insert_policy" ON public.affiliate_usages;
 
 
 
-CREATE POLICY "affiliate_usages_select" ON "public"."affiliate_usages" FOR SELECT USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."affiliates" "a"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "a"."store_id")))
-     JOIN "public"."stores" "s" ON (("s"."id" = "a"."store_id")))
-  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "affiliate_usages_select" ON public.affiliate_usages;
 
 
 
-CREATE POLICY "affiliate_usages_select_policy" ON "public"."affiliate_usages" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM (("public"."affiliates" "a"
-     JOIN "public"."stores" "s" ON (("s"."id" = "a"."store_id")))
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
+DROP POLICY IF EXISTS "affiliate_usages_select_policy" ON public.affiliate_usages;
 
 
 
-ALTER TABLE "public"."affiliates" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliates DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "affiliates_delete_policy" ON "public"."affiliates" FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
+DROP POLICY IF EXISTS "affiliates_delete_policy" ON public.affiliates;
 
 
 
-CREATE POLICY "affiliates_insert_policy" ON "public"."affiliates" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
+DROP POLICY IF EXISTS "affiliates_insert_policy" ON public.affiliates;
 
 
 
-CREATE POLICY "affiliates_select" ON "public"."affiliates" FOR SELECT USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "affiliates"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "affiliates_select" ON public.affiliates;
 
 
 
-CREATE POLICY "affiliates_select_policy" ON "public"."affiliates" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
+DROP POLICY IF EXISTS "affiliates_select_policy" ON public.affiliates;
 
 
 
-CREATE POLICY "affiliates_update_policy" ON "public"."affiliates" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
+DROP POLICY IF EXISTS "affiliates_update_policy" ON public.affiliates;
 
 
 
-ALTER TABLE "public"."audit_logs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "audit_logs_insert_policy" ON "public"."audit_logs" FOR INSERT WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+DROP POLICY IF EXISTS "audit_logs_insert_policy" ON public.audit_logs;
 
 
 
-CREATE POLICY "audit_logs_select_policy" ON "public"."audit_logs" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM ("public"."stores" "s"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("s"."plan" = 'studio'::public.store_plan) AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text")))));
+DROP POLICY IF EXISTS "audit_logs_select_policy" ON public.audit_logs;
 
 
 
-ALTER TABLE "public"."discount_usages" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discount_usages DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "discount_usages_delete" ON "public"."discount_usages" FOR DELETE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discount_usages_delete" ON public.discount_usages;
 
 
 
-CREATE POLICY "discount_usages_insert" ON "public"."discount_usages" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discount_usages_insert" ON public.discount_usages;
 
 
 
-CREATE POLICY "discount_usages_insert_policy" ON "public"."discount_usages" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan))))));
+DROP POLICY IF EXISTS "discount_usages_insert_policy" ON public.discount_usages;
 
 
 
-CREATE POLICY "discount_usages_select" ON "public"."discount_usages" FOR SELECT USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discount_usages_select" ON public.discount_usages;
 
 
 
-CREATE POLICY "discount_usages_select_policy" ON "public"."discount_usages" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
+DROP POLICY IF EXISTS "discount_usages_select_policy" ON public.discount_usages;
 
 
 
-CREATE POLICY "discount_usages_update" ON "public"."discount_usages" FOR UPDATE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM (("public"."discounts" "d"
-     JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
-     JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discount_usages_update" ON public.discount_usages;
 
 
 
-ALTER TABLE "public"."discounts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discounts DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "discounts_delete" ON "public"."discounts" FOR DELETE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discounts_delete" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_delete_policy" ON "public"."discounts" FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
+DROP POLICY IF EXISTS "discounts_delete_policy" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_insert" ON "public"."discounts" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "us"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discounts_insert" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_insert_policy" ON "public"."discounts" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
+DROP POLICY IF EXISTS "discounts_insert_policy" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_manage" ON "public"."discounts" USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us2"
-     JOIN "public"."stores" "s2" ON (("s2"."id" = "us2"."store_id")))
-  WHERE (("us2"."user_id" = "auth"."uid"()) AND ("us2"."store_id" = "discounts"."store_id") AND ("us2"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s2"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discounts_manage" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_select" ON "public"."discounts" FOR SELECT USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discounts_select" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_select_policy" ON "public"."discounts" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
+DROP POLICY IF EXISTS "discounts_select_policy" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_update" ON "public"."discounts" FOR UPDATE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "us"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
+DROP POLICY IF EXISTS "discounts_update" ON public.discounts;
 
 
 
-CREATE POLICY "discounts_update_policy" ON "public"."discounts" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
+DROP POLICY IF EXISTS "discounts_update_policy" ON public.discounts;
 
 
 
-ALTER TABLE "public"."exchange_rates" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exchange_rates DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "exchange_rates_modify_service" ON "public"."exchange_rates" FOR INSERT WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+DROP POLICY IF EXISTS "exchange_rates_modify_service" ON public.exchange_rates;
 
 
 
-CREATE POLICY "exchange_rates_select_service" ON "public"."exchange_rates" FOR SELECT USING ((auth.role() = 'service_role'));
+DROP POLICY IF EXISTS "exchange_rates_select_service" ON public.exchange_rates;
 
-CREATE POLICY "exchange_rates_select_staff" ON "public"."exchange_rates" FOR SELECT USING (
-  EXISTS (
-    SELECT 1 FROM public.user_stores us
-    WHERE us.user_id = auth.uid() AND us.role = ANY (ARRAY['owner', 'manager', 'support'])
-  )
-);
+DROP POLICY IF EXISTS "exchange_rates_select_staff" ON public.exchange_rates;
 
 
 
-CREATE POLICY "exchange_rates_update_service" ON "public"."exchange_rates" FOR UPDATE USING (("auth"."role"() = 'service_role'::"text"));
+DROP POLICY IF EXISTS "exchange_rates_update_service" ON public.exchange_rates;
 
 
 
-ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "notifications_insert_policy" ON "public"."notifications" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])))))));
+DROP POLICY IF EXISTS "notifications_insert_policy" ON public.notifications;
 
 
 
-CREATE POLICY "notifications_select_customer" ON "public"."notifications" FOR SELECT USING (("user_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "notifications_select_customer" ON public.notifications;
 
 
 
-CREATE POLICY "notifications_select_staff" ON "public"."notifications" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "notifications"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "notifications_select_staff" ON public.notifications;
 
 
 
-CREATE POLICY "notifications_update_policy" ON "public"."notifications" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "notifications"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "notifications_update_policy" ON public.notifications;
 
 
 
-ALTER TABLE "public"."order_items" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "order_items_insert_policy" ON "public"."order_items" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "us"."store_id")))
-  WHERE (("o"."id" = "order_items"."order_id") AND (("us"."user_id")::"text" = ("auth"."uid"())::"text") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])))))));
+DROP POLICY IF EXISTS "order_items_insert_policy" ON public.order_items;
 
 
 
-CREATE POLICY "order_items_select_policy" ON "public"."order_items" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."orders" "o"
-  WHERE (("o"."id" = "order_items"."order_id") AND (("o"."customer_id" = ("auth"."uid"())::"text") OR (EXISTS ( SELECT 1
-           FROM "public"."user_stores" "us"
-          WHERE (("us"."store_id" = "o"."store_id") AND (("us"."user_id")::"text" = ("auth"."uid"())::"text") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))))))));
+DROP POLICY IF EXISTS "order_items_select_policy" ON public.order_items;
 
 
 
-CREATE POLICY "order_items_update_policy" ON "public"."order_items" FOR UPDATE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "us"."store_id")))
-  WHERE (("o"."id" = "order_items"."order_id") AND (("us"."user_id")::"text" = ("auth"."uid"())::"text") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])))))));
+DROP POLICY IF EXISTS "order_items_update_policy" ON public.order_items;
 
 
 
-ALTER TABLE "public"."orders" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "orders_can_delete" ON "public"."orders" FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores"
-  WHERE (("user_stores"."user_id" = "auth"."uid"()) AND ("user_stores"."store_id" = "orders"."store_id") AND ("user_stores"."role" = 'owner'::"text")))));
+DROP POLICY IF EXISTS "orders_can_delete" ON public.orders;
 
 
 
-CREATE POLICY "orders_can_select" ON "public"."orders" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores"
-  WHERE (("user_stores"."user_id" = "auth"."uid"()) AND ("user_stores"."store_id" = "orders"."store_id") AND ("user_stores"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "orders_can_select" ON public.orders;
 
 
 
-CREATE POLICY "orders_delete_owner" ON "public"."orders" FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "orders"."store_id") AND (("us"."user_id")::"text" = ("auth"."uid"())::"text") AND ("us"."role" = 'owner'::"text")))));
+DROP POLICY IF EXISTS "orders_delete_owner" ON public.orders;
 
 
 
-CREATE POLICY "orders_insert_policy" ON "public"."orders" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR ("customer_id" = ("auth"."uid"())::"text")));
+DROP POLICY IF EXISTS "orders_insert_policy" ON public.orders;
 
 
 
-CREATE POLICY "orders_select_customer" ON "public"."orders" FOR SELECT USING (("customer_id" = ("auth"."uid"())::"text"));
+DROP POLICY IF EXISTS "orders_select_customer" ON public.orders;
 
 
 
-CREATE POLICY "orders_select_staff" ON "public"."orders" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "orders"."store_id") AND (("us"."user_id")::"text" = ("auth"."uid"())::"text") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "orders_select_staff" ON public.orders;
 
 
 
-CREATE POLICY "orders_update_staff" ON "public"."orders" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "orders"."store_id") AND (("us"."user_id")::"text" = ("auth"."uid"())::"text") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "orders_update_staff" ON public.orders;
 
 
 
-ALTER TABLE "public"."payment_gateways" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_gateways DISABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."referrals" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.referrals DISABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."returns" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.returns DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "returns_insert_policy" ON "public"."returns" FOR INSERT WITH CHECK ((( SELECT "s"."plan"
-   FROM ("public"."stores" "s"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "s"."id")))
-  WHERE ("o"."id" = "returns"."order_id")) <> 'free'::public.store_plan));
+DROP POLICY IF EXISTS "returns_insert_policy" ON public.returns;
 
 
 
-CREATE POLICY "returns_select_customer" ON "public"."returns" FOR SELECT USING (("user_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "returns_select_customer" ON public.returns;
 
 
 
-CREATE POLICY "returns_select_staff" ON "public"."returns" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "us"."store_id")))
-  WHERE (("o"."id" = "returns"."order_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "returns_select_staff" ON public.returns;
 
 
 
-CREATE POLICY "returns_update_staff" ON "public"."returns" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "us"."store_id")))
-  WHERE (("o"."id" = "returns"."order_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "returns_update_staff" ON public.returns;
 
 
 
-ALTER TABLE "public"."reviews" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "reviews_insert_policy" ON "public"."reviews" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."orders" "o"
-  WHERE (("o"."id" = "reviews"."order_id") AND ("o"."customer_id" = ("auth"."uid"())::"text")))));
+DROP POLICY IF EXISTS "reviews_insert_policy" ON public.reviews;
 
 
 
-CREATE POLICY "reviews_select_customer" ON "public"."reviews" FOR SELECT USING (("user_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "reviews_select_customer" ON public.reviews;
 
 
 
-CREATE POLICY "reviews_select_staff" ON "public"."reviews" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "us"."store_id")))
-  WHERE (("o"."id" = "reviews"."order_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "reviews_select_staff" ON public.reviews;
 
 
 
-CREATE POLICY "reviews_update_staff" ON "public"."reviews" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."orders" "o" ON (("o"."store_id" = "us"."store_id")))
-  WHERE (("o"."id" = "reviews"."order_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "reviews_update_staff" ON public.reviews;
 
 
 
-ALTER TABLE "public"."store_integrations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.store_integrations DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "store_integrations_delete_policy" ON "public"."store_integrations" FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "store_integrations"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "store_integrations_delete_policy" ON public.store_integrations;
 
 
 
-CREATE POLICY "store_integrations_insert_policy" ON "public"."store_integrations" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "store_integrations_insert_policy" ON public.store_integrations;
 
 
 
-CREATE POLICY "store_integrations_select_policy" ON "public"."store_integrations" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "store_integrations"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "store_integrations_select_policy" ON public.store_integrations;
 
 
 
-CREATE POLICY "store_integrations_update_policy" ON "public"."store_integrations" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "store_integrations"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "store_integrations_update_policy" ON public.store_integrations;
 
 
 
-ALTER TABLE "public"."store_settings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.store_settings DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "store_settings_delete_policy" ON "public"."store_settings" FOR DELETE USING (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "store_settings"."store_id"))));
+DROP POLICY IF EXISTS "store_settings_delete_policy" ON public.store_settings;
 
 
 
-CREATE POLICY "store_settings_insert_policy" ON "public"."store_settings" FOR INSERT WITH CHECK (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "store_settings"."store_id"))));
+DROP POLICY IF EXISTS "store_settings_insert_policy" ON public.store_settings;
 
 
 
-CREATE POLICY "store_settings_select_policy" ON "public"."store_settings" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "store_settings"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "store_settings_select_policy" ON public.store_settings;
 
 
 
-CREATE POLICY "store_settings_update_policy" ON "public"."store_settings" FOR UPDATE USING (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "store_settings"."store_id"))));
+DROP POLICY IF EXISTS "store_settings_update_policy" ON public.store_settings;
 
 
 
-ALTER TABLE "public"."stores" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stores DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "stores_delete_owner" ON "public"."stores" FOR DELETE USING (("auth"."uid"() = "owner_user_id"));
+DROP POLICY IF EXISTS "stores_delete_owner" ON public.stores;
 
 
 
-CREATE POLICY "stores_insert_service" ON "public"."stores" FOR INSERT WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+DROP POLICY IF EXISTS "stores_insert_service" ON public.stores;
 
 
 
-CREATE POLICY "stores_select_public" ON "public"."stores" FOR SELECT USING (("auth"."role"() = 'anon'::"text"));
+DROP POLICY IF EXISTS "stores_select_public" ON public.stores;
 
 
 
-CREATE POLICY "stores_select_staff" ON "public"."stores" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "stores"."id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"]))))));
+DROP POLICY IF EXISTS "stores_select_staff" ON public.stores;
 
 
 
-CREATE POLICY "stores_update_staff" ON "public"."stores" FOR UPDATE USING ((("auth"."uid"() = "owner_user_id") OR (EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."store_id" = "stores"."id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])))))));
+DROP POLICY IF EXISTS "stores_update_staff" ON public.stores;
 
 
 
-ALTER TABLE "public"."subscriptions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscriptions DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "subscriptions_insert_policy" ON "public"."subscriptions" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
-   FROM "public"."user_stores" "us"
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text"))))));
+DROP POLICY IF EXISTS "subscriptions_insert_policy" ON public.subscriptions;
 
 
 
-CREATE POLICY "subscriptions_select_owner" ON "public"."subscriptions" FOR SELECT USING (("user_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "subscriptions_select_owner" ON public.subscriptions;
 
 
 
-CREATE POLICY "subscriptions_select_staff" ON "public"."subscriptions" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM ("public"."user_stores" "us"
-     JOIN "public"."stores" "s" ON (("s"."owner_user_id" = "us"."user_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"]))))));
+DROP POLICY IF EXISTS "subscriptions_select_staff" ON public.subscriptions;
 
 
 
-CREATE POLICY "subscriptions_update_policy" ON "public"."subscriptions" FOR UPDATE USING (("auth"."role"() = 'service_role'::"text"));
+DROP POLICY IF EXISTS "subscriptions_update_policy" ON public.subscriptions;
 
 
 
-ALTER TABLE "public"."user_stores" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_stores DISABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "user_stores_can_delete" ON "public"."user_stores" FOR DELETE USING (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id"))));
+DROP POLICY IF EXISTS "user_stores_can_delete" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_can_insert" ON "public"."user_stores" FOR INSERT WITH CHECK ((("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id"))) AND (( SELECT "count"(*) AS "count"
-   FROM "public"."user_stores" "user_stores_1"
-  WHERE ("user_stores_1"."store_id" = "user_stores_1"."store_id")) < ( SELECT "stores"."max_users"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id")))));
+DROP POLICY IF EXISTS "user_stores_can_insert" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_can_select" ON "public"."user_stores" FOR SELECT USING (("user_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "user_stores_can_select" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_can_update" ON "public"."user_stores" FOR UPDATE WITH CHECK (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id"))));
+DROP POLICY IF EXISTS "user_stores_can_update" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_delete_owner" ON "public"."user_stores" FOR DELETE USING (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id"))));
+DROP POLICY IF EXISTS "user_stores_delete_owner" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_insert_owner" ON "public"."user_stores" FOR INSERT WITH CHECK ((("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id"))) AND (( SELECT "count"(*) AS "count"
-   FROM "public"."user_stores" "us2"
-  WHERE ("us2"."store_id" = "us2"."store_id")) < ( SELECT "stores"."max_users"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id")))));
+DROP POLICY IF EXISTS "user_stores_insert_owner" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_select_own" ON "public"."user_stores" FOR SELECT USING (("user_id" = "auth"."uid"()));
+DROP POLICY IF EXISTS "user_stores_select_own" ON public.user_stores;
 
 
 
-CREATE POLICY "user_stores_update_owner" ON "public"."user_stores" FOR UPDATE USING (("auth"."uid"() = ( SELECT "stores"."owner_user_id"
-   FROM "public"."stores"
-  WHERE ("stores"."id" = "user_stores"."store_id"))));
+DROP POLICY IF EXISTS "user_stores_update_owner" ON public.user_stores;
 
 
 
-ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."webflow_connections" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.webflow_connections DISABLE ROW LEVEL SECURITY;
 
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
