@@ -260,7 +260,7 @@ ALTER TABLE "public"."orders" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."payment_gateways" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "user_id" "text" NOT NULL,
+    "user_id" "uuid" NOT NULL,
     "store_id" "uuid",
     "gateway" "text" NOT NULL,
     "config" "jsonb" NOT NULL,
@@ -300,7 +300,7 @@ ALTER TABLE "public"."referrals" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."returns" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "order_id" "uuid" NOT NULL,
-    "user_id" "text" NOT NULL,
+    "user_id" "uuid" NOT NULL,
     "status" "text" DEFAULT 'initiated'::"text" NOT NULL,
     "return_reason" "text",
     "initiated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
@@ -318,7 +318,7 @@ ALTER TABLE "public"."returns" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."reviews" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "user_id" "text" NOT NULL,
+    "user_id" "uuid" NOT NULL,
     "product_id" "text",
     "rating" integer,
     "text" "text",
@@ -745,6 +745,8 @@ ALTER TABLE ONLY "public"."discounts"
 
 ALTER TABLE ONLY "public"."reviews"
     ADD CONSTRAINT "fk_reviews_order" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."reviews"
+    ADD CONSTRAINT "reviews_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -770,6 +772,8 @@ ALTER TABLE ONLY "public"."referrals"
 
 ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."returns"
+    ADD CONSTRAINT "returns_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -800,6 +804,8 @@ ALTER TABLE ONLY "public"."user_stores"
 
 ALTER TABLE ONLY "public"."user_stores"
     ADD CONSTRAINT "user_stores_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."payment_gateways"
+    ADD CONSTRAINT "payment_gateways_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -808,7 +814,7 @@ ALTER TABLE ONLY "public"."webflow_connections"
 
 
 
-CREATE POLICY "Allow logged-in users to insert reviews" ON "public"."reviews" FOR INSERT TO "authenticated" WITH CHECK ((("auth"."uid"())::"text" = "user_id"));
+CREATE POLICY "Allow logged-in users to insert reviews" ON "public"."reviews" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
@@ -1222,7 +1228,7 @@ CREATE POLICY "returns_insert_policy" ON "public"."returns" FOR INSERT WITH CHEC
 
 
 
-CREATE POLICY "returns_select_customer" ON "public"."returns" FOR SELECT USING (("user_id" = ("auth"."uid"())::"text"));
+CREATE POLICY "returns_select_customer" ON "public"."returns" FOR SELECT USING (("user_id" = "auth"."uid"()));
 
 
 
@@ -1249,7 +1255,7 @@ CREATE POLICY "reviews_insert_policy" ON "public"."reviews" FOR INSERT WITH CHEC
 
 
 
-CREATE POLICY "reviews_select_customer" ON "public"."reviews" FOR SELECT USING ((("user_id")::"uuid" = "auth"."uid"()));
+CREATE POLICY "reviews_select_customer" ON "public"."reviews" FOR SELECT USING (("user_id" = "auth"."uid"()));
 
 
 
