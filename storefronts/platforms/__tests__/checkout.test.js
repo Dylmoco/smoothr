@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let fetchMock;
+let createPaymentMethodMock;
 
 beforeEach(() => {
   vi.resetModules();
@@ -29,6 +30,40 @@ beforeEach(() => {
   btn.setAttribute('data-smoothr-checkout', '');
   document.body.appendChild(btn);
 
+  const createInput = (attr, val = '') => {
+    const el = document.createElement('input');
+    el.setAttribute(attr, '');
+    el.value = val;
+    document.body.appendChild(el);
+    return el;
+  };
+
+  createInput('data-smoothr-email', 'user@example.com');
+  createInput('data-smoothr-first-name', 'Jane');
+  createInput('data-smoothr-last-name', 'Doe');
+
+  createInput('data-smoothr-bill-first-name', 'Bill');
+  createInput('data-smoothr-bill-last-name', 'Payer');
+  createInput('data-smoothr-bill-line1', '1 Billing Rd');
+  createInput('data-smoothr-bill-line2', 'Suite 2');
+  createInput('data-smoothr-bill-city', 'Billingtown');
+  createInput('data-smoothr-bill-state', 'BI');
+  createInput('data-smoothr-bill-postal', 'B123');
+  createInput('data-smoothr-bill-country', 'UK');
+
+  const cardTarget = document.createElement('div');
+  cardTarget.setAttribute('data-smoothr-card-number', '');
+  document.body.appendChild(cardTarget);
+
+  const elementsMock = { create: vi.fn(() => ({ mount: vi.fn() })) };
+  createPaymentMethodMock = vi.fn(() =>
+    Promise.resolve({ paymentMethod: { id: 'pm_123' } })
+  );
+  global.Stripe = vi.fn(() => ({
+    elements: vi.fn(() => elementsMock),
+    createPaymentMethod: createPaymentMethodMock
+  }));
+
   const cart = {
     items: [
       { product_id: 'p1', name: 'Item', price: 100, image: '', quantity: 1 }
@@ -45,7 +80,7 @@ beforeEach(() => {
 
   global.window.Smoothr = Smoothr;
   global.window.smoothr = Smoothr;
-  global.window.SMOOTHR_CONFIG = { baseCurrency: 'GBP' };
+  global.window.SMOOTHR_CONFIG = { baseCurrency: 'GBP', stripeKey: 'pk_test' };
 
   fetchMock = vi.fn().mockResolvedValue({
     ok: true,
@@ -57,6 +92,7 @@ beforeEach(() => {
 afterEach(() => {
   delete global.fetch;
   delete global.window.SMOOTHR_CONFIG;
+  delete global.Stripe;
 });
 
 async function loadCheckout() {
@@ -70,10 +106,27 @@ describe('checkout', () => {
     initCheckout();
     document.querySelector('[data-smoothr-checkout]').click();
     await Promise.resolve();
+
+    expect(createPaymentMethodMock).toHaveBeenCalled();
+    const args = createPaymentMethodMock.mock.calls[0][0];
+    expect(args.billing_details).toEqual({
+      name: 'Bill Payer',
+      email: 'user@example.com',
+      address: {
+        line1: '1 Billing Rd',
+        line2: 'Suite 2',
+        city: 'Billingtown',
+        state: 'BI',
+        postal_code: 'B123',
+        country: 'UK'
+      }
+    });
+
     expect(fetchMock).toHaveBeenCalled();
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.baseCurrency).toBe('GBP');
+    expect(body.currency).toBe('GBP');
     expect(body.cart.items.length).toBe(1);
+    expect(body.billing_details).toBeUndefined();
   });
 
   it('renders cart items from template', async () => {
