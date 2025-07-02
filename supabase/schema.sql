@@ -221,6 +221,8 @@ CREATE TABLE IF NOT EXISTS "public"."order_items" (
 
 ALTER TABLE "public"."order_items" OWNER TO "postgres";
 
+COMMENT ON TABLE "public"."order_items" IS 'Items belonging to an order. Each row references the parent order via order_id.';
+
 
 CREATE TABLE IF NOT EXISTS "public"."orders" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -245,6 +247,8 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
 
 
 ALTER TABLE "public"."orders" OWNER TO "postgres";
+
+COMMENT ON TABLE "public"."orders" IS 'Orders placed by customers within a store. References store_id and optionally customer_id for the purchaser.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."payment_gateways" (
@@ -353,6 +357,8 @@ CREATE TABLE IF NOT EXISTS "public"."store_settings" (
 
 ALTER TABLE "public"."store_settings" OWNER TO "postgres";
 
+COMMENT ON TABLE "public"."store_settings" IS 'JSON configuration for a store. One row per store referenced by store_id.';
+
 
 CREATE TABLE IF NOT EXISTS "public"."stores" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -376,6 +382,8 @@ CREATE TABLE IF NOT EXISTS "public"."stores" (
 
 
 ALTER TABLE "public"."stores" OWNER TO "postgres";
+
+COMMENT ON TABLE "public"."stores" IS 'Stores managed in Smoothr. Each store is owned by a user and links to store_settings, orders, and other tables via store_id.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."subscriptions" (
@@ -406,6 +414,8 @@ CREATE TABLE IF NOT EXISTS "public"."user_stores" (
 
 ALTER TABLE "public"."user_stores" OWNER TO "postgres";
 
+COMMENT ON TABLE "public"."user_stores" IS 'Joins users to stores with a specific role (owner, manager, etc.). Each row links a user_id to a store_id.';
+
 
 CREATE TABLE IF NOT EXISTS "public"."users" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -419,6 +429,8 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
 
 
 ALTER TABLE "public"."users" OWNER TO "postgres";
+
+COMMENT ON TABLE "public"."users" IS 'Application users including store owners and customers. Holds authentication provider IDs and subscription data.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."webflow_connections" (
