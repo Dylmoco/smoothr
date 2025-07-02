@@ -163,6 +163,27 @@ ALTER TABLE "public"."customers" OWNER TO "postgres";
 
 COMMENT ON TABLE "public"."customers" IS 'Customers belonging to a store. Each row may optionally link to a user account via user_id.';
 
+-- Enable RLS for customers
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY customers_service_role ON public.customers
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Customers may view their own profile
+CREATE POLICY customers_self_select ON public.customers
+  FOR SELECT USING (user_id = auth.uid());
+
+-- Store owners may view customers of their stores
+CREATE POLICY customers_store_owner_select ON public.customers
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = customers.store_id
+        AND s.owner_user_id = auth.uid()
+    )
+  );
+
 
 CREATE TABLE IF NOT EXISTS "public"."discount_usages" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -329,13 +350,33 @@ ALTER TABLE public.returns ENABLE ROW LEVEL SECURITY;
 CREATE POLICY returns_service_role ON public.returns
   FOR ALL USING (auth.role() = 'service_role');
 
--- Customers may access their own return records
-CREATE POLICY returns_customer_access ON public.returns
-  FOR ALL USING (
+-- Customers may view their own return records
+CREATE POLICY returns_customer_select ON public.returns
+  FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM public.customers c
       WHERE c.id = returns.customer_id
         AND c.user_id = auth.uid()
+    )
+  );
+
+-- Customers may create returns for their own orders
+CREATE POLICY returns_customer_insert ON public.returns
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = returns.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
+
+-- Store owners may view returns for their stores
+CREATE POLICY returns_store_owner_select ON public.returns
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = returns.store_id
+        AND s.owner_user_id = auth.uid()
     )
   );
 
@@ -942,9 +983,35 @@ ALTER TABLE public.abandoned_carts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY abandoned_carts_service_role ON public.abandoned_carts
   FOR ALL USING (auth.role() = 'service_role');
 
--- Customers may access rows linked to their user account
-CREATE POLICY abandoned_carts_customer_access ON public.abandoned_carts
-  FOR ALL USING (
+-- Customers may view their own abandoned cart
+CREATE POLICY abandoned_carts_customer_select ON public.abandoned_carts
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = abandoned_carts.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
+
+-- Customers may create a cart linked to their account
+CREATE POLICY abandoned_carts_customer_insert ON public.abandoned_carts
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = abandoned_carts.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
+
+-- Customers may update their own cart
+CREATE POLICY abandoned_carts_customer_update ON public.abandoned_carts
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = abandoned_carts.customer_id
+        AND c.user_id = auth.uid()
+    )
+  ) WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.customers c
       WHERE c.id = abandoned_carts.customer_id
@@ -1144,13 +1211,23 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 CREATE POLICY orders_service_role ON public.orders
   FOR ALL USING (auth.role() = 'service_role');
 
--- Customers may access rows linked to their user account
-CREATE POLICY orders_customer_access ON public.orders
-  FOR ALL USING (
+-- Customers may view their own orders
+CREATE POLICY orders_customer_select ON public.orders
+  FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM public.customers c
       WHERE c.id = orders.customer_id
         AND c.user_id = auth.uid()
+    )
+  );
+
+-- Store owners may view orders for their stores
+CREATE POLICY orders_store_owner_select ON public.orders
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = orders.store_id
+        AND s.owner_user_id = auth.uid()
     )
   );
 
@@ -1221,13 +1298,27 @@ ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 CREATE POLICY reviews_service_role ON public.reviews
   FOR ALL USING (auth.role() = 'service_role');
 
--- Customers may access their own review records
-CREATE POLICY reviews_customer_access ON public.reviews
-  FOR ALL USING (
+-- Customers may create reviews for stores they have ordered from
+CREATE POLICY reviews_customer_insert ON public.reviews
+  FOR INSERT WITH CHECK (
     EXISTS (
-      SELECT 1 FROM public.customers c
-      WHERE c.id = reviews.customer_id
+      SELECT 1
+      FROM public.orders o
+      JOIN public.customers c ON c.id = o.customer_id
+      WHERE o.id = reviews.order_id
+        AND o.store_id = reviews.store_id
         AND c.user_id = auth.uid()
+        AND reviews.customer_id = c.id
+    )
+  );
+
+-- Store owners may view reviews for their stores
+CREATE POLICY reviews_store_owner_select ON public.reviews
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = reviews.store_id
+        AND s.owner_user_id = auth.uid()
     )
   );
 
@@ -1267,7 +1358,6 @@ DROP POLICY IF EXISTS "store_integrations_update_policy" ON public.store_integra
 
 
 
-ALTER TABLE public.store_settings DISABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "store_settings_delete_policy" ON public.store_settings;
@@ -1284,9 +1374,48 @@ DROP POLICY IF EXISTS "store_settings_select_policy" ON public.store_settings;
 
 DROP POLICY IF EXISTS "store_settings_update_policy" ON public.store_settings;
 
+-- Enable RLS for store_settings
+ALTER TABLE public.store_settings ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY store_settings_service_role ON public.store_settings
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Store owners may manage settings for their store
+CREATE POLICY store_settings_owner_select ON public.store_settings
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = store_settings.store_id
+        AND s.owner_user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY store_settings_owner_insert ON public.store_settings
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = store_settings.store_id
+        AND s.owner_user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY store_settings_owner_update ON public.store_settings
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = store_settings.store_id
+        AND s.owner_user_id = auth.uid()
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.stores s
+      WHERE s.id = store_settings.store_id
+        AND s.owner_user_id = auth.uid()
+    )
+  );
 
 
-ALTER TABLE public.stores DISABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "stores_delete_owner" ON public.stores;
@@ -1307,6 +1436,23 @@ DROP POLICY IF EXISTS "stores_select_staff" ON public.stores;
 
 DROP POLICY IF EXISTS "stores_update_staff" ON public.stores;
 
+-- Enable RLS for stores
+ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY stores_service_role ON public.stores
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Store owners may manage their store
+CREATE POLICY stores_owner_select ON public.stores
+  FOR SELECT USING (owner_user_id = auth.uid());
+
+CREATE POLICY stores_owner_insert ON public.stores
+  FOR INSERT WITH CHECK (owner_user_id = auth.uid());
+
+CREATE POLICY stores_owner_update ON public.stores
+  FOR UPDATE USING (owner_user_id = auth.uid())
+  WITH CHECK (owner_user_id = auth.uid());
 
 
 ALTER TABLE public.subscriptions DISABLE ROW LEVEL SECURITY;
