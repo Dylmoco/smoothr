@@ -34,17 +34,6 @@ CREATE TYPE "public"."store_plan" AS ENUM (
 ALTER TYPE "public"."store_plan" OWNER TO "postgres";
 
 
-CREATE TYPE "public"."store_plan_enum" AS ENUM (
-    'free',
-    'starter',
-    'pro',
-    'studio'
-);
-
-
-ALTER TYPE "public"."store_plan_enum" OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "public"."fn_set_plan_limits"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -367,7 +356,7 @@ CREATE TABLE IF NOT EXISTS "public"."stores" (
     "store_domain" "text" NOT NULL,
     "live_domain" "text",
     "login_redirect_url" "text" DEFAULT ''::"text" NOT NULL,
-    "plan" "text" DEFAULT 'free'::"text" NOT NULL,
+    "plan" "public"."store_plan" DEFAULT 'free'::public.store_plan NOT NULL,
     "owner_user_id" "uuid" NOT NULL,
     "branding_logo" "text",
     "branding_color" "text",
@@ -390,7 +379,7 @@ CREATE TABLE IF NOT EXISTS "public"."subscriptions" (
     "user_id" "uuid",
     "stripe_customer_id" "text",
     "stripe_subscription_id" "text",
-    "plan" "text",
+    "plan" "public"."store_plan",
     "status" "text",
     "current_period_start" timestamp with time zone,
     "current_period_end" timestamp with time zone,
@@ -904,7 +893,7 @@ CREATE POLICY "affiliate_usages_insert_policy" ON "public"."affiliate_usages" FO
    FROM (("public"."affiliates" "a"
      JOIN "public"."stores" "s" ON (("s"."id" = "a"."store_id")))
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"])))))));
+  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
@@ -912,7 +901,7 @@ CREATE POLICY "affiliate_usages_select" ON "public"."affiliate_usages" FOR SELEC
    FROM (("public"."affiliates" "a"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "a"."store_id")))
      JOIN "public"."stores" "s" ON (("s"."id" = "a"."store_id")))
-  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"])))))));
+  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
@@ -920,7 +909,7 @@ CREATE POLICY "affiliate_usages_select_policy" ON "public"."affiliate_usages" FO
    FROM (("public"."affiliates" "a"
      JOIN "public"."stores" "s" ON (("s"."id" = "a"."store_id")))
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"]))))));
+  WHERE (("a"."id" = "affiliate_usages"."affiliate_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
 
 
 
@@ -930,35 +919,35 @@ ALTER TABLE "public"."affiliates" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "affiliates_delete_policy" ON "public"."affiliates" FOR DELETE USING ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"]))))));
+  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
 
 
 
 CREATE POLICY "affiliates_insert_policy" ON "public"."affiliates" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"]))))));
+  WHERE (("s"."id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
 
 
 
 CREATE POLICY "affiliates_select" ON "public"."affiliates" FOR SELECT USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "affiliates"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"])))))));
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "affiliates"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
 CREATE POLICY "affiliates_select_policy" ON "public"."affiliates" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"]))))));
+  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
 
 
 
 CREATE POLICY "affiliates_update_policy" ON "public"."affiliates" FOR UPDATE USING ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::"text", 'studio'::"text"]))))));
+  WHERE (("s"."id" = "affiliates"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" = ANY (ARRAY['pro'::public.store_plan, 'studio'::public.store_plan]))))));
 
 
 
@@ -972,7 +961,7 @@ CREATE POLICY "audit_logs_insert_policy" ON "public"."audit_logs" FOR INSERT WIT
 CREATE POLICY "audit_logs_select_policy" ON "public"."audit_logs" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM ("public"."stores" "s"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("s"."plan" = 'studio'::"text") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text")))));
+  WHERE (("s"."plan" = 'studio'::public.store_plan) AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text")))));
 
 
 
@@ -983,7 +972,7 @@ CREATE POLICY "discount_usages_delete" ON "public"."discount_usages" FOR DELETE 
    FROM (("public"."discounts" "d"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
@@ -991,7 +980,7 @@ CREATE POLICY "discount_usages_insert" ON "public"."discount_usages" FOR INSERT 
    FROM (("public"."discounts" "d"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
@@ -999,7 +988,7 @@ CREATE POLICY "discount_usages_insert_policy" ON "public"."discount_usages" FOR 
    FROM (("public"."discounts" "d"
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::"text"))))));
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan))))));
 
 
 
@@ -1007,7 +996,7 @@ CREATE POLICY "discount_usages_select" ON "public"."discount_usages" FOR SELECT 
    FROM (("public"."discounts" "d"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
@@ -1015,7 +1004,7 @@ CREATE POLICY "discount_usages_select_policy" ON "public"."discount_usages" FOR 
    FROM (("public"."discounts" "d"
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "s"."id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::"text")))));
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
 
 
 
@@ -1023,11 +1012,11 @@ CREATE POLICY "discount_usages_update" ON "public"."discount_usages" FOR UPDATE 
    FROM (("public"."discounts" "d"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM (("public"."discounts" "d"
      JOIN "public"."user_stores" "us" ON (("us"."store_id" = "d"."store_id")))
      JOIN "public"."stores" "s" ON (("s"."id" = "d"."store_id")))
-  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("d"."id" = "discount_usages"."discount_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
@@ -1037,69 +1026,69 @@ ALTER TABLE "public"."discounts" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "discounts_delete" ON "public"."discounts" FOR DELETE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
 CREATE POLICY "discounts_delete_policy" ON "public"."discounts" FOR DELETE USING ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::"text")))));
+  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
 
 
 
 CREATE POLICY "discounts_insert" ON "public"."discounts" FOR INSERT WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "us"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "us"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
 CREATE POLICY "discounts_insert_policy" ON "public"."discounts" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::"text")))));
+  WHERE (("s"."id" = "us"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
 
 
 
 CREATE POLICY "discounts_manage" ON "public"."discounts" USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us2"
      JOIN "public"."stores" "s2" ON (("s2"."id" = "us2"."store_id")))
-  WHERE (("us2"."user_id" = "auth"."uid"()) AND ("us2"."store_id" = "discounts"."store_id") AND ("us2"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s2"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("us2"."user_id" = "auth"."uid"()) AND ("us2"."store_id" = "discounts"."store_id") AND ("us2"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s2"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
 CREATE POLICY "discounts_select" ON "public"."discounts" FOR SELECT USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text", 'support'::"text"])) AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
 CREATE POLICY "discounts_select_policy" ON "public"."discounts" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::"text")))));
+  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
 
 
 
 CREATE POLICY "discounts_update" ON "public"."discounts" FOR UPDATE USING ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "discounts"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan]))))))) WITH CHECK ((("auth"."role"() = 'service_role'::"text") OR (EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "us"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::"text", 'pro'::"text", 'studio'::"text"])))))));
+  WHERE (("us"."user_id" = "auth"."uid"()) AND ("us"."store_id" = "us"."store_id") AND ("us"."role" = 'owner'::"text") AND ("s"."plan" = ANY (ARRAY['starter'::public.store_plan, 'pro'::public.store_plan, 'studio'::public.store_plan])))))));
 
 
 
 CREATE POLICY "discounts_update_policy" ON "public"."discounts" FOR UPDATE USING ((EXISTS ( SELECT 1
    FROM ("public"."user_stores" "us"
      JOIN "public"."stores" "s" ON (("s"."id" = "us"."store_id")))
-  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::"text")))));
+  WHERE (("s"."id" = "discounts"."store_id") AND ("us"."user_id" = "auth"."uid"()) AND ("us"."role" = ANY (ARRAY['owner'::"text", 'manager'::"text"])) AND ("s"."plan" <> 'free'::public.store_plan)))));
 
 
 
@@ -1224,7 +1213,7 @@ ALTER TABLE "public"."returns" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "returns_insert_policy" ON "public"."returns" FOR INSERT WITH CHECK ((( SELECT "s"."plan"
    FROM ("public"."stores" "s"
      JOIN "public"."orders" "o" ON (("o"."store_id" = "s"."id")))
-  WHERE ("o"."id" = "returns"."order_id")) <> 'free'::"text"));
+  WHERE ("o"."id" = "returns"."order_id")) <> 'free'::public.store_plan));
 
 
 
