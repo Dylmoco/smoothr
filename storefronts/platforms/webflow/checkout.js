@@ -109,6 +109,34 @@ export function initCheckout() {
         address: { line1, line2, city, state, postal_code, country }
       };
 
+      const billing_first_name = document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
+      const billing_last_name = document.querySelector('[data-smoothr-bill-last-name]')?.value?.trim() || '';
+      const billing_line1 = document.querySelector('[data-smoothr-bill-line1]')?.value?.trim() || '';
+      const billing_line2 = document.querySelector('[data-smoothr-bill-line2]')?.value?.trim() || '';
+      const billing_city = document.querySelector('[data-smoothr-bill-city]')?.value?.trim() || '';
+      const billing_state = document.querySelector('[data-smoothr-bill-state]')?.value?.trim() || '';
+      const billing_postal = document.querySelector('[data-smoothr-bill-postal]')?.value?.trim() || '';
+      const billing_country = document.querySelector('[data-smoothr-bill-country]')?.value?.trim() || '';
+      const billing_details = {
+        name: `${billing_first_name} ${billing_last_name}`.trim(),
+        email,
+        address: {
+          line1: billing_line1,
+          line2: billing_line2,
+          city: billing_city,
+          state: billing_state,
+          postal_code: billing_postal,
+          country: billing_country
+        }
+      };
+
+      const requiredBilling = [billing_first_name, billing_last_name, billing_line1, billing_city, billing_postal, billing_country];
+      const anyBillingFilled = requiredBilling.concat(billing_line2, billing_state).some(f => f);
+      const allBillingFilled = requiredBilling.every(f => f);
+      if (anyBillingFilled && !allBillingFilled) {
+        console.warn('[Smoothr Checkout] Incomplete billing details provided');
+      }
+
       const cart = Smoothr.cart.getCart();
       const total = Smoothr.cart.getTotal();
       const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
@@ -126,10 +154,12 @@ export function initCheckout() {
         return;
       }
 
+      console.log('[Smoothr Checkout] billing_details:', billing_details);
+      console.log('[Smoothr Checkout] shipping:', shipping);
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
-        billing_details: { name: `${first_name} ${last_name}`, email }
+        billing_details
       });
 
       if (pmError || !paymentMethod) {
@@ -150,6 +180,8 @@ export function initCheckout() {
       };
 
       console.log('[Smoothr Checkout] Submitting payload:', payload);
+      console.log('[Smoothr Checkout] billing_details:', billing_details);
+      console.log('[Smoothr Checkout] shipping:', shipping);
       const base = window?.SMOOTHR_CONFIG?.apiBase || '';
       const res = await fetch(`${base}/api/checkout/stripe`, {
         method: 'POST',
