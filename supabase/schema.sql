@@ -151,6 +151,7 @@ ALTER TABLE "public"."audit_logs" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."customers" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "store_id" "uuid" NOT NULL,
+    "user_id" "uuid",
     "email" "text" NOT NULL,
     "first_name" "text",
     "last_name" "text",
@@ -160,7 +161,7 @@ CREATE TABLE IF NOT EXISTS "public"."customers" (
 
 ALTER TABLE "public"."customers" OWNER TO "postgres";
 
-COMMENT ON TABLE "public"."customers" IS 'Customers belonging to a store. Stores basic contact information for shoppers.';
+COMMENT ON TABLE "public"."customers" IS 'Customers belonging to a store. Each row may optionally link to a user account via user_id.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."discount_usages" (
@@ -319,7 +320,24 @@ CREATE TABLE IF NOT EXISTS "public"."returns" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
-ALTER TABLE public.returns DISABLE ROW LEVEL SECURITY;
+-- Enable RLS for returns
+-- service_role: full access
+-- other roles: auth.uid() must match customers.user_id
+ALTER TABLE public.returns ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY returns_service_role ON public.returns
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Customers may access their own return records
+CREATE POLICY returns_customer_access ON public.returns
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = returns.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
 
 
 ALTER TABLE "public"."returns" OWNER TO "postgres";
@@ -609,6 +627,7 @@ CREATE INDEX "idx_abandoned_carts_store_id" ON "public"."abandoned_carts" USING 
 
 CREATE INDEX "idx_customers_store_id" ON "public"."customers" USING "btree" ("store_id");
 CREATE INDEX "idx_customers_email" ON "public"."customers" USING "btree" ("email");
+CREATE INDEX "idx_customers_user_id" ON "public"."customers" USING "btree" ("user_id");
 
 
 CREATE UNIQUE INDEX "idx_exchange_rates_unique" ON "public"."exchange_rates" USING "btree" ("base_currency", "target_currency");
@@ -740,6 +759,8 @@ ALTER TABLE ONLY "public"."abandoned_carts"
 
 ALTER TABLE ONLY "public"."customers"
     ADD CONSTRAINT "customers_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."customers"
+    ADD CONSTRAINT "customers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY "public"."affiliate_usages"
@@ -912,7 +933,24 @@ DROP POLICY IF EXISTS "Users can update their own data" ON public.users;
 
 
 
-ALTER TABLE public.abandoned_carts DISABLE ROW LEVEL SECURITY;
+-- Enable RLS for abandoned carts
+-- service_role: full access
+-- other roles: auth.uid() must match customers.user_id
+ALTER TABLE public.abandoned_carts ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY abandoned_carts_service_role ON public.abandoned_carts
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Customers may access rows linked to their user account
+CREATE POLICY abandoned_carts_customer_access ON public.abandoned_carts
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = abandoned_carts.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
 
 
 DROP POLICY IF EXISTS "abandoned_carts_insert_policy" ON public.abandoned_carts;
@@ -1097,7 +1135,24 @@ DROP POLICY IF EXISTS "order_items_update_policy" ON public.order_items;
 
 
 
-ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;
+-- Enable RLS for orders
+-- service_role: full access
+-- other roles: auth.uid() must match customers.user_id
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY orders_service_role ON public.orders
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Customers may access rows linked to their user account
+CREATE POLICY orders_customer_access ON public.orders
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = orders.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
 
 
 DROP POLICY IF EXISTS "orders_can_delete" ON public.orders;
@@ -1137,7 +1192,8 @@ ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.referrals DISABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE public.returns DISABLE ROW LEVEL SECURITY;
+-- RLS already enabled above for returns
+--ALTER TABLE public.returns DISABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "returns_insert_policy" ON public.returns;
@@ -1156,7 +1212,24 @@ DROP POLICY IF EXISTS "returns_update_staff" ON public.returns;
 
 
 
-ALTER TABLE public.reviews DISABLE ROW LEVEL SECURITY;
+-- Enable RLS for reviews
+-- service_role: full access
+-- other roles: auth.uid() must match customers.user_id
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+
+-- Service role has unrestricted access
+CREATE POLICY reviews_service_role ON public.reviews
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Customers may access their own review records
+CREATE POLICY reviews_customer_access ON public.reviews
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.customers c
+      WHERE c.id = reviews.customer_id
+        AND c.user_id = auth.uid()
+    )
+  );
 
 
 DROP POLICY IF EXISTS "reviews_insert_policy" ON public.reviews;
