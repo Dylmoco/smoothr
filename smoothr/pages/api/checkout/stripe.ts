@@ -29,6 +29,8 @@ interface CheckoutPayload {
   cart: any[];
   total: number;
   currency: string;
+  store_id: string;
+  platform?: string;
   description?: string;
 }
 
@@ -68,6 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cart,
       total,
       currency,
+      store_id,
+      platform,
       description
     } = req.body as CheckoutPayload;
 
@@ -79,7 +83,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       !shipping ||
       !cart ||
       typeof total !== 'number' ||
-      !currency
+      !currency ||
+      !store_id
     ) {
       console.warn('[Smoothr Checkout] Rejecting request: missing required fields');
       res.status(400).json({ error: 'Missing required fields' });
@@ -131,23 +136,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
+    let customerId: string | null = null;
+    try {
+      const { data: existing, error: lookupError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('store_id', store_id)
+        .eq('email', email)
+        .maybeSingle();
+
+      if (lookupError) {
+        console.error('Supabase customer lookup error:', lookupError.message);
+        res.status(500).json({ error: 'Failed to record customer' });
+        return;
+      }
+
+      if (existing) {
+        customerId = existing.id as string;
+      } else {
+        const { data: inserted, error: insertError } = await supabase
+          .from('customers')
+          .insert({ store_id, email })
+          .select('id')
+          .single();
+
+        if (insertError) {
+          console.error('Supabase customer insert error:', insertError.message);
+          res.status(500).json({ error: 'Failed to record customer' });
+          return;
+        }
+        customerId = inserted?.id ?? null;
+      }
+    } catch (err: any) {
+      console.error('Supabase customer error:', err);
+      res.status(500).json({ error: 'Failed to record customer' });
+      return;
+    }
+
     const { data, error } = await supabase
       .from('orders')
       .insert({
         status: 'processing',
         payment_provider: 'stripe',
         raw_data: req.body,
-        total,
-        currency,
-        email,
-        cart,
+        total_price: total,
+        store_id,
+        platform: platform || 'webflow',
+        customer_id: customerId,
+        customer_email: email,
         payment_intent_id: intent.id
       })
       .select('id')
       .single();
 
     if (error) {
-      console.error('Supabase insert error:', error);
+      console.error('Supabase order insert error:', error.message);
+      res.status(500).json({ error: 'Failed to record order' });
+      return;
     }
 
     res.status(200).json({
