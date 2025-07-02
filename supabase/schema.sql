@@ -148,6 +148,21 @@ CREATE TABLE IF NOT EXISTS "public"."audit_logs" (
 ALTER TABLE "public"."audit_logs" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."customers" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "store_id" "uuid" NOT NULL,
+    "email" "text" NOT NULL,
+    "first_name" "text",
+    "last_name" "text",
+    "created_at" timestamp DEFAULT now()
+);
+
+
+ALTER TABLE "public"."customers" OWNER TO "postgres";
+
+COMMENT ON TABLE "public"."customers" IS 'Customers belonging to a store. Stores basic contact information for shoppers.';
+
+
 CREATE TABLE IF NOT EXISTS "public"."discount_usages" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "discount_id" "uuid" NOT NULL,
@@ -468,6 +483,8 @@ ALTER TABLE ONLY "public"."affiliates"
 ALTER TABLE ONLY "public"."audit_logs"
     ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id");
 
+ALTER TABLE ONLY "public"."customers"
+    ADD CONSTRAINT "customers_pkey" PRIMARY KEY ("id");
 
 
 ALTER TABLE ONLY "public"."discount_usages"
@@ -591,6 +608,8 @@ CREATE INDEX "idx_abandoned_carts_customer_id" ON "public"."abandoned_carts" USI
 
 CREATE INDEX "idx_abandoned_carts_store_id" ON "public"."abandoned_carts" USING "btree" ("store_id");
 
+CREATE INDEX "idx_customers_store_id" ON "public"."customers" USING "btree" ("store_id");
+CREATE INDEX "idx_customers_email" ON "public"."customers" USING "btree" ("email");
 
 
 CREATE UNIQUE INDEX "idx_exchange_rates_unique" ON "public"."exchange_rates" USING "btree" ("base_currency", "target_currency");
@@ -720,6 +739,8 @@ CREATE OR REPLACE TRIGGER "user_stores_set_updated_at" BEFORE UPDATE ON "public"
 ALTER TABLE ONLY "public"."abandoned_carts"
     ADD CONSTRAINT "abandoned_carts_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
+ALTER TABLE ONLY "public"."customers"
+    ADD CONSTRAINT "customers_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY "public"."affiliate_usages"
