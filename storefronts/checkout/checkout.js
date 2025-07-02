@@ -155,6 +155,9 @@ export async function initCheckout() {
       parseInt((totalEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) ||
       0;
     const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
+    const customer_id = window.smoothr?.auth?.user?.id || null;
+    const store_id = window.SMOOTHR_CONFIG?.storeId;
+    const platform = window.SMOOTHR_CONFIG?.platform;
 
     if (!email || !first_name || !last_name || !total) {
       warn('Missing required fields; aborting checkout');
@@ -193,7 +196,10 @@ export async function initCheckout() {
         shipping,
         cart: cart.items,
         total,
-        currency
+        currency,
+        customer_id,
+        store_id,
+        platform
       };
 
       window.__latestSmoothrPayload = payload;

@@ -75,18 +75,24 @@ beforeEach(() => {
       getCart: () => cart,
       getTotal: () => 100
     },
-    currency: { convertPrice: amt => amt }
+    currency: { convertPrice: amt => amt },
+    auth: { user: { id: 'cus_1' } }
   };
 
   global.window.Smoothr = Smoothr;
   global.window.smoothr = Smoothr;
-  global.window.SMOOTHR_CONFIG = { baseCurrency: 'GBP', stripeKey: 'pk_test' };
+  global.window.SMOOTHR_CONFIG = {
+    baseCurrency: 'GBP',
+    stripeKey: 'pk_test',
+    storeId: 'store-1'
+  };
 
   fetchMock = vi.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ url: 'http://example.com' })
   });
   global.fetch = fetchMock;
+  global.window.fetch = fetchMock;
 });
 
 afterEach(() => {
@@ -105,6 +111,7 @@ describe('checkout', () => {
     const initCheckout = await loadCheckout();
     initCheckout();
     document.querySelector('[data-smoothr-checkout]').click();
+    await Promise.resolve();
     await Promise.resolve();
 
     expect(createPaymentMethodMock).toHaveBeenCalled();
@@ -126,6 +133,9 @@ describe('checkout', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.currency).toBe('GBP');
     expect(body.cart.items.length).toBe(1);
+    expect(body.store_id).toBe('store-1');
+    expect(body.customer_id).toBe('cus_1');
+    expect(body.platform).toBe('webflow');
     expect(body.billing_details).toBeUndefined();
   });
 
