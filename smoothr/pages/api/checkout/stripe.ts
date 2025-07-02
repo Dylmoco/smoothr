@@ -141,7 +141,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       customerId = await findOrCreateCustomer(supabase, store_id, email);
     } catch (err: any) {
-      console.error('Supabase customer error:', err);
+      console.error(
+        '[Smoothr Checkout] findOrCreateCustomer failed:',
+        err?.message || err
+      );
       res.status(500).json({ error: 'Failed to record customer' });
       return;
     }
@@ -163,8 +166,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (error) {
-      console.error('Supabase order insert error:', error.message);
-      res.status(500).json({ error: 'Failed to record order' });
+      const insertErrorMessage = (error as any).message;
+      console.error('[Smoothr Checkout] Order insert failed:', insertErrorMessage);
+      res.status(400).json({ error: 'Order creation failed' });
       return;
     }
 
@@ -173,8 +177,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       order_id: data?.id,
       payment_intent_id: intent.id
     });
-  } catch (err) {
-    console.error('Payment processing error:', err);
+  } catch (err: any) {
+    console.error(
+      '[Smoothr Checkout] Unexpected processing error:',
+      err?.message || err
+    );
     res.status(500).json({ error: 'Failed to process payment' });
   }
 }
