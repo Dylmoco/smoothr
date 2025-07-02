@@ -823,7 +823,6 @@ CREATE POLICY "Allow logged-in users to insert reviews" ON "public"."reviews" FO
 
 
 
-CREATE POLICY "Allow read access" ON "public"."reviews" FOR SELECT USING (true);
 
 
 
@@ -1115,7 +1114,14 @@ CREATE POLICY "exchange_rates_modify_service" ON "public"."exchange_rates" FOR I
 
 
 
-CREATE POLICY "exchange_rates_select_public" ON "public"."exchange_rates" FOR SELECT USING (true);
+CREATE POLICY "exchange_rates_select_service" ON "public"."exchange_rates" FOR SELECT USING ((auth.role() = 'service_role'));
+
+CREATE POLICY "exchange_rates_select_staff" ON "public"."exchange_rates" FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM public.user_stores us
+    WHERE us.user_id = auth.uid() AND us.role = ANY (ARRAY['owner', 'manager', 'support'])
+  )
+);
 
 
 
