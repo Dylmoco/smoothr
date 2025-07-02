@@ -58,6 +58,7 @@ describe('webflow-order-handler', () => {
     expect(insertMock).toHaveBeenCalledWith({
       customer_email: 'user@example.com',
       customer_id: null,
+      platform: 'webflow',
       store_id: 'site',
       raw_data: payload,
       tracking_number: null,
