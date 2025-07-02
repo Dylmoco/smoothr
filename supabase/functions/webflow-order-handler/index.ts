@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { findOrCreateCustomer } from '../../shared/customers/findOrCreate.ts';
+import { findOrCreateCustomer } from '../../../smoothr/lib/findOrCreateCustomer.ts';
 
 export async function handleRequest(req: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
