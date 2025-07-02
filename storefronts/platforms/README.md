@@ -75,3 +75,24 @@ styles.
   renderCart();
 </script>
 ```
+## Billing address fields
+
+Optional billing information can be captured with `data-smoothr-bill-*` inputs. All fields are optional, but the checkout script will warn if some billing fields are filled in and the required ones (first name, last name, line1, city, postal and country) are missing.
+
+```html
+<input data-smoothr-bill-first-name placeholder="Billing first name" />
+<input data-smoothr-bill-last-name placeholder="Billing last name" />
+<input data-smoothr-bill-line1 placeholder="Street address" />
+<input data-smoothr-bill-line2 placeholder="Apartment or suite" />
+<input data-smoothr-bill-city placeholder="City" />
+<input data-smoothr-bill-state placeholder="State" />
+<input data-smoothr-bill-postal placeholder="Postal code" />
+<input data-smoothr-bill-country placeholder="Country" />
+```
+
+If any required billing fields are missing the browser console logs:
+
+```
+[Smoothr Checkout] Incomplete billing details provided
+```
+
