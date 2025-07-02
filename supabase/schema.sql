@@ -240,7 +240,6 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     "order_date" timestamp with time zone DEFAULT "now"() NOT NULL,
     "total_price" numeric NOT NULL,
     "status" "text" NOT NULL,
-    "items" "jsonb" NOT NULL,
     "customer_id" "text",
     "customer_email" "text",
     "store_id" "uuid",
@@ -1611,6 +1610,28 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "service_role";
+
+-- Migrate existing data from orders.items into order_items then drop the column
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='orders' AND column_name='items'
+  ) THEN
+    INSERT INTO public.order_items (order_id, sku, product_name, quantity, unit_price)
+    SELECT
+      o.id,
+      item->>'sku',
+      item->>'product_name',
+      (item->>'quantity')::integer,
+      (item->>'unit_price')::numeric
+    FROM public.orders o
+    CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item;
+
+    ALTER TABLE public.orders DROP COLUMN items;
+  END IF;
+END;
+$$;
 
 
 
