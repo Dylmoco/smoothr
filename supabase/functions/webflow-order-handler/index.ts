@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 export async function handleRequest(req: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -35,11 +35,50 @@ export async function handleRequest(req: Request): Promise<Response> {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  const email = payload.customerInfo?.email || null;
+  let customerId: string | null = null;
+
+  if (email) {
+    const { data: existing, error: lookupError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('store_id', siteId)
+      .eq('email', email)
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error('Customer lookup error:', lookupError);
+      return new Response(
+        JSON.stringify({ error: lookupError.message }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (existing) {
+      customerId = existing.id as string;
+    } else {
+      const { data: inserted, error: insertError } = await supabase
+        .from('customers')
+        .insert({ store_id: siteId, email })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('Customer insert error:', insertError);
+        return new Response(
+          JSON.stringify({ error: insertError.message }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      customerId = inserted?.id ?? null;
+    }
+  }
+
   // Insert the incoming Webflow order into the existing `orders` table
   const { error } = await supabase.from('orders').insert({
-    customer_email: payload.customerInfo?.email || null,
-    customer_id: null,
-    platform: 'webflow',
+    customer_email: email,
+    customer_id: customerId,
+    platform: payload.platform || 'webflow',
     store_id: siteId,
     raw_data: payload,
     tracking_number: null,
