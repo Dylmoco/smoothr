@@ -309,9 +309,8 @@ ALTER TABLE "public"."referrals" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."returns" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "order_id" "uuid" NOT NULL,
-    "user_id" "uuid" NOT NULL,
+    "customer_id" "uuid" NOT NULL,
     "store_id" "uuid" NOT NULL,
-    "customer_id" "text",
     "status" "text" DEFAULT 'initiated'::"text" NOT NULL,
     "return_reason" "text",
     "initiated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
@@ -329,9 +328,8 @@ ALTER TABLE "public"."returns" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."reviews" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "user_id" "uuid" NOT NULL,
+    "customer_id" "uuid" NOT NULL,
     "store_id" "uuid" NOT NULL,
-    "customer_id" "text",
     "product_id" "text",
     "rating" integer,
     "text" "text",
@@ -643,9 +641,9 @@ CREATE INDEX "idx_orders_status" ON "public"."orders" USING "btree" ("status");
 
 CREATE INDEX "idx_orders_store_id" ON "public"."orders" USING "btree" ("store_id");
 CREATE INDEX "idx_returns_order_id" ON "public"."returns" USING "btree" ("order_id");
-CREATE INDEX "idx_returns_customer_id" ON "public"."returns" USING "btree" ("customer_id");
+CREATE INDEX "idx_returns_store_customer" ON "public"."returns" USING "btree" ("store_id", "customer_id");
 CREATE INDEX "idx_reviews_order_id" ON "public"."reviews" USING "btree" ("order_id");
-CREATE INDEX "idx_reviews_customer_id" ON "public"."reviews" USING "btree" ("customer_id");
+CREATE INDEX "idx_reviews_store_customer" ON "public"."reviews" USING "btree" ("store_id", "customer_id");
 
 
 
@@ -777,7 +775,7 @@ ALTER TABLE ONLY "public"."discounts"
 ALTER TABLE ONLY "public"."reviews"
     ADD CONSTRAINT "fk_reviews_order" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."reviews"
-    ADD CONSTRAINT "reviews_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "reviews_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."reviews"
     ADD CONSTRAINT "reviews_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
@@ -810,7 +808,7 @@ ALTER TABLE ONLY "public"."referrals"
 ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."returns"
-    ADD CONSTRAINT "returns_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "returns_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
