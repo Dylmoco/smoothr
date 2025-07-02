@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { findOrCreateCustomer } from '../../shared/customers/findOrCreate.ts';
 
 export async function handleRequest(req: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -39,38 +40,14 @@ export async function handleRequest(req: Request): Promise<Response> {
   let customerId: string | null = null;
 
   if (email) {
-    const { data: existing, error: lookupError } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('store_id', siteId)
-      .eq('email', email)
-      .maybeSingle();
-
-    if (lookupError) {
-      console.error('Customer lookup error:', lookupError);
+    try {
+      customerId = await findOrCreateCustomer(supabase, siteId, email);
+    } catch (err: any) {
+      console.error('Customer error:', err);
       return new Response(
-        JSON.stringify({ error: lookupError.message }),
+        JSON.stringify({ error: err.message }),
         { status: 400, headers: { 'Content-Type': 'application/json' } },
       );
-    }
-
-    if (existing) {
-      customerId = existing.id as string;
-    } else {
-      const { data: inserted, error: insertError } = await supabase
-        .from('customers')
-        .insert({ store_id: siteId, email })
-        .select('id')
-        .single();
-
-      if (insertError) {
-        console.error('Customer insert error:', insertError);
-        return new Response(
-          JSON.stringify({ error: insertError.message }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } },
-        );
-      }
-      customerId = inserted?.id ?? null;
     }
   }
 

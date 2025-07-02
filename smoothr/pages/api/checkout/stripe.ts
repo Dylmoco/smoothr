@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import supabase from '../../../../shared/supabase/serverClient';
+import { findOrCreateCustomer } from '../../../../shared/customers/findOrCreate';
 import { applyCors } from '../../../utils/cors';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
@@ -138,35 +139,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let customerId: string | null = null;
     try {
-      const { data: existing, error: lookupError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('store_id', store_id)
-        .eq('email', email)
-        .maybeSingle();
-
-      if (lookupError) {
-        console.error('Supabase customer lookup error:', lookupError.message);
-        res.status(500).json({ error: 'Failed to record customer' });
-        return;
-      }
-
-      if (existing) {
-        customerId = existing.id as string;
-      } else {
-        const { data: inserted, error: insertError } = await supabase
-          .from('customers')
-          .insert({ store_id, email })
-          .select('id')
-          .single();
-
-        if (insertError) {
-          console.error('Supabase customer insert error:', insertError.message);
-          res.status(500).json({ error: 'Failed to record customer' });
-          return;
-        }
-        customerId = inserted?.id ?? null;
-      }
+      customerId = await findOrCreateCustomer(supabase, store_id, email);
     } catch (err: any) {
       console.error('Supabase customer error:', err);
       res.status(500).json({ error: 'Failed to record customer' });
