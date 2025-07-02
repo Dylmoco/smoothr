@@ -246,8 +246,9 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     "order_date" timestamp with time zone DEFAULT "now"() NOT NULL,
     "total_price" numeric NOT NULL,
     "status" "text" NOT NULL,
-    "customer_id" "text",
+    "customer_id" "uuid",
     "customer_email" "text",
+    "platform" "text",
     "store_id" "uuid" NOT NULL,
     "raw_data" "jsonb",
     "tracking_number" "text",
@@ -789,6 +790,8 @@ ALTER TABLE ONLY "public"."notifications"
 
 ALTER TABLE ONLY "public"."order_items"
     ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."orders"
+    ADD CONSTRAINT "orders_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE SET NULL;
 ALTER TABLE ONLY "public"."orders"
     ADD CONSTRAINT "orders_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
@@ -1494,6 +1497,40 @@ BEGIN
 
     ALTER TABLE public.orders DROP COLUMN items;
   END IF;
+END;
+$$;
+
+-- Convert orders.customer_id from text to uuid if needed and add platform column
+DO $$
+BEGIN
+  -- Change column type when it still uses text
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'orders' AND column_name = 'customer_id' AND data_type = 'text'
+  ) THEN
+    ALTER TABLE public.orders
+      ALTER COLUMN customer_id TYPE uuid USING NULLIF(customer_id, '')::uuid;
+  END IF;
+
+  -- Add platform column if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'orders' AND column_name = 'platform'
+  ) THEN
+    ALTER TABLE public.orders ADD COLUMN platform text;
+  END IF;
+
+  -- Ensure foreign key exists
+  BEGIN
+    ALTER TABLE public.orders
+      ADD CONSTRAINT orders_customer_id_fkey FOREIGN KEY (customer_id)
+      REFERENCES public.customers(id) ON DELETE SET NULL;
+  EXCEPTION WHEN duplicate_object THEN
+    NULL;
+  END;
+
+  -- Ensure index exists for customer_id
+  CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON public.orders(customer_id);
 END;
 $$;
 

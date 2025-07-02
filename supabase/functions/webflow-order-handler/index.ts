@@ -39,6 +39,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   const { error } = await supabase.from('orders').insert({
     customer_email: payload.customerInfo?.email || null,
     customer_id: null,
+    platform: 'webflow',
     store_id: siteId,
     raw_data: payload,
     tracking_number: null,
