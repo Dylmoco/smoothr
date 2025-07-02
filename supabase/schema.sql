@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     "status" "text" NOT NULL,
     "customer_id" "text",
     "customer_email" "text",
-    "store_id" "uuid",
+    "store_id" "uuid" NOT NULL,
     "raw_data" "jsonb",
     "tracking_number" "text",
     "label_url" "text",
@@ -290,6 +290,8 @@ CREATE TABLE IF NOT EXISTS "public"."returns" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "order_id" "uuid" NOT NULL,
     "user_id" "uuid" NOT NULL,
+    "store_id" "uuid" NOT NULL,
+    "customer_id" "text",
     "status" "text" DEFAULT 'initiated'::"text" NOT NULL,
     "return_reason" "text",
     "initiated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
@@ -308,6 +310,8 @@ CREATE TABLE IF NOT EXISTS "public"."reviews" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "user_id" "uuid" NOT NULL,
+    "store_id" "uuid" NOT NULL,
+    "customer_id" "text",
     "product_id" "text",
     "rating" integer,
     "text" "text",
@@ -606,6 +610,10 @@ CREATE INDEX "idx_orders_status" ON "public"."orders" USING "btree" ("status");
 
 
 CREATE INDEX "idx_orders_store_id" ON "public"."orders" USING "btree" ("store_id");
+CREATE INDEX "idx_returns_order_id" ON "public"."returns" USING "btree" ("order_id");
+CREATE INDEX "idx_returns_customer_id" ON "public"."returns" USING "btree" ("customer_id");
+CREATE INDEX "idx_reviews_order_id" ON "public"."reviews" USING "btree" ("order_id");
+CREATE INDEX "idx_reviews_customer_id" ON "public"."reviews" USING "btree" ("customer_id");
 
 
 
@@ -736,6 +744,8 @@ ALTER TABLE ONLY "public"."reviews"
     ADD CONSTRAINT "fk_reviews_order" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."reviews"
     ADD CONSTRAINT "reviews_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."reviews"
+    ADD CONSTRAINT "reviews_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
 
 
@@ -746,6 +756,8 @@ ALTER TABLE ONLY "public"."notifications"
 
 ALTER TABLE ONLY "public"."order_items"
     ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."orders"
+    ADD CONSTRAINT "orders_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
 
 
@@ -763,6 +775,8 @@ ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."returns"
+    ADD CONSTRAINT "returns_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
 
 
@@ -796,6 +810,8 @@ ALTER TABLE ONLY "public"."user_stores"
 ALTER TABLE ONLY "public"."payment_gateways"
     ADD CONSTRAINT "payment_gateways_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
+ALTER TABLE ONLY "public"."payment_gateways"
+    ADD CONSTRAINT "payment_gateways_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "public"."stores"("id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY "public"."webflow_connections"
