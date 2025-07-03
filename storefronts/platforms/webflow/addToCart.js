@@ -71,18 +71,31 @@ export function initCartBindings() {
         }
 
         const wrapper = btn.closest('[data-smoothr-product]');
-        const imageEl = wrapper ? wrapper.querySelector('.product-image') : null;
-        const image = imageEl?.src || '';
+        let image;
+        if (wrapper) {
+          const first = wrapper.querySelector('[data-smoothr-image]');
+          if (first?.src) {
+            image = first.src;
+          } else {
+            const second = wrapper.querySelector('img');
+            if (second?.src) {
+              image = second.src;
+            } else if (wrapper.dataset?.smoothrImage) {
+              image = wrapper.dataset.smoothrImage;
+            }
+          }
+        }
 
-        Smoothr.cart.addItem({
+        const item = {
           product_id,
           name,
           price,
           quantity: 1,
           options: options ? JSON.parse(options) : undefined,
-          isSubscription,
-          image
-        });
+          isSubscription
+        };
+        if (image) item.image = image;
+        Smoothr.cart.addItem(item);
         if (typeof window.renderCart === 'function') {
           if (debug) console.log('🧼 Calling renderCart() to update UI');
           window.renderCart();
