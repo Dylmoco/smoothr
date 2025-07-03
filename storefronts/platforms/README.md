@@ -75,6 +75,10 @@ styles.
   renderCart();
 </script>
 ```
+### Supplying product images
+
+[data-smoothr-product] or its child elements may include `data-smoothr-image` so the URL is sent when adding to cart.
+
 ## Billing address fields
 
 Optional billing information can be captured with `data-smoothr-bill-*` inputs. All fields are optional, but the checkout script will warn if some billing fields are filled in and the required ones (first name, last name, line1, city, postal and country) are missing.
