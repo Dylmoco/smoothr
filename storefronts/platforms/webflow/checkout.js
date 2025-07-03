@@ -2,6 +2,7 @@ let stripe;
 let elements;
 let cardElement;
 
+
 function hideTemplatesGlobally() {
   if (typeof document === 'undefined') return;
   document
@@ -25,8 +26,7 @@ function initStripeElements() {
 export function initCheckout() {
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
-
-  hideTemplatesGlobally();
+  
 
   const cart = Smoothr.cart.getCart();
   const list = document.querySelector('[data-smoothr-list]');

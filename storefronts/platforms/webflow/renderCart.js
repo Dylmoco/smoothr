@@ -9,6 +9,7 @@ function getSelectedCurrency(Smoothr) {
   );
 }
 
+
 function hideTemplatesGlobally() {
   if (typeof document === 'undefined') return;
   document
