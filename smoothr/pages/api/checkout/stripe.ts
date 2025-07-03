@@ -112,6 +112,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
+    // Stripe metadata values have a 500 character limit. Only store the most
+    // essential cart details to avoid exceeding this limit.
+    const metaCart = cart.map((item: any) => ({
+      id: item.product_id,
+      qty: item.quantity
+    }));
+    const metaCartString = JSON.stringify(metaCart).slice(0, 500);
+
     const intent = await stripe.paymentIntents.create({
       amount: total,
       currency,
@@ -122,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email,
         first_name,
         last_name,
-        cart: JSON.stringify(cart)
+        cart: metaCartString
       },
       shipping: {
         name,
