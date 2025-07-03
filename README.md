@@ -65,9 +65,10 @@ manual build step is required.
 
 ## Stripe Checkout API
 
-The admin dashboard exposes a minimal endpoint at
-`/api/checkout/stripe` for creating Stripe PaymentIntents. The request
-body must include the following fields:
+The admin dashboard exposes two endpoints for interacting with Stripe:
+
+1. `/api/checkout/stripe` – creates a PaymentIntent from a posted cart.
+   The request body must include the following fields:
 
 - `payment_method` – the ID of the payment method to charge
 - `email` – customer email for receipts
@@ -79,8 +80,12 @@ body must include the following fields:
 - `currency` – ISO currency code
 - `description` *(optional)* – order description
 
-On success the endpoint responds with the created order ID and Stripe
-PaymentIntent ID.
+   On success the endpoint responds with the created order ID and Stripe
+   PaymentIntent ID.
+
+2. `/api/create-checkout-session` – generates a Stripe Checkout Session.
+   This endpoint sets `success_url` to `<origin>/checkout-success` and
+   responds with the Checkout Session URL.
 
 
 ### Deployment Log
