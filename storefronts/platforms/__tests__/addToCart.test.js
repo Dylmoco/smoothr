@@ -125,4 +125,24 @@ describe("webflow add-to-cart binding", () => {
       image: "img2.jpg",
     });
   });
+
+  it("uses productImage when wrapper has no image data", () => {
+    wrapper.querySelector.mockImplementation(() => null);
+    // ensure wrapper.dataset.smoothrImage is undefined
+    delete wrapper.dataset.smoothrImage;
+    btn.dataset.productImage = "img-btn.jpg";
+
+    initAddToCart();
+    events.click();
+
+    expect(addItemMock).toHaveBeenCalledWith({
+      product_id: "1",
+      name: "Test",
+      price: 10000,
+      options: { size: "L" },
+      isSubscription: true,
+      quantity: 1,
+      image: "img-btn.jpg",
+    });
+  });
 });
