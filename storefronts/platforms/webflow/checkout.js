@@ -102,14 +102,23 @@ export function initCheckout() {
 
   initStripeElements();
 
-  const checkoutBtn = document.querySelector('[data-smoothr-checkout]');
-  checkoutBtn?.addEventListener('click', async () => {
-    if (checkoutBtn.disabled) return;
+  document.querySelectorAll('[data-smoothr-checkout]').forEach(checkoutBtn => {
+    if (checkoutBtn.__smoothrBound) return;
+    checkoutBtn.__smoothrBound = true;
 
-    if (!window.SMOOTHR_CONFIG?.stripeKey) {
-      alert('Stripe key not configured');
-      return;
-    }
+    checkoutBtn.addEventListener('click', async () => {
+      if (checkoutBtn.disabled) {
+        console.warn('Checkout blocked: already in progress');
+        return;
+      }
+
+      if (!window.SMOOTHR_CONFIG?.stripeKey) {
+        alert('Stripe key not configured');
+        return;
+      }
+
+      checkoutBtn.disabled = true;
+      checkoutBtn.classList.add('loading');
 
     try {
       const email = document.querySelector('[data-smoothr-email]')?.value?.trim() || '';
@@ -164,16 +173,17 @@ export function initCheckout() {
       if (!email || !first_name || !last_name || !total) {
         alert('Missing required fields');
         checkoutBtn.disabled = false;
+        checkoutBtn.classList.remove('loading');
         return;
       }
 
       if (!cardElement) initStripeElements();
       if (!stripe || !cardElement) {
         alert('Payment form not ready');
+        checkoutBtn.disabled = false;
+        checkoutBtn.classList.remove('loading');
         return;
       }
-
-      checkoutBtn.disabled = true;
 
       console.log('[Smoothr Checkout] billing_details:', billing_details);
       console.log('[Smoothr Checkout] shipping:', shipping);
@@ -186,6 +196,7 @@ export function initCheckout() {
       if (pmError || !paymentMethod) {
         alert('Failed to create payment method');
         checkoutBtn.disabled = false;
+        checkoutBtn.classList.remove('loading');
         return;
       }
 
@@ -218,10 +229,12 @@ export function initCheckout() {
       } else {
         alert('Failed to start checkout');
         checkoutBtn.disabled = false;
+        checkoutBtn.classList.remove('loading');
       }
     } catch (err) {
       alert('Failed to start checkout');
       checkoutBtn.disabled = false;
+      checkoutBtn.classList.remove('loading');
     }
   });
 
@@ -230,6 +243,7 @@ export function initCheckout() {
     const emptyEl = document.querySelector('[data-smoothr-empty]');
     if (emptyEl) emptyEl.style.display = '';
   }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);
