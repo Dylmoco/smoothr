@@ -75,8 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         quantity: item.quantity,
       })),
-      success_url:
-        'https://yourdomain.com/order-success?session_id={CHECKOUT_SESSION_ID}',
+      success_url: `${req.headers.origin}/checkout-success`,
       cancel_url: 'https://yourdomain.com/cart',
       metadata: {
         baseCurrency: currency,
