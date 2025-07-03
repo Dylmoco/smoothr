@@ -9,10 +9,18 @@ function getSelectedCurrency(Smoothr) {
   );
 }
 
+function hideTemplatesGlobally() {
+  if (typeof document === 'undefined') return;
+  document
+    .querySelectorAll('[data-smoothr-template]')
+    .forEach(el => (el.style.display = 'none'));
+}
+
 export function renderCart() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   if (debug) console.log('🎨 renderCart() triggered');
   if (typeof document === 'undefined') return;
+  hideTemplatesGlobally();
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
 
@@ -56,6 +64,9 @@ export function renderCart() {
         console.warn('renderCart: no [data-smoothr-template] found', container);
       return;
     }
+
+    // Hide the template row so only cloned items are visible
+    template.style.display = 'none';
 
     cart.items.forEach(item => {
       const clone = template.cloneNode(true);
@@ -102,10 +113,16 @@ export function renderCart() {
       const imageEl = clone.querySelector('[data-smoothr-image]');
       if (imageEl) {
         if (imageEl.tagName === 'IMG') {
-          imageEl.src = item.image || '';
+          if (item.image) {
+            imageEl.src = item.image;
+          } else {
+            imageEl.removeAttribute('src');
+          }
           imageEl.alt = item.name || '';
         } else {
-          imageEl.style.backgroundImage = `url(${item.image || ''})`;
+          imageEl.style.backgroundImage = item.image
+            ? `url(${item.image})`
+            : '';
         }
       }
 
