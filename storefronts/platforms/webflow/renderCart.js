@@ -9,6 +9,7 @@ function getSelectedCurrency(Smoothr) {
   );
 }
 
+
 export function renderCart() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   if (debug) console.log('🎨 renderCart() triggered');
@@ -57,6 +58,9 @@ export function renderCart() {
       return;
     }
 
+    // Hide the template row so only cloned items are visible
+    template.style.display = 'none';
+
     cart.items.forEach(item => {
       const clone = template.cloneNode(true);
       clone.classList.add('cart-rendered', 'smoothr-cart-rendered');
@@ -102,10 +106,16 @@ export function renderCart() {
       const imageEl = clone.querySelector('[data-smoothr-image]');
       if (imageEl) {
         if (imageEl.tagName === 'IMG') {
-          imageEl.src = item.image || '';
+          if (item.image) {
+            imageEl.src = item.image;
+          } else {
+            imageEl.removeAttribute('src');
+          }
           imageEl.alt = item.name || '';
         } else {
-          imageEl.style.backgroundImage = `url(${item.image || ''})`;
+          imageEl.style.backgroundImage = item.image
+            ? `url(${item.image})`
+            : '';
         }
       }
 

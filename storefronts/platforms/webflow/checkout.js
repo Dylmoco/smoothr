@@ -2,6 +2,7 @@ let stripe;
 let elements;
 let cardElement;
 
+
 function initStripeElements() {
   const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
   if (!stripeKey) return;
@@ -19,11 +20,14 @@ export function initCheckout() {
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
 
+
   const cart = Smoothr.cart.getCart();
   const list = document.querySelector('[data-smoothr-list]');
   const template = list?.querySelector('[data-smoothr-template]');
 
   if (list && template) {
+    // Hide template row to avoid showing it alongside cloned items
+    template.style.display = 'none';
     // clear previous items
     list.querySelectorAll('.smoothr-checkout-item').forEach(el => el.remove());
 
@@ -47,10 +51,14 @@ export function initCheckout() {
 
       clone.querySelectorAll('[data-smoothr-image]').forEach(el => {
         if (el.tagName === 'IMG') {
-          el.src = item.image || '';
+          if (item.image) {
+            el.src = item.image;
+          } else {
+            el.removeAttribute('src');
+          }
           el.alt = item.name || '';
         } else {
-          el.style.backgroundImage = `url(${item.image || ''})`;
+          el.style.backgroundImage = item.image ? `url(${item.image})` : '';
         }
       });
 
