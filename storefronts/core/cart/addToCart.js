@@ -70,7 +70,14 @@ export function initCartBindings() {
           return;
         }
 
-        const wrapper = btn.closest('[data-smoothr-product]');
+        let wrapper = btn.closest('[data-smoothr-product]');
+        if (!wrapper && btn.matches('[data-smoothr-product]')) {
+          wrapper = btn; // handle case where button *is* the wrapper
+        }
+        if (!wrapper) {
+          console.warn('[Smoothr] No wrapper found for product:', btn);
+          return;
+        }
         const el = wrapper?.querySelector('[data-smoothr-image]');
         const image =
           el?.getAttribute('src') ||
