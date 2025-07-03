@@ -214,7 +214,8 @@ export async function initCheckout() {
       const data = await res.clone().json().catch(() => ({}));
       log('fetch response', res.status, data);
       if (res.ok && data.success) {
-        block.innerHTML = '<p>Payment successful!</p>';
+        Smoothr?.cart?.clearCart?.();
+        window.location.href = '/checkout-success';
       } else {
         err('Checkout failed');
         if (!hasShownCheckoutError) {
