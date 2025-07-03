@@ -80,7 +80,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cancel_url: 'https://yourdomain.com/cart',
       metadata: {
         baseCurrency: currency,
-        cart: JSON.stringify(cart),
+        // Store a compact cart representation to respect Stripe's 500 character
+        // metadata limit.
+        cart: JSON.stringify(
+          cart.map(i => ({ id: i.product_id, qty: i.quantity }))
+        ).slice(0, 500),
       },
     });
 
