@@ -84,7 +84,21 @@ export function initCartBindings() {
 
         // Final fail
         if (!wrapper) {
-          console.warn('[Smoothr] No wrapper found for Add to Cart button', btn);
+          const path = [];
+          let cur = btn;
+          while (cur && cur.nodeType === 1) {
+            const desc = cur.tagName.toLowerCase() +
+              (cur.id ? `#${cur.id}` : '') +
+              (cur.className ? `.${cur.className.split(' ').join('.')}` : '');
+            path.push(desc);
+            cur = cur.parentElement;
+          }
+          console.warn(
+            '[Smoothr] No wrapper found for Add to Cart button',
+            btn,
+            '\u2014 ancestry:',
+            path.join(' > ')
+          );
           return;
         }
         const el = wrapper?.querySelector('[data-smoothr-image]');
