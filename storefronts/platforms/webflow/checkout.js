@@ -55,18 +55,45 @@ function initStripeElements() {
     const style = computeStripeStyle(numberTarget);
     cardNumberElement = elements.create('cardNumber', { style: { base: style } });
     cardNumberElement.mount(numberTarget);
+    requestAnimationFrame(() => {
+      const iframe = numberTarget.querySelector('iframe');
+      if (iframe) {
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.display = 'block';
+        iframe.style.boxSizing = 'border-box';
+      }
+    });
   }
 
   if (expiryTarget && !cardExpiryElement) {
     const style = computeStripeStyle(expiryTarget);
     cardExpiryElement = elements.create('cardExpiry', { style: { base: style } });
     cardExpiryElement.mount(expiryTarget);
+    requestAnimationFrame(() => {
+      const iframe = expiryTarget.querySelector('iframe');
+      if (iframe) {
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.display = 'block';
+        iframe.style.boxSizing = 'border-box';
+      }
+    });
   }
 
   if (cvcTarget && !cardCvcElement) {
     const style = computeStripeStyle(cvcTarget);
     cardCvcElement = elements.create('cardCvc', { style: { base: style } });
     cardCvcElement.mount(cvcTarget);
+    requestAnimationFrame(() => {
+      const iframe = cvcTarget.querySelector('iframe');
+      if (iframe) {
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.display = 'block';
+        iframe.style.boxSizing = 'border-box';
+      }
+    });
   }
 }
 
