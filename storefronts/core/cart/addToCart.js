@@ -71,7 +71,13 @@ export function initCartBindings() {
         }
 
         const wrapper = btn.closest('[data-smoothr-product]');
-        let image = wrapper?.querySelector('[data-smoothr-image]')?.src || '';
+        let image = '';
+        let el = btn;
+        while (el && !image) {
+          const found = el.querySelector?.('[data-smoothr-image]');
+          if (found?.src) image = found.src;
+          el = el.parentElement;
+        }
         if (!wrapper) {
           console.warn(
             `[Smoothr] No [data-smoothr-product] found for product "${product_id}"`
@@ -81,7 +87,6 @@ export function initCartBindings() {
           console.warn(
             `[Smoothr] No [data-smoothr-image] found for product "${product_id}"`
           );
-          image = '';
         }
 
 
