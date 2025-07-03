@@ -13,29 +13,43 @@ function hideTemplatesGlobally() {
 }
 
 function computeStripeStyle(target) {
-  const defaults = { fontSize: '16px', fontFamily: 'Arial, sans-serif' };
+  const defaults = {
+    color: '#333',
+    fontSize: '16px',
+    fontFamily: 'sans-serif',
+    fontWeight: '400',
+    letterSpacing: '0'
+  };
+
   if (!target || typeof window === 'undefined') {
-    return { ...defaults, '::placeholder': { color: '#999' } };
+    return {
+      base: {
+        color: defaults.color,
+        fontSize: defaults.fontSize,
+        fontFamily: defaults.fontFamily,
+        fontWeight: defaults.fontWeight,
+        letterSpacing: defaults.letterSpacing,
+        '::placeholder': { color: '#999' }
+      },
+      complete: { color: defaults.color }
+    };
   }
+
   const cs = window.getComputedStyle(target);
-  const style = {
-    color: cs.color,
+  const color = cs.color || defaults.color;
+  const placeholderColor = cs.color || '#999';
+  const base = {
+    color,
     fontSize: cs.fontSize || defaults.fontSize,
     fontFamily: cs.fontFamily || defaults.fontFamily,
-    fontWeight: cs.fontWeight,
-    textAlign: cs.textAlign,
-    lineHeight: cs.lineHeight,
-    letterSpacing: cs.letterSpacing,
-    padding: cs.padding,
-    backgroundColor: cs.backgroundColor,
-    '::placeholder': { color: '#999' }
+    fontWeight: cs.fontWeight || defaults.fontWeight,
+    letterSpacing: cs.letterSpacing || defaults.letterSpacing,
+    '::placeholder': { color: placeholderColor }
   };
-  Object.keys(style).forEach(k => {
-    if (style[k] == null || style[k] === '') delete style[k];
-  });
-  if (!style.fontSize) style.fontSize = defaults.fontSize;
-  if (!style.fontFamily) style.fontFamily = defaults.fontFamily;
-  return style;
+
+  const complete = { color };
+
+  return { base, complete };
 }
 
 function initStripeElements() {
@@ -53,7 +67,7 @@ function initStripeElements() {
 
   if (numberTarget && !cardNumberElement) {
     const style = computeStripeStyle(numberTarget);
-    cardNumberElement = elements.create('cardNumber', { style: { base: style } });
+    cardNumberElement = elements.create('cardNumber', { style });
     cardNumberElement.mount(numberTarget);
     requestAnimationFrame(() => {
       const iframe = numberTarget.querySelector('iframe');
@@ -68,7 +82,7 @@ function initStripeElements() {
 
   if (expiryTarget && !cardExpiryElement) {
     const style = computeStripeStyle(expiryTarget);
-    cardExpiryElement = elements.create('cardExpiry', { style: { base: style } });
+    cardExpiryElement = elements.create('cardExpiry', { style });
     cardExpiryElement.mount(expiryTarget);
     requestAnimationFrame(() => {
       const iframe = expiryTarget.querySelector('iframe');
@@ -83,7 +97,7 @@ function initStripeElements() {
 
   if (cvcTarget && !cardCvcElement) {
     const style = computeStripeStyle(cvcTarget);
-    cardCvcElement = elements.create('cardCvc', { style: { base: style } });
+    cardCvcElement = elements.create('cardCvc', { style });
     cardCvcElement.mount(cvcTarget);
     requestAnimationFrame(() => {
       const iframe = cvcTarget.querySelector('iframe');
