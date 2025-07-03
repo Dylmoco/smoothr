@@ -225,7 +225,8 @@ export function initCheckout() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
-        alert('Payment successful');
+        Smoothr.cart.clearCart?.();
+        window.location.href = '/checkout-success';
       } else {
         alert('Failed to start checkout');
         checkoutBtn.disabled = false;
