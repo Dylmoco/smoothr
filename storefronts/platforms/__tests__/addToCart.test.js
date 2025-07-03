@@ -145,4 +145,22 @@ describe("webflow add-to-cart binding", () => {
       image: "img-btn.jpg",
     });
   });
+
+  it("detects wrapper when button is nested deeply", () => {
+    // simulate button nested inside two levels of divs within wrapper
+    btn.parentElement = { matches: vi.fn(() => false), parentElement: wrapper };
+    initAddToCart();
+    events.click();
+
+    expect(btn.closest).toHaveBeenCalledWith("[data-smoothr-product]");
+    expect(addItemMock).toHaveBeenCalledWith({
+      product_id: "1",
+      name: "Test",
+      price: 10000,
+      options: { size: "L" },
+      isSubscription: true,
+      quantity: 1,
+      image: "img1.jpg",
+    });
+  });
 });
