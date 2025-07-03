@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { initAddToCart } from "../../core/cart/addToCart.js";
+let initAddToCart;
 
 class CustomEvt {
   constructor(type, init) {
@@ -14,7 +14,8 @@ describe("webflow add-to-cart binding", () => {
   let addItemMock;
   let wrapper;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     events = {};
     btn = {
       dataset: {},
@@ -38,6 +39,7 @@ describe("webflow add-to-cart binding", () => {
         if (evt === "click") events.click = cb;
       }),
       closest: vi.fn(() => wrapper),
+      parentElement: undefined,
     };
     const img = {
       src: "img1.jpg",
@@ -45,11 +47,13 @@ describe("webflow add-to-cart binding", () => {
     };
     wrapper = {
       querySelector: vi.fn((sel) => {
-        if (sel === "img[data-smoothr-image]") return img;
+        if (sel === "img[data-smoothr-image]" || sel === "[data-smoothr-image]")
+          return img;
         return null;
       }),
       dataset: {},
     };
+    btn.parentElement = wrapper;
     addItemMock = vi.fn();
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
@@ -66,6 +70,10 @@ describe("webflow add-to-cart binding", () => {
       removeEventListener: vi.fn(),
     };
     global.CustomEvent = CustomEvt;
+    ({ initAddToCart } = await import("../../core/cart/addToCart.js"));
+    // Override cart methods after module initializes
+    global.window.Smoothr.cart.addItem = addItemMock;
+    global.window.Smoothr.cart.getCart = vi.fn(() => ({}));
   });
 
   it("binds click handler once", () => {
@@ -89,10 +97,14 @@ describe("webflow add-to-cart binding", () => {
     expect(global.window.dispatchEvent).toHaveBeenCalled();
   });
 
-  it("falls back to dataset image when no product image element", () => {
-    // Ensure querySelector doesn't find an image element
+  it("finds image on ancestor when wrapper lacks one", () => {
+    // wrapper lacks image; ancestor contains it
     wrapper.querySelector.mockImplementation(() => null);
-    wrapper.dataset.smoothrImage = "img1.jpg";
+    const ancestor = {
+      querySelector: vi.fn(() => ({ src: "img1.jpg" })),
+      parentElement: null,
+    };
+    wrapper.parentElement = ancestor;
 
     initAddToCart();
     events.click();
@@ -111,7 +123,7 @@ describe("webflow add-to-cart binding", () => {
   it("warns when no image is found", () => {
     console.warn = vi.fn();
     wrapper.querySelector.mockImplementation(() => null);
-    delete wrapper.dataset.smoothrImage;
+    wrapper.parentElement = null;
 
     initAddToCart();
     events.click();
