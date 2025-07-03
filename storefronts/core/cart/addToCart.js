@@ -71,8 +71,16 @@ export function initCartBindings() {
         }
 
         const wrapper = btn.closest('[data-smoothr-product]');
+        const el = wrapper?.querySelector('[data-smoothr-image]');
         const image =
-          wrapper?.querySelector('[data-smoothr-image]')?.getAttribute('src') ||
+          el?.getAttribute('src') ||
+          el?.src || // Webflow hydration timing fix
+          el?.dataset?.smoothrImage ||
+          (el?.style?.backgroundImage?.includes('url')
+            ? el.style.backgroundImage
+                .replace(/^url\(["']?/, '')
+                .replace(/["']?\)$/, '')
+            : null) ||
           wrapper?.dataset.smoothrImage ||
           btn.dataset.productImage;
 
