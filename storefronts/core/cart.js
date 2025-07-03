@@ -7,7 +7,7 @@ function getStorage() {
   return null;
 }
 
-function readCart() {
+export function readCart() {
   const storage = getStorage();
   if (!storage) {
     return { items: [], meta: { lastModified: Date.now() } };
