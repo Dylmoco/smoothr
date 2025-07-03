@@ -71,19 +71,13 @@ export function initCartBindings() {
         }
 
         const wrapper = btn.closest('[data-smoothr-product]');
-        let image;
-        if (wrapper) {
-          const first = wrapper.querySelector('[data-smoothr-image]');
-          if (first?.src) {
-            image = first.src;
-          } else {
-            const second = wrapper.querySelector('img');
-            if (second?.src) {
-              image = second.src;
-            } else if (wrapper.dataset?.smoothrImage) {
-              image = wrapper.dataset.smoothrImage;
-            }
-          }
+        const image =
+          wrapper?.querySelector('[data-smoothr-image]')?.getAttribute('src') ||
+          wrapper?.dataset.smoothrImage ||
+          btn.dataset.productImage;
+
+        if (!image) {
+          console.warn('[Smoothr] No image URL found for product:', product_id);
         }
 
         const item = {

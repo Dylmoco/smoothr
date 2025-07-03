@@ -17,6 +17,7 @@ describe("webflow add-to-cart binding", () => {
   beforeEach(() => {
     events = {};
     btn = {
+      dataset: {},
       getAttribute: vi.fn((attr) => {
         switch (attr) {
           case "data-product-id":
@@ -38,11 +39,13 @@ describe("webflow add-to-cart binding", () => {
       }),
       closest: vi.fn(() => wrapper),
     };
-    const img = { src: "img1.jpg" };
+    const img = {
+      src: "img1.jpg",
+      getAttribute: vi.fn((attr) => (attr === "src" ? "img1.jpg" : null)),
+    };
     wrapper = {
       querySelector: vi.fn((sel) => {
         if (sel === "[data-smoothr-image]") return img;
-        if (sel === "img") return img;
         return null;
       }),
       dataset: {},
@@ -102,6 +105,24 @@ describe("webflow add-to-cart binding", () => {
       isSubscription: true,
       quantity: 1,
       image: "img1.jpg",
+    });
+  });
+
+  it("uses button dataset image as a final fallback", () => {
+    wrapper.querySelector.mockImplementation(() => null);
+    btn.dataset.productImage = "img2.jpg";
+
+    initAddToCart();
+    events.click();
+
+    expect(addItemMock).toHaveBeenCalledWith({
+      product_id: "1",
+      name: "Test",
+      price: 10000,
+      options: { size: "L" },
+      isSubscription: true,
+      quantity: 1,
+      image: "img2.jpg",
     });
   });
 });
