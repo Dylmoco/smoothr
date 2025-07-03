@@ -44,6 +44,11 @@ function computeStripeStyle(target) {
     fontFamily: cs.fontFamily || defaults.fontFamily,
     fontWeight: cs.fontWeight || defaults.fontWeight,
     letterSpacing: cs.letterSpacing || defaults.letterSpacing,
+    lineHeight: cs.lineHeight,
+    height: cs.height,
+    textAlign: cs.textAlign,
+    padding: cs.padding,
+    backgroundColor: cs.backgroundColor,
     '::placeholder': { color: placeholderColor }
   };
 
@@ -76,6 +81,10 @@ function initStripeElements() {
         iframe.style.height = '100%';
         iframe.style.display = 'block';
         iframe.style.boxSizing = 'border-box';
+        iframe.style.position = 'relative';
+      }
+      if (window.getComputedStyle(numberTarget).position === 'static') {
+        numberTarget.style.position = 'relative';
       }
     });
   }
@@ -91,6 +100,10 @@ function initStripeElements() {
         iframe.style.height = '100%';
         iframe.style.display = 'block';
         iframe.style.boxSizing = 'border-box';
+        iframe.style.position = 'relative';
+      }
+      if (window.getComputedStyle(expiryTarget).position === 'static') {
+        expiryTarget.style.position = 'relative';
       }
     });
   }
@@ -106,6 +119,10 @@ function initStripeElements() {
         iframe.style.height = '100%';
         iframe.style.display = 'block';
         iframe.style.boxSizing = 'border-box';
+        iframe.style.position = 'relative';
+      }
+      if (window.getComputedStyle(cvcTarget).position === 'static') {
+        cvcTarget.style.position = 'relative';
       }
     });
   }
