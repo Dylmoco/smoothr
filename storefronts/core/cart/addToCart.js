@@ -70,17 +70,7 @@ export function initCartBindings() {
           return;
         }
 
-        let wrapper = btn.closest('[data-smoothr-product]');
-
-        // Fallback 1: button *is* the wrapper
-        if (!wrapper && btn.matches('[data-smoothr-product]')) {
-          wrapper = btn;
-        }
-
-        // Fallback 2: wrapper is one level above (e.g. Collection Item contains all product logic)
-        if (!wrapper && btn.parentElement?.matches('[data-smoothr-product]')) {
-          wrapper = btn.parentElement;
-        }
+        const wrapper = btn.closest('[data-smoothr-product]');
 
         // Final fail
         if (!wrapper) {
@@ -101,21 +91,13 @@ export function initCartBindings() {
           );
           return;
         }
-        const el = wrapper?.querySelector('[data-smoothr-image]');
-        const image =
-          el?.getAttribute('src') ||
-          el?.src || // Webflow hydration timing fix
-          el?.dataset?.smoothrImage ||
-          (el?.style?.backgroundImage?.includes('url')
-            ? el.style.backgroundImage
-                .replace(/^url\(["']?/, '')
-                .replace(/["']?\)$/, '')
-            : null) ||
-          wrapper?.dataset.smoothrImage ||
-          btn.dataset.productImage;
+        const imgEl = wrapper?.querySelector('img[data-smoothr-image]');
+        const image = imgEl?.getAttribute('src') || imgEl?.src || wrapper?.dataset.smoothrImage;
 
         if (!image) {
-          console.warn('[Smoothr] No image URL found for product:', product_id);
+          console.warn(
+            `[Smoothr] No image found for product "${name}" (${product_id})`
+          );
         }
 
         const item = {
