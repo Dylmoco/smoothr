@@ -1,6 +1,8 @@
 let stripe;
 let elements;
-let cardElement;
+let cardNumberElement;
+let cardExpiryElement;
+let cardCvcElement;
 
 
 function hideTemplatesGlobally() {
@@ -10,17 +12,62 @@ function hideTemplatesGlobally() {
     .forEach(el => (el.style.display = 'none'));
 }
 
+function computeStripeStyle(target) {
+  const defaults = { fontSize: '16px', fontFamily: 'Arial, sans-serif' };
+  if (!target || typeof window === 'undefined') {
+    return { ...defaults, '::placeholder': { color: '#999' } };
+  }
+  const cs = window.getComputedStyle(target);
+  const style = {
+    color: cs.color,
+    fontSize: cs.fontSize || defaults.fontSize,
+    fontFamily: cs.fontFamily || defaults.fontFamily,
+    fontWeight: cs.fontWeight,
+    textAlign: cs.textAlign,
+    lineHeight: cs.lineHeight,
+    letterSpacing: cs.letterSpacing,
+    padding: cs.padding,
+    backgroundColor: cs.backgroundColor,
+    '::placeholder': { color: '#999' }
+  };
+  Object.keys(style).forEach(k => {
+    if (style[k] == null || style[k] === '') delete style[k];
+  });
+  if (!style.fontSize) style.fontSize = defaults.fontSize;
+  if (!style.fontFamily) style.fontFamily = defaults.fontFamily;
+  return style;
+}
+
 function initStripeElements() {
   const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
   if (!stripeKey) return;
-  const target = document.querySelector('[data-smoothr-card-number]');
-  if (!target) return;
+  const numberTarget = document.querySelector('[data-smoothr-card-number]');
+  const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
+  const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
+  if (!numberTarget && !expiryTarget && !cvcTarget) return;
+
   if (!stripe) {
     stripe = Stripe(stripeKey);
     elements = stripe.elements();
   }
-  cardElement = elements.create('card');
-  cardElement.mount(target);
+
+  if (numberTarget && !cardNumberElement) {
+    const style = computeStripeStyle(numberTarget);
+    cardNumberElement = elements.create('cardNumber', { style: { base: style } });
+    cardNumberElement.mount(numberTarget);
+  }
+
+  if (expiryTarget && !cardExpiryElement) {
+    const style = computeStripeStyle(expiryTarget);
+    cardExpiryElement = elements.create('cardExpiry', { style: { base: style } });
+    cardExpiryElement.mount(expiryTarget);
+  }
+
+  if (cvcTarget && !cardCvcElement) {
+    const style = computeStripeStyle(cvcTarget);
+    cardCvcElement = elements.create('cardCvc', { style: { base: style } });
+    cardCvcElement.mount(cvcTarget);
+  }
 }
 
 export function initCheckout() {
@@ -177,8 +224,8 @@ export function initCheckout() {
         return;
       }
 
-      if (!cardElement) initStripeElements();
-      if (!stripe || !cardElement) {
+      if (!cardNumberElement) initStripeElements();
+      if (!stripe || !cardNumberElement) {
         alert('Payment form not ready');
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove('loading');
@@ -189,7 +236,7 @@ export function initCheckout() {
       console.log('[Smoothr Checkout] shipping:', shipping);
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardElement,
+        card: cardNumberElement,
         billing_details
       });
 
