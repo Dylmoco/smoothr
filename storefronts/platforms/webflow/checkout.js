@@ -3,6 +3,13 @@ let elements;
 let cardElement;
 
 
+function hideTemplatesGlobally() {
+  if (typeof document === 'undefined') return;
+  document
+    .querySelectorAll('[data-smoothr-template]')
+    .forEach(el => (el.style.display = 'none'));
+}
+
 function initStripeElements() {
   const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
   if (!stripeKey) return;
@@ -19,7 +26,7 @@ function initStripeElements() {
 export function initCheckout() {
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
-
+  
 
   const cart = Smoothr.cart.getCart();
   const list = document.querySelector('[data-smoothr-list]');
