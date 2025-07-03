@@ -21,7 +21,7 @@ export function renderCart() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   if (debug) console.log('🎨 renderCart() triggered');
   if (typeof document === 'undefined') return;
-  hideTemplatesGlobally();
+  setTimeout(() => hideTemplatesGlobally(), 50);
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
 
