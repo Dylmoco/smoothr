@@ -57,6 +57,9 @@ export function renderCart() {
       return;
     }
 
+    // Hide the template row so only cloned items are visible
+    template.style.display = 'none';
+
     cart.items.forEach(item => {
       const clone = template.cloneNode(true);
       clone.classList.add('cart-rendered', 'smoothr-cart-rendered');
