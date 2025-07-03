@@ -71,11 +71,20 @@ export function initCartBindings() {
         }
 
         let wrapper = btn.closest('[data-smoothr-product]');
+
+        // Fallback 1: button *is* the wrapper
         if (!wrapper && btn.matches('[data-smoothr-product]')) {
-          wrapper = btn; // handle case where button *is* the wrapper
+          wrapper = btn;
         }
+
+        // Fallback 2: wrapper is one level above (e.g. Collection Item contains all product logic)
+        if (!wrapper && btn.parentElement?.matches('[data-smoothr-product]')) {
+          wrapper = btn.parentElement;
+        }
+
+        // Final fail
         if (!wrapper) {
-          console.warn('[Smoothr] No wrapper found for product:', btn);
+          console.warn('[Smoothr] No wrapper found for Add to Cart button', btn);
           return;
         }
         const el = wrapper?.querySelector('[data-smoothr-image]');
