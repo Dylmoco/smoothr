@@ -123,11 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const idempotencyKey = crypto
       .createHash('sha256')
-      .update(
-        `${email}-${total}-${JSON.stringify(metaCart)}-${Math.floor(
-          Date.now() / 10000
-        )}`
-      )
+      .update(`${email}-${total}-${JSON.stringify(metaCart)}`)
       .digest('hex');
 
     const intent = await stripe.paymentIntents.create({
