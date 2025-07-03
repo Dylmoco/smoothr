@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import supabase from '../../../../shared/supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import { applyCors } from '../../../utils/cors';
+import crypto from 'crypto';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
@@ -120,6 +121,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }));
     const metaCartString = JSON.stringify(metaCart).slice(0, 500);
 
+    const idempotencyKey = crypto
+      .createHash('sha256')
+      .update(
+        `${email}-${total}-${JSON.stringify(metaCart)}-${Math.floor(
+          Date.now() / 10000
+        )}`
+      )
+      .digest('hex');
+
     const intent = await stripe.paymentIntents.create({
       amount: total,
       currency,
@@ -143,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           country
         }
       }
-    });
+    }, { idempotencyKey });
 
     let customerId: string | null = null;
     try {
