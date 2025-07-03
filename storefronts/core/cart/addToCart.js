@@ -70,20 +70,18 @@ export function initCartBindings() {
           return;
         }
 
-        const card = btn.closest('.product-card');
-        let image = '';
-        if (card) {
-          const imgEl = card.querySelector('.product-image');
-          image = imgEl?.src || imgEl?.getAttribute('src') || '';
-          if (!imgEl || !image) {
-            console.warn(
-              `[Smoothr] No .product-image found for product "${product_id}"`
-            );
-          }
-        } else {
+        const wrapper = btn.closest('[data-smoothr-product]');
+        let image = wrapper?.querySelector('[data-smoothr-image]')?.src || '';
+        if (!wrapper) {
           console.warn(
-            `[Smoothr] No .product-card found for product "${product_id}"`
+            `[Smoothr] No [data-smoothr-product] found for product "${product_id}"`
           );
+        }
+        if (!image) {
+          console.warn(
+            `[Smoothr] No [data-smoothr-image] found for product "${product_id}"`
+          );
+          image = '';
         }
 
 
