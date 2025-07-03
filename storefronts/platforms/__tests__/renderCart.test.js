@@ -87,7 +87,7 @@ beforeEach(() => {
 });
 
 async function loadRenderCart() {
-  const mod = await import('../webflow/renderCart.js');
+  const mod = await import('../../core/cart/renderCart.js');
   return mod.renderCart;
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { initAddToCart } from "../webflow/addToCart.js";
+import { initAddToCart } from "../../core/cart/addToCart.js";
 
 class CustomEvt {
   constructor(type, init) {
