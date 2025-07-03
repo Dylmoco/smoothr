@@ -46,11 +46,7 @@ export function renderCart() {
     el.dataset.smoothrBase = baseTotal;
     el.setAttribute('data-smoothr-total', displayTotal);
     if (formatter) {
-      if (formatter.length >= 2) {
-        el.textContent = formatter(displayTotal, currencyCode);
-      } else {
-        el.textContent = formatter(displayTotal);
-      }
+      el.textContent = formatter(displayTotal, currencyCode);
     } else {
       el.textContent = String(displayTotal);
     }
@@ -96,19 +92,41 @@ export function renderCart() {
       });
 
       clone.querySelectorAll('[data-smoothr-price]').forEach(el => {
-        const displayPrice = item.price / 100;
+        const basePrice = item.price / 100;
+        const currencyCode = getSelectedCurrency(Smoothr);
+        let displayPrice = basePrice;
+        if (Smoothr.currency?.convertPrice) {
+          displayPrice = Smoothr.currency.convertPrice(
+            basePrice,
+            currencyCode,
+            Smoothr.currency.baseCurrency
+          );
+        }
+        el.dataset.smoothrBase = basePrice;
         el.setAttribute('data-smoothr-price', displayPrice);
         if (formatter) {
-          el.textContent = formatter(displayPrice);
+          el.textContent = formatter(displayPrice, currencyCode);
         } else {
           el.textContent = String(displayPrice);
         }
       });
 
       clone.querySelectorAll('[data-smoothr-subtotal]').forEach(el => {
-        const subtotal = (item.price * item.quantity) / 100;
-        el.setAttribute('data-smoothr-subtotal', subtotal);
-        el.textContent = formatter ? formatter(subtotal) : String(subtotal);
+        const baseSubtotal = (item.price * item.quantity) / 100;
+        const currencyCode = getSelectedCurrency(Smoothr);
+        let displaySubtotal = baseSubtotal;
+        if (Smoothr.currency?.convertPrice) {
+          displaySubtotal = Smoothr.currency.convertPrice(
+            baseSubtotal,
+            currencyCode,
+            Smoothr.currency.baseCurrency
+          );
+        }
+        el.dataset.smoothrBase = baseSubtotal;
+        el.setAttribute('data-smoothr-subtotal', displaySubtotal);
+        el.textContent = formatter
+          ? formatter(displaySubtotal, currencyCode)
+          : String(displaySubtotal);
       });
 
       const imageEl = clone.querySelector('[data-smoothr-image]');
