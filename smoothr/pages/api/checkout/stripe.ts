@@ -202,6 +202,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: 'processing',
         payment_provider: 'stripe',
         raw_data: req.body,
+        // Include cart items for backward compatibility with
+        // environments where the `orders` table still has an
+        // `items` column. Newer schemas ignore extra fields.
+        items: cart,
         total_price: total,
         store_id,
         platform: platform || 'webflow',
