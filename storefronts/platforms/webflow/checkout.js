@@ -104,11 +104,13 @@ export function initCheckout() {
 
   const checkoutBtn = document.querySelector('[data-smoothr-checkout]');
   checkoutBtn?.addEventListener('click', async () => {
+    if (checkoutBtn.disabled) return;
+
     if (!window.SMOOTHR_CONFIG?.stripeKey) {
       alert('Stripe key not configured');
       return;
     }
-    checkoutBtn.disabled = true;
+
     try {
       const email = document.querySelector('[data-smoothr-email]')?.value?.trim() || '';
       const first_name = document.querySelector('[data-smoothr-first-name]')?.value?.trim() || '';
@@ -168,9 +170,10 @@ export function initCheckout() {
       if (!cardElement) initStripeElements();
       if (!stripe || !cardElement) {
         alert('Payment form not ready');
-        checkoutBtn.disabled = false;
         return;
       }
+
+      checkoutBtn.disabled = true;
 
       console.log('[Smoothr Checkout] billing_details:', billing_details);
       console.log('[Smoothr Checkout] shipping:', shipping);
@@ -214,10 +217,10 @@ export function initCheckout() {
         alert('Payment successful');
       } else {
         alert('Failed to start checkout');
+        checkoutBtn.disabled = false;
       }
     } catch (err) {
       alert('Failed to start checkout');
-    } finally {
       checkoutBtn.disabled = false;
     }
   });
