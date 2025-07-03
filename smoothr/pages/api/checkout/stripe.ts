@@ -157,9 +157,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
+    // Fetch store prefix and current order sequence
+    const { data: storeData, error: storeError } = await supabase
+      .from('stores')
+      .select('prefix, order_sequence')
+      .eq('id', store_id)
+      .maybeSingle();
+
+    if (storeError) {
+      console.error(
+        '[Smoothr Checkout] Store lookup failed:',
+        (storeError as any).message
+      );
+      res.status(500).json({ error: 'Failed to fetch store information' });
+      return;
+    }
+
+    if (!storeData) {
+      res.status(400).json({ error: 'Invalid store_id' });
+      return;
+    }
+
+    const { prefix, order_sequence } = storeData as any;
+
+    if (!prefix) {
+      console.error('[Smoothr Checkout] Store prefix missing');
+      res.status(500).json({ error: 'Store configuration invalid' });
+      return;
+    }
+
+    if (order_sequence === null || order_sequence === undefined) {
+      console.error('[Smoothr Checkout] order_sequence missing for store');
+      res.status(500).json({ error: 'Store configuration invalid' });
+      return;
+    }
+
+    const nextSequence = Number(order_sequence) + 1;
+    const orderNumber = `${prefix}-${String(nextSequence).padStart(4, '0')}`;
+
     const { data, error } = await supabase
       .from('orders')
       .insert({
+        order_number: orderNumber,
         status: 'processing',
         payment_provider: 'stripe',
         raw_data: req.body,
@@ -180,9 +219,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
+    const { error: updateError } = await supabase
+      .from('stores')
+      .update({ order_sequence: nextSequence })
+      .eq('id', store_id);
+    if (updateError) {
+      console.error(
+        '[Smoothr Checkout] Failed to update store sequence:',
+        (updateError as any).message
+      );
+    }
+
     res.status(200).json({
       success: true,
       order_id: data?.id,
+      order_number: orderNumber,
       payment_intent_id: intent.id
     });
   } catch (err: any) {
