@@ -24,6 +24,8 @@ export function initCheckout() {
   const template = list?.querySelector('[data-smoothr-template]');
 
   if (list && template) {
+    // Hide template row to avoid showing it alongside cloned items
+    template.style.display = 'none';
     // clear previous items
     list.querySelectorAll('.smoothr-checkout-item').forEach(el => el.remove());
 
