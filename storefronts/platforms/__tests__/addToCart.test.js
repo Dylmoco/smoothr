@@ -45,7 +45,7 @@ describe("webflow add-to-cart binding", () => {
     };
     wrapper = {
       querySelector: vi.fn((sel) => {
-        if (sel === "[data-smoothr-image]") return img;
+        if (sel === "img[data-smoothr-image]") return img;
         return null;
       }),
       dataset: {},
@@ -108,29 +108,10 @@ describe("webflow add-to-cart binding", () => {
     });
   });
 
-  it("uses button dataset image as a final fallback", () => {
+  it("warns when no image is found", () => {
+    console.warn = vi.fn();
     wrapper.querySelector.mockImplementation(() => null);
-    btn.dataset.productImage = "img2.jpg";
-
-    initAddToCart();
-    events.click();
-
-    expect(addItemMock).toHaveBeenCalledWith({
-      product_id: "1",
-      name: "Test",
-      price: 10000,
-      options: { size: "L" },
-      isSubscription: true,
-      quantity: 1,
-      image: "img2.jpg",
-    });
-  });
-
-  it("uses productImage when wrapper has no image data", () => {
-    wrapper.querySelector.mockImplementation(() => null);
-    // ensure wrapper.dataset.smoothrImage is undefined
     delete wrapper.dataset.smoothrImage;
-    btn.dataset.productImage = "img-btn.jpg";
 
     initAddToCart();
     events.click();
@@ -142,8 +123,8 @@ describe("webflow add-to-cart binding", () => {
       options: { size: "L" },
       isSubscription: true,
       quantity: 1,
-      image: "img-btn.jpg",
     });
+    expect(console.warn).toHaveBeenCalled();
   });
 
   it("detects wrapper when button is nested deeply", () => {
