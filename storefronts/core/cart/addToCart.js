@@ -70,35 +70,22 @@ export function initCartBindings() {
           return;
         }
 
-        const wrapper = btn.closest('[data-smoothr-product]');
-
-        // Final fail
-        if (!wrapper) {
-          const path = [];
-          let cur = btn;
-          while (cur && cur.nodeType === 1) {
-            const desc = cur.tagName.toLowerCase() +
-              (cur.id ? `#${cur.id}` : '') +
-              (cur.className ? `.${cur.className.split(' ').join('.')}` : '');
-            path.push(desc);
-            cur = cur.parentElement;
+        const card = btn.closest('.product-card');
+        let image = '';
+        if (card) {
+          const imgEl = card.querySelector('.product-image');
+          image = imgEl?.src || imgEl?.getAttribute('src') || '';
+          if (!imgEl || !image) {
+            console.warn(
+              `[Smoothr] No .product-image found for product "${product_id}"`
+            );
           }
+        } else {
           console.warn(
-            '[Smoothr] No wrapper found for Add to Cart button',
-            btn,
-            '\u2014 ancestry:',
-            path.join(' > ')
+            `[Smoothr] No .product-card found for product "${product_id}"`
           );
-          return;
         }
-        const imgEl = wrapper?.querySelector('img[data-smoothr-image]');
-        const image = imgEl?.getAttribute('src') || imgEl?.src || wrapper?.dataset.smoothrImage;
 
-        if (!image) {
-          console.warn(
-            `[Smoothr] No image found for product "${name}" (${product_id})`
-          );
-        }
 
         const item = {
           product_id,
@@ -106,9 +93,9 @@ export function initCartBindings() {
           price,
           quantity: 1,
           options: options ? JSON.parse(options) : undefined,
-          isSubscription
+          isSubscription,
+          image
         };
-        if (image) item.image = image;
         Smoothr.cart.addItem(item);
         if (typeof window.renderCart === 'function') {
           if (debug) console.log('🧼 Calling renderCart() to update UI');
