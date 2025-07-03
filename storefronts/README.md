@@ -97,6 +97,19 @@ a dropdown and mark prices using `data-smoothr-price`:
 Prices update automatically when the currency changes and the selection is
 persisted in `localStorage`.
 
+## Cart UI helpers
+
+Helpers for rendering the cart and binding `[data-smoothr-add]` buttons live in
+`./core/cart`. Import them as needed:
+
+```javascript
+import { renderCart } from './core/cart/renderCart.js';
+import { initCartBindings } from './core/cart/addToCart.js';
+```
+
+Call `renderCart()` after page load to display items and totals. Use
+`initCartBindings()` to attach click handlers for adding products.
+
 ## Checkout
 
 `initCheckout` now mounts Stripe card fields automatically. Provide elements

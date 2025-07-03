@@ -12,8 +12,8 @@ import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
 import * as auth from './auth/index.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
-import { initCartBindings } from '../platforms/webflow/addToCart.js';
-import { renderCart } from '../platforms/webflow/renderCart.js';
+import { initCartBindings } from './cart/addToCart.js';
+import { renderCart } from './cart/renderCart.js';
 
 // Default endpoint for retrieving live exchange rates via Supabase proxy.
 const DEFAULT_RATE_SOURCE =

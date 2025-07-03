@@ -2,6 +2,8 @@
 
 Adapters for Webflow, Framer, Webstudio, and other platforms.
 
+Cart DOM helpers like `addToCart.js` and `renderCart.js` now live in `../core/cart`.
+
 ## Currency dropdown
 
 `webflow-dom.js` replaces any element marked with `data-smoothr-price` or
@@ -71,7 +73,7 @@ styles.
 </div>
 <div>Total: <span data-smoothr-total></span></div>
 <script type="module">
-  import { renderCart } from './webflow/renderCart.js';
+  import { renderCart } from '../core/cart/renderCart.js';
   renderCart();
 </script>
 ```
