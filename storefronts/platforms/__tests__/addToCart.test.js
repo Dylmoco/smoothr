@@ -41,9 +41,11 @@ describe("webflow add-to-cart binding", () => {
     const img = { src: "img1.jpg" };
     wrapper = {
       querySelector: vi.fn((sel) => {
-        if (sel === ".product-image") return img;
+        if (sel === "[data-smoothr-image]") return img;
+        if (sel === "img") return img;
         return null;
       }),
+      dataset: {},
     };
     addItemMock = vi.fn();
     global.document = {
