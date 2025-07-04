@@ -5,6 +5,10 @@ import { applyCors } from '../../utils/cors';
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
 const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
+const debug = process.env.SMOOTHR_DEBUG === 'true';
+const log = (...args: any[]) => debug && console.log('[create-checkout]', ...args);
+const err = (...args: any[]) => debug && console.error('[create-checkout]', ...args);
+
 const SUPPORTED_CURRENCIES = new Set([
   'USD', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'NZD', 'SGD',
   'CHF', 'HKD', 'SEK', 'DKK', 'NOK'
@@ -89,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json({ url: session.url });
   } catch (err: any) {
-    console.error('❌ Stripe session error:', err);
+    err('❌ Stripe session error:', err);
     res.status(500).json({ error: err.message || String(err) });
   }
 }

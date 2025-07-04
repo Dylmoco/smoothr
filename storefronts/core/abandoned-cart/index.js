@@ -9,13 +9,18 @@
 const STORAGE_KEY = 'smoothr_cart_meta';
 let isSetup = false;
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('smoothr:abandoned-cart', ...args);
+const warn = (...args) => debug && console.warn('smoothr:abandoned-cart', ...args);
+const err = (...args) => debug && console.error('smoothr:abandoned-cart', ...args);
+
 function readMeta() {
   if (typeof window === 'undefined' || !window.localStorage) return {};
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (err) {
-    console.warn('smoothr:abandoned-cart invalid meta', err);
+    warn('invalid meta', err);
   }
   return {};
 }
@@ -25,7 +30,7 @@ function writeMeta(meta) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
   } catch (err) {
-    console.error('smoothr:abandoned-cart write failed', err);
+    err('write failed', err);
   }
 }
 

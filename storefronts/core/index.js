@@ -1,4 +1,7 @@
-console.log('Smoothr SDK loaded');
+const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
+
+log('Smoothr SDK loaded');
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
 import * as analytics from './analytics/index.js';
@@ -70,14 +73,14 @@ if (typeof window !== 'undefined') {
     if (!/[?&]symbols=/.test(urlBase)) {
       debugUrl += (debugUrl.includes('?') ? '&' : '?') + `symbols=${symbols.join(',')}`;
     }
-    console.log('smoothr:live-rates-url', debugUrl);
+    log('smoothr:live-rates-url', debugUrl);
   }
   fetchExchangeRates(base, symbols, cfg.rateSource)
     .then(rates => {
       if (rates) {
         currency.updateRates(rates);
         if (cfg.debug) {
-          console.log('smoothr:live-rates', rates);
+          log('smoothr:live-rates', rates);
         }
       }
     })
@@ -90,14 +93,14 @@ if (typeof window !== 'undefined') {
   window.Smoothr = Smoothr;
   window.smoothr = window.smoothr || Smoothr;
   window.renderCart = renderCart;
-  console.log('🎨 renderCart registered in SDK');
+  log('🎨 renderCart registered in SDK');
   window.Smoothr = window.Smoothr || {};
   // Clone the cart module so additional properties can be assigned
   window.Smoothr.cart = { ...cart, ...(window.Smoothr.cart || {}) };
   window.Smoothr.cart.renderCart = renderCart;
   window.initCartBindings = initCartBindings;
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('✅ DOM ready – calling initCartBindings');
+    log('✅ DOM ready – calling initCartBindings');
     initCartBindings();
   });
   Promise.resolve(auth.initAuth()).then(() => {

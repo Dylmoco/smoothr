@@ -1,6 +1,11 @@
 // Core cart module for Smoothr SDK
 const STORAGE_KEY = 'smoothr_cart';
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Cart]', ...args);
+const err = (...args) => debug && console.error('[Smoothr Cart]', ...args);
+
 function getStorage() {
   if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
   if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
@@ -16,7 +21,7 @@ export function readCart() {
     const raw = storage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (err) {
-    console.warn('smoothr:cart invalid data', err);
+    warn('invalid data', err);
   }
   return { items: [], meta: { lastModified: Date.now() } };
 }
@@ -27,7 +32,7 @@ function writeCart(cart) {
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(cart));
   } catch (err) {
-    console.error('smoothr:cart write failed', err);
+    err('write failed', err);
   }
 }
 

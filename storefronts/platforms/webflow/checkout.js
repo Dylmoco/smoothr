@@ -4,6 +4,10 @@ let cardNumberElement;
 let cardExpiryElement;
 let cardCvcElement;
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
+
 
 function hideTemplatesGlobally() {
   if (typeof document === 'undefined') return;
@@ -78,13 +82,9 @@ function forceStripeIframeStyle(selector) {
       }
       clearInterval(interval);
     } else {
-      console.log(
-        `[Smoothr Checkout] Waiting for Stripe iframe in ${selector} (${attempts + 1})`
-      );
+      log(`Waiting for Stripe iframe in ${selector} (${attempts + 1})`);
       if (++attempts >= 20) {
-        console.warn(
-          `[Smoothr Checkout] iframe not found in ${selector} after ${attempts} attempts`
-        );
+        warn(`iframe not found in ${selector} after ${attempts} attempts`);
         clearInterval(interval);
       }
     }
@@ -211,7 +211,7 @@ export function initCheckout() {
 
     checkoutBtn.addEventListener('click', async () => {
       if (checkoutBtn.disabled) {
-        console.warn('Checkout blocked: already in progress');
+        warn('Checkout blocked: already in progress');
         return;
       }
 
@@ -262,9 +262,9 @@ export function initCheckout() {
       const requiredBilling = [billing_first_name, billing_last_name, billing_line1, billing_city, billing_postal, billing_country];
       const anyBillingFilled = requiredBilling.concat(billing_line2, billing_state).some(f => f);
       const allBillingFilled = requiredBilling.every(f => f);
-      if (anyBillingFilled && !allBillingFilled) {
-        console.warn('[Smoothr Checkout] Incomplete billing details provided');
-      }
+        if (anyBillingFilled && !allBillingFilled) {
+          warn('Incomplete billing details provided');
+        }
 
       const cart = Smoothr.cart.getCart();
       const total = Smoothr.cart.getTotal();
@@ -288,8 +288,8 @@ export function initCheckout() {
         return;
       }
 
-      console.log('[Smoothr Checkout] billing_details:', billing_details);
-      console.log('[Smoothr Checkout] shipping:', shipping);
+        log('billing_details:', billing_details);
+        log('shipping:', shipping);
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumberElement,
@@ -317,9 +317,9 @@ export function initCheckout() {
         platform
       };
 
-      console.log('[Smoothr Checkout] Submitting payload:', payload);
-      console.log('[Smoothr Checkout] billing_details:', billing_details);
-      console.log('[Smoothr Checkout] shipping:', shipping);
+        log('Submitting payload:', payload);
+        log('billing_details:', billing_details);
+        log('shipping:', shipping);
       const base = window?.SMOOTHR_CONFIG?.apiBase || '';
       const res = await fetch(`${base}/api/checkout/stripe`, {
         method: 'POST',

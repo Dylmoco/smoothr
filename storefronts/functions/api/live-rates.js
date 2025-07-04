@@ -7,6 +7,11 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type'
 };
 
+const debug = process.env.SMOOTHR_DEBUG === 'true';
+const log = (...args) => debug && console.log('[live-rates]', ...args);
+const warn = (...args) => debug && console.warn('[live-rates]', ...args);
+const err = (...args) => debug && console.error('[live-rates]', ...args);
+
 export async function onRequestGet({ request }) {
   const url = new URL(request.url);
   const base = (url.searchParams.get('base') || 'GBP').toUpperCase();
@@ -24,7 +29,7 @@ export async function onRequestGet({ request }) {
   }
   try {
     const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${symbols.join(',')}`;
-    console.log('Fetching live rates from', apiUrl);
+    log('Fetching live rates from', apiUrl);
     let data;
     try {
       const res = await fetch(apiUrl, {
@@ -34,23 +39,23 @@ export async function onRequestGet({ request }) {
         },
         redirect: 'manual'
       });
-      console.log('Fetch result URL:', res.url, 'status:', res.status);
+      log('Fetch result URL:', res.url, 'status:', res.status);
       if (res.status === 301 || res.url.includes('fixer.io')) {
-        console.warn('Possible redirect detected:', res.status, res.url);
+        warn('Possible redirect detected:', res.status, res.url);
       }
       if (!res.ok) {
-        console.error('Exchange fetch status', res.status);
-        console.error('Exchange fetch body', await res.text());
+        err('Exchange fetch status', res.status);
+        err('Exchange fetch body', await res.text());
         throw new Error('Fetch failed');
       }
       data = await res.json();
       if (!data.rates || typeof data.rates.USD !== 'number') {
-        console.error('Invalid rates payload', data);
+        err('Invalid rates payload', data);
         throw new Error('Invalid rates structure');
       }
-      console.log('Received live rates:', data.rates);
+      log('Received live rates:', data.rates);
     } catch (e) {
-      console.error('Exchange fetch error', e);
+      err('Exchange fetch error', e);
       throw e;
     }
     const rates = {};
@@ -65,7 +70,7 @@ export async function onRequestGet({ request }) {
       headers: CORS_HEADERS
     });
   } catch (err) {
-    console.error('Failed to fetch live rates', err);
+    err('Failed to fetch live rates', err);
     const fallback = {
       base: 'GBP',
       date: new Date().toISOString(),

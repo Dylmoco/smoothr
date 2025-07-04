@@ -1,4 +1,8 @@
-console.log('proxy-live-rates function started');
+const debug = Deno.env.get('SMOOTHR_DEBUG') === 'true';
+const log = (...args: any[]) => debug && console.log('[proxy-live-rates]', ...args);
+const err = (...args: any[]) => debug && console.error('[proxy-live-rates]', ...args);
+
+log('proxy-live-rates function started');
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*", // Change "*" to your Webflow domain for stricter security if needed
@@ -78,7 +82,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       },
     );
   } catch (err) {
-    console.error('Unexpected error in proxy-live-rates:', err);
+    err('Unexpected error in proxy-live-rates:', err);
     return new Response(
       JSON.stringify({
         code: 500,

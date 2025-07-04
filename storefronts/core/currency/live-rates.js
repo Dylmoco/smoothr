@@ -1,4 +1,7 @@
-console.log("🔥 Smoothr live-rates function triggered");
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Rates]', ...args);
+
+log("🔥 Smoothr live-rates function triggered");
 
 // Default endpoint used when no custom rateSource is provided. This proxies
 // requests through a Supabase Edge Function to avoid Cloudflare redirect

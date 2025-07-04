@@ -1,5 +1,10 @@
 import supabase from './supabaseClient.js';
 
+const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Auth]', ...args);
+const err = (...args) => debug && console.error('[Smoothr Auth]', ...args);
+
 export function getOAuthRedirectUrl() {
   return (
     (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
@@ -87,7 +92,7 @@ export function showError(form, msg, input, trigger) {
     target.style.display = '';
     target.focus && target.focus();
   } else {
-    console.error('No [data-smoothr-error] container found');
+    err('No [data-smoothr-error] container found');
     alert(msg);
   }
   if (input && input.focus) input.focus();
@@ -103,7 +108,7 @@ export function showSuccess(form, msg, trigger) {
     target.style.display = '';
     target.focus && target.focus();
   } else {
-    console.log('No [data-smoothr-success] container found');
+    log('No [data-smoothr-success] container found');
     alert(msg);
   }
 }
@@ -125,8 +130,8 @@ export async function lookupRedirectUrl(type) {
       throw error;
     }
     return data[`${type}_redirect_url`] || window.location.origin;
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    err(error);
     return window.location.origin;
   }
 }
@@ -138,15 +143,9 @@ export function initAuth() {
       window.smoothr.auth = { user: user || null };
 
       if (user) {
-        console.log(
-          `%c✅ Smoothr Auth: Logged in as ${user.email}`,
-          'color: #22c55e; font-weight: bold;'
-        );
+        log(`%c✅ Smoothr Auth: Logged in as ${user.email}`, 'color: #22c55e; font-weight: bold;');
       } else {
-        console.log(
-          '%c🔒 Smoothr Auth: Not logged in',
-          'color: #f87171; font-weight: bold;'
-        );
+        log('%c🔒 Smoothr Auth: Not logged in', 'color: #f87171; font-weight: bold;');
       }
 
       const storage =
