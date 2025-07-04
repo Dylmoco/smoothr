@@ -14,6 +14,7 @@ import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
 import * as auth from './auth/index.js';
+import * as stripeGateway from '../checkout/gateways/stripe.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
 import { initCartBindings } from './cart/addToCart.js';
 import { renderCart } from './cart/renderCart.js';
@@ -34,7 +35,8 @@ export {
   returns,
   reviews,
   subscriptions,
-  auth
+  auth,
+  stripeGateway as checkout
 };
 
 const Smoothr = {
@@ -49,7 +51,8 @@ const Smoothr = {
   returns,
   reviews,
   subscriptions,
-  auth
+  auth,
+  checkout: stripeGateway
 };
 
 let setSelectedCurrency = setDomCurrency;
@@ -98,6 +101,7 @@ if (typeof window !== 'undefined') {
   // Clone the cart module so additional properties can be assigned
   window.Smoothr.cart = { ...cart, ...(window.Smoothr.cart || {}) };
   window.Smoothr.cart.renderCart = renderCart;
+  window.Smoothr.checkout = stripeGateway;
   window.initCartBindings = initCartBindings;
   document.addEventListener('DOMContentLoaded', () => {
     log('✅ DOM ready – calling initCartBindings');
