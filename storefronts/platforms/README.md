@@ -103,6 +103,11 @@ If any required billing fields are missing the browser console logs:
 ```
 
 
+## forceStripeIframeStyle helper
+
+The checkout adapter exposes `forceStripeIframeStyle()`, which runs automatically right after `.mount()` on each Stripe card field. It fixes the notorious “1px iframe bug” that can appear in flexbox layouts by forcing the Stripe Elements iframe to remain at `100%` width.
+
+
 ## Webflow integration
 
 Webflow layouts can occasionally shrink the Stripe Elements iframe to a single pixel. The checkout adapter exports a helper called `forceStripeIframeStyle()` that applies explicit width and positioning styles to the iframe container. This helper is invoked automatically after each Element mounts, preventing the 1-pixel bug without any manual calls. The fix works across all Webflow layout types.
