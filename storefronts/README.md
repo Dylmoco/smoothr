@@ -146,7 +146,6 @@ Vitest runs the unit tests for this package. After installing dependencies run:
 npm test
 ```
 
-The `pretest` script ensures dependencies are installed before tests execute.
 
 ## Supabase Proxy Live Rates Function
 
