@@ -4,6 +4,40 @@ let stripe;
 let elements;
 let cardNumberElement;
 
+function forceStripeIframeStyle(selector) {
+  if (typeof document === 'undefined') return;
+  let attempts = 0;
+  const interval = setInterval(() => {
+    const targetEl = document.querySelector(selector);
+    const iframe = targetEl?.querySelector('iframe');
+    if (iframe) {
+      iframe.style.width = '100%';
+      iframe.style.minWidth = '100%';
+      iframe.style.display = 'block';
+      iframe.style.boxSizing = 'border-box';
+      iframe.style.position = 'relative';
+      if (
+        targetEl &&
+        typeof window !== 'undefined' &&
+        window.getComputedStyle(targetEl).position === 'static'
+      ) {
+        targetEl.style.position = 'relative';
+      }
+      clearInterval(interval);
+    } else {
+      console.log(
+        `[Smoothr Checkout] Waiting for Stripe iframe in ${selector} (${attempts + 1})`
+      );
+      if (++attempts >= 20) {
+        console.warn(
+          `[Smoothr Checkout] iframe not found in ${selector} after ${attempts} attempts`
+        );
+        clearInterval(interval);
+      }
+    }
+  }, 100);
+}
+
 function getElements() {
   if (!stripe) {
     const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
@@ -33,15 +67,18 @@ export function mountCardFields() {
   if (numberTarget && !cardNumberElement) {
     cardNumberElement = els.create('cardNumber');
     cardNumberElement.mount('[data-smoothr-card-number]');
+    forceStripeIframeStyle('[data-smoothr-card-number]');
     fieldsMounted = true;
   }
   if (expiryTarget) {
     const el = els.create('cardExpiry');
     el.mount('[data-smoothr-card-expiry]');
+    forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
   if (cvcTarget) {
     const el = els.create('cardCvc');
     el.mount('[data-smoothr-card-cvc]');
+    forceStripeIframeStyle('[data-smoothr-card-cvc]');
   }
 }
 
