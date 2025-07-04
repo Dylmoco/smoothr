@@ -7,12 +7,11 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type'
 };
 
-const debug = process.env.SMOOTHR_DEBUG === 'true';
-const log = (...args) => debug && console.log('[live-rates]', ...args);
-const warn = (...args) => debug && console.warn('[live-rates]', ...args);
-const err = (...args) => debug && console.error('[live-rates]', ...args);
-
-export async function onRequestGet({ request }) {
+export async function onRequestGet({ request, env }) {
+  const debug = env && env.SMOOTHR_DEBUG === 'true';
+  const log = (...args) => debug && console.log('[live-rates]', ...args);
+  const warn = (...args) => debug && console.warn('[live-rates]', ...args);
+  const err = (...args) => debug && console.error('[live-rates]', ...args);
   const url = new URL(request.url);
   const base = (url.searchParams.get('base') || 'GBP').toUpperCase();
   const symbolsParam = url.searchParams.get('symbols');
