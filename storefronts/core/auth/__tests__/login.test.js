@@ -66,6 +66,9 @@ describe("login form", () => {
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),
+      dispatchEvent: vi.fn((ev) => {
+        if (ev.type === "click") clickHandler(ev);
+      }),
       textContent: "Login",
     };
 

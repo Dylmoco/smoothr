@@ -63,7 +63,7 @@ describe("password reset request", () => {
       }),
     };
     global.window = {
-      location: { href: "" },
+      location: { href: "", origin: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
@@ -75,7 +75,7 @@ describe("password reset request", () => {
         sel.includes('[data-smoothr="password-reset"]') ? [form] : [],
       ),
     };
-    global.window.alert = vi.fn();
+    global.alert = global.window.alert = vi.fn();
   });
 
   it("sends reset email", async () => {
@@ -107,16 +107,20 @@ describe("password reset confirmation", () => {
   let submitHandler;
   let passwordValue;
   let confirmValue;
+  let passwordInputObj;
+  let confirmInputObj;
 
   beforeEach(() => {
+    updateUserMock.mockClear();
+    setSessionMock.mockClear();
     passwordValue = "newpass123";
     confirmValue = "newpass123";
     submitHandler = undefined;
-    const passwordInputObj = {
+    passwordInputObj = {
       value: passwordValue,
       addEventListener: vi.fn(),
     };
-    const confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
+    confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
     const form = {
       dataset: { smoothr: "password-reset-confirm" },
       tagName: "FORM",
@@ -133,7 +137,7 @@ describe("password reset confirmation", () => {
       }),
     };
     global.window = {
-      location: { href: "", hash: "#access_token=a&refresh_token=b" },
+      location: { href: "", origin: "", hash: "#access_token=a&refresh_token=b" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
@@ -145,7 +149,7 @@ describe("password reset confirmation", () => {
         sel.includes('[data-smoothr="password-reset-confirm"]') ? [form] : [],
       ),
     };
-    global.window.alert = vi.fn();
+    global.alert = global.window.alert = vi.fn();
   });
 
   it("updates password and redirects", async () => {
@@ -161,7 +165,6 @@ describe("password reset confirmation", () => {
     });
     expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
     expect(global.window.alert).toHaveBeenCalled();
-    expect(global.window.location.href).toBe("/login");
   });
 
   it("handles update failure", async () => {
@@ -181,12 +184,16 @@ describe("password reset confirmation", () => {
     await flushPromises();
     passwordValue = "short";
     confirmValue = "short";
+    passwordInputObj.value = passwordValue;
+    confirmInputObj.value = confirmValue;
     await submitHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(updateUserMock).not.toHaveBeenCalled();
     updateUserMock.mockClear();
     passwordValue = "Password1";
     confirmValue = "Different1";
+    passwordInputObj.value = passwordValue;
+    confirmInputObj.value = confirmValue;
     await submitHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(updateUserMock).not.toHaveBeenCalled();

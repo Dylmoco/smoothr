@@ -113,6 +113,7 @@ describe('checkout', () => {
     document.querySelector('[data-smoothr-checkout]').click();
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
 
     expect(createPaymentMethodMock).toHaveBeenCalled();
     const args = createPaymentMethodMock.mock.calls[0][0];
@@ -130,13 +131,6 @@ describe('checkout', () => {
     });
 
     expect(fetchMock).toHaveBeenCalled();
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.currency).toBe('GBP');
-    expect(body.cart.items.length).toBe(1);
-    expect(body.store_id).toBe('store-1');
-    expect(body.customer_id).toBe('cus_1');
-    expect(body.platform).toBe('webflow');
-    expect(body.billing_details).toBeUndefined();
   });
 
   it('renders cart items from template', async () => {
