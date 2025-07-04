@@ -1,56 +1,4 @@
-let stripeFieldsMounted = false;
-let stripeMountAttempts = 0;
-let stripe;
-let elements;
-let cardNumberElement;
-
-function initStripeElements() {
-  const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
-  if (!stripeKey) return;
-
-  const numberTarget = document.querySelector('[data-smoothr-card-number]');
-  const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
-  const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
-
-  if (!numberTarget && !expiryTarget && !cvcTarget) {
-    if (stripeMountAttempts < 5) {
-      stripeMountAttempts++;
-      setTimeout(initStripeElements, 200);
-    }
-    return;
-  }
-
-  if (!stripe) {
-    stripe = Stripe(stripeKey);
-    elements = stripe.elements();
-  }
-
-  console.log('[Smoothr Checkout] Mounting Stripe card fields...');
-
-  if (numberTarget) {
-    cardNumberElement = elements.create('cardNumber');
-    cardNumberElement.mount('[data-smoothr-card-number]');
-    stripeFieldsMounted = true;
-  } else {
-    console.warn('[Smoothr Checkout] Missing [data-smoothr-card-number] container');
-  }
-
-  if (expiryTarget) {
-    const cardExpiryElement = elements.create('cardExpiry');
-    cardExpiryElement.mount('[data-smoothr-card-expiry]');
-  } else {
-    console.warn('[Smoothr Checkout] Missing [data-smoothr-card-expiry] container');
-  }
-
-  if (cvcTarget) {
-    const cardCvcElement = elements.create('cardCvc');
-    cardCvcElement.mount('[data-smoothr-card-cvc]');
-  } else {
-    console.warn('[Smoothr Checkout] Missing [data-smoothr-card-cvc] container');
-  }
-
-  console.log('[Smoothr Checkout] Stripe fields mounted into individual containers');
-}
+import paymentGateway from './gateways/index.js';
 
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
@@ -71,7 +19,6 @@ export async function initCheckout() {
 
   log('Stripe key confirmed');
 
-  let stripeReady = false;
   let hasShownCheckoutError = false;
 
   let block = document.querySelector('[data-smoothr-checkout]');
@@ -110,13 +57,8 @@ export async function initCheckout() {
   if (!totalEl) warn('missing [data-smoothr-total]');
   log('no polling loops active');
 
-  // TODO: Support multiple gateways besides Stripe
-  const stripePk = stripeKey;
-  log('Stripe PK loaded', stripePk);
-
-  if (!stripeFieldsMounted) {
-    initStripeElements();
-  }
+  // Initialize payment gateway fields
+  paymentGateway.mountCardFields();
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
@@ -165,22 +107,19 @@ export async function initCheckout() {
       return;
     }
 
-    if (!stripeFieldsMounted) initStripeElements();
-    if (!stripe || !cardNumberElement) {
-      err('Stripe not ready');
+    if (!paymentGateway.isMounted()) paymentGateway.mountCardFields();
+    if (!paymentGateway.ready()) {
+      err('Payment gateway not ready');
       submitBtn.disabled = false;
       return;
     }
 
     try {
-      const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardNumberElement,
-        billing_details: {
+      const { error: pmError, paymentMethod } =
+        await paymentGateway.createPaymentMethod({
           name: `${first_name} ${last_name}`,
           email
-        }
-      });
+        });
 
       if (pmError || !paymentMethod) {
         err(`\u274C Failed to create payment method: ${pmError?.message}`);
