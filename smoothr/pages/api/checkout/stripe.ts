@@ -12,6 +12,15 @@ const log = (...args: any[]) => debug && console.log('[Smoothr Checkout]', ...ar
 const warn = (...args: any[]) => debug && console.warn('[Smoothr Checkout]', ...args);
 const err = (...args: any[]) => debug && console.error('[Smoothr Checkout]', ...args);
 
+// Hash cart metadata deterministically to detect duplicate orders
+function hashCartMeta(email: string, total: number, cart: any[]): string {
+  const normalized = cart
+    .map(i => ({ id: i.product_id, qty: i.quantity }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const input = `${email}-${total}-${JSON.stringify(normalized)}`;
+  return crypto.createHash('sha256').update(input).digest('hex');
+}
+
 interface ShippingAddress {
   line1: string;
   line2?: string;
@@ -156,6 +165,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
+    // Canonical duplicate protection: check for an existing order with the same
+    // store, email, total and cart hash before creating a new PaymentIntent.
+    const cart_meta_hash = hashCartMeta(email, total, cart);
+
+    const { data: existingOrders, error: lookupErr } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('store_id', store_id)
+      .eq('customer_email', email)
+      .eq('total_price', total)
+      .eq('cart_meta_hash', cart_meta_hash)
+      .limit(1);
+
+    if (lookupErr) {
+      err('Order deduplication check failed:', lookupErr.message);
+      res.status(500).json({ error: 'Order lookup failed' });
+      return;
+    }
+
+    if (existingOrders && existingOrders.length > 0) {
+      warn('Duplicate order detected for same cart hash');
+      res
+        .status(409)
+        .json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
+      return;
+    }
+
     const metaCart = cart.map((item: any) => ({
       id: item.product_id,
       qty: item.quantity
@@ -241,21 +277,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const nextSequence = Number(order_sequence) + 1;
     const orderNumber = `${prefix}-${String(nextSequence).padStart(4, '0')}`;
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        order_number: orderNumber,
-        status: 'processing',
-        payment_provider: 'stripe',
-        raw_data: req.body,
-        items: cart,
-        total_price: total,
-        store_id,
-        platform: platform || 'webflow',
-        customer_id: customerId,
-        customer_email: email,
-        payment_intent_id: intent.id
-      })
+      const { data, error } = await supabase
+        .from('orders')
+        .insert({
+          order_number: orderNumber,
+          status: 'processing',
+          payment_provider: 'stripe',
+          raw_data: req.body,
+          items: cart,
+          cart_meta_hash,
+          total_price: total,
+          store_id,
+          platform: platform || 'webflow',
+          customer_id: customerId,
+          customer_email: email,
+          payment_intent_id: intent.id
+        })
       .select('id')
       .single();
 
