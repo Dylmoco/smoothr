@@ -57,9 +57,11 @@ function computeStripeStyle(target) {
   return { base, complete };
 }
 
-function watchStripeIframe(targetEl) {
-  let tries = 0;
+function forceStripeIframeStyle(selector) {
+  if (typeof document === 'undefined') return;
+  let attempts = 0;
   const interval = setInterval(() => {
+    const targetEl = document.querySelector(selector);
     const iframe = targetEl?.querySelector('iframe');
     if (iframe) {
       iframe.style.width = '100%';
@@ -68,14 +70,24 @@ function watchStripeIframe(targetEl) {
       iframe.style.boxSizing = 'border-box';
       iframe.style.position = 'relative';
       if (
+        targetEl &&
         typeof window !== 'undefined' &&
         window.getComputedStyle(targetEl).position === 'static'
       ) {
         targetEl.style.position = 'relative';
       }
       clearInterval(interval);
+    } else {
+      console.log(
+        `[Smoothr Checkout] Waiting for Stripe iframe in ${selector} (${attempts + 1})`
+      );
+      if (++attempts >= 20) {
+        console.warn(
+          `[Smoothr Checkout] iframe not found in ${selector} after ${attempts} attempts`
+        );
+        clearInterval(interval);
+      }
     }
-    if (++tries > 20) clearInterval(interval);
   }, 100);
 }
 
@@ -96,21 +108,21 @@ function initStripeElements() {
     const style = computeStripeStyle(numberTarget);
     cardNumberElement = elements.create('cardNumber', { style });
     cardNumberElement.mount(numberTarget);
-    watchStripeIframe(numberTarget);
+    forceStripeIframeStyle('[data-smoothr-card-number]');
   }
 
   if (expiryTarget && !cardExpiryElement) {
     const style = computeStripeStyle(expiryTarget);
     cardExpiryElement = elements.create('cardExpiry', { style });
     cardExpiryElement.mount(expiryTarget);
-    watchStripeIframe(expiryTarget);
+    forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
 
   if (cvcTarget && !cardCvcElement) {
     const style = computeStripeStyle(cvcTarget);
     cardCvcElement = elements.create('cardCvc', { style });
     cardCvcElement.mount(cvcTarget);
-    watchStripeIframe(cvcTarget);
+    forceStripeIframeStyle('[data-smoothr-card-cvc]');
   }
 }
 
