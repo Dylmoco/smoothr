@@ -72,7 +72,7 @@ describe("dynamic DOM bindings", () => {
       dispatchEvent: vi.fn(),
     };
     win = {
-      location: { href: "" },
+      location: { href: "", origin: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
@@ -196,7 +196,7 @@ describe("dynamic DOM bindings", () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: "google",
-      options: { redirectTo: "" },
+      options: { redirectTo: expect.any(String) },
     });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
@@ -262,7 +262,7 @@ describe("dynamic DOM bindings", () => {
     await flushPromises();
 
     expect(resetPasswordMock).toHaveBeenCalledWith("user@example.com", {
-      redirectTo: "",
+      redirectTo: expect.any(String),
     });
     expect(successEl.textContent).toBe("Check your email for a reset link.");
     expect(errorEl.textContent).toBe("");

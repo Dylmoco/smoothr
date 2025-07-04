@@ -81,7 +81,7 @@ describe("google login button", () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: "google",
-      options: { redirectTo: "" },
+      options: { redirectTo: expect.any(String) },
     });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
   });

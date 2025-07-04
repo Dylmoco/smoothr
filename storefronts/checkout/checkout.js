@@ -223,8 +223,8 @@ export async function initCheckout() {
           hasShownCheckoutError = true;
         }
       }
-    } catch (err) {
-      err(`\u274C ${err.message}`);
+    } catch (error) {
+      err(`\u274C ${error.message}`);
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
         hasShownCheckoutError = true;

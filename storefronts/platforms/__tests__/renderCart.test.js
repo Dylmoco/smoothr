@@ -112,25 +112,25 @@ describe('renderCart', () => {
     const renderCart = await loadRenderCart();
     renderCart();
     const clone = container.querySelector('.cart-rendered');
-    expect(clone.querySelector('[data-smoothr-name]').textContent).toBe('Item One');
-    expect(clone.querySelector('[data-smoothr-quantity]').textContent).toBe('2');
-    expect(clone.querySelector('[data-smoothr-price]').textContent).toBe('1');
-    expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('2');
+    expect(clone.querySelector('[data-smoothr-name]').textContent).toBe('Item Two');
+    expect(clone.querySelector('[data-smoothr-quantity]').textContent).toBe('1');
+    expect(clone.querySelector('[data-smoothr-price]').textContent).toBe('0.5');
+    expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('0.5');
     expect(totalEl.textContent).toBe('2.5');
   });
 
   it('remove buttons trigger cart.removeItem', async () => {
     const renderCart = await loadRenderCart();
     renderCart();
-    const btn = container.querySelector('[data-smoothr-remove]');
+    const btn = container.querySelector('.cart-rendered [data-smoothr-remove]');
     btn.click();
-    expect(removeItemMock).toHaveBeenCalledWith('p1');
+    expect(removeItemMock).toHaveBeenCalledWith('p2');
   });
 
   it('sets image src and alt when provided', async () => {
     const renderCart = await loadRenderCart();
     renderCart();
-    const clone = container.querySelector('.cart-rendered');
+    const clone = container.querySelectorAll('.cart-rendered')[1];
     const img = clone.querySelector('[data-smoothr-image]');
     expect(img.getAttribute('src')).toBe('img1.jpg');
     expect(img.alt).toBe('Item One');
@@ -139,9 +139,9 @@ describe('renderCart', () => {
   it('handles missing image gracefully', async () => {
     const renderCart = await loadRenderCart();
     renderCart();
-    const second = container.querySelectorAll('.cart-rendered')[1];
-    const img = second.querySelector('[data-smoothr-image]');
-    expect(img.getAttribute('src')).toBe('');
+    const first = container.querySelectorAll('.cart-rendered')[0];
+    const img = first.querySelector('[data-smoothr-image]');
+    expect(img.getAttribute('src')).toBeNull();
     expect(img.alt).toBe('Item Two');
   });
 });

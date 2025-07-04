@@ -54,7 +54,9 @@ describe("webflow add-to-cart binding", () => {
       dataset: {},
     };
     btn.parentElement = wrapper;
-    addItemMock = vi.fn();
+    addItemMock = vi.fn(() => {
+      global.window.dispatchEvent(new CustomEvt('smoothr:cart:updated'));
+    });
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
@@ -135,6 +137,7 @@ describe("webflow add-to-cart binding", () => {
       options: { size: "L" },
       isSubscription: true,
       quantity: 1,
+      image: ""
     });
     expect(console.warn).toHaveBeenCalled();
   });
