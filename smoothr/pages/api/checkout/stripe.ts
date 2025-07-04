@@ -43,8 +43,8 @@ interface CheckoutPayload {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
-    console.log('[Smoothr Checkout API] Setting CORS headers for status', 400);
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.log('[Smoothr Checkout API] Applying inline CORS headers (fallback)');
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.status(400).end();
@@ -57,22 +57,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
 
   if (!storeMatch || storeMatch.length === 0) {
-    console.log('[Smoothr Checkout API] Setting CORS headers for status', 403);
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    console.log('[Smoothr Checkout API] Applying inline CORS headers (fallback)');
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.status(403).end();
     return;
   }
 
-  console.log('[Smoothr Checkout API] Setting CORS headers for status', 200);
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  console.log('[Smoothr Checkout API] Applying inline CORS headers (fallback)');
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    console.log('[Smoothr Checkout API] Setting CORS headers for status', 200);
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    console.log('[Smoothr Checkout API] Applying inline CORS headers (fallback)');
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     return res.status(200).end();
@@ -88,8 +88,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!req.body.currency) warn('Missing currency');
 
   if (req.method !== 'POST') {
-    console.log('[Smoothr Checkout API] Setting CORS headers for status', 405);
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    console.log('[Smoothr Checkout API] Applying inline CORS headers (fallback)');
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Allow', 'POST');
