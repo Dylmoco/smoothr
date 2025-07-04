@@ -1,5 +1,17 @@
 import * as stripeGateway from './gateways/stripe.js';
 
+export async function computeCartHash(cart, total, email) {
+  const normalized = [...cart]
+    .map(item => ({ id: item.product_id, qty: item.quantity }))
+    .sort((a, b) => (a.id > b.id ? 1 : a.id < b.id ? -1 : 0));
+  const input = `${email}-${total}-${JSON.stringify(normalized)}`;
+  const data = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
@@ -106,6 +118,15 @@ export async function initCheckout() {
       submitBtn.disabled = false;
       return;
     }
+
+    const cartHash = await computeCartHash(cart.items, total, email);
+    const lastHash = localStorage.getItem('smoothr_last_cart_hash');
+    if (cartHash === lastHash) {
+      submitBtn.disabled = false;
+      alert("You’ve already submitted this cart. Please wait or modify your order.");
+      return;
+    }
+    localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
     if (!stripeGateway.isMounted()) stripeGateway.mountCardFields();
     if (!stripeGateway.ready()) {
