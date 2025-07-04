@@ -74,7 +74,11 @@ export default async function handler(
     try {
       const { data, error } = await supabase
         .from("orders")
-        .update({ status: "paid", paid_at: new Date().toISOString() })
+        .update({
+          status: "paid",
+          payment_status: "paid",
+          paid_at: new Date().toISOString(),
+        })
         .eq("payment_intent_id", id)
         .select("id");
       log('🧮 Supabase update result:', { id, data, error });

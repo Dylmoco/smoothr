@@ -1,0 +1,230 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import supabase from '../supabase/serverClient';
+import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
+import crypto from 'crypto';
+import stripeProvider from './providers/stripe';
+import authorizeProvider from './providers/authorize';
+
+const debug = process.env.SMOOTHR_DEBUG === 'true';
+const log = (...args: any[]) => debug && console.log('[Smoothr Checkout]', ...args);
+const warn = (...args: any[]) => debug && console.warn('[Smoothr Checkout]', ...args);
+const err = (...args: any[]) => debug && console.error('[Smoothr Checkout]', ...args);
+
+function hashCartMeta(email: string, total: number, cart: any[]): string {
+  const normalized = cart
+    .map(i => ({ id: i.product_id, qty: i.quantity }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const input = `${email}-${total}-${JSON.stringify(normalized)}`;
+  return crypto.createHash('sha256').update(input).digest('hex');
+}
+
+export async function handleCheckout({ provider, req, res }:{ provider: string; req: NextApiRequest; res: NextApiResponse; }) {
+  log('Selected provider:', provider);
+
+  const providers: Record<string, any> = {
+    stripe: stripeProvider,
+    authorize: authorizeProvider
+  };
+  const providerHandler = providers[provider];
+  if (!providerHandler) {
+    warn('Unknown provider:', provider);
+    res.status(400).json({ error: 'Unsupported payment provider' });
+    return;
+  }
+
+  const origin = req.headers.origin as string | undefined;
+  if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(400).end();
+    return;
+  }
+
+  const { data: storeMatch } = await supabase
+    .from('stores')
+    .select('id')
+    .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
+
+  if (!storeMatch || storeMatch.length === 0) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.status(403).end();
+    return;
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    warn('Method not allowed:', req.method);
+    res.setHeader('Allow', 'POST');
+    res.status(405).json({ error: 'Method Not Allowed' });
+    return;
+  }
+
+  const { payment_method, email, first_name, last_name, shipping, cart, total, currency, store_id, platform, description } = req.body as any;
+
+  if (!payment_method || !email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
+    warn('Missing required fields');
+    res.status(400).json({ error: 'Missing required fields' });
+    return;
+  }
+
+  if (!Array.isArray(cart) || cart.length === 0) {
+    warn('Empty cart');
+    res.status(400).json({ error: 'Cart cannot be empty' });
+    return;
+  }
+
+  if (total <= 0) {
+    warn('Invalid total:', total);
+    res.status(400).json({ error: 'Invalid total' });
+    return;
+  }
+
+  const { name, address } = shipping;
+  const { line1, line2, city, state, postal_code, country } = address || {};
+  if (!name || !line1 || !city || !postal_code || !state || !country) {
+    warn('Invalid shipping details');
+    res.status(400).json({ error: 'Invalid shipping details' });
+    return;
+  }
+
+  const cart_meta_hash = hashCartMeta(email, total, cart);
+
+  const { data: existingOrders, error: lookupErr } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('store_id', store_id)
+    .eq('customer_email', email)
+    .eq('total_price', total)
+    .eq('cart_meta_hash', cart_meta_hash)
+    .limit(1);
+
+  if (lookupErr) {
+    err('Order deduplication check failed:', lookupErr.message);
+    res.status(500).json({ error: 'Order lookup failed' });
+    return;
+  }
+
+  if (existingOrders && existingOrders.length > 0) {
+    warn('Duplicate order detected');
+    res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
+    return;
+  }
+
+  const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
+  const metaCartString = JSON.stringify(metaCart).slice(0, 500);
+
+  let intent;
+  try {
+    intent = await providerHandler({
+      payment_method,
+      email,
+      first_name,
+      last_name,
+      shipping: {
+        name,
+        address: { line1, line2: line2 || undefined, city, state, postal_code, country }
+      },
+      cart,
+      total,
+      currency,
+      description,
+      metaCartString
+    });
+  } catch (e: any) {
+    err('Provider handler error:', e?.message || e);
+    res.status(500).json({ error: 'Failed to process payment' });
+    return;
+  }
+
+  let customerId: string | null = null;
+  try {
+    customerId = await findOrCreateCustomer(supabase, store_id, email);
+  } catch (error: any) {
+    err('findOrCreateCustomer failed:', error?.message || error);
+    res.status(500).json({ error: 'Failed to record customer' });
+    return;
+  }
+
+  const { data: storeData, error: storeError } = await supabase
+    .from('stores')
+    .select('prefix, order_sequence')
+    .eq('id', store_id)
+    .maybeSingle();
+
+  if (storeError) {
+    err('Store lookup failed:', storeError.message);
+    res.status(500).json({ error: 'Failed to fetch store information' });
+    return;
+  }
+
+  if (!storeData) {
+    warn('Invalid store_id provided');
+    res.status(400).json({ error: 'Invalid store_id' });
+    return;
+  }
+
+  const { prefix, order_sequence } = storeData as any;
+  if (!prefix || order_sequence === null || order_sequence === undefined) {
+    err('Store configuration invalid');
+    res.status(500).json({ error: 'Store configuration invalid' });
+    return;
+  }
+
+  const nextSequence = Number(order_sequence) + 1;
+  const orderNumber = `${prefix}-${String(nextSequence).padStart(4, '0')}`;
+
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .insert({
+      order_number: orderNumber,
+      status: 'processing',
+      payment_provider: provider,
+      payment_status: 'unpaid',
+      raw_data: req.body,
+      items: cart,
+      cart_meta_hash,
+      total_price: total,
+      store_id,
+      platform: platform || 'webflow',
+      customer_id: customerId,
+      customer_email: email,
+      payment_intent_id: intent?.id || null
+    })
+    .select('id')
+    .single();
+
+  if (orderError) {
+    err('Order insert failed:', orderError.message);
+    res.status(400).json({ error: 'Order creation failed' });
+    return;
+  }
+
+  const { error: updateError } = await supabase
+    .from('stores')
+    .update({ order_sequence: nextSequence })
+    .eq('id', store_id);
+
+  if (updateError) {
+    err('Failed to update store sequence:', updateError.message);
+  }
+
+  log('Order creation result:', orderData);
+
+  res.status(200).json({
+    success: true,
+    order_id: orderData?.id,
+    order_number: orderNumber,
+    payment_intent_id: intent?.id || null
+  });
+}
