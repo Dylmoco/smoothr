@@ -81,13 +81,13 @@ export async function handleRequest(req: Request): Promise<Response> {
         },
       },
     );
-  } catch (err) {
-    errorLog('Unexpected error in proxy-live-rates:', err);
+  } catch (error) {
+    errorLog('Unexpected error in proxy-live-rates:', error);
     return new Response(
       JSON.stringify({
         code: 500,
         message: 'Internal Server Error',
-        detail: err instanceof Error ? err.message : String(err),
+        detail: error instanceof Error ? error.message : String(error),
       }),
       { status: 500, headers: CORS_HEADERS },
     );
