@@ -147,8 +147,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    // Stripe metadata values have a 500 character limit. Only store the most
-    // essential cart details to avoid exceeding this limit.
     const metaCart = cart.map((item: any) => ({
       id: item.product_id,
       qty: item.quantity
@@ -188,13 +186,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let customerId: string | null = null;
     try {
       customerId = await findOrCreateCustomer(supabase, store_id, email);
-    } catch (err: any) {
-      err('findOrCreateCustomer failed:', err?.message || err);
+    } catch (error: any) {
+      err('findOrCreateCustomer failed:', error?.message || error);
       res.status(500).json({ error: 'Failed to record customer' });
       return;
     }
 
-    // Fetch store prefix and current order sequence
     const { data: storeData, error: storeError } = await supabase
       .from('stores')
       .select('prefix, order_sequence')
@@ -236,9 +233,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: 'processing',
         payment_provider: 'stripe',
         raw_data: req.body,
-        // Include cart items for backward compatibility with
-        // environments where the `orders` table still has an
-        // `items` column. Newer schemas ignore extra fields.
         items: cart,
         total_price: total,
         store_id,
@@ -271,8 +265,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       order_number: orderNumber,
       payment_intent_id: intent.id
     });
-  } catch (err: any) {
-    err('Unexpected processing error:', err?.message || err);
+  } catch (error: any) {
+    err('Unexpected processing error:', error?.message || error);
     res.status(500).json({ error: 'Failed to process payment' });
   }
 }
