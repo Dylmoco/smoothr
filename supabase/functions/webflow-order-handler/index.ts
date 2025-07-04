@@ -1,6 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { findOrCreateCustomer } from '../../../smoothr/lib/findOrCreateCustomer.ts';
 
+const debug = Deno.env.get('SMOOTHR_DEBUG') === 'true';
+const log = (...args: any[]) => debug && console.log('[webflow-order]', ...args);
+const warn = (...args: any[]) => debug && console.warn('[webflow-order]', ...args);
+const err = (...args: any[]) => debug && console.error('[webflow-order]', ...args);
+
 export async function handleRequest(req: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -17,20 +22,20 @@ export async function handleRequest(req: Request): Promise<Response> {
   }
 
   const headers = Object.fromEntries(req.headers.entries());
-  console.log('Headers:', headers);
+  log('Headers:', headers);
 
   let payload: any;
   try {
     payload = await req.json();
   } catch (err) {
-    console.error('Invalid JSON:', err);
+    err('Invalid JSON:', err);
     return new Response(
       JSON.stringify({ error: 'Invalid JSON payload' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
-  console.log('Payload:', payload);
+  log('Payload:', payload);
 
   const { siteId } = payload;
 
@@ -43,7 +48,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     try {
       customerId = await findOrCreateCustomer(supabase, siteId, email);
     } catch (err: any) {
-      console.error('Customer error:', err);
+      err('Customer error:', err);
       return new Response(
         JSON.stringify({ error: err.message }),
         { status: 400, headers: { 'Content-Type': 'application/json' } },
@@ -66,7 +71,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   });
 
   if (error) {
-    console.error('Insert error:', error);
+    err('Insert error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },

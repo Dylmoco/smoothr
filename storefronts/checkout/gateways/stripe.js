@@ -4,6 +4,10 @@ let stripe;
 let elements;
 let cardNumberElement;
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
+
 function forceStripeIframeStyle(selector) {
   if (typeof document === 'undefined') return;
   let attempts = 0;
@@ -25,13 +29,9 @@ function forceStripeIframeStyle(selector) {
       }
       clearInterval(interval);
     } else {
-      console.log(
-        `[Smoothr Checkout] Waiting for Stripe iframe in ${selector} (${attempts + 1})`
-      );
+      log(`Waiting for Stripe iframe in ${selector} (${attempts + 1})`);
       if (++attempts >= 20) {
-        console.warn(
-          `[Smoothr Checkout] iframe not found in ${selector} after ${attempts} attempts`
-        );
+        warn(`iframe not found in ${selector} after ${attempts} attempts`);
         clearInterval(interval);
       }
     }

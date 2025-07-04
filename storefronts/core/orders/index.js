@@ -4,6 +4,11 @@
 
 import supabase from '../../../supabase/supabaseClient.js';
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Orders]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Orders]', ...args);
+const err = (...args) => debug && console.error('[Smoothr Orders]', ...args);
+
 export async function fetchOrderHistory(customer_id) {
   if (!customer_id) return [];
   try {
@@ -13,13 +18,13 @@ export async function fetchOrderHistory(customer_id) {
       .eq('customer_id', customer_id)
       .order('order_date', { ascending: false });
     if (error) {
-      console.error('smoothr:orders fetch error', error);
+      err('fetch error', error);
       return [];
     }
-    console.log(`smoothr:orders fetched ${data.length} records`);
+    log(`fetched ${data.length} records`);
     return data || [];
   } catch (err) {
-    console.error('smoothr:orders fetch error', err);
+    err('fetch error', err);
     return [];
   }
 }
@@ -33,13 +38,13 @@ export async function renderOrders(container) {
 
   const list = root.querySelector('[data-smoothr="order-list"]');
   if (!list) {
-    console.warn('smoothr:orders container not found');
+    warn('container not found');
     return;
   }
 
   const template = list.querySelector('[data-smoothr="order-card"]');
   if (!template) {
-    console.warn('smoothr:orders template not found');
+    warn('template not found');
     return;
   }
 
@@ -71,7 +76,7 @@ export async function renderOrders(container) {
   }
 
   orders.forEach(order => {
-    console.log('rendering order object', order);
+    log('rendering order object', order);
     const card = template.cloneNode(true);
 
     card.removeAttribute('hidden');
@@ -95,8 +100,8 @@ export async function renderOrders(container) {
     }
     setText('[data-smoothr="order-number"]', order.order_number);
     setText('[data-smoothr="customer-name"]', order.customer_name);
-    console.log('smoothr:orders customer email', order.customer_email);
-    console.log('smoothr:orders order price', order.total_price);
+    log('customer email', order.customer_email);
+    log('order price', order.total_price);
     setText('[data-smoothr="order-email"]', order.customer_email);
     setText(
       '[data-smoothr="order-price"]',

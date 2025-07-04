@@ -16,6 +16,9 @@ import {
   registerDOMBindings
 } from '../../../supabase/authHelpers.js';
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
+
 function safeSetDataset(el, key, val) {
   try {
     if (el && el.dataset) el.dataset[key] = val;
@@ -204,7 +207,7 @@ function bindLogoutButtons() {
       evt.preventDefault();
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error(error);
+        log(error);
       }
       const {
         data: { user }
@@ -214,15 +217,9 @@ function bindLogoutButtons() {
         window.smoothr.auth = { user: user || null };
 
         if (user) {
-          console.log(
-            `%c✅ Smoothr Auth: Logged in as ${user.email}`,
-            'color: #22c55e; font-weight: bold;'
-          );
+          log(`%c✅ Smoothr Auth: Logged in as ${user.email}`, 'color: #22c55e; font-weight: bold;');
         } else {
-          console.log(
-            '%c🔒 Smoothr Auth: Not logged in',
-            'color: #f87171; font-weight: bold;'
-          );
+          log('%c🔒 Smoothr Auth: Not logged in', 'color: #f87171; font-weight: bold;');
         }
       }
       document.dispatchEvent(new CustomEvent('smoothr:logout'));
