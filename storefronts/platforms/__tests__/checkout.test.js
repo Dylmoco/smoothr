@@ -51,6 +51,13 @@ beforeEach(() => {
   createInput('data-smoothr-bill-postal', 'B123');
   createInput('data-smoothr-bill-country', 'UK');
 
+  createInput('data-smoothr-ship-line1', '123 Ship St');
+  createInput('data-smoothr-ship-line2', 'Apt 4');
+  createInput('data-smoothr-ship-city', 'Shipville');
+  createInput('data-smoothr-ship-state', 'SH');
+  createInput('data-smoothr-ship-postal', 'S123');
+  createInput('data-smoothr-ship-country', 'US');
+
   const cardTarget = document.createElement('div');
   cardTarget.setAttribute('data-smoothr-card-number', '');
   document.body.appendChild(cardTarget);
