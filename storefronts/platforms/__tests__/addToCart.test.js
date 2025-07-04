@@ -71,6 +71,7 @@ describe("webflow add-to-cart binding", () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
+    global.window.SMOOTHR_CONFIG = { debug: true };
     global.CustomEvent = CustomEvt;
     ({ initAddToCart } = await import("../../core/cart/addToCart.js"));
     // Override cart methods after module initializes

@@ -1,5 +1,12 @@
-const debug = window.SMOOTHR_CONFIG?.debug;
+const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Rates]', ...args);
+
+function getAuthToken() {
+  return (
+    (typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.liveRatesToken) ||
+    (typeof process !== 'undefined' && process.env.LIVE_RATES_AUTH_TOKEN)
+  );
+}
 
 log("🔥 Smoothr live-rates function triggered");
 
@@ -57,7 +64,10 @@ export async function fetchExchangeRates(
         hostname.endsWith('.functions.supabase.co') &&
         pathname === '/proxy-live-rates'
       ) {
-        headers.Authorization = 'Token eca2385f63504d80a624d130cce7e240';
+        const token = getAuthToken();
+        if (token) {
+          headers.Authorization = `Token ${token}`;
+        }
       }
     } catch {}
     const res = await fetch(url, {
