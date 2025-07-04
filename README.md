@@ -31,6 +31,15 @@ two workspaces:
 Running `npm install` from the repository root installs dependencies for all
 packages in one step.
 
+Afterwards run `npm install` (or `npm ci`) inside each workspace so dev
+dependencies like **vitest** are available in `storefronts` and `smoothr`:
+
+```bash
+npm install        # or npm ci
+(cd storefronts && npm install)
+(cd smoothr && npm install)
+```
+
 All scripts in the repository are written using ECMAScript Module (ESM)
 syntax and require **Node.js 20 or later**. Update any local builds or
 Cloudflare/Vercel deploy commands that specify a Node version to ensure they
@@ -118,6 +127,10 @@ repository root with:
 npm test
 ```
 
+The test command depends on `vitest` and other development packages. Ensure you
+have installed dependencies in both the `storefronts` and `smoothr` workspaces
+with `npm install` or `npm ci` before running tests.
+
 All tests rely on a shared setup file that polyfills browser globals like
 `window`, `document` and `localStorage` for Node environments. The setup is
 configured in `storefronts/vitest.config.js` and runs automatically.
@@ -131,8 +144,8 @@ functions and build scripts. Browser logs are controlled via
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later with ECMAScript Modules enabled.
-- **Tests**: run `npm test` from the repository root to execute tests in all
-  workspaces.
+- **Tests**: run `npm install` (or `npm ci`) in both `storefronts` and `smoothr`
+  before running `npm test` from the repository root.
 - **Coding style**: follow the existing style—two space indentation, single
   quotes and trailing semicolons. Keep the code free of unused variables and
   prefer small, focused commits.
