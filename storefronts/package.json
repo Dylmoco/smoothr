@@ -6,7 +6,6 @@
     "build": "vite build",
     "postbuild": "node scripts/copy-checkout.js && node scripts/check-sdk.js",
     "dev": "vite",
-    "pretest": "npm install",
     "test": "vitest run"
   },
   "dependencies": {
