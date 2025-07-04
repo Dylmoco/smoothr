@@ -57,6 +57,8 @@ export function mountCardFields() {
     if (mountAttempts < 5) {
       mountAttempts++;
       setTimeout(mountCardFields, 200);
+    } else {
+      warn('card fields not found');
     }
     return;
   }

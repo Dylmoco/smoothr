@@ -61,4 +61,17 @@ describe('stripe element mounting', () => {
     expect(cardExpiryEl.mount).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
     expect(cardCvcEl.mount).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
   });
+
+  it('logs a warning when targets are missing', async () => {
+    global.document.querySelector.mockImplementation(() => null);
+    global.window.SMOOTHR_CONFIG.debug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.useFakeTimers();
+    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    mountCardFields();
+    for (let i = 0; i < 5; i++) vi.runOnlyPendingTimers();
+    expect(warnSpy).toHaveBeenCalled();
+    vi.useRealTimers();
+    warnSpy.mockRestore();
+  });
 });
