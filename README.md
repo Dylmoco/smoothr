@@ -122,6 +122,12 @@ All tests rely on a shared setup file that polyfills browser globals like
 `window`, `document` and `localStorage` for Node environments. The setup is
 configured in `storefronts/vitest.config.js` and runs automatically.
 
+## Debug logging
+
+Set `SMOOTHR_DEBUG=true` to enable verbose logging in API routes, edge
+functions and build scripts. Browser logs are controlled via
+`window.SMOOTHR_CONFIG.debug`.
+
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later with ECMAScript Modules enabled.
