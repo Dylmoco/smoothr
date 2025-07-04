@@ -41,6 +41,7 @@ interface CheckoutPayload {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
     console.log('[Smoothr Checkout API] Applying inline CORS headers (fallback)');
@@ -92,9 +93,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    warn('HTTP method not allowed:', req.method);
+    console.log('[Smoothr Checkout] Method not allowed', req.method);
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  console.log('[Smoothr Checkout] Incoming payload:', JSON.stringify(req.body, null, 2));
 
   try {
     const {
@@ -123,18 +128,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       !store_id
     ) {
       warn('Rejecting request: missing required fields');
+      console.log('[Smoothr Checkout] Missing required fields', req.body);
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
 
     if (!Array.isArray(cart) || cart.length === 0) {
       warn('Rejecting request: empty cart');
+      console.log('[Smoothr Checkout] Empty cart received', cart);
       res.status(400).json({ error: 'Cart cannot be empty' });
       return;
     }
 
     if (total <= 0) {
       warn('Rejecting request: invalid total');
+      console.log('[Smoothr Checkout] Invalid total value', total);
       res.status(400).json({ error: 'Invalid total' });
       return;
     }
@@ -143,6 +151,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { line1, line2, city, state, postal_code, country } = address || {};
     if (!name || !line1 || !city || !postal_code || !state || !country) {
       warn('Rejecting request: invalid shipping details');
+      console.log('[Smoothr Checkout] Invalid shipping details', shipping);
       res.status(400).json({ error: 'Invalid shipping details' });
       return;
     }
@@ -188,6 +197,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       customerId = await findOrCreateCustomer(supabase, store_id, email);
     } catch (error: any) {
       err('findOrCreateCustomer failed:', error?.message || error);
+      console.log('[Smoothr Checkout] findOrCreateCustomer error', error);
       res.status(500).json({ error: 'Failed to record customer' });
       return;
     }
@@ -200,11 +210,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (storeError) {
       err('Store lookup failed:', (storeError as any).message);
+      console.log('[Smoothr Checkout] Store lookup error', storeError);
       res.status(500).json({ error: 'Failed to fetch store information' });
       return;
     }
 
     if (!storeData) {
+      console.log('[Smoothr Checkout] storeData missing for id', store_id);
+      warn('Invalid store_id provided');
       res.status(400).json({ error: 'Invalid store_id' });
       return;
     }
@@ -213,12 +226,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!prefix) {
       err('Store prefix missing');
+      console.log('[Smoothr Checkout] Missing prefix for store', store_id);
       res.status(500).json({ error: 'Store configuration invalid' });
       return;
     }
 
     if (order_sequence === null || order_sequence === undefined) {
       err('order_sequence missing for store');
+      console.log('[Smoothr Checkout] order_sequence missing', store_id);
       res.status(500).json({ error: 'Store configuration invalid' });
       return;
     }
@@ -247,6 +262,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) {
       const insertErrorMessage = (error as any).message;
       err('Order insert failed:', insertErrorMessage);
+      console.log('[Smoothr Checkout] Order insert error', error);
       res.status(400).json({ error: 'Order creation failed' });
       return;
     }
@@ -267,6 +283,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (error: any) {
     err('Unexpected processing error:', error?.message || error);
+    console.error('[Smoothr Checkout] RAW ERROR', JSON.stringify(error, null, 2));
     res.status(500).json({ error: 'Failed to process payment' });
+  }
+  } catch (error: any) {
+    console.error('[Smoothr Checkout] Unhandled handler error:', error?.message || error);
+    console.error('[Smoothr Checkout] RAW ERROR', JSON.stringify(error, null, 2));
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Unhandled checkout error' });
+    }
   }
 }
