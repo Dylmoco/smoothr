@@ -1,4 +1,4 @@
-import paymentGateway from './gateways/index.js';
+import * as stripeGateway from './gateways/stripe.js';
 
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
@@ -58,7 +58,7 @@ export async function initCheckout() {
   log('no polling loops active');
 
   // Initialize payment gateway fields
-  paymentGateway.mountCardFields();
+  stripeGateway.mountCardFields();
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
@@ -107,8 +107,8 @@ export async function initCheckout() {
       return;
     }
 
-    if (!paymentGateway.isMounted()) paymentGateway.mountCardFields();
-    if (!paymentGateway.ready()) {
+    if (!stripeGateway.isMounted()) stripeGateway.mountCardFields();
+    if (!stripeGateway.ready()) {
       err('Payment gateway not ready');
       submitBtn.disabled = false;
       return;
@@ -116,7 +116,7 @@ export async function initCheckout() {
 
     try {
       const { error: pmError, paymentMethod } =
-        await paymentGateway.createPaymentMethod({
+        await stripeGateway.createPaymentMethod({
           name: `${first_name} ${last_name}`,
           email
         });

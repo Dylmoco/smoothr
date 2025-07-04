@@ -1,9 +1,4 @@
-import {
-  mountCardFields,
-  isMounted,
-  createPaymentMethod,
-  ready as gatewayReady
-} from '../../checkout/gateways/stripe.js';
+import * as stripeGateway from '../../checkout/gateways/stripe.js';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
@@ -95,7 +90,7 @@ export function initCheckout() {
     totalEl.parentNode?.insertBefore(p, totalEl.nextSibling);
   }
 
-  mountCardFields();
+  stripeGateway.mountCardFields();
 
   document.querySelectorAll('[data-smoothr-checkout]').forEach(checkoutBtn => {
     if (checkoutBtn.__smoothrBound) return;
@@ -172,8 +167,8 @@ export function initCheckout() {
         return;
       }
 
-      if (!isMounted()) mountCardFields();
-      if (!gatewayReady()) {
+      if (!stripeGateway.isMounted()) stripeGateway.mountCardFields();
+      if (!stripeGateway.ready()) {
         alert('Payment form not ready');
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove('loading');
@@ -182,7 +177,7 @@ export function initCheckout() {
 
         log('billing_details:', billing_details);
         log('shipping:', shipping);
-      const { error: pmError, paymentMethod } = await createPaymentMethod(billing_details);
+      const { error: pmError, paymentMethod } = await stripeGateway.createPaymentMethod(billing_details);
 
       if (pmError || !paymentMethod) {
         alert('Failed to create payment method');
