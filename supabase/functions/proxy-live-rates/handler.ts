@@ -1,6 +1,6 @@
 const debug = Deno.env.get('SMOOTHR_DEBUG') === 'true';
 const log = (...args: any[]) => debug && console.log('[proxy-live-rates]', ...args);
-const err = (...args: any[]) => debug && console.error('[proxy-live-rates]', ...args);
+const errorLog = (...args: any[]) => debug && console.error('[proxy-live-rates]', ...args);
 
 log('proxy-live-rates function started');
 
@@ -82,7 +82,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       },
     );
   } catch (err) {
-    err('Unexpected error in proxy-live-rates:', err);
+    errorLog('Unexpected error in proxy-live-rates:', err);
     return new Response(
       JSON.stringify({
         code: 500,

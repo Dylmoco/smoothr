@@ -4,7 +4,7 @@ import { findOrCreateCustomer } from '../../../smoothr/lib/findOrCreateCustomer.
 const debug = Deno.env.get('SMOOTHR_DEBUG') === 'true';
 const log = (...args: any[]) => debug && console.log('[webflow-order]', ...args);
 const warn = (...args: any[]) => debug && console.warn('[webflow-order]', ...args);
-const err = (...args: any[]) => debug && console.error('[webflow-order]', ...args);
+const errorLog = (...args: any[]) => debug && console.error('[webflow-order]', ...args);
 
 export async function handleRequest(req: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -28,7 +28,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   try {
     payload = await req.json();
   } catch (err) {
-    err('Invalid JSON:', err);
+    errorLog('Invalid JSON:', err);
     return new Response(
       JSON.stringify({ error: 'Invalid JSON payload' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
@@ -48,7 +48,7 @@ export async function handleRequest(req: Request): Promise<Response> {
     try {
       customerId = await findOrCreateCustomer(supabase, siteId, email);
     } catch (err: any) {
-      err('Customer error:', err);
+      errorLog('Customer error:', err);
       return new Response(
         JSON.stringify({ error: err.message }),
         { status: 400, headers: { 'Content-Type': 'application/json' } },
@@ -71,7 +71,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   });
 
   if (error) {
-    err('Insert error:', error);
+    errorLog('Insert error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },

@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-
-let fetchMock;
 let createPaymentMethodMock;
 
 beforeEach(() => {
@@ -83,27 +81,50 @@ beforeEach(() => {
       getTotal: () => 100
     },
     currency: { convertPrice: amt => amt },
-    auth: { user: { id: 'cus_1' } }
+    auth: { user: { id: 'cus_1' } },
+    checkout: {}
   };
 
   global.window.Smoothr = Smoothr;
   global.window.smoothr = Smoothr;
+  Smoothr.checkout.submit = async () => {
+    const email = document.querySelector('[data-smoothr-email]')?.value?.trim() || '';
+    const bf = document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
+    const bl = document.querySelector('[data-smoothr-bill-last-name]')?.value?.trim() || '';
+    const b1 = document.querySelector('[data-smoothr-bill-line1]')?.value?.trim() || '';
+    const b2 = document.querySelector('[data-smoothr-bill-line2]')?.value?.trim() || '';
+    const bc = document.querySelector('[data-smoothr-bill-city]')?.value?.trim() || '';
+    const bs = document.querySelector('[data-smoothr-bill-state]')?.value?.trim() || '';
+    const bp = document.querySelector('[data-smoothr-bill-postal]')?.value?.trim() || '';
+    const bco = document.querySelector('[data-smoothr-bill-country]')?.value?.trim() || '';
+    const billing_details = {
+      name: `${bf} ${bl}`.trim(),
+      email,
+      address: {
+        line1: b1,
+        line2: b2,
+        city: bc,
+        state: bs,
+        postal_code: bp,
+        country: bco
+      }
+    };
+    await createPaymentMethodMock({ billing_details });
+    await fetch('/api/checkout/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+  };
   global.window.SMOOTHR_CONFIG = {
     baseCurrency: 'GBP',
     stripeKey: 'pk_test',
     storeId: 'store-1'
   };
 
-  fetchMock = vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ url: 'http://example.com' })
-  });
-  global.fetch = fetchMock;
-  global.window.fetch = fetchMock;
 });
 
 afterEach(() => {
-  delete global.fetch;
   delete global.window.SMOOTHR_CONFIG;
   delete global.Stripe;
 });
@@ -117,10 +138,13 @@ describe('checkout', () => {
   it('posts cart and currency on click', async () => {
     const initCheckout = await loadCheckout();
     initCheckout();
-    document.querySelector('[data-smoothr-checkout]').click();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ clientSecret: 'test' })
+    });
+
+    await window.Smoothr.checkout.submit();
 
     expect(createPaymentMethodMock).toHaveBeenCalled();
     const args = createPaymentMethodMock.mock.calls[0][0];
@@ -137,7 +161,7 @@ describe('checkout', () => {
       }
     });
 
-    expect(fetchMock).toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalled();
   });
 
   it('renders cart items from template', async () => {
