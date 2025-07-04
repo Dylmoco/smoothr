@@ -43,6 +43,9 @@ interface CheckoutPayload {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.status(400).end();
     return;
   }
@@ -53,6 +56,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
 
   if (!storeMatch || storeMatch.length === 0) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.status(403).end();
     return;
   }
