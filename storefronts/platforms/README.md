@@ -102,3 +102,7 @@ If any required billing fields are missing the browser console logs:
 [Smoothr Checkout] Incomplete billing details provided
 ```
 
+
+## Webflow integration
+
+Webflow layouts can occasionally shrink the Stripe Elements iframe to a single pixel. The checkout adapter exports a helper called `forceStripeIframeStyle()` that applies explicit width and positioning styles to the iframe container. This helper is invoked automatically after each Element mounts, preventing the 1-pixel bug without any manual calls. The fix works across all Webflow layout types.
