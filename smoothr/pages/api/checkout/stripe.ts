@@ -41,8 +41,10 @@ interface CheckoutPayload {
   description?: string;
 }
 
+const WEBFLOW_ORIGIN = 'https://smoothr-cms.webflow.io';
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const origin = req.headers.origin || '*';
+  const origin = WEBFLOW_ORIGIN;
 
   if (req.method === 'OPTIONS') {
     applyCors(res, origin);
