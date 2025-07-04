@@ -1,8 +1,9 @@
-let stripe;
-let elements;
-let cardNumberElement;
-let cardExpiryElement;
-let cardCvcElement;
+import {
+  mountCardFields,
+  isMounted,
+  createPaymentMethod,
+  ready as gatewayReady
+} from '../../checkout/gateways/stripe.js';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
@@ -16,115 +17,6 @@ function hideTemplatesGlobally() {
     .forEach(el => (el.style.display = 'none'));
 }
 
-function computeStripeStyle(target) {
-  const defaults = {
-    color: '#333',
-    fontSize: '16px',
-    fontFamily: 'sans-serif',
-    fontWeight: '400',
-    letterSpacing: '0'
-  };
-
-  if (!target || typeof window === 'undefined') {
-    return {
-      base: {
-        color: defaults.color,
-        fontSize: defaults.fontSize,
-        fontFamily: defaults.fontFamily,
-        fontWeight: defaults.fontWeight,
-        letterSpacing: defaults.letterSpacing,
-        '::placeholder': { color: '#999' }
-      },
-      complete: { color: defaults.color }
-    };
-  }
-
-  const cs = window.getComputedStyle(target);
-  const color = cs.color || defaults.color;
-  const placeholderColor = cs.color || '#999';
-  const base = {
-    color,
-    fontSize: cs.fontSize || defaults.fontSize,
-    fontFamily: cs.fontFamily || defaults.fontFamily,
-    fontWeight: cs.fontWeight || defaults.fontWeight,
-    letterSpacing: cs.letterSpacing || defaults.letterSpacing,
-    lineHeight: cs.lineHeight,
-    height: cs.height,
-    textAlign: cs.textAlign,
-    padding: cs.padding,
-    backgroundColor: cs.backgroundColor,
-    '::placeholder': { color: placeholderColor }
-  };
-
-  const complete = { color };
-
-  return { base, complete };
-}
-
-function forceStripeIframeStyle(selector) {
-  if (typeof document === 'undefined') return;
-  let attempts = 0;
-  const interval = setInterval(() => {
-    const targetEl = document.querySelector(selector);
-    const iframe = targetEl?.querySelector('iframe');
-    if (iframe) {
-      iframe.style.width = '100%';
-      iframe.style.minWidth = '100%';
-      iframe.style.display = 'block';
-      iframe.style.boxSizing = 'border-box';
-      iframe.style.position = 'relative';
-      if (
-        targetEl &&
-        typeof window !== 'undefined' &&
-        window.getComputedStyle(targetEl).position === 'static'
-      ) {
-        targetEl.style.position = 'relative';
-      }
-      clearInterval(interval);
-    } else {
-      log(`Waiting for Stripe iframe in ${selector} (${attempts + 1})`);
-      if (++attempts >= 20) {
-        warn(`iframe not found in ${selector} after ${attempts} attempts`);
-        clearInterval(interval);
-      }
-    }
-  }, 100);
-}
-
-function initStripeElements() {
-  const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
-  if (!stripeKey) return;
-  const numberTarget = document.querySelector('[data-smoothr-card-number]');
-  const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
-  const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
-  if (!numberTarget && !expiryTarget && !cvcTarget) return;
-
-  if (!stripe) {
-    stripe = Stripe(stripeKey);
-    elements = stripe.elements();
-  }
-
-  if (numberTarget && !cardNumberElement) {
-    const style = computeStripeStyle(numberTarget);
-    cardNumberElement = elements.create('cardNumber', { style });
-    cardNumberElement.mount(numberTarget);
-    forceStripeIframeStyle('[data-smoothr-card-number]');
-  }
-
-  if (expiryTarget && !cardExpiryElement) {
-    const style = computeStripeStyle(expiryTarget);
-    cardExpiryElement = elements.create('cardExpiry', { style });
-    cardExpiryElement.mount(expiryTarget);
-    forceStripeIframeStyle('[data-smoothr-card-expiry]');
-  }
-
-  if (cvcTarget && !cardCvcElement) {
-    const style = computeStripeStyle(cvcTarget);
-    cardCvcElement = elements.create('cardCvc', { style });
-    cardCvcElement.mount(cvcTarget);
-    forceStripeIframeStyle('[data-smoothr-card-cvc]');
-  }
-}
 
 export function initCheckout() {
   const Smoothr = window.Smoothr || window.smoothr;
@@ -203,7 +95,7 @@ export function initCheckout() {
     totalEl.parentNode?.insertBefore(p, totalEl.nextSibling);
   }
 
-  initStripeElements();
+  mountCardFields();
 
   document.querySelectorAll('[data-smoothr-checkout]').forEach(checkoutBtn => {
     if (checkoutBtn.__smoothrBound) return;
@@ -280,8 +172,8 @@ export function initCheckout() {
         return;
       }
 
-      if (!cardNumberElement) initStripeElements();
-      if (!stripe || !cardNumberElement) {
+      if (!isMounted()) mountCardFields();
+      if (!gatewayReady()) {
         alert('Payment form not ready');
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove('loading');
@@ -290,11 +182,7 @@ export function initCheckout() {
 
         log('billing_details:', billing_details);
         log('shipping:', shipping);
-      const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardNumberElement,
-        billing_details
-      });
+      const { error: pmError, paymentMethod } = await createPaymentMethod(billing_details);
 
       if (pmError || !paymentMethod) {
         alert('Failed to create payment method');
