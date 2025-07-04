@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import supabase from '../../../../shared/supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
-import { applyCors } from '../../../utils/cors';
 import crypto from 'crypto';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
@@ -58,11 +57,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  applyCors(res, origin);
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(200).end();
   }
 
   log('Incoming payload:', req.body);
