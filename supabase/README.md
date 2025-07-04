@@ -90,3 +90,13 @@ GET https://<project-ref>.functions.supabase.co/proxy-live-rates?base=USD&symbol
 Authorization: Token eca2385f63504d80a624d130cce7e240
 ```
 
+
+## Running tests
+
+Run the Supabase tests using the workspace script from the repository root:
+
+```bash
+npm test
+```
+
+These tests are executed with `vitest` and rely on the `OPENEXCHANGERATES_TOKEN` environment variable. Network requests are made during the tests, so failures may occur in environments that block outbound traffic.
