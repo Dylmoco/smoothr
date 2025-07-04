@@ -78,7 +78,7 @@ function initStripeElements() {
       const iframe = numberTarget.querySelector('iframe');
       if (iframe) {
         iframe.style.width = '100%';
-        iframe.style.height = '100%';
+        iframe.style.minWidth = '100%';
         iframe.style.display = 'block';
         iframe.style.boxSizing = 'border-box';
         iframe.style.position = 'relative';
@@ -97,7 +97,7 @@ function initStripeElements() {
       const iframe = expiryTarget.querySelector('iframe');
       if (iframe) {
         iframe.style.width = '100%';
-        iframe.style.height = '100%';
+        iframe.style.minWidth = '100%';
         iframe.style.display = 'block';
         iframe.style.boxSizing = 'border-box';
         iframe.style.position = 'relative';
@@ -116,7 +116,7 @@ function initStripeElements() {
       const iframe = cvcTarget.querySelector('iframe');
       if (iframe) {
         iframe.style.width = '100%';
-        iframe.style.height = '100%';
+        iframe.style.minWidth = '100%';
         iframe.style.display = 'block';
         iframe.style.boxSizing = 'border-box';
         iframe.style.position = 'relative';
