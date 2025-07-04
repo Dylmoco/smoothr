@@ -9,6 +9,6 @@
   ],
   "scripts": {
     "test": "npm --workspace storefronts test && npm run test:supabase",
-    "test:supabase": "echo 'supabase tests skipped'"
+    "test:supabase": "vitest run supabase/functions"
   }
 }
