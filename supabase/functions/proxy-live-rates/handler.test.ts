@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { handleRequest } from './handler';
+
+let handleRequest: (req: Request, fetchFn?: typeof fetch) => Promise<Response>;
 
 describe('handleRequest', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     (globalThis as any).Deno = { env: { get: () => 'token' } };
+    ({ handleRequest } = await import('./handler'));
   });
 
   afterEach(() => {
+    vi.resetModules();
     delete (globalThis as any).Deno;
   });
 
@@ -78,6 +81,7 @@ describe('token missing', () => {
   it('returns 500 when token is absent', async () => {
     (globalThis as any).Deno = { env: { get: () => undefined } };
     const fetchFn = vi.fn();
+    ({ handleRequest } = await import('./handler'));
     const res = await handleRequest(new Request('https://example.com'), fetchFn);
     expect(fetchFn).not.toHaveBeenCalled();
     expect(res.status).toBe(500);
