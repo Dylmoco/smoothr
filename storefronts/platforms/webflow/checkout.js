@@ -57,6 +57,28 @@ function computeStripeStyle(target) {
   return { base, complete };
 }
 
+function watchStripeIframe(targetEl) {
+  let tries = 0;
+  const interval = setInterval(() => {
+    const iframe = targetEl?.querySelector('iframe');
+    if (iframe) {
+      iframe.style.width = '100%';
+      iframe.style.minWidth = '100%';
+      iframe.style.display = 'block';
+      iframe.style.boxSizing = 'border-box';
+      iframe.style.position = 'relative';
+      if (
+        typeof window !== 'undefined' &&
+        window.getComputedStyle(targetEl).position === 'static'
+      ) {
+        targetEl.style.position = 'relative';
+      }
+      clearInterval(interval);
+    }
+    if (++tries > 20) clearInterval(interval);
+  }, 100);
+}
+
 function initStripeElements() {
   const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
   if (!stripeKey) return;
@@ -74,57 +96,21 @@ function initStripeElements() {
     const style = computeStripeStyle(numberTarget);
     cardNumberElement = elements.create('cardNumber', { style });
     cardNumberElement.mount(numberTarget);
-    requestAnimationFrame(() => {
-      const iframe = numberTarget.querySelector('iframe');
-      if (iframe) {
-        iframe.style.width = '100%';
-        iframe.style.minWidth = '100%';
-        iframe.style.display = 'block';
-        iframe.style.boxSizing = 'border-box';
-        iframe.style.position = 'relative';
-      }
-      if (window.getComputedStyle(numberTarget).position === 'static') {
-        numberTarget.style.position = 'relative';
-      }
-    });
+    watchStripeIframe(numberTarget);
   }
 
   if (expiryTarget && !cardExpiryElement) {
     const style = computeStripeStyle(expiryTarget);
     cardExpiryElement = elements.create('cardExpiry', { style });
     cardExpiryElement.mount(expiryTarget);
-    requestAnimationFrame(() => {
-      const iframe = expiryTarget.querySelector('iframe');
-      if (iframe) {
-        iframe.style.width = '100%';
-        iframe.style.minWidth = '100%';
-        iframe.style.display = 'block';
-        iframe.style.boxSizing = 'border-box';
-        iframe.style.position = 'relative';
-      }
-      if (window.getComputedStyle(expiryTarget).position === 'static') {
-        expiryTarget.style.position = 'relative';
-      }
-    });
+    watchStripeIframe(expiryTarget);
   }
 
   if (cvcTarget && !cardCvcElement) {
     const style = computeStripeStyle(cvcTarget);
     cardCvcElement = elements.create('cardCvc', { style });
     cardCvcElement.mount(cvcTarget);
-    requestAnimationFrame(() => {
-      const iframe = cvcTarget.querySelector('iframe');
-      if (iframe) {
-        iframe.style.width = '100%';
-        iframe.style.minWidth = '100%';
-        iframe.style.display = 'block';
-        iframe.style.boxSizing = 'border-box';
-        iframe.style.position = 'relative';
-      }
-      if (window.getComputedStyle(cvcTarget).position === 'static') {
-        cvcTarget.style.position = 'relative';
-      }
-    });
+    watchStripeIframe(cvcTarget);
   }
 }
 
