@@ -41,18 +41,29 @@ interface CheckoutPayload {
   description?: string;
 }
 
-const WEBFLOW_ORIGIN = 'https://smoothr-cms.webflow.io';
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const origin = WEBFLOW_ORIGIN;
+  const origin = req.headers.origin as string | undefined;
+  if (!origin) {
+    res.status(400).end();
+    return;
+  }
 
-  if (req.method === 'OPTIONS') {
-    applyCors(res, origin);
-    res.status(200).end();
+  const { data: storeMatch } = await supabase
+    .from('stores')
+    .select('id')
+    .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
+
+  if (!storeMatch || storeMatch.length === 0) {
+    res.status(403).end();
     return;
   }
 
   applyCors(res, origin);
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
   log('Incoming payload:', req.body);
   if (!req.body.email) warn('Missing email');
