@@ -75,7 +75,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!req.body.currency) warn('Missing currency');
 
   if (req.method !== 'POST') {
-    applyCors(res, origin);
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
