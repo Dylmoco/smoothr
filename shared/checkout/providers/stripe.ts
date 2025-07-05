@@ -32,12 +32,12 @@ interface StripePayload {
 }
 
 export default async function handleStripe(payload: StripePayload) {
-  const idempotencyKey = crypto
-    .createHash('sha256')
-    .update(`${payload.email}-${payload.total}-${payload.metaCartString}`)
-    .digest('hex');
-
   try {
+    const idempotencyKey = crypto
+      .createHash('sha256')
+      .update(`${payload.email}-${payload.total}-${payload.metaCartString}`)
+      .digest('hex');
+
     const intent = await stripe.paymentIntents.create(
       {
         amount: payload.total,
@@ -56,9 +56,9 @@ export default async function handleStripe(payload: StripePayload) {
       { idempotencyKey }
     );
     log('Stripe PaymentIntent created:', intent.id);
-    return intent;
-  } catch (error: any) {
-    err('Stripe error:', error?.message || error);
-    throw error;
+    return { success: true, intent };
+  } catch (err: any) {
+    console.error('Stripe Error:', err);
+    return { success: false, error: err?.message || 'Stripe checkout failed' };
   }
 }
