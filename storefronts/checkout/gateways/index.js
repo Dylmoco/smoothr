@@ -1,3 +1,9 @@
-import stripeGateway from './stripe.js';
+import * as stripe from './stripe.js';
+import * as authorizeNet from './authorizeNet.js';
+import * as nmi from './nmi.js';
 
-export default stripeGateway;
+export default {
+  stripe,
+  authorizeNet,
+  nmi
+};
