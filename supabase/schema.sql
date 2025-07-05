@@ -423,7 +423,7 @@ ALTER TABLE "public"."store_integrations" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."store_settings" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "store_id" "uuid" NOT NULL,
-    "settings" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "settings" "jsonb" DEFAULT '{"active_payment_gateway": "stripe"}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
