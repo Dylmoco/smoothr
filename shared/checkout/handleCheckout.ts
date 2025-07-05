@@ -3,7 +3,7 @@ import supabase from '../supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import stripeProvider from './providers/stripe';
-import authorizeProvider from './providers/authorize';
+import authorizeNetProvider from './providers/authorizeNet';
 import paypalProvider from './providers/paypal';
 import nmiProvider from './providers/nmi';
 import segpayProvider from './providers/segpay';
@@ -21,22 +21,7 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
   return crypto.createHash('sha256').update(input).digest('hex');
 }
 
-export async function handleCheckout({ provider, req, res }:{ provider: string; req: NextApiRequest; res: NextApiResponse; }) {
-  log('Selected provider:', provider);
-
-  const providers: Record<string, any> = {
-    stripe: stripeProvider,
-    authorize: authorizeProvider,
-    paypal: paypalProvider,
-    nmi: nmiProvider,
-    segpay: segpayProvider
-  };
-  const providerHandler = providers[provider];
-  if (!providerHandler) {
-    warn('Unknown provider:', provider);
-    res.status(400).json({ error: 'Unsupported payment provider' });
-    return;
-  }
+export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: NextApiResponse; }) {
 
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
@@ -101,6 +86,35 @@ export async function handleCheckout({ provider, req, res }:{ provider: string; 
   if (!name || !line1 || !city || !postal_code || !state || !country) {
     warn('Invalid shipping details');
     res.status(400).json({ error: 'Invalid shipping details' });
+    return;
+  }
+
+  const { data: storeSettings, error: settingsError } = await supabase
+    .from('store_settings')
+    .select('settings')
+    .eq('store_id', store_id)
+    .maybeSingle();
+
+  if (settingsError) {
+    err('Store settings lookup failed:', settingsError.message);
+    res.status(500).json({ error: 'Failed to load store settings' });
+    return;
+  }
+
+  const provider = storeSettings?.settings?.active_payment_gateway as string;
+  log('Selected provider:', provider);
+
+  const providers: Record<string, any> = {
+    stripe: stripeProvider,
+    authorizeNet: authorizeNetProvider,
+    paypal: paypalProvider,
+    nmi: nmiProvider,
+    segpay: segpayProvider
+  };
+  const providerHandler = providers[provider];
+  if (!providerHandler) {
+    warn('Unknown provider:', provider);
+    res.status(400).json({ error: 'Unsupported payment provider' });
     return;
   }
 
