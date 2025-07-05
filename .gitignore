@@ -19,7 +19,11 @@ yarn-error.log*
 /build
 .next
 out/
-storefronts/dist/
+
+/storefronts/dist/*
+!/storefronts/dist/platforms/
+!/storefronts/dist/platforms/webflow/
+!/storefronts/dist/platforms/webflow/checkout.js
 
 # Misc
 .DS_Store
