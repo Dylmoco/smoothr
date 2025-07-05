@@ -5,7 +5,8 @@
   "type": "module",
   "workspaces": [
     "smoothr",
-    "storefronts"
+    "storefronts",
+    "shared"
   ],
   "scripts": {
     "test": "npm --workspace storefronts test && npm run test:supabase",
