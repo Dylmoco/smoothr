@@ -32,6 +32,10 @@ jobs:
         working-directory: storefronts
         run: npm run build
 
+      - name: Bundle Webflow checkout
+        working-directory: storefronts
+        run: node scripts/bundle-webflow-checkout.js
+
       - name: Postbuild check
         working-directory: storefronts
         run: node scripts/check-sdk.js

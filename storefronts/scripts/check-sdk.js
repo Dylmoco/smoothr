@@ -12,13 +12,24 @@ const err = (...args) => debug && console.error('[check-sdk]', ...args);
 const sdkPath = join(__dirname, '..', 'dist', 'smoothr-sdk.js');
 const checkoutPath = join(__dirname, '..', 'dist', 'checkout.js');
 const stripePath = join(__dirname, '..', 'dist', 'gateways', 'stripe.js');
+const webflowCheckoutPath = join(
+  __dirname,
+  '..',
+  'dist',
+  'platforms',
+  'webflow',
+  'checkout.js'
+);
 
 try {
   await access(sdkPath, constants.F_OK);
   await access(checkoutPath, constants.F_OK);
   await access(stripePath, constants.F_OK);
+  await access(webflowCheckoutPath, constants.F_OK);
 } catch {
-  err(`File not found: ${sdkPath} or ${checkoutPath} or ${stripePath}`);
+  err(
+    `File not found: ${sdkPath} or ${checkoutPath} or ${stripePath} or ${webflowCheckoutPath}`
+  );
   process.exit(1);
 }
 
