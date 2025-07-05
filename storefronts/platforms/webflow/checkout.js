@@ -19,11 +19,10 @@ async function getPublicCredential(storeId, integrationId) {
       .eq('store_id', storeId)
       .eq('integration_id', integrationId)
       .maybeSingle();
-    if (window.SMOOTHR_CONFIG?.debug) {
-      console.warn(
-        '[Smoothr Checkout] store_integrations response',
-        { data, error }
-      );
+    if (debug) {
+      console.log('[Smoothr Checkout] store_integrations response');
+      console.log('data:', data);
+      console.log('error:', error);
     }
     if (error) {
       warn('Credential lookup failed:', error.message || error);
