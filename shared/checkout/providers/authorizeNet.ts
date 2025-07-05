@@ -25,6 +25,10 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     integration?.settings?.loginId || integration?.api_key || envLoginId;
   const transactionKey =
     integration?.settings?.transactionKey || envTransactionKey;
+  if (!loginId.trim() || !transactionKey.trim()) {
+    err('Missing Authorize.Net credentials');
+    return { success: false, error: 'Missing credentials' };
+  }
   const body = {
     createTransactionRequest: {
       merchantAuthentication: {
