@@ -125,6 +125,12 @@ active payment gateway. `initCheckout` chooses the gateway by first checking
 `store_settings.settings.active_payment_gateway` in Supabase using the provided
 `storeId`. The default provider is `stripe`.
 
+A Webflow‑specific version lives at `./platforms/webflow/checkout.js`. Embed it with:
+
+```html
+<script type="module" src="https://sdk.smoothr.io/platforms/webflow/checkout.js?v=dev-final"></script>
+```
+
 
 ## CI/CD
 
