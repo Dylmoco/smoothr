@@ -88,6 +88,8 @@ beforeEach(() => {
   global.window.Smoothr = Smoothr;
   global.window.smoothr = Smoothr;
   Smoothr.checkout.submit = async () => {
+    const provider =
+      global.window.SMOOTHR_CONFIG?.active_payment_gateway || 'stripe';
     const email = document.querySelector('[data-smoothr-email]')?.value?.trim() || '';
     const bf = document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
     const bl = document.querySelector('[data-smoothr-bill-last-name]')?.value?.trim() || '';
@@ -110,7 +112,7 @@ beforeEach(() => {
       }
     };
     await createPaymentMethodMock({ billing_details });
-    await fetch('/api/checkout/stripe', {
+    await fetch(`/api/checkout/${provider}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: '{}'
@@ -162,7 +164,31 @@ describe('checkout', () => {
       }
     });
 
-    expect(fetch).toHaveBeenCalled();
+    const provider = global.window.SMOOTHR_CONFIG.active_payment_gateway;
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/checkout/${provider}`,
+      expect.any(Object)
+    );
+  });
+
+  it('posts cart for non-Stripe provider', async () => {
+    global.window.SMOOTHR_CONFIG.active_payment_gateway = 'authorizeNet';
+
+    const initCheckout = await loadCheckout();
+    await initCheckout();
+
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ clientSecret: 'test' })
+    });
+
+    await window.Smoothr.checkout.submit();
+
+    const provider = global.window.SMOOTHR_CONFIG.active_payment_gateway;
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/checkout/${provider}`,
+      expect.any(Object)
+    );
   });
 
   it('renders cart items from template', async () => {
