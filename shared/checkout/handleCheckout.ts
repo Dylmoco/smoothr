@@ -144,9 +144,9 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
   const metaCartString = JSON.stringify(metaCart).slice(0, 500);
 
-  let intent;
+  let providerResult;
   try {
-    intent = await providerHandler({
+    providerResult = await providerHandler({
       payment_method,
       email,
       first_name,
@@ -166,6 +166,14 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     res.status(500).json({ error: 'Failed to process payment' });
     return;
   }
+
+  if (providerResult && providerResult.success === false) {
+    warn('Provider handler returned error:', providerResult.error);
+    res.status(400).json({ error: providerResult.error });
+    return;
+  }
+
+  const intent = providerResult?.intent ?? providerResult;
 
   let customerId: string | null = null;
   try {
