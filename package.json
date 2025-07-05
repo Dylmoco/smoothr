@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "test": "npm --workspace storefronts test && npm run test:supabase",
-    "test:supabase": "vitest run supabase/functions"
+    "test:supabase": "vitest run supabase/functions",
+    "bundle:webflow-checkout": "node storefronts/scripts/bundle-webflow-checkout.js"
   }
 }
