@@ -9,7 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.50.0",
+    "stripe": "^12.16.0"
   },
   "devDependencies": {
     "happy-dom": "^18.0.1",
