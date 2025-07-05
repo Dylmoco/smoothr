@@ -5,6 +5,26 @@ const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
 
+async function getPublicCredential(storeId, integrationId) {
+  if (!storeId || !integrationId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('store_integrations')
+      .select('api_key, settings')
+      .eq('store_id', storeId)
+      .eq('integration_id', integrationId)
+      .maybeSingle();
+    if (error) {
+      warn('Credential lookup failed:', error.message || error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    warn('Credential fetch error:', e?.message || e);
+    return null;
+  }
+}
+
 async function getActivePaymentGateway() {
   const cfg = window.SMOOTHR_CONFIG || {};
   if (cfg.active_payment_gateway) return cfg.active_payment_gateway;
@@ -132,9 +152,18 @@ export async function initCheckout() {
         return;
       }
 
-      if (provider === 'stripe' && !window.SMOOTHR_CONFIG?.stripeKey) {
-        alert('Stripe key not configured');
-        return;
+      if (provider === 'stripe') {
+        if (!window.SMOOTHR_CONFIG?.stripeKey) {
+          const storeId = window.SMOOTHR_CONFIG?.storeId;
+          const cred = await getPublicCredential(storeId, 'stripe');
+          const key = cred?.api_key || cred?.settings?.publishable_key || '';
+          if (key) window.SMOOTHR_CONFIG.stripeKey = key;
+        }
+        if (!window.SMOOTHR_CONFIG?.stripeKey) {
+          warn('Stripe key not configured');
+          alert('Stripe key not configured');
+          return;
+        }
       }
 
       checkoutBtn.disabled = true;
