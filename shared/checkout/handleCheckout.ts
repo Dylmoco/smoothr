@@ -61,7 +61,15 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
-  const { payment_method, email, first_name, last_name, shipping, cart, total, currency, store_id, platform, description } = req.body as any;
+  const payload = req.body as any;
+  if (!payload.store_id) {
+    console.warn('Missing store_id in payload — setting fallback dev-store');
+    payload.store_id = 'dev-store';
+  }
+
+  console.log('Incoming checkout payload:', JSON.stringify(payload, null, 2));
+
+  const { payment_method, email, first_name, last_name, shipping, cart, total, currency, store_id, platform, description } = payload;
 
   if (!payment_method || !email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
     warn('Missing required fields');
@@ -212,30 +220,33 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   const nextSequence = Number(order_sequence) + 1;
   const orderNumber = `${prefix}-${String(nextSequence).padStart(4, '0')}`;
 
+  const orderPayload = {
+    order_number: orderNumber,
+    status: 'processing',
+    payment_provider: provider,
+    payment_status: 'unpaid',
+    raw_data: req.body,
+    items: cart,
+    cart_meta_hash,
+    total_price: total,
+    store_id,
+    platform: platform || 'webflow',
+    customer_id: customerId,
+    customer_email: email,
+    payment_intent_id: intent?.id || null
+  };
+
   const { data: orderData, error: orderError } = await supabase
     .from('orders')
-    .insert({
-      order_number: orderNumber,
-      status: 'processing',
-      payment_provider: provider,
-      payment_status: 'unpaid',
-      raw_data: req.body,
-      items: cart,
-      cart_meta_hash,
-      total_price: total,
-      store_id,
-      platform: platform || 'webflow',
-      customer_id: customerId,
-      customer_email: email,
-      payment_intent_id: intent?.id || null
-    })
+    .insert(orderPayload)
     .select('id')
     .single();
 
+  console.log('createOrder result:', JSON.stringify({ data: orderData, error: orderError }, null, 2));
+
   if (orderError) {
-    err('Order insert failed:', orderError.message);
-    res.status(400).json({ error: 'Order creation failed' });
-    return;
+    console.error('Order creation failed:', orderError.message);
+    return res.status(400).json({ error: orderError.message || 'Order creation failed' });
   }
 
   const { error: updateError } = await supabase
