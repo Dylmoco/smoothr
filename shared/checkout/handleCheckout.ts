@@ -222,9 +222,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const orderPayload = {
     order_number: orderNumber,
-    status: 'processing',
+    status: 'unpaid',
     payment_provider: provider,
-    payment_status: 'unpaid',
     raw_data: req.body,
     items: cart,
     cart_meta_hash,
