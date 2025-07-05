@@ -2,10 +2,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let handleStripe: any;
 let createMock: any;
+let integrationMock: any;
 
 vi.mock('stripe', () => {
   createMock = vi.fn();
   return { default: class { paymentIntents = { create: createMock }; constructor() {} } };
+});
+
+vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
+  integrationMock = vi.fn(async () => ({ api_key: 'sk_test' }));
+  return { getStoreIntegration: integrationMock };
 });
 
 async function loadModule() {
@@ -32,18 +38,17 @@ const basePayload = {
   total: 1000,
   currency: 'USD',
   description: 'Test',
-  metaCartString: 'cart'
+  metaCartString: 'cart',
+  store_id: 'store-1'
 };
 
 beforeEach(async () => {
   vi.resetModules();
-  process.env.STRIPE_SECRET_KEY = 'sk_test';
   await loadModule();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
-  delete process.env.STRIPE_SECRET_KEY;
 });
 
 describe('handleStripe', () => {
@@ -58,5 +63,6 @@ describe('handleStripe', () => {
     createMock.mockResolvedValue(intent);
     const res = await handleStripe(basePayload);
     expect(res).toEqual({ success: true, intent });
+    expect(integrationMock).toHaveBeenCalledWith('store-1', 'stripe');
   });
 });

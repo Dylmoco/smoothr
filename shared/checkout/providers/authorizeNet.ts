@@ -1,6 +1,8 @@
 
-const loginId = process.env.AUTHORIZE_NET_LOGIN_ID || '';
-const transactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY || '';
+import { getStoreIntegration } from '../getStoreIntegration';
+
+const envLoginId = process.env.AUTHORIZE_NET_LOGIN_ID || '';
+const envTransactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY || '';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout AuthorizeNet]', ...args);
@@ -14,9 +16,15 @@ interface AuthorizeNetPayload {
     cardCode: string;
   };
   currency?: string;
+  store_id: string;
 }
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
+  const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
+  const loginId =
+    integration?.settings?.loginId || integration?.api_key || envLoginId;
+  const transactionKey =
+    integration?.settings?.transactionKey || envTransactionKey;
   const body = {
     createTransactionRequest: {
       merchantAuthentication: {

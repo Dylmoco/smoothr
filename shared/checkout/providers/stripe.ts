@@ -1,8 +1,6 @@
 import Stripe from 'stripe';
 import crypto from 'crypto';
-
-const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
-const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
+import { getStoreIntegration } from '../getStoreIntegration';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout Stripe]', ...args);
@@ -29,9 +27,17 @@ interface StripePayload {
   currency: string;
   description?: string;
   metaCartString: string;
+  store_id: string;
 }
 
 export default async function handleStripe(payload: StripePayload) {
+  const integration = await getStoreIntegration(payload.store_id, 'stripe');
+  const stripeSecret =
+    integration?.api_key ||
+    integration?.settings?.secret_key ||
+    process.env.STRIPE_SECRET_KEY ||
+    '';
+  const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
   const { payment_method, total, currency, shipping } = payload;
   const { name, address } = shipping || {};
   const { line1, city, state, postal_code, country } = address || {};
