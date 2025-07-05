@@ -37,6 +37,10 @@ export default async function handleStripe(payload: StripePayload) {
     integration?.settings?.secret_key ||
     process.env.STRIPE_SECRET_KEY ||
     '';
+  if (!stripeSecret.trim()) {
+    err('Missing Stripe credentials');
+    return { success: false, error: 'Missing credentials' };
+  }
   const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
   const { payment_method, total, currency, shipping } = payload;
   const { name, address } = shipping || {};
