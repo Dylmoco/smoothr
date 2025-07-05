@@ -72,6 +72,9 @@ npm run dev
 The storefront SDK is automatically built and deployed by GitHub Actions so no
 manual build step is required.
 
+Use `npm run bundle:webflow-checkout` from the repository root to rebuild only
+the Webflow checkout script.
+
 ## Checkout API
 
 The admin dashboard exposes two endpoints for initiating a checkout:
