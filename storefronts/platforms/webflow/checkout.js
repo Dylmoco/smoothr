@@ -2,8 +2,8 @@ import gateways from '../../checkout/gateways/index.js';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  window.SMOOTHR_CONFIG?.supabaseUrl,
-  window.SMOOTHR_CONFIG?.supabaseAnonKey
+  'https://smoothr-prod.supabase.co',
+  'your-public-anon-key'
 );
 
 const debug = window.SMOOTHR_CONFIG?.debug;
