@@ -8,6 +8,26 @@ const gatewayLoaders = {
   segpay: () => import('./gateways/segpay.js')
 };
 
+async function getPublicCredential(storeId, integrationId) {
+  if (!storeId || !integrationId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('store_integrations')
+      .select('api_key, settings')
+      .eq('store_id', storeId)
+      .eq('integration_id', integrationId)
+      .maybeSingle();
+    if (error) {
+      console.warn('[Smoothr Checkout] Credential lookup failed:', error.message || error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.warn('[Smoothr Checkout] Credential fetch error:', e?.message || e);
+    return null;
+  }
+}
+
 async function getActivePaymentGateway(log, warn) {
   const cfg = window.SMOOTHR_CONFIG || {};
   if (cfg.active_payment_gateway) return cfg.active_payment_gateway;
@@ -69,7 +89,13 @@ export async function initCheckout() {
   log(`Using gateway: ${provider}`);
 
   if (provider === 'stripe') {
-    const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+    let stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+    if (!stripeKey) {
+      const storeId = window.SMOOTHR_CONFIG?.storeId;
+      const cred = await getPublicCredential(storeId, 'stripe');
+      stripeKey = cred?.api_key || cred?.settings?.publishable_key || '';
+      if (stripeKey) window.SMOOTHR_CONFIG.stripeKey = stripeKey;
+    }
     log(`stripeKey: ${stripeKey}`);
     if (!stripeKey) {
       warn('❌ Failed at Stripe Key Check: missing key');

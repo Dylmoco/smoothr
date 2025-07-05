@@ -167,7 +167,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       total,
       currency,
       description,
-      metaCartString
+      metaCartString,
+      store_id
     });
   } catch (e: any) {
     err('Provider handler error:', e?.message || e);
