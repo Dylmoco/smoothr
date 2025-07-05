@@ -1,4 +1,4 @@
-import * as stripeGateway from './gateways/stripe.js';
+import gateways from './gateways/index.js';
 
 export async function computeCartHash(cart, total, email) {
   const normalized = [...cart]
@@ -21,15 +21,19 @@ export async function initCheckout() {
   log('SDK initialized');
   log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
 
-  const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
-  log(`stripeKey: ${stripeKey}`);
-  if (!stripeKey) {
-    warn('❌ Failed at Stripe Key Check: missing key');
-    console.log('[Smoothr Checkout] No Stripe key provided');
-    return;
-  }
+  const provider = window.SMOOTHR_CONFIG?.active_payment_gateway || 'stripe';
+  const gateway = gateways[provider] || gateways.stripe;
 
-  log('Stripe key confirmed');
+  if (provider === 'stripe') {
+    const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+    log(`stripeKey: ${stripeKey}`);
+    if (!stripeKey) {
+      warn('❌ Failed at Stripe Key Check: missing key');
+      console.log('[Smoothr Checkout] No Stripe key provided');
+      return;
+    }
+    log('Stripe key confirmed');
+  }
 
   let hasShownCheckoutError = false;
 
@@ -70,7 +74,7 @@ export async function initCheckout() {
   log('no polling loops active');
 
   // Initialize payment gateway fields
-  stripeGateway.mountCardFields();
+  gateway.mountCardFields();
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
@@ -128,8 +132,8 @@ export async function initCheckout() {
     }
     localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
-    if (!stripeGateway.isMounted()) stripeGateway.mountCardFields();
-    if (!stripeGateway.ready()) {
+    if (!gateway.isMounted()) gateway.mountCardFields();
+    if (!gateway.ready()) {
       err('Payment gateway not ready');
       submitBtn.disabled = false;
       return;
@@ -137,7 +141,7 @@ export async function initCheckout() {
 
     try {
       const { error: pmError, paymentMethod } =
-        await stripeGateway.createPaymentMethod({
+        await gateway.createPaymentMethod({
           name: `${first_name} ${last_name}`,
           email
         });
@@ -150,7 +154,6 @@ export async function initCheckout() {
 
       const payload = {
         email,
-        payment_method: paymentMethod.id,
         first_name,
         last_name,
         shipping,
@@ -162,13 +165,23 @@ export async function initCheckout() {
         platform
       };
 
+      if (provider === 'stripe') {
+        payload.payment_method = paymentMethod.id;
+      } else if (provider === 'authorizeNet') {
+        payload.payment = paymentMethod;
+      } else if (provider === 'nmi') {
+        Object.assign(payload, paymentMethod);
+      } else {
+        payload.payment_method = paymentMethod.id;
+      }
+
       if (debug) {
         window.__latestSmoothrPayload = payload;
         console.log('[Smoothr Checkout] Submitting payload:', window.__latestSmoothrPayload);
       }
       const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
-      log('POST', `${apiBase}/api/checkout/stripe`);
-      const res = await fetch(`${apiBase}/api/checkout/stripe`, {
+      log('POST', `${apiBase}/api/checkout/${provider}`);
+      const res = await fetch(`${apiBase}/api/checkout/${provider}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
