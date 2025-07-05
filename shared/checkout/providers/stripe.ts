@@ -32,6 +32,25 @@ interface StripePayload {
 }
 
 export default async function handleStripe(payload: StripePayload) {
+  const { payment_method, total, currency, shipping } = payload;
+  const { name, address } = shipping || {};
+  const { line1, city, state, postal_code, country } = address || {};
+
+  if (
+    !payment_method ||
+    typeof total !== 'number' ||
+    !currency ||
+    !name ||
+    !line1 ||
+    !city ||
+    !state ||
+    !postal_code ||
+    !country
+  ) {
+    err('Missing required fields');
+    return { success: false, error: 'Missing required fields' };
+  }
+
   try {
     const idempotencyKey = crypto
       .createHash('sha256')
