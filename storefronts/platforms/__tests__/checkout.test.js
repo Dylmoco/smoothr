@@ -122,7 +122,9 @@ beforeEach(() => {
     baseCurrency: 'GBP',
     stripeKey: 'pk_test',
     storeId: 'store-1',
-    active_payment_gateway: 'stripe'
+    active_payment_gateway: 'stripe',
+    supabaseUrl: 'https://example.supabase.co',
+    supabaseAnonKey: 'anon-key'
   };
 
 });

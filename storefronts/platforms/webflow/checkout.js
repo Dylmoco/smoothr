@@ -1,5 +1,10 @@
 import gateways from '../../checkout/gateways/index.js';
-import supabase from '../../../supabase/supabaseClient.js';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  window.SMOOTHR_CONFIG?.supabaseUrl,
+  window.SMOOTHR_CONFIG?.supabaseAnonKey
+);
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
@@ -133,10 +138,11 @@ export async function initCheckout() {
     totalEl.parentNode?.insertBefore(p, totalEl.nextSibling);
   }
 
-  const provider = await getActivePaymentGateway();
-  const gateway = gateways[provider];
+  const activeGateway = await getActivePaymentGateway();
+  console.log('[Smoothr Checkout] Using gateway:', activeGateway);
+  const gateway = gateways[activeGateway];
   if (!gateway) {
-    warn('Unknown payment gateway:', provider);
+    warn('Unknown payment gateway:', activeGateway);
     return;
   }
 
@@ -152,7 +158,7 @@ export async function initCheckout() {
         return;
       }
 
-      if (provider === 'stripe') {
+      if (activeGateway === 'stripe') {
         if (!window.SMOOTHR_CONFIG?.stripeKey) {
           const storeId = window.SMOOTHR_CONFIG?.storeId;
           const cred = await getPublicCredential(storeId, 'stripe');
@@ -260,11 +266,11 @@ export async function initCheckout() {
         platform
       };
 
-      if (provider === 'stripe') {
+      if (activeGateway === 'stripe') {
         payload.payment_method = paymentMethod.id;
-      } else if (provider === 'authorizeNet') {
+      } else if (activeGateway === 'authorizeNet') {
         payload.payment = paymentMethod;
-      } else if (provider === 'nmi') {
+      } else if (activeGateway === 'nmi') {
         Object.assign(payload, paymentMethod);
       } else {
         payload.payment_method = paymentMethod.id;
@@ -274,7 +280,7 @@ export async function initCheckout() {
         log('billing_details:', billing_details);
         log('shipping:', shipping);
       const base = window?.SMOOTHR_CONFIG?.apiBase || '';
-      const res = await fetch(`${base}/api/checkout/${provider}`, {
+      const res = await fetch(`${base}/api/checkout/${activeGateway}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
