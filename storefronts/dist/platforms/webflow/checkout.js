@@ -7672,6 +7672,11 @@ async function getPublicCredential(storeId, integrationId) {
   if (!storeId || !integrationId) return null;
   try {
     const { data, error } = await supabase.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("integration_id", integrationId).maybeSingle();
+    if (debug2) {
+      console.log("[Smoothr Checkout] store_integrations response");
+      console.log("data:", data);
+      console.log("error:", error);
+    }
     if (error) {
       warn2("Credential lookup failed:", error.message || error);
       return null;
