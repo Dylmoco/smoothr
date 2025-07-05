@@ -1,8 +1,31 @@
-import * as stripeGateway from '../../checkout/gateways/stripe.js';
+import gateways from '../../checkout/gateways/index.js';
+import supabase from '../../../supabase/supabaseClient.js';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
+
+async function getActivePaymentGateway() {
+  const cfg = window.SMOOTHR_CONFIG || {};
+  if (cfg.active_payment_gateway) return cfg.active_payment_gateway;
+  const storeId = cfg.storeId;
+  if (!storeId) return 'stripe';
+  try {
+    const { data, error } = await supabase
+      .from('store_settings')
+      .select('settings')
+      .eq('store_id', storeId)
+      .maybeSingle();
+    if (error) {
+      warn('Store settings lookup failed:', error.message || error);
+      return 'stripe';
+    }
+    return data?.settings?.active_payment_gateway || 'stripe';
+  } catch (e) {
+    warn('Gateway lookup failed:', e?.message || e);
+    return 'stripe';
+  }
+}
 
 
 function hideTemplatesGlobally() {
@@ -13,7 +36,7 @@ function hideTemplatesGlobally() {
 }
 
 
-export function initCheckout() {
+export async function initCheckout() {
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
   
@@ -90,7 +113,14 @@ export function initCheckout() {
     totalEl.parentNode?.insertBefore(p, totalEl.nextSibling);
   }
 
-  stripeGateway.mountCardFields();
+  const provider = await getActivePaymentGateway();
+  const gateway = gateways[provider];
+  if (!gateway) {
+    warn('Unknown payment gateway:', provider);
+    return;
+  }
+
+  gateway.mountCardFields();
 
   document.querySelectorAll('[data-smoothr-checkout]').forEach(checkoutBtn => {
     if (checkoutBtn.__smoothrBound) return;
@@ -102,7 +132,7 @@ export function initCheckout() {
         return;
       }
 
-      if (!window.SMOOTHR_CONFIG?.stripeKey) {
+      if (provider === 'stripe' && !window.SMOOTHR_CONFIG?.stripeKey) {
         alert('Stripe key not configured');
         return;
       }
@@ -167,17 +197,19 @@ export function initCheckout() {
         return;
       }
 
-      if (!stripeGateway.isMounted()) stripeGateway.mountCardFields();
-      if (!stripeGateway.ready()) {
+      if (!gateway.isMounted()) gateway.mountCardFields();
+      if (!gateway.ready()) {
         alert('Payment form not ready');
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove('loading');
         return;
       }
 
-        log('billing_details:', billing_details);
-        log('shipping:', shipping);
-      const { error: pmError, paymentMethod } = await stripeGateway.createPaymentMethod(billing_details);
+      log('billing_details:', billing_details);
+      log('shipping:', shipping);
+      const { error: pmError, paymentMethod } = await gateway.createPaymentMethod(
+        billing_details
+      );
 
       if (pmError || !paymentMethod) {
         alert('Failed to create payment method');
@@ -188,7 +220,6 @@ export function initCheckout() {
 
       const payload = {
         email,
-        payment_method: paymentMethod.id,
         first_name,
         last_name,
         shipping,
@@ -200,11 +231,21 @@ export function initCheckout() {
         platform
       };
 
+      if (provider === 'stripe') {
+        payload.payment_method = paymentMethod.id;
+      } else if (provider === 'authorizeNet') {
+        payload.payment = paymentMethod;
+      } else if (provider === 'nmi') {
+        Object.assign(payload, paymentMethod);
+      } else {
+        payload.payment_method = paymentMethod.id;
+      }
+
         log('Submitting payload:', payload);
         log('billing_details:', billing_details);
         log('shipping:', shipping);
       const base = window?.SMOOTHR_CONFIG?.apiBase || '';
-      const res = await fetch(`${base}/api/checkout/stripe`, {
+      const res = await fetch(`${base}/api/checkout/${provider}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

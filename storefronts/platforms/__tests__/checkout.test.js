@@ -119,7 +119,8 @@ beforeEach(() => {
   global.window.SMOOTHR_CONFIG = {
     baseCurrency: 'GBP',
     stripeKey: 'pk_test',
-    storeId: 'store-1'
+    storeId: 'store-1',
+    active_payment_gateway: 'stripe'
   };
 
 });
@@ -137,7 +138,7 @@ async function loadCheckout() {
 describe('checkout', () => {
   it('posts cart and currency on click', async () => {
     const initCheckout = await loadCheckout();
-    initCheckout();
+    await initCheckout();
 
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
@@ -166,7 +167,7 @@ describe('checkout', () => {
 
   it('renders cart items from template', async () => {
     const initCheckout = await loadCheckout();
-    initCheckout();
+    await initCheckout();
     const clones = document.querySelectorAll('.smoothr-checkout-item');
     expect(clones.length).toBe(1);
     expect(clones[0].querySelector('[data-smoothr-name]').textContent).toBe(
