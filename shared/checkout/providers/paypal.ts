@@ -1,0 +1,60 @@
+const clientId = process.env.PAYPAL_CLIENT_ID || '';
+const clientSecret = process.env.PAYPAL_CLIENT_SECRET || '';
+const env = process.env.PAYPAL_ENV === 'live' ? 'live' : 'sandbox';
+const baseUrl = env === 'live'
+  ? 'https://api-m.paypal.com'
+  : 'https://api-m.sandbox.paypal.com';
+
+const debug = process.env.SMOOTHR_DEBUG === 'true';
+const log = (...args: any[]) => debug && console.log('[Checkout PayPal]', ...args);
+const err = (...args: any[]) => debug && console.error('[Checkout PayPal]', ...args);
+
+interface PayPalPayload {
+  total: number;
+  currency: string;
+  description?: string;
+}
+
+export default async function handlePayPal(payload: PayPalPayload) {
+  const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  try {
+    const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${creds}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+    const token = await tokenRes.json();
+    log('PayPal token acquired');
+
+    const orderBody = {
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          amount: {
+            currency_code: payload.currency,
+            value: (payload.total / 100).toFixed(2)
+          },
+          ...(payload.description ? { description: payload.description } : {})
+        }
+      ]
+    };
+
+    const orderRes = await fetch(`${baseUrl}/v2/checkout/orders`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderBody)
+    });
+    const order = await orderRes.json();
+    log('PayPal order response:', JSON.stringify(order));
+    return order;
+  } catch (e: any) {
+    err('PayPal error:', e?.message || e);
+    throw e;
+  }
+}

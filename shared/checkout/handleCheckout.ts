@@ -4,6 +4,9 @@ import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import stripeProvider from './providers/stripe';
 import authorizeProvider from './providers/authorize';
+import paypalProvider from './providers/paypal';
+import nmiProvider from './providers/nmi';
+import segpayProvider from './providers/segpay';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Smoothr Checkout]', ...args);
@@ -23,7 +26,10 @@ export async function handleCheckout({ provider, req, res }:{ provider: string; 
 
   const providers: Record<string, any> = {
     stripe: stripeProvider,
-    authorize: authorizeProvider
+    authorize: authorizeProvider,
+    paypal: paypalProvider,
+    nmi: nmiProvider,
+    segpay: segpayProvider
   };
   const providerHandler = providers[provider];
   if (!providerHandler) {
