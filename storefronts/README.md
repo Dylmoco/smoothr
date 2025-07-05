@@ -119,6 +119,12 @@ the script retries mounting every 200ms for up to five attempts. Attach
 `data-smoothr-checkout` to the checkout button only—placing this attribute on a
 wrapping container causes clicks anywhere in the container to trigger checkout.
 
+The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
+active payment gateway. `initCheckout` chooses the gateway by first checking
+`window.SMOOTHR_CONFIG.active_payment_gateway`. If not set it queries
+`store_settings.settings.active_payment_gateway` in Supabase using the provided
+`storeId`. The default provider is `stripe`.
+
 
 ## CI/CD
 

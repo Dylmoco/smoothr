@@ -72,12 +72,11 @@ npm run dev
 The storefront SDK is automatically built and deployed by GitHub Actions so no
 manual build step is required.
 
-## Stripe Checkout API
+## Checkout API
 
-The admin dashboard exposes two endpoints for interacting with Stripe:
+The admin dashboard exposes two endpoints for initiating a checkout:
 
-1. `/api/checkout/stripe` – creates a PaymentIntent from a posted cart.
-   The request body must include the following fields:
+1. `/api/checkout/[provider]` – processes a posted cart using the configured payment gateway. The `[provider]` segment must match the gateway configured for the store. The request body must include the following fields:
 
 - `payment_method` – the ID of the payment method to charge
 - `email` – customer email for receipts
@@ -89,12 +88,18 @@ The admin dashboard exposes two endpoints for interacting with Stripe:
 - `currency` – ISO currency code
 - `description` *(optional)* – order description
 
-   On success the endpoint responds with the created order ID and Stripe
-   PaymentIntent ID.
+   On success the endpoint responds with the created order ID and any payment
+   intent ID returned by the gateway.
 
 2. `/api/create-checkout-session` – generates a Stripe Checkout Session.
    This endpoint sets `success_url` to `<origin>/checkout-success` and
    responds with the Checkout Session URL.
+
+The SDK determines the active payment gateway by first checking
+`window.SMOOTHR_CONFIG.active_payment_gateway`. If absent, it loads the value
+from the store's `store_settings` table in Supabase using the configured
+`storeId`. The `[provider]` segment in the route should match this value and
+defaults to `stripe` when no configuration is found.
 
 
 ### Deployment Log
