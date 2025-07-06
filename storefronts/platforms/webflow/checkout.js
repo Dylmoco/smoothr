@@ -247,7 +247,23 @@ export async function initCheckout() {
       const store_id = window.SMOOTHR_CONFIG?.storeId;
       const platform = 'webflow';
 
-      if (!email || !first_name || !last_name || !total) {
+      const isValid = !!(email && first_name && last_name && total);
+      log('Validation state', {
+        email,
+        first_name,
+        last_name,
+        total,
+        isValid
+      });
+
+      const missing = [];
+      if (!email) missing.push('email');
+      if (!first_name) missing.push('first_name');
+      if (!last_name) missing.push('last_name');
+      if (!total) missing.push('total');
+
+      if (!isValid && !window.SMOOTHR_CONFIG?.disableFrontendValidation) {
+        warn('Missing required fields:', missing);
         alert('Missing required fields');
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove('loading');
