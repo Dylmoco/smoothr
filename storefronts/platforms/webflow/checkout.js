@@ -1,4 +1,5 @@
 import gateways from '../../checkout/gateways/index.js';
+import * as stripeGateway from '../../checkout/gateways/stripe.js';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL =
@@ -333,3 +334,11 @@ document.addEventListener('DOMContentLoaded', initCheckout);
 if (document.readyState !== 'loading') {
   initCheckout();
 }
+
+window.Smoothr = window.Smoothr || {};
+window.Smoothr.checkout = {
+  version: 'dev6',
+  mountCardFields: stripeGateway.mountCardFields,
+  getStoreSettings: stripeGateway.getStoreSettings,
+  createPaymentMethod: stripeGateway.createPaymentMethod
+};
