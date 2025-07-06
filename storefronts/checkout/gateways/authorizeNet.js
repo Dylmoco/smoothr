@@ -4,6 +4,7 @@ let fieldsMounted = false;
 let mountPromise;
 let clientKey;
 let apiLoginID;
+let scriptPromise;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
@@ -27,6 +28,27 @@ async function getPublicCredential(storeId, integrationId) {
     warn('Credential fetch error:', e?.message || e);
     return null;
   }
+}
+
+function loadAcceptJs() {
+  if (window.Accept) return Promise.resolve();
+  if (scriptPromise) return scriptPromise;
+  scriptPromise = new Promise(resolve => {
+    let script = document.querySelector('script[data-smoothr-accept]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://jstest.authorize.net/v1/Accept.js';
+      script.type = 'text/javascript';
+      script.setAttribute('data-smoothr-accept', '');
+      script.addEventListener('load', () => resolve());
+      document.head.appendChild(script);
+    } else if (window.Accept) {
+      resolve();
+    } else {
+      script.addEventListener('load', () => resolve());
+    }
+  });
+  return scriptPromise;
 }
 
 async function resolveCredentials() {
@@ -54,6 +76,30 @@ export async function mountCardFields() {
     }
 
     await resolveCredentials();
+    await loadAcceptJs();
+
+    if (!num.querySelector('input')) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.autocomplete = 'cc-number';
+      input.placeholder = 'Card number';
+      num.appendChild(input);
+    }
+    if (!exp.querySelector('input')) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.autocomplete = 'cc-exp';
+      input.placeholder = 'MM/YY';
+      exp.appendChild(input);
+    }
+    if (!cvc.querySelector('input')) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.autocomplete = 'cc-csc';
+      input.placeholder = 'CVC';
+      cvc.appendChild(input);
+    }
+
     fieldsMounted = true;
     log('Card fields mounted');
   })();
@@ -83,11 +129,11 @@ export async function createPaymentMethod() {
   }
 
   const cardNumber =
-    document.querySelector('[data-smoothr-card-number]')?.value?.trim() || '';
+    document.querySelector('[data-smoothr-card-number] input')?.value?.trim() || '';
   const expiry =
-    document.querySelector('[data-smoothr-card-expiry]')?.value?.trim() || '';
+    document.querySelector('[data-smoothr-card-expiry] input')?.value?.trim() || '';
   const cardCode =
-    document.querySelector('[data-smoothr-card-cvc]')?.value?.trim() || '';
+    document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
 
   if (!cardNumber || !expiry) {
     return { error: { message: 'Card details incomplete' } };
@@ -112,7 +158,7 @@ export async function createPaymentMethod() {
           response.messages?.message?.[0]?.text || 'Tokenization failed';
         resolve({ error: { message } });
       } else {
-        resolve({ paymentMethod: response.opaqueData });
+        resolve({ success: true, payment_method: response.opaqueData });
       }
     });
   });

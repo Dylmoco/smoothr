@@ -126,6 +126,12 @@ it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`).
 </script>
 ```
 
+Include the Authorize.Net Accept.js script on pages that render the checkout form:
+
+```html
+<script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.js"></script>
+```
+
 
 ### Deployment Log
 

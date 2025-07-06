@@ -20,7 +20,7 @@ async function loadModule() {
 
 const basePayload = {
   amount: 100,
-  payment: { dataDescriptor: 'desc', dataValue: 'val' },
+  payment_method: { dataDescriptor: 'desc', dataValue: 'val' },
   currency: 'USD',
   store_id: 'store-1'
 };
