@@ -5,6 +5,8 @@ let mountPromise;
 let clientKey;
 let apiLoginID;
 let scriptPromise;
+let authorizeNetReady = false;
+let submitting = false;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
@@ -66,6 +68,7 @@ export async function mountCardFields() {
   if (fieldsMounted) return;
 
   mountPromise = (async () => {
+    log('Mounting card fields');
     const num = document.querySelector('[data-smoothr-card-number]');
     const exp = document.querySelector('[data-smoothr-card-expiry]');
     const cvc = document.querySelector('[data-smoothr-card-cvc]');
@@ -77,6 +80,7 @@ export async function mountCardFields() {
 
     await resolveCredentials();
     await loadAcceptJs();
+    log('Accept.js injected');
 
     if (!num.querySelector('input')) {
       const input = document.createElement('input');
@@ -101,6 +105,7 @@ export async function mountCardFields() {
     }
 
     fieldsMounted = true;
+    authorizeNetReady = true;
     log('Card fields mounted');
   })();
 
@@ -128,6 +133,16 @@ export async function createPaymentMethod() {
     return { error: { message: 'Authorize.Net not ready' } };
   }
 
+  if (!authorizeNetReady) {
+    warn('Payment form not ready');
+    return { error: { message: 'Payment form not ready' } };
+  }
+
+  if (submitting) {
+    warn('Payment already submitting');
+    return { error: { message: 'Already submitting' } };
+  }
+
   const cardNumber =
     document.querySelector('[data-smoothr-card-number] input')?.value?.trim() || '';
   const expiry =
@@ -152,15 +167,24 @@ export async function createPaymentMethod() {
       resolve({ error: { message: 'Accept.js unavailable' } });
       return;
     }
-    window.Accept.dispatchData(secureData, response => {
-      if (response.messages?.resultCode === 'Error') {
-        const message =
-          response.messages?.message?.[0]?.text || 'Tokenization failed';
-        resolve({ error: { message } });
-      } else {
-        resolve({ success: true, payment_method: response.opaqueData });
-      }
-    });
+    submitting = true;
+    log('Dispatching Accept.dispatchData');
+    try {
+      window.Accept.dispatchData(secureData, response => {
+        submitting = false;
+        if (response.messages?.resultCode === 'Error') {
+          const message =
+            response.messages?.message?.[0]?.text || 'Tokenization failed';
+          resolve({ error: { message } });
+        } else {
+          resolve({ success: true, payment_method: response.opaqueData });
+        }
+      });
+    } catch (e) {
+      submitting = false;
+      console.error('[Smoothr AuthorizeNet]', 'Tokenization error', e);
+      resolve({ error: { message: e?.message || 'Tokenization failed' } });
+    }
   });
 }
 
