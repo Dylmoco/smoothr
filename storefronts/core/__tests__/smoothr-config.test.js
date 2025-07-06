@@ -23,6 +23,7 @@ beforeEach(() => {
   global.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
+    querySelector: vi.fn(() => null),
   };
   global.localStorage = {
     getItem: vi.fn(),

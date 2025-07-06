@@ -42,7 +42,10 @@ beforeEach(() => {
   };
 
   global.window = {
-    SMOOTHR_CONFIG: { stripeKey: 'pk_test' },
+    SMOOTHR_CONFIG: {
+      stripeKey: 'pk_test',
+      active_payment_gateway: 'stripe'
+    },
     Smoothr: { cart: { getCart: () => ({ items: [] }), getTotal: () => 0 } }
   };
   global.window.smoothr = global.window.Smoothr;
@@ -51,7 +54,9 @@ beforeEach(() => {
 describe('stripe element mounting', () => {
   it('mounts each field to its container', async () => {
     await import('../../checkout/checkout.js');
-    domReadyCb && domReadyCb();
+    if (domReadyCb) {
+      await domReadyCb();
+    }
 
     expect(elementsCreate).toHaveBeenCalledWith('cardNumber');
     expect(elementsCreate).toHaveBeenCalledWith('cardExpiry');
