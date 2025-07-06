@@ -58,9 +58,9 @@ describe('stripe element mounting', () => {
       await domReadyCb();
     }
 
-    expect(elementsCreate).toHaveBeenCalledWith('cardNumber');
-    expect(elementsCreate).toHaveBeenCalledWith('cardExpiry');
-    expect(elementsCreate).toHaveBeenCalledWith('cardCvc');
+    expect(elementsCreate).toHaveBeenCalledWith('cardNumber', expect.any(Object));
+    expect(elementsCreate).toHaveBeenCalledWith('cardExpiry', expect.any(Object));
+    expect(elementsCreate).toHaveBeenCalledWith('cardCvc', expect.any(Object));
 
     expect(cardNumberEl.mount).toHaveBeenCalledWith('[data-smoothr-card-number]');
     expect(cardExpiryEl.mount).toHaveBeenCalledWith('[data-smoothr-card-expiry]');

@@ -17,7 +17,9 @@ function forceStripeIframeStyle(selector) {
     if (iframe) {
       iframe.style.width = '100%';
       iframe.style.minWidth = '100%';
+      iframe.style.height = targetEl ? `${targetEl.offsetHeight}px` : '100%';
       iframe.style.display = 'block';
+      iframe.style.opacity = '1';
       iframe.style.boxSizing = 'border-box';
       iframe.style.position = 'relative';
       if (
@@ -27,6 +29,7 @@ function forceStripeIframeStyle(selector) {
       ) {
         targetEl.style.position = 'relative';
       }
+      log('[debug] Stripe iframe forced styles');
       clearInterval(interval);
     } else {
       log(`Waiting for Stripe iframe in ${selector} (${attempts + 1})`);
@@ -36,6 +39,19 @@ function forceStripeIframeStyle(selector) {
       }
     }
   }, 100);
+}
+
+function elementStyleFromContainer(el) {
+  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return {};
+  const cs = window.getComputedStyle(el);
+  return {
+    base: {
+      fontSize: cs.fontSize,
+      color: cs.color,
+      fontFamily: cs.fontFamily,
+      backgroundColor: cs.backgroundColor
+    }
+  };
 }
 
 function getElements() {
@@ -75,18 +91,24 @@ export function mountCardFields() {
   if (!els) return;
 
   if (numberTarget && !cardNumberElement) {
-    cardNumberElement = els.create('cardNumber');
+    cardNumberElement = els.create('cardNumber', {
+      style: elementStyleFromContainer(numberTarget)
+    });
     cardNumberElement.mount('[data-smoothr-card-number]');
     forceStripeIframeStyle('[data-smoothr-card-number]');
     fieldsMounted = true;
   }
   if (expiryTarget) {
-    const el = els.create('cardExpiry');
+    const el = els.create('cardExpiry', {
+      style: elementStyleFromContainer(expiryTarget)
+    });
     el.mount('[data-smoothr-card-expiry]');
     forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
   if (cvcTarget) {
-    const el = els.create('cardCvc');
+    const el = els.create('cardCvc', {
+      style: elementStyleFromContainer(cvcTarget)
+    });
     el.mount('[data-smoothr-card-cvc]');
     forceStripeIframeStyle('[data-smoothr-card-cvc]');
   }
