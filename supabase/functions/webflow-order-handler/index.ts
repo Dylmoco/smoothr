@@ -39,7 +39,14 @@ export async function handleRequest(req: Request): Promise<Response> {
 
   const { siteId } = payload;
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    },
+  });
 
   const email = payload.customerInfo?.email || null;
   let customerId: string | null = null;
