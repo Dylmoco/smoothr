@@ -56,10 +56,11 @@ beforeEach(() => {
 
 describe('stripe element mounting', () => {
   it('mounts each field to its container', async () => {
-    await import('../../checkout/checkout.js');
-    if (domReadyCb) {
-      await domReadyCb();
-    }
+    vi.useFakeTimers();
+    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    await mountCardFields();
+    await vi.runAllTimersAsync();
+    vi.useRealTimers();
 
     expect(elementsCreate).toHaveBeenCalledWith('cardNumber', expect.any(Object));
     expect(elementsCreate).toHaveBeenCalledWith('cardExpiry', expect.any(Object));
@@ -76,7 +77,7 @@ describe('stripe element mounting', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.useFakeTimers();
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
-    mountCardFields();
+    await mountCardFields();
     for (let i = 0; i < 5; i++) vi.runOnlyPendingTimers();
     expect(warnSpy).toHaveBeenCalled();
     vi.useRealTimers();
@@ -84,10 +85,33 @@ describe('stripe element mounting', () => {
   });
 
   it('enforces iframe styles after mount', async () => {
+    vi.useFakeTimers();
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
-    mountCardFields();
+    const p = mountCardFields();
+    await vi.runAllTimersAsync();
+    await p;
+    vi.useRealTimers();
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]');
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
+  });
+
+  it('waitForVisible resolves when width becomes visible', async () => {
+    const { waitForVisible } = await import('../../checkout/gateways/stripe.js');
+    let width = 0;
+    const el = { getBoundingClientRect: vi.fn(() => ({ width })) };
+    vi.useFakeTimers();
+    let resolved = false;
+    const p = waitForVisible(el, 1000).then(() => {
+      resolved = true;
+    });
+    vi.advanceTimersByTime(100);
+    expect(resolved).toBe(false);
+    vi.advanceTimersByTime(100);
+    width = 20;
+    await vi.runAllTimersAsync();
+    await p;
+    expect(resolved).toBe(true);
+    vi.useRealTimers();
   });
 });
