@@ -2,6 +2,7 @@ import { build } from 'esbuild';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
+import { loadEnv } from 'vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -12,6 +13,8 @@ const err = (...args) => debug && console.error('[bundle-webflow-checkout]', ...
 const entry = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
 const outFile = join(__dirname, '..', 'dist', 'platforms', 'webflow', 'checkout.js');
 
+const env = loadEnv(process.env.NODE_ENV || 'production', process.cwd(), '');
+
 try {
   await mkdir(dirname(outFile), { recursive: true });
   await build({
@@ -20,7 +23,11 @@ try {
     bundle: true,
     format: 'esm',
     platform: 'browser',
-    target: 'es2018'
+    target: 'es2018',
+    define: {
+      __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
+      __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    }
   });
   log(`Bundled ${entry} to ${outFile}`);
 } catch (e) {
