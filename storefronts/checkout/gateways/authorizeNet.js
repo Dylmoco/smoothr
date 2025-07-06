@@ -1,10 +1,67 @@
-let fieldsMounted = false;
+import supabase from '../../../supabase/supabaseClient.js';
 
-export function mountCardFields() {
-  const num = document.querySelector('[data-smoothr-card-number]');
-  const exp = document.querySelector('[data-smoothr-card-expiry]');
-  const cvc = document.querySelector('[data-smoothr-card-cvc]');
-  if (num && exp && cvc) fieldsMounted = true;
+let fieldsMounted = false;
+let mountPromise;
+let clientKey;
+let apiLoginID;
+
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr AuthorizeNet]', ...args);
+
+async function getPublicCredential(storeId, integrationId) {
+  if (!storeId || !integrationId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('store_integrations')
+      .select('api_key, settings')
+      .eq('store_id', storeId)
+      .eq('integration_id', integrationId)
+      .maybeSingle();
+    if (error) {
+      warn('Credential lookup failed:', error.message || error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    warn('Credential fetch error:', e?.message || e);
+    return null;
+  }
+}
+
+async function resolveCredentials() {
+  if (clientKey && apiLoginID) return { clientKey, apiLoginID };
+  const storeId = window.SMOOTHR_CONFIG?.storeId;
+  if (!storeId) return { clientKey: null, apiLoginID: null };
+  const cred = await getPublicCredential(storeId, 'authorizeNet');
+  clientKey = cred?.settings?.clientKey || '';
+  apiLoginID = cred?.api_key || cred?.settings?.loginId || '';
+  return { clientKey, apiLoginID };
+}
+
+export async function mountCardFields() {
+  if (mountPromise) return mountPromise;
+  if (fieldsMounted) return;
+
+  mountPromise = (async () => {
+    const num = document.querySelector('[data-smoothr-card-number]');
+    const exp = document.querySelector('[data-smoothr-card-expiry]');
+    const cvc = document.querySelector('[data-smoothr-card-cvc]');
+
+    if (!num || !exp || !cvc) {
+      warn('Card fields not found');
+      return;
+    }
+
+    await resolveCredentials();
+    fieldsMounted = true;
+    log('Card fields mounted');
+  })();
+
+  mountPromise = mountPromise.finally(() => {
+    mountPromise = null;
+  });
+  return mountPromise;
 }
 
 export function isMounted() {
@@ -12,28 +69,53 @@ export function isMounted() {
 }
 
 export function ready() {
-  const num = document.querySelector('[data-smoothr-card-number]');
-  const exp = document.querySelector('[data-smoothr-card-expiry]');
-  return !!num && !!exp;
+  return (
+    fieldsMounted &&
+    !!window.Accept &&
+    !!clientKey &&
+    !!apiLoginID
+  );
 }
 
 export async function createPaymentMethod() {
   if (!ready()) {
-    return { error: { message: 'Card fields missing' } };
+    return { error: { message: 'Authorize.Net not ready' } };
   }
-  const cardNumber = document
-    .querySelector('[data-smoothr-card-number]')
-    ?.value?.trim() || '';
-  const expirationDate = document
-    .querySelector('[data-smoothr-card-expiry]')
-    ?.value?.trim() || '';
-  const cardCode = document
-    .querySelector('[data-smoothr-card-cvc]')
-    ?.value?.trim() || '';
-  if (!cardNumber || !expirationDate) {
+
+  const cardNumber =
+    document.querySelector('[data-smoothr-card-number]')?.value?.trim() || '';
+  const expiry =
+    document.querySelector('[data-smoothr-card-expiry]')?.value?.trim() || '';
+  const cardCode =
+    document.querySelector('[data-smoothr-card-cvc]')?.value?.trim() || '';
+
+  if (!cardNumber || !expiry) {
     return { error: { message: 'Card details incomplete' } };
   }
-  return { paymentMethod: { cardNumber, expirationDate, cardCode } };
+
+  let [month, year] = expiry.split('/').map(p => p.trim());
+  if (year && year.length === 2) year = '20' + year;
+
+  const secureData = {
+    authData: { clientKey, apiLoginID },
+    cardData: { cardNumber, month, year, cardCode }
+  };
+
+  return new Promise(resolve => {
+    if (!window.Accept || !window.Accept.dispatchData) {
+      resolve({ error: { message: 'Accept.js unavailable' } });
+      return;
+    }
+    window.Accept.dispatchData(secureData, response => {
+      if (response.messages?.resultCode === 'Error') {
+        const message =
+          response.messages?.message?.[0]?.text || 'Tokenization failed';
+        resolve({ error: { message } });
+      } else {
+        resolve({ paymentMethod: response.opaqueData });
+      }
+    });
+  });
 }
 
 export default {
