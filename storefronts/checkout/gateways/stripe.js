@@ -1,3 +1,4 @@
+import forceStripeIframeStyle from "./forceStripeIframeStyle.js";
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -8,38 +9,6 @@ const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
-function forceStripeIframeStyle(selector) {
-  if (typeof document === 'undefined') return;
-  let attempts = 0;
-  const interval = setInterval(() => {
-    const targetEl = document.querySelector(selector);
-    const iframe = targetEl?.querySelector('iframe');
-    if (iframe) {
-      iframe.style.width = '100%';
-      iframe.style.minWidth = '100%';
-      iframe.style.height = targetEl ? `${targetEl.offsetHeight}px` : '100%';
-      iframe.style.display = 'block';
-      iframe.style.opacity = '1';
-      iframe.style.boxSizing = 'border-box';
-      iframe.style.position = 'relative';
-      if (
-        targetEl &&
-        typeof window !== 'undefined' &&
-        window.getComputedStyle(targetEl).position === 'static'
-      ) {
-        targetEl.style.position = 'relative';
-      }
-      log('[debug] Stripe iframe forced styles');
-      clearInterval(interval);
-    } else {
-      log(`Waiting for Stripe iframe in ${selector} (${attempts + 1})`);
-      if (++attempts >= 20) {
-        warn(`iframe not found in ${selector} after ${attempts} attempts`);
-        clearInterval(interval);
-      }
-    }
-  }, 100);
-}
 
 function elementStyleFromContainer(el) {
   if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return {};

@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+let styleSpy = vi.fn();
+vi.mock("../../checkout/gateways/forceStripeIframeStyle.js", () => ({ default: (...args) => styleSpy(...args) }));
 
 let domReadyCb;
 let cardNumberEl;
@@ -8,6 +10,7 @@ let elementsCreate;
 
 beforeEach(() => {
   vi.resetModules();
+  styleSpy = vi.fn();
   domReadyCb = null;
 
   cardNumberEl = { mount: vi.fn() };
@@ -78,5 +81,13 @@ describe('stripe element mounting', () => {
     expect(warnSpy).toHaveBeenCalled();
     vi.useRealTimers();
     warnSpy.mockRestore();
+  });
+
+  it('enforces iframe styles after mount', async () => {
+    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    mountCardFields();
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]');
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
   });
 });
