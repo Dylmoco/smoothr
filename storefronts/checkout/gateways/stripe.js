@@ -1,4 +1,5 @@
 import forceStripeIframeStyle from './forceStripeIframeStyle.js';
+import supabase from '../../../supabase/supabaseClient.js';
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -160,6 +161,25 @@ export function ready() {
   return !!stripe && !!cardNumberElement;
 }
 
+export async function getStoreSettings(storeId) {
+  if (!storeId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('store_settings')
+      .select('settings')
+      .eq('store_id', storeId)
+      .maybeSingle();
+    if (error) {
+      warn('Store settings lookup failed:', error.message || error);
+      return null;
+    }
+    return data?.settings || null;
+  } catch (e) {
+    warn('Store settings fetch error:', e?.message || e);
+    return null;
+  }
+}
+
 export async function createPaymentMethod(billing_details) {
   if (!ready()) {
     return { error: { message: 'Stripe not ready' } };
@@ -175,6 +195,7 @@ export default {
   mountCardFields,
   isMounted,
   ready,
+  getStoreSettings,
   createPaymentMethod,
   waitForVisible,
   waitForInteractable

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 let createPaymentMethodMock;
+let submitCheckout;
 
 beforeEach(() => {
   vi.resetModules();
@@ -87,7 +88,7 @@ beforeEach(() => {
 
   global.window.Smoothr = Smoothr;
   global.window.smoothr = Smoothr;
-  Smoothr.checkout.submit = async () => {
+  submitCheckout = async () => {
     const provider =
       global.window.SMOOTHR_CONFIG?.active_payment_gateway || 'stripe';
     const email = document.querySelector('[data-smoothr-email]')?.value?.trim() || '';
@@ -134,6 +135,7 @@ afterEach(() => {
 
 async function loadCheckout() {
   const mod = await import('../webflow/checkout.js');
+  window.Smoothr.checkout.submit = submitCheckout;
   return mod.initCheckout;
 }
 
@@ -199,5 +201,14 @@ describe('checkout', () => {
     expect(clones[0].querySelector('[data-smoothr-name]').textContent).toBe(
       'Item'
     );
+  });
+
+  it('exposes version and helpers on window', async () => {
+    const initCheckout = await loadCheckout();
+    await initCheckout();
+    expect(window.Smoothr.checkout.version).toBe('dev6');
+    expect(typeof window.Smoothr.checkout.mountCardFields).toBe('function');
+    expect(typeof window.Smoothr.checkout.getStoreSettings).toBe('function');
+    expect(typeof window.Smoothr.checkout.createPaymentMethod).toBe('function');
   });
 });
