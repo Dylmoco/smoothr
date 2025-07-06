@@ -210,13 +210,14 @@ export async function initCheckout() {
     }
 
     try {
-      const { error: pmError, paymentMethod } =
+      const { error: pmError, payment_method, paymentMethod } =
         await gateway.createPaymentMethod({
           name: `${first_name} ${last_name}`,
           email
         });
 
-      if (pmError || !paymentMethod) {
+      const token = payment_method || paymentMethod;
+      if (pmError || !token) {
         err(`\u274C Failed to create payment method: ${pmError?.message}`);
         submitBtn.disabled = false;
         return;
@@ -236,13 +237,13 @@ export async function initCheckout() {
       };
 
       if (provider === 'stripe') {
-        payload.payment_method = paymentMethod.id;
+        payload.payment_method = token.id;
       } else if (provider === 'authorizeNet') {
-        payload.payment = paymentMethod;
+        payload.payment_method = token;
       } else if (provider === 'nmi') {
-        Object.assign(payload, paymentMethod);
+        Object.assign(payload, token);
       } else {
-        payload.payment_method = paymentMethod.id;
+        payload.payment_method = token.id;
       }
 
       if (debug) {

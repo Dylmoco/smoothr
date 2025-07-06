@@ -17,7 +17,7 @@ const err = (...args: any[]) => debug && console.error('[Checkout AuthorizeNet]'
 
 interface AuthorizeNetPayload {
   amount: number;
-  payment: {
+  payment_method: {
     dataDescriptor: string;
     dataValue: string;
   };
@@ -49,8 +49,8 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
         ...(payload.currency ? { currencyCode: payload.currency } : {}),
         payment: {
           opaqueData: {
-            dataDescriptor: payload.payment.dataDescriptor,
-            dataValue: payload.payment.dataValue
+            dataDescriptor: payload.payment_method.dataDescriptor,
+            dataValue: payload.payment_method.dataValue
           }
         }
       }
