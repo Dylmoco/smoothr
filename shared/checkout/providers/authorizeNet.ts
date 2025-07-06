@@ -1,8 +1,15 @@
 
 import { getStoreIntegration } from '../getStoreIntegration';
 
-const envLoginId = process.env.AUTHORIZE_NET_LOGIN_ID || '';
-const envTransactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY || '';
+const envLoginId = process.env.AUTHNET_API_LOGIN_ID || '';
+const envTransactionKey = process.env.AUTHNET_TRANSACTION_KEY || '';
+const envClientKey = process.env.AUTHNET_CLIENT_KEY || '';
+
+const env = process.env.AUTHNET_ENV === 'production' ? 'production' : 'sandbox';
+const baseUrl =
+  env === 'production'
+    ? 'https://api.authorize.net/xml/v1/request.api'
+    : 'https://apitest.authorize.net/xml/v1/request.api';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout AuthorizeNet]', ...args);
@@ -11,9 +18,8 @@ const err = (...args: any[]) => debug && console.error('[Checkout AuthorizeNet]'
 interface AuthorizeNetPayload {
   amount: number;
   payment: {
-    cardNumber: string;
-    expirationDate: string;
-    cardCode: string;
+    dataDescriptor: string;
+    dataValue: string;
   };
   currency?: string;
   store_id: string;
@@ -22,9 +28,11 @@ interface AuthorizeNetPayload {
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
   const loginId =
-    integration?.settings?.loginId || integration?.api_key || envLoginId;
+    integration?.settings?.api_login_id || integration?.api_key || envLoginId;
   const transactionKey =
-    integration?.settings?.transactionKey || envTransactionKey;
+    integration?.settings?.transaction_key || envTransactionKey;
+  const clientKey =
+    integration?.settings?.client_key || envClientKey;
   if (!loginId.trim() || !transactionKey.trim()) {
     err('Missing Authorize.Net credentials');
     return { success: false, error: 'Missing credentials' };
@@ -38,11 +46,11 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       transactionRequest: {
         transactionType: 'authCaptureTransaction',
         amount: payload.amount,
+        ...(payload.currency ? { currencyCode: payload.currency } : {}),
         payment: {
-          creditCard: {
-            cardNumber: payload.payment.cardNumber,
-            expirationDate: payload.payment.expirationDate,
-            cardCode: payload.payment.cardCode
+          opaqueData: {
+            dataDescriptor: payload.payment.dataDescriptor,
+            dataValue: payload.payment.dataValue
           }
         }
       }
@@ -50,7 +58,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   };
 
   try {
-    const res = await fetch('https://apitest.authorize.net/xml/v1/request.api', {
+    const res = await fetch(baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -59,11 +67,14 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     log('AuthorizeNet response:', JSON.stringify(json));
 
     if (json.messages?.resultCode === 'Ok') {
-      const url = json.transactionResponse?.secureAcceptance?.secureAcceptanceUrl;
-      return { success: true, ...(url ? { checkoutUrl: url } : {}) };
+      const transactionId = json.transactionResponse?.transId;
+      return { success: true, intent: { id: transactionId } };
     }
 
-    const message = json.messages?.message?.[0]?.text || 'Unknown error';
+    const message =
+      json.transactionResponse?.errors?.error?.[0]?.errorText ||
+      json.messages?.message?.[0]?.text ||
+      'Unknown error';
     return { success: false, error: message };
   } catch (e: any) {
     err('AuthorizeNet error:', e?.message || e);
