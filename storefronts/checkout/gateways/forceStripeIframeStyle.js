@@ -9,12 +9,15 @@ export default function forceStripeIframeStyle(selector) {
       iframe.style.minWidth = '100%';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
-      if (
-        container &&
-        typeof window !== 'undefined' &&
-        window.getComputedStyle(container).position === 'static'
-      ) {
-        container.style.position = 'relative';
+      if (container) {
+        container.style.width = '100%';
+        container.style.minWidth = '100%';
+        if (
+          typeof window !== 'undefined' &&
+          window.getComputedStyle(container).position === 'static'
+        ) {
+          container.style.position = 'relative';
+        }
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
