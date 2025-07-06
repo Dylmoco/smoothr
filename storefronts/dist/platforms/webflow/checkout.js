@@ -7457,6 +7457,7 @@ var stripe;
 var elements;
 var cachedKey;
 var cardNumberElement;
+var mountPromise;
 var _a;
 var debug = (_a = window.SMOOTHR_CONFIG) == null ? void 0 : _a.debug;
 var log = (...args) => debug && console.log("[Smoothr Stripe]", ...args);
@@ -7538,26 +7539,35 @@ async function getElements() {
   return { stripe, elements };
 }
 async function mountCardFields() {
-  log("Mounting split fields");
-  const numberTarget = document.querySelector("[data-smoothr-card-number]");
-  const expiryTarget = document.querySelector("[data-smoothr-card-expiry]");
-  const cvcTarget = document.querySelector("[data-smoothr-card-cvc]");
-  log("Targets found", {
-    number: !!numberTarget,
-    expiry: !!expiryTarget,
-    cvc: !!cvcTarget
-  });
-  if (!numberTarget && !expiryTarget && !cvcTarget) {
-    if (mountAttempts < 5) {
-      mountAttempts++;
-      setTimeout(mountCardFields, 200);
-    } else {
-      warn("card fields not found");
+  if (mountPromise) return mountPromise;
+  if (fieldsMounted) return;
+  mountPromise = (async () => {
+    log("Mounting split fields");
+    const numberTarget = document.querySelector("[data-smoothr-card-number]");
+    const expiryTarget = document.querySelector("[data-smoothr-card-expiry]");
+    const cvcTarget = document.querySelector("[data-smoothr-card-cvc]");
+    log("Targets found", {
+      number: !!numberTarget,
+      expiry: !!expiryTarget,
+      cvc: !!cvcTarget
+    });
+    if (!numberTarget && !expiryTarget && !cvcTarget) {
+      if (mountAttempts < 5) {
+        mountAttempts++;
+        mountPromise = null;
+        setTimeout(mountCardFields, 200);
+      } else {
+        warn("card fields not found");
+        mountPromise = null;
+      }
+      return;
     }
-    return;
-  }
-  const { elements: els } = await getElements();
-  if (!els) return;
+    const { elements: els } = await getElements();
+    if (!els) {
+      mountPromise = null;
+      return;
+    }
+    fieldsMounted = true;
   if (numberTarget && !cardNumberElement) {
     await waitForInteractable(numberTarget);
     const el = elements.create("cardNumber");
@@ -7621,6 +7631,11 @@ async function mountCardFields() {
     forceStripeIframeStyle("[data-smoothr-card-cvc]");
   }
   log("Mounted split fields");
+})();
+  mountPromise = mountPromise.finally(() => {
+    mountPromise = null;
+  });
+  return mountPromise;
 }
 function isMounted() {
   return fieldsMounted;

@@ -7,6 +7,7 @@ let elements;
 let initPromise;
 let cachedKey;
 let cardNumberElement;
+let mountPromise;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
@@ -124,29 +125,40 @@ export async function getElements() {
 }
 
 export async function mountCardFields() {
-  log('Mounting split fields');
-  const numberTarget = document.querySelector('[data-smoothr-card-number]');
-  const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
-  const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
+  if (mountPromise) return mountPromise;
+  if (fieldsMounted) return;
 
-  log('Targets found', {
-    number: !!numberTarget,
-    expiry: !!expiryTarget,
-    cvc: !!cvcTarget
-  });
+  mountPromise = (async () => {
+    log('Mounting split fields');
+    const numberTarget = document.querySelector('[data-smoothr-card-number]');
+    const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
+    const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
 
-  if (!numberTarget && !expiryTarget && !cvcTarget) {
-    if (mountAttempts < 5) {
-      mountAttempts++;
-      setTimeout(mountCardFields, 200);
-    } else {
-      warn('card fields not found');
+    log('Targets found', {
+      number: !!numberTarget,
+      expiry: !!expiryTarget,
+      cvc: !!cvcTarget
+    });
+
+    if (!numberTarget && !expiryTarget && !cvcTarget) {
+      if (mountAttempts < 5) {
+        mountAttempts++;
+        mountPromise = null;
+        setTimeout(mountCardFields, 200);
+      } else {
+        warn('card fields not found');
+        mountPromise = null;
+      }
+      return;
     }
-    return;
-  }
 
-  const { elements: els } = await getElements();
-  if (!els) return;
+    const { elements: els } = await getElements();
+    if (!els) {
+      mountPromise = null;
+      return;
+    }
+
+    fieldsMounted = true;
 
   const existingNumber = els.getElement ? els.getElement('cardNumber') : null;
   if (numberTarget && !existingNumber) {
@@ -168,7 +180,6 @@ export async function mountCardFields() {
     }, 500);
     forceStripeIframeStyle('[data-smoothr-card-number]');
     cardNumberElement = el;
-    fieldsMounted = true;
   }
   const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
   if (expiryTarget && !existingExpiry) {
@@ -212,6 +223,12 @@ export async function mountCardFields() {
   }
 
   log('Mounted split fields');
+})();
+
+  mountPromise = mountPromise.finally(() => {
+    mountPromise = null;
+  });
+  return mountPromise;
 }
 
 export function isMounted() {
