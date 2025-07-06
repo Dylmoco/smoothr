@@ -93,6 +93,19 @@ export async function mountCardFields() {
     await waitForInteractable(numberTarget);
     const el = elements.create('cardNumber');
     el.mount('[data-smoothr-card-number]');
+    console.log('[Stripe] Mounted iframe');
+    setTimeout(() => {
+      const iframe = document.querySelector('[data-smoothr-card-number] iframe');
+      const width = iframe?.getBoundingClientRect().width;
+      console.log('[Stripe] iframe bbox', width);
+      if (iframe && width < 10) {
+        console.warn('[Stripe] iframe dead → remounting now...');
+        cardNumberElement?.unmount?.();
+        cardNumberElement = elements.create('cardNumber');
+        cardNumberElement.mount('[data-smoothr-card-number]');
+        forceStripeIframeStyle('[data-smoothr-card-number]');
+      }
+    }, 500);
     forceStripeIframeStyle('[data-smoothr-card-number]');
     cardNumberElement = el;
     fieldsMounted = true;
@@ -101,12 +114,38 @@ export async function mountCardFields() {
     await waitForInteractable(expiryTarget);
     const el = elements.create('cardExpiry');
     el.mount('[data-smoothr-card-expiry]');
+    console.log('[Stripe] Mounted iframe');
+    setTimeout(() => {
+      const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
+      const width = iframe?.getBoundingClientRect().width;
+      console.log('[Stripe] iframe bbox', width);
+      if (iframe && width < 10) {
+        console.warn('[Stripe] iframe dead → remounting now...');
+        el?.unmount?.();
+        const remount = elements.create('cardExpiry');
+        remount.mount('[data-smoothr-card-expiry]');
+        forceStripeIframeStyle('[data-smoothr-card-expiry]');
+      }
+    }, 500);
     forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
   if (cvcTarget) {
     await waitForInteractable(cvcTarget);
     const el = elements.create('cardCvc');
     el.mount('[data-smoothr-card-cvc]');
+    console.log('[Stripe] Mounted iframe');
+    setTimeout(() => {
+      const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
+      const width = iframe?.getBoundingClientRect().width;
+      console.log('[Stripe] iframe bbox', width);
+      if (iframe && width < 10) {
+        console.warn('[Stripe] iframe dead → remounting now...');
+        el?.unmount?.();
+        const remount = elements.create('cardCvc');
+        remount.mount('[data-smoothr-card-cvc]');
+        forceStripeIframeStyle('[data-smoothr-card-cvc]');
+      }
+    }, 500);
     forceStripeIframeStyle('[data-smoothr-card-cvc]');
   }
 
