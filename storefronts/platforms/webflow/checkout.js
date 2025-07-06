@@ -167,7 +167,7 @@ export async function initCheckout() {
     return;
   }
 
-  gateway.mountCardFields();
+  await gateway.mountCardFields();
 
   document.querySelectorAll('[data-smoothr-checkout]').forEach(checkoutBtn => {
     if (checkoutBtn.__smoothrBound) return;
