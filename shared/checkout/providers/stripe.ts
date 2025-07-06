@@ -33,13 +33,16 @@ interface StripePayload {
 export default async function handleStripe(payload: StripePayload) {
   const integration = await getStoreIntegration(payload.store_id, 'stripe');
   const stripeSecret =
-    integration?.api_key ||
     integration?.settings?.secret_key ||
+    integration?.api_key ||
     process.env.STRIPE_SECRET_KEY ||
     '';
   if (!stripeSecret.trim()) {
     err('Missing Stripe credentials');
     return { success: false, error: 'Missing credentials' };
+  }
+  if (stripeSecret.startsWith('pk_')) {
+    console.warn('[Checkout Stripe] Using publishable key on server');
   }
   const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
   const { payment_method, total, currency, shipping } = payload;
