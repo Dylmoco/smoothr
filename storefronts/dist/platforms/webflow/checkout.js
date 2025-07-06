@@ -7923,3 +7923,4 @@ document.addEventListener("DOMContentLoaded", initCheckout);
 export {
   initCheckout
 };
+// bump version
