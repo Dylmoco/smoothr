@@ -330,3 +330,6 @@ export async function initCheckout() {
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);
+if (document.readyState !== 'loading') {
+  initCheckout();
+}
