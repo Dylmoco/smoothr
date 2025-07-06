@@ -167,6 +167,14 @@ export async function initCheckout() {
     return;
   }
 
+  // expose selected gateway helpers on window
+  window.Smoothr.checkout = Object.assign(
+    {},
+    window.Smoothr.checkout,
+    gateway,
+    { version: 'dev6' }
+  );
+
   await gateway.mountCardFields();
 
   document.querySelectorAll('[data-smoothr-checkout]').forEach(checkoutBtn => {
@@ -340,9 +348,4 @@ if (document.readyState !== 'loading') {
 }
 
 window.Smoothr = window.Smoothr || {};
-window.Smoothr.checkout = {
-  version: 'dev6',
-  mountCardFields: stripeGateway.mountCardFields,
-  getStoreSettings: stripeGateway.getStoreSettings,
-  createPaymentMethod: stripeGateway.createPaymentMethod
-};
+window.Smoothr.checkout = { version: 'dev6' };

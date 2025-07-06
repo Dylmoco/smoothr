@@ -193,6 +193,16 @@ describe('checkout', () => {
     );
   });
 
+  it('uses helpers from the active gateway', async () => {
+    global.window.SMOOTHR_CONFIG.active_payment_gateway = 'authorizeNet';
+    const initCheckout = await loadCheckout();
+    await initCheckout();
+    const mod = await import('../../checkout/gateways/authorizeNet.js');
+    expect(window.Smoothr.checkout.createPaymentMethod).toBe(
+      mod.createPaymentMethod
+    );
+  });
+
   it('renders cart items from template', async () => {
     const initCheckout = await loadCheckout();
     await initCheckout();
