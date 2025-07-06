@@ -148,17 +148,6 @@ export async function initCheckout() {
     totalEl.textContent = String(convertedSubtotal);
   }
 
-  const disclaimerText =
-    'You will be charged in GBP. Displayed prices are approximate.';
-  const disclaimerEl = document.querySelector('[data-smoothr-disclaimer]');
-  if (disclaimerEl) {
-    disclaimerEl.textContent = disclaimerText;
-  } else if (totalEl) {
-    const p = document.createElement('p');
-    p.textContent = disclaimerText;
-    totalEl.parentNode?.insertBefore(p, totalEl.nextSibling);
-  }
-
   const activeGateway = await getActivePaymentGateway();
   console.log('[Smoothr Checkout] Using gateway:', activeGateway);
   const gateway = gateways[activeGateway];
