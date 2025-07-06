@@ -1,4 +1,4 @@
-import forceStripeIframeStyle from "./forceStripeIframeStyle.js";
+import forceStripeIframeStyle from './forceStripeIframeStyle.js';
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -8,6 +8,19 @@ let cardNumberElement;
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
+
+export async function waitForVisible(el, timeout = 1000) {
+  if (!el || typeof el.getBoundingClientRect !== 'function') return;
+  log('Waiting for element to be visible', el);
+  for (let i = 0; i < 10; i++) {
+    if (el.getBoundingClientRect().width > 10) {
+      log('Element visible', el);
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  warn('Element still invisible after timeout', el);
+}
 
 
 function elementStyleFromContainer(el) {
@@ -34,7 +47,7 @@ function getElements() {
   return elements;
 }
 
-export function mountCardFields() {
+export async function mountCardFields() {
   log('Mounting split fields');
   const numberTarget = document.querySelector('[data-smoothr-card-number]');
   const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
@@ -60,6 +73,7 @@ export function mountCardFields() {
   if (!els) return;
 
   if (numberTarget && !cardNumberElement) {
+    await waitForVisible(numberTarget);
     cardNumberElement = els.create('cardNumber', {
       style: elementStyleFromContainer(numberTarget)
     });
@@ -68,6 +82,7 @@ export function mountCardFields() {
     fieldsMounted = true;
   }
   if (expiryTarget) {
+    await waitForVisible(expiryTarget);
     const el = els.create('cardExpiry', {
       style: elementStyleFromContainer(expiryTarget)
     });
@@ -75,6 +90,7 @@ export function mountCardFields() {
     forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
   if (cvcTarget) {
+    await waitForVisible(cvcTarget);
     const el = els.create('cardCvc', {
       style: elementStyleFromContainer(cvcTarget)
     });
@@ -108,5 +124,6 @@ export default {
   mountCardFields,
   isMounted,
   ready,
-  createPaymentMethod
+  createPaymentMethod,
+  waitForVisible
 };
