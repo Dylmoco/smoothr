@@ -22,6 +22,24 @@ export async function waitForVisible(el, timeout = 1000) {
   warn('Element still invisible after timeout', el);
 }
 
+export async function waitForInteractable(el, timeout = 1500) {
+  if (!el || typeof el.getBoundingClientRect !== 'function') return;
+  log('Waiting for mount target to be visible and clickable');
+  const attempts = Math.ceil(timeout / 100);
+  for (let i = 0; i < attempts; i++) {
+    if (
+      el.offsetParent !== null &&
+      el.getBoundingClientRect().width > 10 &&
+      document.activeElement !== el
+    ) {
+      log('Target ready → mounting...');
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  warn('Mount target not interactable after 1.5s');
+}
+
 
 function elementStyleFromContainer(el) {
   if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return {};
@@ -69,31 +87,25 @@ export async function mountCardFields() {
     return;
   }
 
-  const els = getElements();
-  if (!els) return;
+  if (!getElements()) return;
 
   if (numberTarget && !cardNumberElement) {
-    await waitForVisible(numberTarget);
-    cardNumberElement = els.create('cardNumber', {
-      style: elementStyleFromContainer(numberTarget)
-    });
-    cardNumberElement.mount('[data-smoothr-card-number]');
+    await waitForInteractable(numberTarget);
+    const el = elements.create('cardNumber');
+    el.mount('[data-smoothr-card-number]');
     forceStripeIframeStyle('[data-smoothr-card-number]');
+    cardNumberElement = el;
     fieldsMounted = true;
   }
   if (expiryTarget) {
-    await waitForVisible(expiryTarget);
-    const el = els.create('cardExpiry', {
-      style: elementStyleFromContainer(expiryTarget)
-    });
+    await waitForInteractable(expiryTarget);
+    const el = elements.create('cardExpiry');
     el.mount('[data-smoothr-card-expiry]');
     forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
   if (cvcTarget) {
-    await waitForVisible(cvcTarget);
-    const el = els.create('cardCvc', {
-      style: elementStyleFromContainer(cvcTarget)
-    });
+    await waitForInteractable(cvcTarget);
+    const el = elements.create('cardCvc');
     el.mount('[data-smoothr-card-cvc]');
     forceStripeIframeStyle('[data-smoothr-card-cvc]');
   }
@@ -125,5 +137,6 @@ export default {
   isMounted,
   ready,
   createPaymentMethod,
-  waitForVisible
+  waitForVisible,
+  waitForInteractable
 };

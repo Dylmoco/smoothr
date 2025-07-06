@@ -62,9 +62,9 @@ describe('stripe element mounting', () => {
     await vi.runAllTimersAsync();
     vi.useRealTimers();
 
-    expect(elementsCreate).toHaveBeenCalledWith('cardNumber', expect.any(Object));
-    expect(elementsCreate).toHaveBeenCalledWith('cardExpiry', expect.any(Object));
-    expect(elementsCreate).toHaveBeenCalledWith('cardCvc', expect.any(Object));
+    expect(elementsCreate).toHaveBeenCalledWith('cardNumber');
+    expect(elementsCreate).toHaveBeenCalledWith('cardExpiry');
+    expect(elementsCreate).toHaveBeenCalledWith('cardCvc');
 
     expect(cardNumberEl.mount).toHaveBeenCalledWith('[data-smoothr-card-number]');
     expect(cardExpiryEl.mount).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
@@ -109,6 +109,37 @@ describe('stripe element mounting', () => {
     expect(resolved).toBe(false);
     vi.advanceTimersByTime(100);
     width = 20;
+    await vi.runAllTimersAsync();
+    await p;
+    expect(resolved).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('waitForInteractable resolves when element becomes clickable', async () => {
+    const { waitForInteractable } = await import('../../checkout/gateways/stripe.js');
+    let width = 0;
+    let offset = null;
+    let active = null;
+    const el = {
+      getBoundingClientRect: vi.fn(() => ({ width })),
+      get offsetParent() {
+        return offset;
+      }
+    };
+    Object.defineProperty(global.document, 'activeElement', {
+      configurable: true,
+      get: () => active
+    });
+    vi.useFakeTimers();
+    let resolved = false;
+    const p = waitForInteractable(el, 500).then(() => {
+      resolved = true;
+    });
+    vi.advanceTimersByTime(100); // not interactable
+    width = 20;
+    vi.advanceTimersByTime(100); // width ok but offsetParent null
+    offset = {};
+    vi.advanceTimersByTime(100); // now interactable
     await vi.runAllTimersAsync();
     await p;
     expect(resolved).toBe(true);
