@@ -125,6 +125,29 @@ active payment gateway. `initCheckout` chooses the gateway by first checking
 `store_settings.settings.active_payment_gateway` in Supabase using the provided
 `storeId`. The default provider is `stripe`.
 
+To integrate Authorize.net create a record in the `store_integrations` table
+with `integration_id` set to `authorizeNet` and save your credentials in the
+`settings` JSON column:
+
+```json
+{
+  "api_login_id": "<API_LOGIN_ID>",
+  "transaction_key": "<TRANSACTION_KEY>",
+  "client_key": "<CLIENT_KEY>"
+}
+```
+
+Activate the gateway via `store_settings.settings.active_payment_gateway`
+or by defining the following snippet before loading the SDK:
+
+```html
+<script>
+  window.SMOOTHR_CONFIG = {
+    active_payment_gateway: 'authorizeNet'
+  };
+</script>
+```
+
 A Webflow‑specific version lives at `./platforms/webflow/checkout.js`. Embed it with:
 
 ```html
