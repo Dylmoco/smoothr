@@ -8,14 +8,19 @@ const SUPABASE_ANON_KEY =
   (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  global: {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
     },
-  },
-});
+  });
+
+console.log(
+  '[debug] Supabase client created',
+  supabase?.rest?.headers || supabase?.headers
+);
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
@@ -24,17 +29,14 @@ const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
 async function getPublicCredential(storeId, integrationId) {
   if (!storeId || !integrationId) return null;
   try {
+    console.log('[debug] Fetching store_integrations for storeId:', storeId);
     const { data, error } = await supabase
       .from('store_integrations')
       .select('api_key, settings')
       .eq('store_id', storeId)
       .eq('integration_id', integrationId)
       .maybeSingle();
-    if (debug) {
-      console.log('[Smoothr Checkout] store_integrations response');
-      console.log('data:', data);
-      console.log('error:', error);
-    }
+    console.log('[debug] store_integrations response', { credsData: data, credsError: error });
     if (error) {
       warn('Credential lookup failed:', error.message || error);
       return null;
@@ -52,11 +54,13 @@ async function getActivePaymentGateway() {
   const storeId = cfg.storeId;
   if (!storeId) return 'stripe';
   try {
+    console.log('[debug] Fetching store_settings for storeId:', storeId);
     const { data, error } = await supabase
       .from('store_settings')
       .select('settings')
       .eq('store_id', storeId)
       .maybeSingle();
+    console.log('[debug] store_settings response', { settingsData: data, settingsError: error });
     if (error) {
       warn('Store settings lookup failed:', error.message || error);
       return 'stripe';
