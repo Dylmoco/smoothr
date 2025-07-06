@@ -135,9 +135,10 @@ repository root with:
 npm test
 ```
 
-The test command depends on `vitest` and other development packages. Ensure you
-have installed dependencies in both the `storefronts` and `smoothr` workspaces
-with `npm install` or `npm ci` before running tests.
+The test command depends on `vitest` and other development packages. Vitest is
+declared in each workspace’s `package.json`, so **run `npm install` inside the
+`storefronts` directory (and in `smoothr` if it contains tests)** before
+executing `npm test`.
 
 All tests rely on a shared setup file that polyfills browser globals like
 `window`, `document` and `localStorage` for Node environments. The setup is
