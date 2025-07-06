@@ -13,12 +13,30 @@ const src = join(__dirname, '..', 'checkout', 'checkout.js');
 const dest = join(__dirname, '..', 'dist', 'checkout.js');
 const gatewaysSrcDir = join(__dirname, '..', 'checkout', 'gateways');
 const gatewaysDestDir = join(__dirname, '..', 'dist', 'gateways');
+const webflowSrc = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
+const webflowDest = join(
+  __dirname,
+  '..',
+  'dist',
+  'platforms',
+  'webflow',
+  'checkout.js'
+);
 
 try {
   await copyFile(src, dest);
   log(`Copied ${src} to ${dest}`);
 } catch (err) {
   err(`Failed to copy checkout.js: ${err.message}`);
+  process.exit(1);
+}
+
+try {
+  await mkdir(dirname(webflowDest), { recursive: true });
+  await copyFile(webflowSrc, webflowDest);
+  log(`Copied ${webflowSrc} to ${webflowDest}`);
+} catch (err) {
+  err(`Failed to copy Webflow checkout.js: ${err.message}`);
   process.exit(1);
 }
 
