@@ -152,7 +152,9 @@ Deployment status can be monitored in the GitHub Actions tab.
 
 ## Running tests
 
-Vitest runs the unit tests for this package. After installing dependencies run:
+Vitest runs the unit tests for this package. Run `npm install` in this
+directory first so that Vitest and other dev dependencies from the local
+`package.json` are installed, then execute:
 
 ```bash
 npm test
