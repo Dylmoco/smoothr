@@ -7535,7 +7535,7 @@ async function getElements() {
     stripe = Stripe(stripeKey);
     elements = stripe.elements();
   }
-  return elements;
+  return { stripe, elements };
 }
 async function mountCardFields() {
   log("Mounting split fields");
@@ -7556,7 +7556,7 @@ async function mountCardFields() {
     }
     return;
   }
-  const els = await getElements();
+  const { elements: els } = await getElements();
   if (!els) return;
   if (numberTarget && !cardNumberElement) {
     await waitForInteractable(numberTarget);
@@ -7646,7 +7646,11 @@ async function createPaymentMethod(billing_details) {
   if (!ready()) {
     return { error: { message: "Stripe not ready" } };
   }
-  return stripe.createPaymentMethod({
+  const { stripe: stripeInstance } = await getElements();
+  if (!stripeInstance) {
+    return { error: { message: "Stripe not ready" } };
+  }
+  return stripeInstance.createPaymentMethod({
     type: "card",
     card: cardNumberElement,
     billing_details
@@ -7937,7 +7941,7 @@ async function initCheckout() {
       }
       if (activeGateway === "stripe") {
         try {
-          const els = await getElements();
+          const { elements: els } = await getElements();
           if (!els) {
             alert("Stripe key not configured");
             checkoutBtn.disabled = false;

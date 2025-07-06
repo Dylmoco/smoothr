@@ -179,15 +179,15 @@ export async function initCheckout() {
         return;
       }
 
-      if (activeGateway === 'stripe') {
-        try {
-          const els = await stripeGateway.getElements();
-          if (!els) {
-            alert('Stripe key not configured');
-            checkoutBtn.disabled = false;
-            checkoutBtn.classList.remove('loading');
-            return;
-          }
+        if (activeGateway === 'stripe') {
+          try {
+            const { elements: els } = await stripeGateway.getElements();
+            if (!els) {
+              alert('Stripe key not configured');
+              checkoutBtn.disabled = false;
+              checkoutBtn.classList.remove('loading');
+              return;
+            }
         } catch (err) {
           warn('Stripe init failed:', err?.message || err);
           alert('Stripe key not configured');
