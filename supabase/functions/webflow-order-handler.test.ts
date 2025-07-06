@@ -68,7 +68,18 @@ describe('webflow-order-handler', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }));
-    expect(createClientMock).toHaveBeenCalledWith('https://example.supabase.co', 'service-key');
+    expect(createClientMock).toHaveBeenCalledWith(
+      'https://example.supabase.co',
+      'service-key',
+      {
+        global: {
+          headers: {
+            apikey: 'service-key',
+            Authorization: 'Bearer service-key'
+          }
+        }
+      }
+    );
     expect(insertCustomerMock).toHaveBeenCalledWith({ store_id: 'site', email: 'user@example.com' });
     expect(insertOrderMock).toHaveBeenCalledWith({
       customer_email: 'user@example.com',
