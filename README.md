@@ -104,6 +104,28 @@ from the store's `store_settings` table in Supabase using the configured
 `storeId`. The `[provider]` segment in the route should match this value and
 defaults to `stripe` when no configuration is found.
 
+To enable Authorize.net create a row in the `store_integrations` table with
+`integration_id` set to `authorizeNet` and store your API credentials under the
+`settings` column:
+
+```json
+{
+  "api_login_id": "<API_LOGIN_ID>",
+  "transaction_key": "<TRANSACTION_KEY>",
+  "client_key": "<CLIENT_KEY>"
+}
+```
+
+Select Authorize.net by setting
+`store_settings.settings.active_payment_gateway` to `authorizeNet` (or override
+it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`).
+
+```html
+<script>
+  window.SMOOTHR_CONFIG = { active_payment_gateway: 'authorizeNet' };
+</script>
+```
+
 
 ### Deployment Log
 
