@@ -103,7 +103,7 @@ async function resolveStripeKey() {
   return key;
 }
 
-async function getElements() {
+export async function getElements() {
   if (!stripe) {
     const stripeKey = await resolveStripeKey();
     if (!stripeKey) return null;
@@ -245,6 +245,7 @@ export default {
   isMounted,
   ready,
   getStoreSettings,
+  getElements,
   createPaymentMethod,
   waitForVisible,
   waitForInteractable
