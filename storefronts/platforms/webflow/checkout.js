@@ -1,27 +1,6 @@
 import gateways from '../../checkout/gateways/index.js';
 import * as stripeGateway from '../../checkout/gateways/stripe.js';
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL =
-  (typeof __NEXT_PUBLIC_SUPABASE_URL__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_URL__) ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY =
-  (typeof __NEXT_PUBLIC_SUPABASE_ANON_KEY__ !== 'undefined' && __NEXT_PUBLIC_SUPABASE_ANON_KEY__) ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    },
-  });
-
-console.log(
-  '[debug] Supabase client created',
-  supabase?.rest?.headers || supabase?.headers
-);
+import supabase from '../../../supabase/supabaseClient.js';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
