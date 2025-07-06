@@ -42,6 +42,7 @@ function getElements() {
   if (!stripe) {
     const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
     if (!stripeKey) return null;
+    log('Using Stripe key', stripeKey);
     stripe = Stripe(stripeKey);
     elements = stripe.elements();
   }
@@ -49,9 +50,16 @@ function getElements() {
 }
 
 export function mountCardFields() {
+  log('Mounting split fields');
   const numberTarget = document.querySelector('[data-smoothr-card-number]');
   const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
   const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
+
+  log('Targets found', {
+    number: !!numberTarget,
+    expiry: !!expiryTarget,
+    cvc: !!cvcTarget
+  });
 
   if (!numberTarget && !expiryTarget && !cvcTarget) {
     if (mountAttempts < 5) {
@@ -82,6 +90,8 @@ export function mountCardFields() {
     el.mount('[data-smoothr-card-cvc]');
     forceStripeIframeStyle('[data-smoothr-card-cvc]');
   }
+
+  log('Mounted split fields');
 }
 
 export function isMounted() {
