@@ -106,6 +106,7 @@ If any required billing fields are missing the browser console logs:
 ## forceStripeIframeStyle helper
 
 The checkout adapter exposes `forceStripeIframeStyle()`, which runs automatically right after `.mount()` on each Stripe card field. It fixes the notorious “1px iframe bug” that can appear in flexbox layouts by forcing the Stripe Elements iframe to remain at `100%` width.
+Stripe Elements automatically inherit font and color styles from their container, so extra CSS is rarely needed.
 
 
 ## Webflow integration
