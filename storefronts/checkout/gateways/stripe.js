@@ -4,6 +4,7 @@ let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
 let elements;
+let initPromise;
 let cachedKey;
 let cardNumberElement;
 
@@ -104,14 +105,22 @@ async function resolveStripeKey() {
 }
 
 export async function getElements() {
-  if (!stripe) {
-    const stripeKey = await resolveStripeKey();
-    if (!stripeKey) return null;
-    log('Using Stripe key', stripeKey);
-    stripe = Stripe(stripeKey);
-    elements = stripe.elements();
+  if (stripe && elements) {
+    return { stripe, elements };
   }
-  return { stripe, elements };
+
+  if (!initPromise) {
+    initPromise = (async () => {
+      const stripeKey = await resolveStripeKey();
+      if (!stripeKey) return { stripe: null, elements: null };
+      log('Using Stripe key', stripeKey);
+      stripe = Stripe(stripeKey);
+      elements = stripe.elements();
+      return { stripe, elements };
+    })();
+  }
+
+  return initPromise;
 }
 
 export async function mountCardFields() {
@@ -233,13 +242,16 @@ export async function createPaymentMethod(billing_details) {
   if (!ready()) {
     return { error: { message: 'Stripe not ready' } };
   }
-  const { stripe: stripeInstance } = await getElements();
-  if (!stripeInstance) {
+
+  const { stripe: stripeInstance, elements: els } = await getElements();
+  if (!stripeInstance || !els) {
     return { error: { message: 'Stripe not ready' } };
   }
+
+  const card = els.getElement('cardNumber');
   return stripeInstance.createPaymentMethod({
     type: 'card',
-    card: cardNumberElement,
+    card,
     billing_details
   });
 }
