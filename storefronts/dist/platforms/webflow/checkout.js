@@ -32,7 +32,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// ../node_modules/@supabase/node-fetch/browser.js
+// node_modules/@supabase/node-fetch/browser.js
 var browser_exports = {};
 __export(browser_exports, {
   Headers: () => Headers2,
@@ -43,7 +43,7 @@ __export(browser_exports, {
 });
 var getGlobal, globalObject, fetch2, browser_default, Headers2, Request, Response2;
 var init_browser = __esm({
-  "../node_modules/@supabase/node-fetch/browser.js"() {
+  "node_modules/@supabase/node-fetch/browser.js"() {
     "use strict";
     getGlobal = function() {
       if (typeof self !== "undefined") {
@@ -66,9 +66,9 @@ var init_browser = __esm({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js
 var require_PostgrestError = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var PostgrestError2 = class extends Error {
@@ -84,9 +84,9 @@ var require_PostgrestError = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js
 var require_PostgrestBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -286,9 +286,9 @@ var require_PostgrestBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js
 var require_PostgrestTransformBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -501,9 +501,9 @@ var require_PostgrestTransformBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js
 var require_PostgrestFilterBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -867,9 +867,9 @@ var require_PostgrestFilterBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js
 var require_PostgrestQueryBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1139,9 +1139,9 @@ var require_PostgrestQueryBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/version.js
+// node_modules/@supabase/postgrest-js/dist/cjs/version.js
 var require_version = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/version.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/version.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.version = void 0;
@@ -1149,9 +1149,9 @@ var require_version = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/constants.js
+// node_modules/@supabase/postgrest-js/dist/cjs/constants.js
 var require_constants = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/constants.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DEFAULT_HEADERS = void 0;
@@ -1160,9 +1160,9 @@ var require_constants = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js
 var require_PostgrestClient = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1270,9 +1270,9 @@ var require_PostgrestClient = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/index.js
+// node_modules/@supabase/postgrest-js/dist/cjs/index.js
 var require_cjs = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/index.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/index.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1302,9 +1302,9 @@ var require_cjs = __commonJS({
   }
 });
 
-// ../node_modules/ws/browser.js
+// node_modules/ws/browser.js
 var require_browser = __commonJS({
-  "../node_modules/ws/browser.js"(exports, module) {
+  "node_modules/ws/browser.js"(exports, module) {
     "use strict";
     module.exports = function() {
       throw new Error(
@@ -1314,344 +1314,48 @@ var require_browser = __commonJS({
   }
 });
 
-// checkout/gateways/stripe.js
+// storefronts/checkout/gateways/stripe.js
 var stripe_exports = {};
 __export(stripe_exports, {
   createPaymentMethod: () => createPaymentMethod,
   default: () => stripe_default,
+  getElements: () => getElements,
+  getStoreSettings: () => getStoreSettings,
   isMounted: () => isMounted,
   mountCardFields: () => mountCardFields,
-  ready: () => ready
+  ready: () => ready,
+  waitForInteractable: () => waitForInteractable,
+  waitForVisible: () => waitForVisible
 });
-var fieldsMounted = false;
-var mountAttempts = 0;
-var stripe;
-var elements;
-var cachedKey;
-var cardNumberElement;
-var _a;
-var debug = (_a = window.SMOOTHR_CONFIG) == null ? void 0 : _a.debug;
-var log = (...args) => debug && console.log("[Smoothr Stripe]", ...args);
-var warn = (...args) => debug && console.warn("[Smoothr Stripe]", ...args);
+
+// storefronts/checkout/gateways/forceStripeIframeStyle.js
 function forceStripeIframeStyle(selector) {
   if (typeof document === "undefined") return;
   let attempts = 0;
   const interval = setInterval(() => {
-    const targetEl = document.querySelector(selector);
-    const iframe = targetEl == null ? void 0 : targetEl.querySelector("iframe");
+    const container = document.querySelector(selector);
+    const iframe = container == null ? void 0 : container.querySelector("iframe");
     if (iframe) {
       iframe.style.width = "100%";
       iframe.style.minWidth = "100%";
       iframe.style.display = "block";
-      iframe.style.boxSizing = "border-box";
-      iframe.style.position = "relative";
-      if (targetEl && typeof window !== "undefined" && window.getComputedStyle(targetEl).position === "static") {
-        targetEl.style.position = "relative";
+      iframe.style.opacity = "1";
+      if (container) {
+        container.style.width = "100%";
+        container.style.minWidth = "100%";
+        if (typeof window !== "undefined" && window.getComputedStyle(container).position === "static") {
+          container.style.position = "relative";
+        }
       }
+      console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
-    } else {
-      log(`Waiting for Stripe iframe in ${selector} (${attempts + 1})`);
-      if (++attempts >= 20) {
-        warn(`iframe not found in ${selector} after ${attempts} attempts`);
-        clearInterval(interval);
-      }
+    } else if (++attempts >= 20) {
+      clearInterval(interval);
     }
   }, 100);
 }
 
-async function resolveStripeKey() {
-  if (cachedKey) return cachedKey;
-  const cfg = window.SMOOTHR_CONFIG || {};
-  let key = cfg.stripeKey;
-  if (key) {
-    log("Loaded key from window.SMOOTHR_CONFIG");
-  } else {
-    const storeId = cfg.storeId;
-    if (storeId) {
-      const settings = await getStoreSettings(storeId);
-      if ((settings == null ? void 0 : settings.stripeKey)) {
-        key = settings.stripeKey;
-        log("Loaded key from Supabase.store_settings");
-      }
-      if (!key) {
-        try {
-          const { data, error } = await supabase
-            .from("store_integrations")
-            .select("api_key, settings")
-            .eq("store_id", storeId)
-            .eq("integration_id", "stripe")
-            .maybeSingle();
-          if (error) {
-            warn("Integration lookup failed:", error.message || error);
-          } else if (data) {
-            key = data.api_key || (data.settings == null ? void 0 : data.settings.public_key) || "";
-            if (key) {
-              log(
-                "Loaded key from Supabase." +
-                  (data.api_key ? "store_integrations.api_key" : "store_integrations.settings.public_key")
-              );
-            }
-          }
-        } catch (e) {
-          warn("Integration fetch error:", (e == null ? void 0 : e.message) || e);
-        }
-      }
-    }
-  }
-  if (!key) {
-    throw new Error("\u274C Stripe key not found \u2014 aborting Stripe mount.");
-  }
-  cachedKey = key;
-  if (!cfg.stripeKey) cfg.stripeKey = key;
-  return key;
-}
-async function getElements() {
-  if (!stripe) {
-    const stripeKey = await resolveStripeKey();
-    if (!stripeKey) return null;
-    log("Using Stripe key", stripeKey);
-    stripe = Stripe(stripeKey);
-    elements = stripe.elements();
-  }
-  return elements;
-}
-async function mountCardFields() {
-  log("Mounting split fields");
-  const numberTarget = document.querySelector("[data-smoothr-card-number]");
-  const expiryTarget = document.querySelector("[data-smoothr-card-expiry]");
-  const cvcTarget = document.querySelector("[data-smoothr-card-cvc]");
-  log("Targets found", {
-    number: !!numberTarget,
-    expiry: !!expiryTarget,
-    cvc: !!cvcTarget
-  });
-  if (!numberTarget && !expiryTarget && !cvcTarget) {
-    if (mountAttempts < 5) {
-      mountAttempts++;
-      setTimeout(mountCardFields, 200);
-    } else {
-      warn("card fields not found");
-    }
-    return;
-  }
-  const els = await getElements();
-  if (!els) return;
-  if (numberTarget && !cardNumberElement) {
-    cardNumberElement = els.create("cardNumber");
-    cardNumberElement.mount("[data-smoothr-card-number]");
-    forceStripeIframeStyle("[data-smoothr-card-number]");
-    fieldsMounted = true;
-  }
-  if (expiryTarget) {
-    const el = els.create("cardExpiry");
-    el.mount("[data-smoothr-card-expiry]");
-    forceStripeIframeStyle("[data-smoothr-card-expiry]");
-  }
-  if (cvcTarget) {
-    const el = els.create("cardCvc");
-    el.mount("[data-smoothr-card-cvc]");
-    forceStripeIframeStyle("[data-smoothr-card-cvc]");
-  }
-  log("Mounted split fields");
-}
-function isMounted() {
-  return fieldsMounted;
-}
-function ready() {
-  return !!stripe && !!cardNumberElement;
-}
-
-async function getStoreSettings(storeId) {
-  if (!storeId) return null;
-  try {
-    const { data, error } = await supabase
-      .from("store_settings")
-      .select("settings")
-      .eq("store_id", storeId)
-      .maybeSingle();
-    if (error) {
-      warn("Store settings lookup failed:", error.message || error);
-      return null;
-    }
-    return (data == null ? void 0 : data.settings) || null;
-  } catch (e) {
-    warn("Store settings fetch error:", (e == null ? void 0 : e.message) || e);
-    return null;
-  }
-}
-async function createPaymentMethod(billing_details) {
-  if (!ready()) {
-    return { error: { message: "Stripe not ready" } };
-  }
-  return stripe.createPaymentMethod({
-    type: "card",
-    card: cardNumberElement,
-    billing_details
-  });
-}
-var stripe_default = {
-  mountCardFields,
-  isMounted,
-  ready,
-  createPaymentMethod
-};
-
-// checkout/gateways/authorizeNet.js
-var authorizeNet_exports = {};
-__export(authorizeNet_exports, {
-  createPaymentMethod: () => createPaymentMethod2,
-  default: () => authorizeNet_default,
-  isMounted: () => isMounted2,
-  mountCardFields: () => mountCardFields2,
-  ready: () => ready2
-});
-var fieldsMounted2 = false;
-function mountCardFields2() {
-  const num = document.querySelector("[data-smoothr-card-number]");
-  const exp = document.querySelector("[data-smoothr-card-expiry]");
-  const cvc = document.querySelector("[data-smoothr-card-cvc]");
-  if (num && exp && cvc) fieldsMounted2 = true;
-}
-function isMounted2() {
-  return fieldsMounted2;
-}
-function ready2() {
-  const num = document.querySelector("[data-smoothr-card-number]");
-  const exp = document.querySelector("[data-smoothr-card-expiry]");
-  return !!num && !!exp;
-}
-async function createPaymentMethod2() {
-  var _a4, _b, _c, _d, _e, _f;
-  if (!ready2()) {
-    return { error: { message: "Card fields missing" } };
-  }
-  const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number]")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
-  const expirationDate = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
-  const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  if (!cardNumber || !expirationDate) {
-    return { error: { message: "Card details incomplete" } };
-  }
-  return { paymentMethod: { cardNumber, expirationDate, cardCode } };
-}
-var authorizeNet_default = {
-  mountCardFields: mountCardFields2,
-  isMounted: isMounted2,
-  ready: ready2,
-  createPaymentMethod: createPaymentMethod2
-};
-
-// checkout/gateways/paypal.js
-var paypal_exports = {};
-__export(paypal_exports, {
-  createPaymentMethod: () => createPaymentMethod3,
-  default: () => paypal_default,
-  isMounted: () => isMounted3,
-  mountCardFields: () => mountCardFields3,
-  ready: () => ready3
-});
-var fieldsMounted3 = false;
-function mountCardFields3() {
-  fieldsMounted3 = true;
-}
-function isMounted3() {
-  return fieldsMounted3;
-}
-function ready3() {
-  return true;
-}
-async function createPaymentMethod3() {
-  return { paymentMethod: { id: "paypal" } };
-}
-var paypal_default = {
-  mountCardFields: mountCardFields3,
-  isMounted: isMounted3,
-  ready: ready3,
-  createPaymentMethod: createPaymentMethod3
-};
-
-// checkout/gateways/nmi.js
-var nmi_exports = {};
-__export(nmi_exports, {
-  createPaymentMethod: () => createPaymentMethod4,
-  default: () => nmi_default,
-  isMounted: () => isMounted4,
-  mountCardFields: () => mountCardFields4,
-  ready: () => ready4
-});
-var fieldsMounted4 = false;
-function mountCardFields4() {
-  const num = document.querySelector("[data-smoothr-card-number]");
-  const exp = document.querySelector("[data-smoothr-card-expiry]");
-  const cvc = document.querySelector("[data-smoothr-card-cvc]");
-  if (num && exp) fieldsMounted4 = true;
-}
-function isMounted4() {
-  return fieldsMounted4;
-}
-function ready4() {
-  const num = document.querySelector("[data-smoothr-card-number]");
-  const exp = document.querySelector("[data-smoothr-card-expiry]");
-  return !!num && !!exp;
-}
-async function createPaymentMethod4() {
-  var _a4, _b, _c, _d, _e, _f;
-  if (!ready4()) {
-    return { error: { message: "Card fields missing" } };
-  }
-  const ccnumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number]")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
-  const ccexp = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
-  const cvv = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  if (!ccnumber || !ccexp) {
-    return { error: { message: "Card details incomplete" } };
-  }
-  return { paymentMethod: { ccnumber, ccexp, cvv } };
-}
-var nmi_default = {
-  mountCardFields: mountCardFields4,
-  isMounted: isMounted4,
-  ready: ready4,
-  createPaymentMethod: createPaymentMethod4
-};
-
-// checkout/gateways/segpay.js
-var segpay_exports = {};
-__export(segpay_exports, {
-  createPaymentMethod: () => createPaymentMethod5,
-  default: () => segpay_default,
-  isMounted: () => isMounted5,
-  mountCardFields: () => mountCardFields5,
-  ready: () => ready5
-});
-var fieldsMounted5 = false;
-function mountCardFields5() {
-  fieldsMounted5 = true;
-}
-function isMounted5() {
-  return fieldsMounted5;
-}
-function ready5() {
-  return true;
-}
-async function createPaymentMethod5() {
-  return { paymentMethod: { id: "segpay" } };
-}
-var segpay_default = {
-  mountCardFields: mountCardFields5,
-  isMounted: isMounted5,
-  ready: ready5,
-  createPaymentMethod: createPaymentMethod5
-};
-
-// checkout/gateways/index.js
-var gateways_default = {
-  stripe: stripe_exports,
-  authorizeNet: authorizeNet_exports,
-  paypal: paypal_exports,
-  nmi: nmi_exports,
-  segpay: segpay_exports
-};
-
-// ../node_modules/@supabase/functions-js/dist/module/helper.js
+// node_modules/@supabase/functions-js/dist/module/helper.js
 var resolveFetch = (customFetch) => {
   let _fetch;
   if (customFetch) {
@@ -1664,7 +1368,7 @@ var resolveFetch = (customFetch) => {
   return (...args) => _fetch(...args);
 };
 
-// ../node_modules/@supabase/functions-js/dist/module/types.js
+// node_modules/@supabase/functions-js/dist/module/types.js
 var FunctionsError = class extends Error {
   constructor(message, name = "FunctionsError", context) {
     super(message);
@@ -1706,7 +1410,7 @@ var FunctionRegion;
   FunctionRegion2["UsWest2"] = "us-west-2";
 })(FunctionRegion || (FunctionRegion = {}));
 
-// ../node_modules/@supabase/functions-js/dist/module/FunctionsClient.js
+// node_modules/@supabase/functions-js/dist/module/FunctionsClient.js
 var __awaiter = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -1820,7 +1524,7 @@ var FunctionsClient = class {
   }
 };
 
-// ../node_modules/@supabase/postgrest-js/dist/esm/wrapper.mjs
+// node_modules/@supabase/postgrest-js/dist/esm/wrapper.mjs
 var import_cjs = __toESM(require_cjs(), 1);
 var {
   PostgrestClient,
@@ -1831,7 +1535,7 @@ var {
   PostgrestError
 } = import_cjs.default;
 
-// ../node_modules/@supabase/realtime-js/dist/module/WebSocket.js
+// node_modules/@supabase/realtime-js/dist/module/WebSocket.js
 var WebSocketImpl;
 if (typeof window === "undefined") {
   WebSocketImpl = require_browser();
@@ -1840,10 +1544,10 @@ if (typeof window === "undefined") {
 }
 var WebSocket_default = WebSocketImpl;
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/version.js
+// node_modules/@supabase/realtime-js/dist/module/lib/version.js
 var version = "2.11.10";
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/constants.js
+// node_modules/@supabase/realtime-js/dist/module/lib/constants.js
 var DEFAULT_HEADERS = { "X-Client-Info": `realtime-js/${version}` };
 var VSN = "1.0.0";
 var DEFAULT_TIMEOUT = 1e4;
@@ -1884,7 +1588,7 @@ var CONNECTION_STATE;
   CONNECTION_STATE2["Closed"] = "closed";
 })(CONNECTION_STATE || (CONNECTION_STATE = {}));
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/serializer.js
+// node_modules/@supabase/realtime-js/dist/module/lib/serializer.js
 var Serializer = class {
   constructor() {
     this.HEADER_LENGTH = 1;
@@ -1916,7 +1620,7 @@ var Serializer = class {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/timer.js
+// node_modules/@supabase/realtime-js/dist/module/lib/timer.js
 var Timer = class {
   constructor(callback, timerCalc) {
     this.callback = callback;
@@ -1940,7 +1644,7 @@ var Timer = class {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/transformers.js
+// node_modules/@supabase/realtime-js/dist/module/lib/transformers.js
 var PostgresTypes;
 (function(PostgresTypes2) {
   PostgresTypes2["abstime"] = "abstime";
@@ -2089,7 +1793,7 @@ var httpEndpointURL = (socketUrl) => {
   return url.replace(/\/+$/, "");
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/push.js
+// node_modules/@supabase/realtime-js/dist/module/lib/push.js
 var Push = class {
   /**
    * Initializes the Push
@@ -2188,7 +1892,7 @@ var Push = class {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js
+// node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js
 var REALTIME_PRESENCE_LISTEN_EVENTS;
 (function(REALTIME_PRESENCE_LISTEN_EVENTS2) {
   REALTIME_PRESENCE_LISTEN_EVENTS2["SYNC"] = "sync";
@@ -2411,7 +2115,7 @@ var RealtimePresence = class _RealtimePresence {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js
+// node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js
 var REALTIME_POSTGRES_CHANGES_LISTEN_EVENT;
 (function(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2) {
   REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["ALL"] = "*";
@@ -2875,7 +2579,7 @@ var RealtimeChannel = class _RealtimeChannel {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js
+// node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js
 var noop2 = () => {
 };
 var WORKER_SCRIPT = `
@@ -3349,7 +3053,7 @@ var WSWebSocketDummy = class {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/errors.js
+// node_modules/@supabase/storage-js/dist/module/lib/errors.js
 var StorageError = class extends Error {
   constructor(message) {
     super(message);
@@ -3382,7 +3086,7 @@ var StorageUnknownError = class extends StorageError {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/helpers.js
+// node_modules/@supabase/storage-js/dist/module/lib/helpers.js
 var __awaiter2 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3441,7 +3145,7 @@ var recursiveToCamel = (item) => {
   return result;
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/fetch.js
+// node_modules/@supabase/storage-js/dist/module/lib/fetch.js
 var __awaiter3 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3532,7 +3236,7 @@ function remove(fetcher, url, body, options, parameters) {
   });
 }
 
-// ../node_modules/@supabase/storage-js/dist/module/packages/StorageFileApi.js
+// node_modules/@supabase/storage-js/dist/module/packages/StorageFileApi.js
 var __awaiter4 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -4072,13 +3776,13 @@ var StorageFileApi = class {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/version.js
+// node_modules/@supabase/storage-js/dist/module/lib/version.js
 var version2 = "2.7.1";
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/constants.js
+// node_modules/@supabase/storage-js/dist/module/lib/constants.js
 var DEFAULT_HEADERS2 = { "X-Client-Info": `storage-js/${version2}` };
 
-// ../node_modules/@supabase/storage-js/dist/module/packages/StorageBucketApi.js
+// node_modules/@supabase/storage-js/dist/module/packages/StorageBucketApi.js
 var __awaiter5 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -4250,7 +3954,7 @@ var StorageBucketApi = class {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/StorageClient.js
+// node_modules/@supabase/storage-js/dist/module/StorageClient.js
 var StorageClient = class extends StorageBucketApi {
   constructor(url, headers = {}, fetch3) {
     super(url, headers, fetch3);
@@ -4265,10 +3969,10 @@ var StorageClient = class extends StorageBucketApi {
   }
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/version.js
+// node_modules/@supabase/supabase-js/dist/module/lib/version.js
 var version3 = "2.50.0";
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/constants.js
+// node_modules/@supabase/supabase-js/dist/module/lib/constants.js
 var JS_ENV = "";
 if (typeof Deno !== "undefined") {
   JS_ENV = "deno";
@@ -4294,7 +3998,7 @@ var DEFAULT_AUTH_OPTIONS = {
 };
 var DEFAULT_REALTIME_OPTIONS = {};
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
+// node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
 init_browser();
 var __awaiter6 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
@@ -4357,7 +4061,7 @@ var fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
   });
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
+// node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
 var __awaiter7 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -4409,10 +4113,10 @@ function applySettingDefaults(options, defaults) {
   return result;
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/version.js
+// node_modules/@supabase/auth-js/dist/module/lib/version.js
 var version4 = "2.70.0";
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/constants.js
+// node_modules/@supabase/auth-js/dist/module/lib/constants.js
 var AUTO_REFRESH_TICK_DURATION_MS = 30 * 1e3;
 var AUTO_REFRESH_TICK_THRESHOLD = 3;
 var EXPIRY_MARGIN_MS = AUTO_REFRESH_TICK_THRESHOLD * AUTO_REFRESH_TICK_DURATION_MS;
@@ -4429,7 +4133,7 @@ var API_VERSIONS = {
 var BASE64URL_REGEX = /^([a-z0-9_-]{4})*($|[a-z0-9_-]{3}$|[a-z0-9_-]{2}$)$/i;
 var JWKS_TTL = 6e5;
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/errors.js
+// node_modules/@supabase/auth-js/dist/module/lib/errors.js
 var AuthError = class extends Error {
   constructor(message, status, code) {
     super(message);
@@ -4538,7 +4242,7 @@ var AuthInvalidJwtError = class extends CustomAuthError {
   }
 };
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/base64url.js
+// node_modules/@supabase/auth-js/dist/module/lib/base64url.js
 var TO_BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".split("");
 var IGNORE_BASE64URL = " 	\n\r=".split("");
 var FROM_BASE64URL = (() => {
@@ -4700,7 +4404,7 @@ function bytesToBase64URL(bytes) {
   return result.join("");
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/helpers.js
+// node_modules/@supabase/auth-js/dist/module/lib/helpers.js
 function expiresAt(expiresIn) {
   const timeNow = Math.round(Date.now() / 1e3);
   return timeNow + expiresIn;
@@ -4944,7 +4648,7 @@ function validateUUID(str) {
   }
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/fetch.js
+// node_modules/@supabase/auth-js/dist/module/lib/fetch.js
 var __rest = function(s, e) {
   var t = {};
   for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -5092,10 +4796,10 @@ function hasSession(data) {
   return data.access_token && data.refresh_token && data.expires_in;
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/types.js
+// node_modules/@supabase/auth-js/dist/module/lib/types.js
 var SIGN_OUT_SCOPES = ["global", "local", "others"];
 
-// ../node_modules/@supabase/auth-js/dist/module/GoTrueAdminApi.js
+// node_modules/@supabase/auth-js/dist/module/GoTrueAdminApi.js
 var __rest2 = function(s, e) {
   var t = {};
   for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -5356,7 +5060,7 @@ var GoTrueAdminApi = class {
   }
 };
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
+// node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
 var localStorageAdapter = {
   getItem: (key) => {
     if (!supportsLocalStorage()) {
@@ -5391,7 +5095,7 @@ function memoryLocalStorageAdapter(store = {}) {
   };
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/polyfills.js
+// node_modules/@supabase/auth-js/dist/module/lib/polyfills.js
 function polyfillGlobalThis() {
   if (typeof globalThis === "object")
     return;
@@ -5411,7 +5115,7 @@ function polyfillGlobalThis() {
   }
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/locks.js
+// node_modules/@supabase/auth-js/dist/module/lib/locks.js
 var internals = {
   /**
    * @experimental
@@ -5479,7 +5183,7 @@ async function navigatorLock(name, acquireTimeout, fn) {
   }));
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/GoTrueClient.js
+// node_modules/@supabase/auth-js/dist/module/GoTrueClient.js
 polyfillGlobalThis();
 var DEFAULT_OPTIONS = {
   url: GOTRUE_URL,
@@ -7485,18 +7189,18 @@ var GoTrueClient = class _GoTrueClient {
 };
 GoTrueClient.nextInstanceID = 0;
 
-// ../node_modules/@supabase/auth-js/dist/module/AuthClient.js
+// node_modules/@supabase/auth-js/dist/module/AuthClient.js
 var AuthClient = GoTrueClient;
 var AuthClient_default = AuthClient;
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js
+// node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js
 var SupabaseAuthClient = class extends AuthClient_default {
   constructor(options) {
     super(options);
   }
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/SupabaseClient.js
+// node_modules/@supabase/supabase-js/dist/module/SupabaseClient.js
 var __awaiter8 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -7728,15 +7432,396 @@ var SupabaseClient = class {
   }
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/index.js
+// node_modules/@supabase/supabase-js/dist/module/index.js
 var createClient = (supabaseUrl, supabaseKey, options) => {
   return new SupabaseClient(supabaseUrl, supabaseKey, options);
 };
 
-// platforms/webflow/checkout.js
+// supabase/supabaseClient.js
+var DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
+var DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
+var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
+  global: {
+    headers: {
+      apikey: DEFAULT_SUPABASE_KEY,
+      Authorization: `Bearer ${DEFAULT_SUPABASE_KEY}`
+    }
+  }
+});
+var supabaseClient_default = supabase;
+
+// storefronts/checkout/gateways/stripe.js
+var fieldsMounted = false;
+var mountAttempts = 0;
+var stripe;
+var elements;
+var cachedKey;
+var cardNumberElement;
+var _a;
+var debug = (_a = window.SMOOTHR_CONFIG) == null ? void 0 : _a.debug;
+var log = (...args) => debug && console.log("[Smoothr Stripe]", ...args);
+var warn = (...args) => debug && console.warn("[Smoothr Stripe]", ...args);
+async function waitForVisible(el, timeout = 1e3) {
+  if (!el || typeof el.getBoundingClientRect !== "function") return;
+  log("Waiting for element to be visible", el);
+  for (let i = 0; i < 10; i++) {
+    if (el.getBoundingClientRect().width > 10) {
+      log("Element visible", el);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  warn("Element still invisible after timeout", el);
+}
+async function waitForInteractable(el, timeout = 1500) {
+  if (!el || typeof el.getBoundingClientRect !== "function") return;
+  log("Waiting for mount target to be visible and clickable");
+  const attempts = Math.ceil(timeout / 100);
+  for (let i = 0; i < attempts; i++) {
+    if (el.offsetParent !== null && el.getBoundingClientRect().width > 10 && document.activeElement !== el) {
+      log("Target ready \u2192 mounting...");
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  warn("Mount target not interactable after 1.5s");
+}
+async function resolveStripeKey() {
+  var _a4;
+  if (cachedKey) return cachedKey;
+  const cfg = window.SMOOTHR_CONFIG || {};
+  let key = cfg.stripeKey;
+  if (key) {
+    log("Loaded key from window.SMOOTHR_CONFIG");
+  } else {
+    const storeId = cfg.storeId;
+    if (storeId) {
+      const settings = await getStoreSettings(storeId);
+      if (settings == null ? void 0 : settings.stripeKey) {
+        key = settings.stripeKey;
+        log("Loaded key from Supabase.store_settings");
+      }
+      if (!key) {
+        try {
+          const { data, error } = await supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("integration_id", "stripe").maybeSingle();
+          if (error) {
+            warn("Integration lookup failed:", error.message || error);
+          } else if (data) {
+            key = data.api_key || ((_a4 = data.settings) == null ? void 0 : _a4.public_key) || "";
+            if (key) {
+              log(
+                "Loaded key from Supabase." + (data.api_key ? "store_integrations.api_key" : "store_integrations.settings.public_key")
+              );
+            }
+          }
+        } catch (e) {
+          warn("Integration fetch error:", (e == null ? void 0 : e.message) || e);
+        }
+      }
+    }
+  }
+  if (!key) {
+    throw new Error("\u274C Stripe key not found \u2014 aborting Stripe mount.");
+  }
+  cachedKey = key;
+  if (!cfg.stripeKey) cfg.stripeKey = key;
+  return key;
+}
+async function getElements() {
+  if (!stripe) {
+    const stripeKey = await resolveStripeKey();
+    if (!stripeKey) return null;
+    log("Using Stripe key", stripeKey);
+    stripe = Stripe(stripeKey);
+    elements = stripe.elements();
+  }
+  return elements;
+}
+async function mountCardFields() {
+  log("Mounting split fields");
+  const numberTarget = document.querySelector("[data-smoothr-card-number]");
+  const expiryTarget = document.querySelector("[data-smoothr-card-expiry]");
+  const cvcTarget = document.querySelector("[data-smoothr-card-cvc]");
+  log("Targets found", {
+    number: !!numberTarget,
+    expiry: !!expiryTarget,
+    cvc: !!cvcTarget
+  });
+  if (!numberTarget && !expiryTarget && !cvcTarget) {
+    if (mountAttempts < 5) {
+      mountAttempts++;
+      setTimeout(mountCardFields, 200);
+    } else {
+      warn("card fields not found");
+    }
+    return;
+  }
+  const els = await getElements();
+  if (!els) return;
+  if (numberTarget && !cardNumberElement) {
+    await waitForInteractable(numberTarget);
+    const el = elements.create("cardNumber");
+    el.mount("[data-smoothr-card-number]");
+    console.log("[Stripe] Mounted iframe");
+    setTimeout(() => {
+      var _a4;
+      const iframe = document.querySelector("[data-smoothr-card-number] iframe");
+      const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
+      console.log("[Stripe] iframe bbox", width);
+      if (iframe && width < 10) {
+        console.warn("[Stripe] iframe dead \u2192 remounting now...");
+        (_a4 = cardNumberElement == null ? void 0 : cardNumberElement.unmount) == null ? void 0 : _a4.call(cardNumberElement);
+        cardNumberElement = elements.create("cardNumber");
+        cardNumberElement.mount("[data-smoothr-card-number]");
+        forceStripeIframeStyle("[data-smoothr-card-number]");
+      }
+    }, 500);
+    forceStripeIframeStyle("[data-smoothr-card-number]");
+    cardNumberElement = el;
+    fieldsMounted = true;
+  }
+  if (expiryTarget) {
+    await waitForInteractable(expiryTarget);
+    const el = elements.create("cardExpiry");
+    el.mount("[data-smoothr-card-expiry]");
+    console.log("[Stripe] Mounted iframe");
+    setTimeout(() => {
+      var _a4;
+      const iframe = document.querySelector("[data-smoothr-card-expiry] iframe");
+      const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
+      console.log("[Stripe] iframe bbox", width);
+      if (iframe && width < 10) {
+        console.warn("[Stripe] iframe dead \u2192 remounting now...");
+        (_a4 = el == null ? void 0 : el.unmount) == null ? void 0 : _a4.call(el);
+        const remount = elements.create("cardExpiry");
+        remount.mount("[data-smoothr-card-expiry]");
+        forceStripeIframeStyle("[data-smoothr-card-expiry]");
+      }
+    }, 500);
+    forceStripeIframeStyle("[data-smoothr-card-expiry]");
+  }
+  if (cvcTarget) {
+    await waitForInteractable(cvcTarget);
+    const el = elements.create("cardCvc");
+    el.mount("[data-smoothr-card-cvc]");
+    console.log("[Stripe] Mounted iframe");
+    setTimeout(() => {
+      var _a4;
+      const iframe = document.querySelector("[data-smoothr-card-cvc] iframe");
+      const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
+      console.log("[Stripe] iframe bbox", width);
+      if (iframe && width < 10) {
+        console.warn("[Stripe] iframe dead \u2192 remounting now...");
+        (_a4 = el == null ? void 0 : el.unmount) == null ? void 0 : _a4.call(el);
+        const remount = elements.create("cardCvc");
+        remount.mount("[data-smoothr-card-cvc]");
+        forceStripeIframeStyle("[data-smoothr-card-cvc]");
+      }
+    }, 500);
+    forceStripeIframeStyle("[data-smoothr-card-cvc]");
+  }
+  log("Mounted split fields");
+}
+function isMounted() {
+  return fieldsMounted;
+}
+function ready() {
+  return !!stripe && !!cardNumberElement;
+}
+async function getStoreSettings(storeId) {
+  if (!storeId) return null;
+  try {
+    const { data, error } = await supabaseClient_default.from("store_settings").select("settings").eq("store_id", storeId).maybeSingle();
+    if (error) {
+      warn("Store settings lookup failed:", error.message || error);
+      return null;
+    }
+    return (data == null ? void 0 : data.settings) || null;
+  } catch (e) {
+    warn("Store settings fetch error:", (e == null ? void 0 : e.message) || e);
+    return null;
+  }
+}
+async function createPaymentMethod(billing_details) {
+  if (!ready()) {
+    return { error: { message: "Stripe not ready" } };
+  }
+  return stripe.createPaymentMethod({
+    type: "card",
+    card: cardNumberElement,
+    billing_details
+  });
+}
+var stripe_default = {
+  mountCardFields,
+  isMounted,
+  ready,
+  getStoreSettings,
+  getElements,
+  createPaymentMethod,
+  waitForVisible,
+  waitForInteractable
+};
+
+// storefronts/checkout/gateways/authorizeNet.js
+var authorizeNet_exports = {};
+__export(authorizeNet_exports, {
+  createPaymentMethod: () => createPaymentMethod2,
+  default: () => authorizeNet_default,
+  isMounted: () => isMounted2,
+  mountCardFields: () => mountCardFields2,
+  ready: () => ready2
+});
+var fieldsMounted2 = false;
+function mountCardFields2() {
+  const num = document.querySelector("[data-smoothr-card-number]");
+  const exp = document.querySelector("[data-smoothr-card-expiry]");
+  const cvc = document.querySelector("[data-smoothr-card-cvc]");
+  if (num && exp && cvc) fieldsMounted2 = true;
+}
+function isMounted2() {
+  return fieldsMounted2;
+}
+function ready2() {
+  const num = document.querySelector("[data-smoothr-card-number]");
+  const exp = document.querySelector("[data-smoothr-card-expiry]");
+  return !!num && !!exp;
+}
+async function createPaymentMethod2() {
+  var _a4, _b, _c, _d, _e, _f;
+  if (!ready2()) {
+    return { error: { message: "Card fields missing" } };
+  }
+  const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number]")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
+  const expirationDate = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
+  const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
+  if (!cardNumber || !expirationDate) {
+    return { error: { message: "Card details incomplete" } };
+  }
+  return { paymentMethod: { cardNumber, expirationDate, cardCode } };
+}
+var authorizeNet_default = {
+  mountCardFields: mountCardFields2,
+  isMounted: isMounted2,
+  ready: ready2,
+  createPaymentMethod: createPaymentMethod2
+};
+
+// storefronts/checkout/gateways/paypal.js
+var paypal_exports = {};
+__export(paypal_exports, {
+  createPaymentMethod: () => createPaymentMethod3,
+  default: () => paypal_default,
+  isMounted: () => isMounted3,
+  mountCardFields: () => mountCardFields3,
+  ready: () => ready3
+});
+var fieldsMounted3 = false;
+function mountCardFields3() {
+  fieldsMounted3 = true;
+}
+function isMounted3() {
+  return fieldsMounted3;
+}
+function ready3() {
+  return true;
+}
+async function createPaymentMethod3() {
+  return { paymentMethod: { id: "paypal" } };
+}
+var paypal_default = {
+  mountCardFields: mountCardFields3,
+  isMounted: isMounted3,
+  ready: ready3,
+  createPaymentMethod: createPaymentMethod3
+};
+
+// storefronts/checkout/gateways/nmi.js
+var nmi_exports = {};
+__export(nmi_exports, {
+  createPaymentMethod: () => createPaymentMethod4,
+  default: () => nmi_default,
+  isMounted: () => isMounted4,
+  mountCardFields: () => mountCardFields4,
+  ready: () => ready4
+});
+var fieldsMounted4 = false;
+function mountCardFields4() {
+  const num = document.querySelector("[data-smoothr-card-number]");
+  const exp = document.querySelector("[data-smoothr-card-expiry]");
+  const cvc = document.querySelector("[data-smoothr-card-cvc]");
+  if (num && exp) fieldsMounted4 = true;
+}
+function isMounted4() {
+  return fieldsMounted4;
+}
+function ready4() {
+  const num = document.querySelector("[data-smoothr-card-number]");
+  const exp = document.querySelector("[data-smoothr-card-expiry]");
+  return !!num && !!exp;
+}
+async function createPaymentMethod4() {
+  var _a4, _b, _c, _d, _e, _f;
+  if (!ready4()) {
+    return { error: { message: "Card fields missing" } };
+  }
+  const ccnumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number]")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
+  const ccexp = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
+  const cvv = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
+  if (!ccnumber || !ccexp) {
+    return { error: { message: "Card details incomplete" } };
+  }
+  return { paymentMethod: { ccnumber, ccexp, cvv } };
+}
+var nmi_default = {
+  mountCardFields: mountCardFields4,
+  isMounted: isMounted4,
+  ready: ready4,
+  createPaymentMethod: createPaymentMethod4
+};
+
+// storefronts/checkout/gateways/segpay.js
+var segpay_exports = {};
+__export(segpay_exports, {
+  createPaymentMethod: () => createPaymentMethod5,
+  default: () => segpay_default,
+  isMounted: () => isMounted5,
+  mountCardFields: () => mountCardFields5,
+  ready: () => ready5
+});
+var fieldsMounted5 = false;
+function mountCardFields5() {
+  fieldsMounted5 = true;
+}
+function isMounted5() {
+  return fieldsMounted5;
+}
+function ready5() {
+  return true;
+}
+async function createPaymentMethod5() {
+  return { paymentMethod: { id: "segpay" } };
+}
+var segpay_default = {
+  mountCardFields: mountCardFields5,
+  isMounted: isMounted5,
+  ready: ready5,
+  createPaymentMethod: createPaymentMethod5
+};
+
+// storefronts/checkout/gateways/index.js
+var gateways_default = {
+  stripe: stripe_exports,
+  authorizeNet: authorizeNet_exports,
+  paypal: paypal_exports,
+  nmi: nmi_exports,
+  segpay: segpay_exports
+};
+
+// storefronts/platforms/webflow/checkout.js
 var SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
 var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
-var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+var supabase2 = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   global: {
     headers: {
       apikey: SUPABASE_ANON_KEY,
@@ -7747,28 +7832,12 @@ var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 var _a2;
 console.log(
   "[debug] Supabase client created",
-  ((_a2 = supabase == null ? void 0 : supabase.rest) == null ? void 0 : _a2.headers) || (supabase == null ? void 0 : supabase.headers)
+  ((_a2 = supabase2 == null ? void 0 : supabase2.rest) == null ? void 0 : _a2.headers) || (supabase2 == null ? void 0 : supabase2.headers)
 );
 var _a3;
 var debug2 = (_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug;
 var log2 = (...args) => debug2 && console.log("[Smoothr Checkout]", ...args);
 var warn2 = (...args) => debug2 && console.warn("[Smoothr Checkout]", ...args);
-async function getPublicCredential(storeId, integrationId) {
-  if (!storeId || !integrationId) return null;
-  try {
-    console.log("[debug] Fetching store_integrations for storeId:", storeId);
-    const { data, error } = await supabase.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("integration_id", integrationId).maybeSingle();
-    console.log("[debug] store_integrations response", { credsData: data, credsError: error });
-    if (error) {
-      warn2("Credential lookup failed:", error.message || error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    warn2("Credential fetch error:", (e == null ? void 0 : e.message) || e);
-    return null;
-  }
-}
 async function getActivePaymentGateway() {
   var _a4;
   const cfg = window.SMOOTHR_CONFIG || {};
@@ -7777,7 +7846,7 @@ async function getActivePaymentGateway() {
   if (!storeId) return "stripe";
   try {
     console.log("[debug] Fetching store_settings for storeId:", storeId);
-    const { data, error } = await supabase.from("store_settings").select("settings").eq("store_id", storeId).maybeSingle();
+    const { data, error } = await supabase2.from("store_settings").select("settings").eq("store_id", storeId).maybeSingle();
     console.log("[debug] store_settings response", { settingsData: data, settingsError: error });
     if (error) {
       warn2("Store settings lookup failed:", error.message || error);
@@ -7861,48 +7930,52 @@ async function initCheckout() {
     if (checkoutBtn.__smoothrBound) return;
     checkoutBtn.__smoothrBound = true;
     checkoutBtn.addEventListener("click", async () => {
-      var _a6, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
+      var _a6, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P;
       if (checkoutBtn.disabled) {
         warn2("Checkout blocked: already in progress");
         return;
       }
       if (activeGateway === "stripe") {
-        if (!((_a6 = window.SMOOTHR_CONFIG) == null ? void 0 : _a6.stripeKey)) {
-          const storeId = (_b2 = window.SMOOTHR_CONFIG) == null ? void 0 : _b2.storeId;
-          const cred = await getPublicCredential(storeId, "stripe");
-          const key = (cred == null ? void 0 : cred.api_key) || ((_c = cred == null ? void 0 : cred.settings) == null ? void 0 : _c.publishable_key) || "";
-          if (key) window.SMOOTHR_CONFIG.stripeKey = key;
-        }
-        if (!((_d = window.SMOOTHR_CONFIG) == null ? void 0 : _d.stripeKey)) {
-          warn2("Stripe key not configured");
+        try {
+          const els = await getElements();
+          if (!els) {
+            alert("Stripe key not configured");
+            checkoutBtn.disabled = false;
+            checkoutBtn.classList.remove("loading");
+            return;
+          }
+        } catch (err) {
+          warn2("Stripe init failed:", (err == null ? void 0 : err.message) || err);
           alert("Stripe key not configured");
+          checkoutBtn.disabled = false;
+          checkoutBtn.classList.remove("loading");
           return;
         }
       }
       checkoutBtn.disabled = true;
       checkoutBtn.classList.add("loading");
       try {
-        const email = ((_f = (_e = document.querySelector("[data-smoothr-email]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-        const first_name = ((_h = (_g = document.querySelector("[data-smoothr-first-name]")) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
-        const last_name = ((_j = (_i = document.querySelector("[data-smoothr-last-name]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
-        const line1 = ((_l = (_k = document.querySelector("[data-smoothr-ship-line1]")) == null ? void 0 : _k.value) == null ? void 0 : _l.trim()) || "";
-        const line2 = ((_n = (_m = document.querySelector("[data-smoothr-ship-line2]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim()) || "";
-        const city = ((_p = (_o = document.querySelector("[data-smoothr-ship-city]")) == null ? void 0 : _o.value) == null ? void 0 : _p.trim()) || "";
-        const state = ((_r = (_q = document.querySelector("[data-smoothr-ship-state]")) == null ? void 0 : _q.value) == null ? void 0 : _r.trim()) || "";
-        const postal_code = ((_t = (_s = document.querySelector("[data-smoothr-ship-postal]")) == null ? void 0 : _s.value) == null ? void 0 : _t.trim()) || "";
-        const country = ((_v = (_u = document.querySelector("[data-smoothr-ship-country]")) == null ? void 0 : _u.value) == null ? void 0 : _v.trim()) || "";
+        const email = ((_b2 = (_a6 = document.querySelector("[data-smoothr-email]")) == null ? void 0 : _a6.value) == null ? void 0 : _b2.trim()) || "";
+        const first_name = ((_d = (_c = document.querySelector("[data-smoothr-first-name]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
+        const last_name = ((_f = (_e = document.querySelector("[data-smoothr-last-name]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
+        const line1 = ((_h = (_g = document.querySelector("[data-smoothr-ship-line1]")) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
+        const line2 = ((_j = (_i = document.querySelector("[data-smoothr-ship-line2]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
+        const city = ((_l = (_k = document.querySelector("[data-smoothr-ship-city]")) == null ? void 0 : _k.value) == null ? void 0 : _l.trim()) || "";
+        const state = ((_n = (_m = document.querySelector("[data-smoothr-ship-state]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim()) || "";
+        const postal_code = ((_p = (_o = document.querySelector("[data-smoothr-ship-postal]")) == null ? void 0 : _o.value) == null ? void 0 : _p.trim()) || "";
+        const country = ((_r = (_q = document.querySelector("[data-smoothr-ship-country]")) == null ? void 0 : _q.value) == null ? void 0 : _r.trim()) || "";
         const shipping = {
           name: `${first_name} ${last_name}`,
           address: { line1, line2, city, state, postal_code, country }
         };
-        const billing_first_name = ((_x = (_w = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _w.value) == null ? void 0 : _x.trim()) || "";
-        const billing_last_name = ((_z = (_y = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _y.value) == null ? void 0 : _z.trim()) || "";
-        const billing_line1 = ((_B = (_A = document.querySelector("[data-smoothr-bill-line1]")) == null ? void 0 : _A.value) == null ? void 0 : _B.trim()) || "";
-        const billing_line2 = ((_D = (_C = document.querySelector("[data-smoothr-bill-line2]")) == null ? void 0 : _C.value) == null ? void 0 : _D.trim()) || "";
-        const billing_city = ((_F = (_E = document.querySelector("[data-smoothr-bill-city]")) == null ? void 0 : _E.value) == null ? void 0 : _F.trim()) || "";
-        const billing_state = ((_H = (_G = document.querySelector("[data-smoothr-bill-state]")) == null ? void 0 : _G.value) == null ? void 0 : _H.trim()) || "";
-        const billing_postal = ((_J = (_I = document.querySelector("[data-smoothr-bill-postal]")) == null ? void 0 : _I.value) == null ? void 0 : _J.trim()) || "";
-        const billing_country = ((_L = (_K = document.querySelector("[data-smoothr-bill-country]")) == null ? void 0 : _K.value) == null ? void 0 : _L.trim()) || "";
+        const billing_first_name = ((_t = (_s = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _s.value) == null ? void 0 : _t.trim()) || "";
+        const billing_last_name = ((_v = (_u = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _u.value) == null ? void 0 : _v.trim()) || "";
+        const billing_line1 = ((_x = (_w = document.querySelector("[data-smoothr-bill-line1]")) == null ? void 0 : _w.value) == null ? void 0 : _x.trim()) || "";
+        const billing_line2 = ((_z = (_y = document.querySelector("[data-smoothr-bill-line2]")) == null ? void 0 : _y.value) == null ? void 0 : _z.trim()) || "";
+        const billing_city = ((_B = (_A = document.querySelector("[data-smoothr-bill-city]")) == null ? void 0 : _A.value) == null ? void 0 : _B.trim()) || "";
+        const billing_state = ((_D = (_C = document.querySelector("[data-smoothr-bill-state]")) == null ? void 0 : _C.value) == null ? void 0 : _D.trim()) || "";
+        const billing_postal = ((_F = (_E = document.querySelector("[data-smoothr-bill-postal]")) == null ? void 0 : _E.value) == null ? void 0 : _F.trim()) || "";
+        const billing_country = ((_H = (_G = document.querySelector("[data-smoothr-bill-country]")) == null ? void 0 : _G.value) == null ? void 0 : _H.trim()) || "";
         const billing_details = {
           name: `${billing_first_name} ${billing_last_name}`.trim(),
           email,
@@ -7923,9 +7996,9 @@ async function initCheckout() {
         }
         const cart2 = Smoothr.cart.getCart();
         const total = Smoothr.cart.getTotal();
-        const currency = ((_M = window.SMOOTHR_CONFIG) == null ? void 0 : _M.baseCurrency) || "USD";
-        const customer_id = ((_P = (_O = (_N = window.smoothr) == null ? void 0 : _N.auth) == null ? void 0 : _O.user) == null ? void 0 : _P.id) || null;
-        const store_id = (_Q = window.SMOOTHR_CONFIG) == null ? void 0 : _Q.storeId;
+        const currency = ((_I = window.SMOOTHR_CONFIG) == null ? void 0 : _I.baseCurrency) || "USD";
+        const customer_id = ((_L = (_K = (_J = window.smoothr) == null ? void 0 : _J.auth) == null ? void 0 : _K.user) == null ? void 0 : _L.id) || null;
+        const store_id = (_M = window.SMOOTHR_CONFIG) == null ? void 0 : _M.storeId;
         const platform = "webflow";
         if (!email || !first_name || !last_name || !total) {
           alert("Missing required fields");
@@ -7975,7 +8048,7 @@ async function initCheckout() {
         log2("Submitting payload:", payload);
         log2("billing_details:", billing_details);
         log2("shipping:", shipping);
-        const base = ((_R = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _R.apiBase) || "";
+        const base = ((_N = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _N.apiBase) || "";
         const res = await fetch(`${base}/api/checkout/${activeGateway}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -7983,7 +8056,7 @@ async function initCheckout() {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.success) {
-          (_T = (_S = Smoothr.cart).clearCart) == null ? void 0 : _T.call(_S);
+          (_P = (_O = Smoothr.cart).clearCart) == null ? void 0 : _P.call(_O);
           window.location.href = "/checkout-success";
         } else {
           alert("Failed to start checkout");
@@ -8004,6 +8077,16 @@ async function initCheckout() {
   });
 }
 document.addEventListener("DOMContentLoaded", initCheckout);
+if (document.readyState !== "loading") {
+  initCheckout();
+}
+window.Smoothr = window.Smoothr || {};
+window.Smoothr.checkout = {
+  version: "dev6",
+  mountCardFields,
+  getStoreSettings,
+  createPaymentMethod
+};
 export {
   initCheckout
 };

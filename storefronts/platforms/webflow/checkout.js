@@ -180,15 +180,19 @@ export async function initCheckout() {
       }
 
       if (activeGateway === 'stripe') {
-        if (!window.SMOOTHR_CONFIG?.stripeKey) {
-          const storeId = window.SMOOTHR_CONFIG?.storeId;
-          const cred = await getPublicCredential(storeId, 'stripe');
-          const key = cred?.api_key || cred?.settings?.publishable_key || '';
-          if (key) window.SMOOTHR_CONFIG.stripeKey = key;
-        }
-        if (!window.SMOOTHR_CONFIG?.stripeKey) {
-          warn('Stripe key not configured');
+        try {
+          const els = await stripeGateway.getElements();
+          if (!els) {
+            alert('Stripe key not configured');
+            checkoutBtn.disabled = false;
+            checkoutBtn.classList.remove('loading');
+            return;
+          }
+        } catch (err) {
+          warn('Stripe init failed:', err?.message || err);
           alert('Stripe key not configured');
+          checkoutBtn.disabled = false;
+          checkoutBtn.classList.remove('loading');
           return;
         }
       }
