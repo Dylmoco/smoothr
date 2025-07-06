@@ -6,6 +6,7 @@ let clientKey;
 let apiLoginID;
 let scriptPromise;
 let authorizeNetReady = false;
+let acceptReady = false;
 let submitting = false;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
@@ -81,6 +82,10 @@ export async function mountCardFields() {
     await resolveCredentials();
     await loadAcceptJs();
     log('Accept.js injected');
+    if (!acceptReady) {
+      acceptReady = true;
+      log('Accept.js ready');
+    }
 
     if (!num.querySelector('input')) {
       const input = document.createElement('input');
@@ -133,7 +138,7 @@ export async function createPaymentMethod() {
     return { error: { message: 'Authorize.Net not ready' } };
   }
 
-  if (!authorizeNetReady) {
+  if (!acceptReady || !authorizeNetReady) {
     warn('Payment form not ready');
     return { error: { message: 'Payment form not ready' } };
   }
