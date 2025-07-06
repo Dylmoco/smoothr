@@ -148,7 +148,8 @@ export async function mountCardFields() {
   const { elements: els } = await getElements();
   if (!els) return;
 
-  if (numberTarget && !cardNumberElement) {
+  const existingNumber = els.getElement ? els.getElement('cardNumber') : null;
+  if (numberTarget && !existingNumber) {
     await waitForInteractable(numberTarget);
     const el = elements.create('cardNumber');
     el.mount('[data-smoothr-card-number]');
@@ -169,7 +170,8 @@ export async function mountCardFields() {
     cardNumberElement = el;
     fieldsMounted = true;
   }
-  if (expiryTarget) {
+  const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
+  if (expiryTarget && !existingExpiry) {
     await waitForInteractable(expiryTarget);
     const el = elements.create('cardExpiry');
     el.mount('[data-smoothr-card-expiry]');
@@ -188,7 +190,8 @@ export async function mountCardFields() {
     }, 500);
     forceStripeIframeStyle('[data-smoothr-card-expiry]');
   }
-  if (cvcTarget) {
+  const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
+  if (cvcTarget && !existingCvc) {
     await waitForInteractable(cvcTarget);
     const el = elements.create('cardCvc');
     el.mount('[data-smoothr-card-cvc]');
