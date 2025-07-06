@@ -76,7 +76,11 @@ beforeEach(() => {
   };
 
   global.window = {
-    SMOOTHR_CONFIG: { stripeKey: 'pk_test', baseCurrency: 'USD' },
+    SMOOTHR_CONFIG: {
+      stripeKey: 'pk_test',
+      baseCurrency: 'USD',
+      active_payment_gateway: 'stripe'
+    },
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -94,7 +98,9 @@ beforeEach(() => {
 describe('checkout payload', () => {
   it('sends expected data to fetch', async () => {
     await import('../../checkout/checkout.js');
-    domReadyCb && domReadyCb();
+    if (domReadyCb) {
+      await domReadyCb();
+    }
 
     await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
