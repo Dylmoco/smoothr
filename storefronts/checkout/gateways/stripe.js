@@ -4,6 +4,7 @@ let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
 let elements;
+let cachedKey;
 let cardNumberElement;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
@@ -55,9 +56,56 @@ function elementStyleFromContainer(el) {
   };
 }
 
-function getElements() {
+async function resolveStripeKey() {
+  if (cachedKey) return cachedKey;
+  const cfg = window.SMOOTHR_CONFIG || {};
+  let key = cfg.stripeKey;
+  if (key) {
+    log('Loaded key from window.SMOOTHR_CONFIG');
+  } else {
+    const storeId = cfg.storeId;
+    if (storeId) {
+      const settings = await getStoreSettings(storeId);
+      if (settings?.stripeKey) {
+        key = settings.stripeKey;
+        log('Loaded key from Supabase.store_settings');
+      }
+      if (!key) {
+        try {
+          const { data, error } = await supabase
+            .from('store_integrations')
+            .select('api_key, settings')
+            .eq('store_id', storeId)
+            .eq('integration_id', 'stripe')
+            .maybeSingle();
+          if (error) {
+            warn('Integration lookup failed:', error.message || error);
+          } else if (data) {
+            key = data.api_key || data.settings?.public_key || '';
+            if (key) {
+              log(
+                'Loaded key from Supabase.' +
+                  (data.api_key ? 'store_integrations.api_key' : 'store_integrations.settings.public_key')
+              );
+            }
+          }
+        } catch (e) {
+          warn('Integration fetch error:', e?.message || e);
+        }
+      }
+    }
+  }
+  if (!key) {
+    throw new Error('❌ Stripe key not found — aborting Stripe mount.');
+  }
+  cachedKey = key;
+  if (!cfg.stripeKey) cfg.stripeKey = key;
+  return key;
+}
+
+async function getElements() {
   if (!stripe) {
-    const stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
+    const stripeKey = await resolveStripeKey();
     if (!stripeKey) return null;
     log('Using Stripe key', stripeKey);
     stripe = Stripe(stripeKey);
@@ -88,7 +136,8 @@ export async function mountCardFields() {
     return;
   }
 
-  if (!getElements()) return;
+  const els = await getElements();
+  if (!els) return;
 
   if (numberTarget && !cardNumberElement) {
     await waitForInteractable(numberTarget);

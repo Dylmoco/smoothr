@@ -1327,6 +1327,7 @@ var fieldsMounted = false;
 var mountAttempts = 0;
 var stripe;
 var elements;
+var cachedKey;
 var cardNumberElement;
 var _a;
 var debug = (_a = window.SMOOTHR_CONFIG) == null ? void 0 : _a.debug;
@@ -1357,10 +1358,56 @@ function forceStripeIframeStyle(selector) {
     }
   }, 100);
 }
-function getElements() {
-  var _a4;
+
+async function resolveStripeKey() {
+  if (cachedKey) return cachedKey;
+  const cfg = window.SMOOTHR_CONFIG || {};
+  let key = cfg.stripeKey;
+  if (key) {
+    log("Loaded key from window.SMOOTHR_CONFIG");
+  } else {
+    const storeId = cfg.storeId;
+    if (storeId) {
+      const settings = await getStoreSettings(storeId);
+      if ((settings == null ? void 0 : settings.stripeKey)) {
+        key = settings.stripeKey;
+        log("Loaded key from Supabase.store_settings");
+      }
+      if (!key) {
+        try {
+          const { data, error } = await supabase
+            .from("store_integrations")
+            .select("api_key, settings")
+            .eq("store_id", storeId)
+            .eq("integration_id", "stripe")
+            .maybeSingle();
+          if (error) {
+            warn("Integration lookup failed:", error.message || error);
+          } else if (data) {
+            key = data.api_key || (data.settings == null ? void 0 : data.settings.public_key) || "";
+            if (key) {
+              log(
+                "Loaded key from Supabase." +
+                  (data.api_key ? "store_integrations.api_key" : "store_integrations.settings.public_key")
+              );
+            }
+          }
+        } catch (e) {
+          warn("Integration fetch error:", (e == null ? void 0 : e.message) || e);
+        }
+      }
+    }
+  }
+  if (!key) {
+    throw new Error("\u274C Stripe key not found \u2014 aborting Stripe mount.");
+  }
+  cachedKey = key;
+  if (!cfg.stripeKey) cfg.stripeKey = key;
+  return key;
+}
+async function getElements() {
   if (!stripe) {
-    const stripeKey = (_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.stripeKey;
+    const stripeKey = await resolveStripeKey();
     if (!stripeKey) return null;
     log("Using Stripe key", stripeKey);
     stripe = Stripe(stripeKey);
@@ -1368,7 +1415,7 @@ function getElements() {
   }
   return elements;
 }
-function mountCardFields() {
+async function mountCardFields() {
   log("Mounting split fields");
   const numberTarget = document.querySelector("[data-smoothr-card-number]");
   const expiryTarget = document.querySelector("[data-smoothr-card-expiry]");
@@ -1387,7 +1434,7 @@ function mountCardFields() {
     }
     return;
   }
-  const els = getElements();
+  const els = await getElements();
   if (!els) return;
   if (numberTarget && !cardNumberElement) {
     cardNumberElement = els.create("cardNumber");
@@ -1412,6 +1459,25 @@ function isMounted() {
 }
 function ready() {
   return !!stripe && !!cardNumberElement;
+}
+
+async function getStoreSettings(storeId) {
+  if (!storeId) return null;
+  try {
+    const { data, error } = await supabase
+      .from("store_settings")
+      .select("settings")
+      .eq("store_id", storeId)
+      .maybeSingle();
+    if (error) {
+      warn("Store settings lookup failed:", error.message || error);
+      return null;
+    }
+    return (data == null ? void 0 : data.settings) || null;
+  } catch (e) {
+    warn("Store settings fetch error:", (e == null ? void 0 : e.message) || e);
+    return null;
+  }
 }
 async function createPaymentMethod(billing_details) {
   if (!ready()) {
