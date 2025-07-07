@@ -197,16 +197,15 @@ export async function createPaymentMethod() {
   const cardCode =
     document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
 
-  const firstName =
-    document.querySelector('[name="billing_first_name"]')?.value?.trim() || '';
-  const lastName =
-    document.querySelector('[name="billing_last_name"]')?.value?.trim() || '';
-  const fullName = `${firstName} ${lastName}`.trim();
+  const first = document.querySelector('[name="billing_first_name"]')?.value?.trim();
+  const last = document.querySelector('[name="billing_last_name"]')?.value?.trim();
 
-  if (!fullName) {
-    console.warn('[Authorize.Net] \u274c fullName is empty \u2013 skipping tokenization');
+  if (!first || !last) {
+    console.warn('[Authorize.Net] \u274c Missing billing_first_name or billing_last_name');
     return;
   }
+
+  const fullName = `${first} ${last}`.trim();
 
   console.log('[Authorize.Net] \ud83e\uddea Using fullName:', fullName);
 
