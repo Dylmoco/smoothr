@@ -160,6 +160,7 @@ export function getReadiness() {
 }
 
 export async function createPaymentMethod() {
+  console.log('[Authorize.Net] \ud83e\uddea createPaymentMethod called');
   if (!ready()) {
     return { error: { message: 'Authorize.Net not ready' } };
   }
@@ -230,6 +231,7 @@ export async function createPaymentMethod() {
     }
     submitting = true;
     updateDebug();
+    console.log('[Authorize.Net] \ud83e\uddea Using fullName:', cardData.name);
     console.log('[Authorize.Net] \ud83e\uddea Dispatching tokenization with cardData:', cardData);
     try {
       window.Accept.dispatchData(secureData, response => {
