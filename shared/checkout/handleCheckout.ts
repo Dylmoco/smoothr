@@ -22,6 +22,7 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
 }
 
 export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: NextApiResponse; }) {
+  try {
 
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
@@ -290,4 +291,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     order_number: orderNumber,
     payment_intent_id: intent?.id || null
   });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(400).json({ error: err.message });
+  }
 }
