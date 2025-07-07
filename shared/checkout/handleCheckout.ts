@@ -232,7 +232,6 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     status: 'unpaid',
     payment_provider: provider,
     raw_data: req.body,
-    items: cart,
     cart_meta_hash,
     total_price: total,
     store_id,
@@ -253,6 +252,25 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   if (orderError) {
     console.error('Order creation failed:', orderError.message);
     return res.status(400).json({ error: orderError.message || 'Order creation failed' });
+  }
+
+  if (orderData) {
+    const itemRows = cart.map((item: any) => ({
+      order_id: orderData.id,
+      sku: item.product_id || item.sku || '',
+      product_name: item.name || item.product_name || '',
+      quantity: item.quantity,
+      unit_price: item.price || item.unit_price
+    }));
+
+    if (itemRows.length) {
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemRows);
+      if (itemsError) {
+        err('Failed to insert order items:', itemsError.message);
+      }
+    }
   }
 
   const { error: updateError } = await supabase
