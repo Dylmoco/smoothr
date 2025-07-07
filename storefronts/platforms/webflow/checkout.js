@@ -333,3 +333,26 @@ if (document.readyState !== 'loading') {
 
 window.Smoothr = window.Smoothr || {};
 window.Smoothr.checkout = { version: 'dev6' };
+
+async function submitGatewayPayment() {
+  const activeGateway = await getActivePaymentGateway();
+  const gateway = gateways[activeGateway];
+  if (!gateway) {
+    warn('Unknown payment gateway:', activeGateway);
+    return;
+  }
+  await gateway.mountCardFields?.();
+  await gateway.createPaymentMethod();
+}
+
+window.__SMOOTHR_DEBUG__ = window.__SMOOTHR_DEBUG__ || {};
+window.__SMOOTHR_DEBUG__.submitCheckout = () => {
+  console.log('[Authorize.Net] \u{1F501} Submit triggered');
+  submitGatewayPayment();
+};
+
+document
+  .querySelector('[data-smoothr-checkout]')
+  ?.addEventListener('click', () => {
+    window.__SMOOTHR_DEBUG__.submitCheckout?.();
+  });
