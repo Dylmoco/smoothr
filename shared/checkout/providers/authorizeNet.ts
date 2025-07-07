@@ -16,7 +16,7 @@ const log = (...args: any[]) => debug && console.log('[Checkout AuthorizeNet]', 
 const err = (...args: any[]) => debug && console.error('[Checkout AuthorizeNet]', ...args);
 
 interface AuthorizeNetPayload {
-  amount: number;
+  total: number;
   payment_method: {
     dataDescriptor: string;
     dataValue: string;
@@ -45,7 +45,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       },
       transactionRequest: {
         transactionType: 'authCaptureTransaction',
-        amount: payload.amount,
+        amount: payload.total,
         ...(payload.currency ? { currencyCode: payload.currency } : {}),
         payment: {
           opaqueData: {

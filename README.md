@@ -132,6 +132,10 @@ Include the Authorize.Net Accept.js script on pages that render the checkout for
 <script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.js"></script>
 ```
 
+The checkout payload for Authorize.Net uses the same `total` field as the Stripe
+integration to specify the charge amount. All other attributes remain the same,
+so existing checkout code can submit the identical payload for either gateway.
+
 
 ### Deployment Log
 
