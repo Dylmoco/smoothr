@@ -310,15 +310,24 @@ export async function createPaymentMethod() {
     submitting = true;
     updateDebug();
     log('\ud83e\uddea Dispatching tokenization with cardData:', cardData);
+    const timeoutId = setTimeout(() => {
+      console.warn(
+        '[Authorize.Net] dispatchData callback never fired \u2014 possible sandbox issue'
+      );
+    }, 5000);
     try {
       window.Accept.dispatchData(secureData, response => {
+        clearTimeout(timeoutId);
+        console.log('[Authorize.Net] Accept.js response:', response);
         submitting = false;
         updateDebug();
         if (response.messages?.resultCode === 'Error') {
+          console.error(response.messages?.message);
           const message =
             response.messages?.message?.[0]?.text || 'Tokenization failed';
           resolve({ error: { message } });
         } else {
+          console.log(response.opaqueData);
           resolve({ success: true, payment_method: response.opaqueData });
         }
       });
