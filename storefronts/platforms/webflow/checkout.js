@@ -249,7 +249,7 @@ export async function initCheckout() {
         return;
       }
 
-      if (!gateway.isMounted()) gateway.mountCardFields();
+      if (!gateway.isMounted()) await gateway.mountCardFields();
       if (!gateway.ready()) {
         alert('Payment form not ready');
         checkoutBtn.disabled = false;
