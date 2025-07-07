@@ -9,6 +9,8 @@ let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
 
+window.__SMOOTHR_DEBUG__ = { acceptReady, authorizeNetReady };
+
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr AuthorizeNet]', ...args);
@@ -138,9 +140,15 @@ export async function createPaymentMethod() {
     return { error: { message: 'Authorize.Net not ready' } };
   }
 
-  if (!acceptReady || !authorizeNetReady) {
-    warn('Payment form not ready');
-    return { error: { message: 'Payment form not ready' } };
+  if (!acceptReady) {
+    console.warn('[Smoothr AuthorizeNet] \u274c Accept.js not ready');
+    alert('Payment form not ready: Accept.js not loaded');
+    return { error: { message: 'Accept.js not loaded' } };
+  }
+  if (!authorizeNetReady) {
+    console.warn('[Smoothr AuthorizeNet] \u274c Card fields not mounted');
+    alert('Payment form not ready: Card fields not ready');
+    return { error: { message: 'Card fields not ready' } };
   }
 
   if (submitting) {
