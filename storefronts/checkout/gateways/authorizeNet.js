@@ -9,12 +9,23 @@ let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
 
+let debugInitialized = false;
+
+function getReadinessState() {
+  return { acceptReady, authorizeNetReady, isSubmitting: submitting };
+}
+
 function updateDebug() {
   window.__SMOOTHR_DEBUG__ = {
     acceptReady,
     authorizeNetReady,
-    isSubmitting: submitting
+    isSubmitting: submitting,
+    getReadinessState
   };
+  if (!debugInitialized && acceptReady && authorizeNetReady) {
+    debugInitialized = true;
+    log('Debug helpers ready:', window.__SMOOTHR_DEBUG__);
+  }
 }
 
 const debug = window.SMOOTHR_CONFIG?.debug;
@@ -223,5 +234,6 @@ export default {
   isMounted,
   ready,
   getReadiness,
+  getReadinessState,
   createPaymentMethod
 };
