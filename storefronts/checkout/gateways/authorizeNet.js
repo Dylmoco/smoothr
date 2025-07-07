@@ -269,12 +269,18 @@ export async function createPaymentMethod() {
     return { error: { message: 'Already submitting' } };
   }
 
-  const cardNumber =
-    document.querySelector('[data-smoothr-card-number] input')?.value?.trim() || '';
-  const expiry =
-    document.querySelector('[data-smoothr-card-expiry] input')?.value?.trim() || '';
-  const cardCode =
-    document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
+  const cardNumberInput = document.querySelector('[data-smoothr-card-number] input');
+  const expiryInput = document.querySelector('[data-smoothr-card-expiry] input');
+  const cvcInput = document.querySelector('[data-smoothr-card-cvc] input');
+
+  let cardNumber = cardNumberInput?.value?.replace(/\s+/g, '') || '';
+  let cardCode = cvcInput?.value?.replace(/\D/g, '') || '';
+  let month = '';
+  let year = '';
+  if (expiryInput?.value) {
+    [month, year] = expiryInput.value.split('/').map(s => s.trim());
+    if (year && year.length === 2) year = '20' + year;
+  }
 
   const first =
     document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
@@ -288,12 +294,9 @@ export async function createPaymentMethod() {
   }
 
 
-  if (!cardNumber || !expiry) {
+  if (!cardNumber || !month || !year) {
     return { error: { message: 'Card details incomplete' } };
   }
-
-  let [month, year] = expiry.split('/').map(p => p.trim());
-  if (year && year.length === 2) year = '20' + year;
 
   const cardData = { cardNumber, month, year, cardCode, name: fullName };
   const secureData = {
@@ -309,7 +312,12 @@ export async function createPaymentMethod() {
     }
     submitting = true;
     updateDebug();
-    log('\ud83e\uddea Dispatching tokenization with cardData:', cardData);
+    log('\ud83e\uddea Dispatching tokenization:', {
+      month,
+      year,
+      cardCode,
+      name: fullName
+    });
     const timeoutId = setTimeout(() => {
       console.warn(
         '[Authorize.Net] dispatchData callback never fired \u2014 possible sandbox issue'

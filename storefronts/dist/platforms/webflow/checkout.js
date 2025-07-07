@@ -1710,17 +1710,24 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
+    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -7914,7 +7921,7 @@ function getReadiness() {
   return { acceptReady, authorizeNetReady };
 }
 async function createPaymentMethod2() {
-  var _a4, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+  var _a4, _b, _c, _d, _e, _f;
   log2("\u{1F9EA} createPaymentMethod called");
   if (!ready2()) {
     return { error: { message: "Authorize.Net not ready" } };
@@ -7943,21 +7950,27 @@ async function createPaymentMethod2() {
     warn2("Payment already submitting");
     return { error: { message: "Already submitting" } };
   }
-  const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number] input")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
-  const expiry = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry] input")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
-  const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc] input")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  const first = ((_h = (_g = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
-  const last = ((_j = (_i = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
+  const cardNumberInput = document.querySelector("[data-smoothr-card-number] input");
+  const expiryInput = document.querySelector("[data-smoothr-card-expiry] input");
+  const cvcInput = document.querySelector("[data-smoothr-card-cvc] input");
+  let cardNumber = ((_a4 = cardNumberInput == null ? void 0 : cardNumberInput.value) == null ? void 0 : _a4.replace(/\s+/g, "")) || "";
+  let cardCode = ((_b = cvcInput == null ? void 0 : cvcInput.value) == null ? void 0 : _b.replace(/\D/g, "")) || "";
+  let month = "";
+  let year = "";
+  if (expiryInput == null ? void 0 : expiryInput.value) {
+    [month, year] = expiryInput.value.split("/").map((s) => s.trim());
+    if (year && year.length === 2) year = "20" + year;
+  }
+  const first = ((_d = (_c = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
+  const last = ((_f = (_e = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
   const fullName = `${first} ${last}`.trim();
   if (!first || !last) {
     console.warn("[Authorize.Net] \u274C Missing billing name fields \u2014 aborting tokenization");
     return;
   }
-  if (!cardNumber || !expiry) {
+  if (!cardNumber || !month || !year) {
     return { error: { message: "Card details incomplete" } };
   }
-  let [month, year] = expiry.split("/").map((p) => p.trim());
-  if (year && year.length === 2) year = "20" + year;
   const cardData = { cardNumber, month, year, cardCode, name: fullName };
   const secureData = {
     authData: { clientKey, apiLoginID },
@@ -7971,7 +7984,12 @@ async function createPaymentMethod2() {
     }
     submitting = true;
     updateDebug();
-    log2("\u{1F9EA} Dispatching tokenization with cardData:", cardData);
+    log2("\u{1F9EA} Dispatching tokenization:", {
+      month,
+      year,
+      cardCode,
+      name: fullName
+    });
     const timeoutId = setTimeout(() => {
       console.warn(
         "[Authorize.Net] dispatchData callback never fired \u2014 possible sandbox issue"
