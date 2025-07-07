@@ -202,7 +202,7 @@ export async function initCheckout() {
     }
     localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
-    if (!gateway.isMounted()) gateway.mountCardFields();
+    if (!gateway.isMounted()) await gateway.mountCardFields();
     if (!gateway.ready()) {
       err('Payment gateway not ready');
       submitBtn.disabled = false;

@@ -15,6 +15,11 @@ const supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       Authorization: `Bearer ${DEFAULT_SUPABASE_KEY}`,
     },
   },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
 });
 
 export default supabase;
