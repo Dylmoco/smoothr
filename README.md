@@ -79,7 +79,7 @@ the Webflow checkout script.
 
 The admin dashboard exposes two endpoints for initiating a checkout:
 
-1. `/api/checkout/[provider]` – processes a posted cart using the configured payment gateway. The `[provider]` segment must match the gateway configured for the store. The request body must include the following fields:
+1. `/api/checkout/[provider]` – processes a posted cart using the configured payment gateway. This single route handles checkouts for all providers (e.g. `stripe` or `authorizeNet`). The `[provider]` segment must match the gateway configured for the store. The request body must include the following fields:
 
 - `payment_method` – the ID of the payment method to charge
 - `email` – customer email for receipts
@@ -118,7 +118,9 @@ To enable Authorize.net create a row in the `store_integrations` table with
 
 Select Authorize.net by setting
 `store_settings.settings.active_payment_gateway` to `authorizeNet` (or override
-it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`).
+it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`). Requests
+to `/api/checkout/authorizeNet` will only succeed when this value is
+`authorizeNet`.
 
 ```html
 <script>
