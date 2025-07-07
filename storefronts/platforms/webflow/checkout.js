@@ -348,11 +348,18 @@ async function submitGatewayPayment() {
 window.__SMOOTHR_DEBUG__ = window.__SMOOTHR_DEBUG__ || {};
 window.__SMOOTHR_DEBUG__.submitCheckout = () => {
   console.log('[Authorize.Net] \u{1F501} Submit triggered');
-  submitGatewayPayment();
+  submitGatewayPayment?.();
 };
 
-document
-  .querySelector('[data-smoothr-checkout]')
-  ?.addEventListener('click', () => {
-    window.__SMOOTHR_DEBUG__.submitCheckout?.();
-  });
+window.addEventListener('DOMContentLoaded', () => {
+  const checkoutButton = document.querySelector('[data-smoothr-checkout]');
+  if (checkoutButton) {
+    console.log('[Smoothr] \u2705 Binding checkout button');
+    checkoutButton.addEventListener('click', () => {
+      console.log('[Smoothr] \u{1F7E2} Button clicked \u2013 running submitCheckout');
+      window.__SMOOTHR_DEBUG__.submitCheckout?.();
+    });
+  } else {
+    console.warn('[Smoothr] \u274C [data-smoothr-checkout] not found');
+  }
+});
