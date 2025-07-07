@@ -17,6 +17,7 @@ function getReadinessState() {
 
 function updateDebug() {
   window.__SMOOTHR_DEBUG__ = {
+    ...window.__SMOOTHR_DEBUG__,
     acceptReady,
     authorizeNetReady,
     isSubmitting: submitting,

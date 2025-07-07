@@ -1710,24 +1710,17 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
-    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -7728,6 +7721,7 @@ function getReadinessState() {
 }
 function updateDebug() {
   window.__SMOOTHR_DEBUG__ = {
+    ...window.__SMOOTHR_DEBUG__,
     acceptReady,
     authorizeNetReady,
     isSubmitting: submitting,
