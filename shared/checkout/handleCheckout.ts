@@ -130,11 +130,12 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const { data: existingOrders, error: lookupErr } = await supabase
     .from('orders')
-    .select('id')
+    .select('id, created_at, payment_status')
     .eq('store_id', store_id)
     .eq('customer_email', email)
     .eq('total_price', total)
     .eq('cart_meta_hash', cart_meta_hash)
+    .order('created_at', { ascending: false })
     .limit(1);
 
   if (lookupErr) {
@@ -143,10 +144,15 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
+  const dedupWindowMs = 5 * 60 * 1000; // five minutes
   if (existingOrders && existingOrders.length > 0) {
-    warn('Duplicate order detected');
-    res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
-    return;
+    const existing = existingOrders[0];
+    const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
+    if (existing.payment_status !== 'paid' && ageMs < dedupWindowMs) {
+      warn('Duplicate order detected within window', { order_id: existing.id });
+      res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
+      return;
+    }
   }
 
   const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
@@ -238,7 +244,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const { data: orderData, error: orderError } = await supabase
     .from('orders')
-    .insert(orderPayload)
+    .upsert(orderPayload, { onConflict: 'order_number' })
     .select('id')
     .single();
 
