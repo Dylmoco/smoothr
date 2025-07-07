@@ -100,3 +100,16 @@ npm test
 ```
 
 These tests are executed with `vitest` and rely on the `OPENEXCHANGERATES_TOKEN` environment variable. Network requests are made during the tests, so failures may occur in environments that block outbound traffic.
+
+## Database migrations
+
+Run Supabase migrations to keep your local database in sync. To add the
+`cart_meta_hash` column to the `orders` table execute:
+
+```sql
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS cart_meta_hash text;
+```
+
+This statement is saved in
+`supabase/migrations/20250708000000_add-cart-meta-hash.sql` so it can be applied
+with the Supabase CLI or any PostgreSQL client.
