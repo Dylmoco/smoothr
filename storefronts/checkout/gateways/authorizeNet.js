@@ -126,9 +126,9 @@ async function resolveCredentials() {
   const storeId = window.SMOOTHR_CONFIG?.storeId;
   if (!storeId) return { clientKey: null, apiLoginID: null };
   const cred = await getPublicCredential(storeId, 'authorizeNet');
-  clientKey = cred?.settings?.clientKey || '';
-  apiLoginID = cred?.api_key || cred?.settings?.loginId || '';
-  transactionKey = cred?.settings?.transactionKey || cred?.settings?.transaction_key || '';
+  clientKey = cred?.settings?.client_key || '';
+  apiLoginID = cred?.settings?.api_login_id || cred?.api_key || '';
+  transactionKey = cred?.settings?.transaction_key || '';
   return { clientKey, apiLoginID };
 }
 
