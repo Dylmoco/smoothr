@@ -9,4 +9,5 @@ All notable changes to this project will be documented in this file.
 - Simplified test commands so running `npm test` from the repository root executes all package tests.
 - Documented Supabase testing instructions including the `OPENEXCHANGERATES_TOKEN` requirement.
 - Fixed Stripe iframe width issues using the `forceStripeIframeStyle` helper.
+- Added logging for Authorize.Net Accept.js responses and a timeout warning if dispatchData does not fire.
 
