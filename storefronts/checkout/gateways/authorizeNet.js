@@ -197,8 +197,12 @@ export async function createPaymentMethod() {
   const cardCode =
     document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
 
-  const first = document.querySelector('[name="billing_first_name"]')?.value?.trim();
-  const last = document.querySelector('[name="billing_last_name"]')?.value?.trim();
+  const first =
+    document.querySelector('[name="billing_first_name"]')?.value?.trim() ||
+    document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim();
+  const last =
+    document.querySelector('[name="billing_last_name"]')?.value?.trim() ||
+    document.querySelector('[data-smoothr-bill-last-name]')?.value?.trim();
 
   if (!first || !last) {
     console.warn('[Authorize.Net] \u274c Missing billing_first_name or billing_last_name');

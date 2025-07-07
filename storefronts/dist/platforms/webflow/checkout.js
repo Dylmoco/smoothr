@@ -7869,8 +7869,10 @@ async function createPaymentMethod2() {
   const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number] input")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
   const expiry = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry] input")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
   const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc] input")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  const first = (_h = (_g = document.querySelector('[name="billing_first_name"]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim();
-  const last = (_j = (_i = document.querySelector('[name="billing_last_name"]')) == null ? void 0 : _i.value) == null ? void 0 : _j.trim();
+  const first = (_h = (_g = document.querySelector('[name="billing_first_name"]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim() ||
+    ((_j = (_i = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim());
+  const last = (_l = (_k = document.querySelector('[name="billing_last_name"]')) == null ? void 0 : _k.value) == null ? void 0 : _l.trim() ||
+    ((_n = (_m = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim());
   if (!first || !last) {
     console.warn("[Authorize.Net] \u274C Missing billing_first_name or billing_last_name");
     return;
