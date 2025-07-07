@@ -70,6 +70,10 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   console.log('Incoming checkout payload:', JSON.stringify(payload, null, 2));
 
+  if (debug) {
+    console.log('[debug] Raw payment_method:', payload.payment_method);
+  }
+
   const { payment_method, email, first_name, last_name, shipping, cart, total, currency, store_id, platform, description } = payload;
 
   if (!payment_method || !email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
