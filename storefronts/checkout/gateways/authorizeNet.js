@@ -9,7 +9,13 @@ let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
 
-window.__SMOOTHR_DEBUG__ = { acceptReady, authorizeNetReady };
+function updateDebug() {
+  window.__SMOOTHR_DEBUG__ = {
+    acceptReady,
+    authorizeNetReady,
+    isSubmitting: submitting
+  };
+}
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
@@ -86,6 +92,7 @@ export async function mountCardFields() {
     log('Accept.js injected');
     if (!acceptReady) {
       acceptReady = true;
+      updateDebug();
       log('Accept.js ready');
     }
 
@@ -113,6 +120,7 @@ export async function mountCardFields() {
 
     fieldsMounted = true;
     authorizeNetReady = true;
+    updateDebug();
     log('Card fields mounted');
   })();
 
@@ -181,10 +189,12 @@ export async function createPaymentMethod() {
       return;
     }
     submitting = true;
+    updateDebug();
     log('Dispatching Accept.dispatchData');
     try {
       window.Accept.dispatchData(secureData, response => {
         submitting = false;
+        updateDebug();
         if (response.messages?.resultCode === 'Error') {
           const message =
             response.messages?.message?.[0]?.text || 'Tokenization failed';
@@ -195,6 +205,7 @@ export async function createPaymentMethod() {
       });
     } catch (e) {
       submitting = false;
+      updateDebug();
       console.error('[Smoothr AuthorizeNet]', 'Tokenization error', e);
       resolve({ error: { message: e?.message || 'Tokenization failed' } });
     }
