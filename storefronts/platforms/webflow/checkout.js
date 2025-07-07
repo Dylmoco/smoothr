@@ -259,9 +259,11 @@ export async function initCheckout() {
 
       log('billing_details:', billing_details);
       log('shipping:', shipping);
-      const { error: pmError, paymentMethod } = await gateway.createPaymentMethod(
-        billing_details
-      );
+      const {
+        error: pmError,
+        paymentMethod,
+        payment_method
+      } = await gateway.createPaymentMethod(billing_details);
 
       if (pmError || !paymentMethod) {
         alert('Failed to create payment method');
@@ -286,7 +288,7 @@ export async function initCheckout() {
       if (activeGateway === 'stripe') {
         payload.payment_method = paymentMethod.id;
       } else if (activeGateway === 'authorizeNet') {
-        payload.payment = paymentMethod;
+        payload.payment_method = payment_method;
       } else if (activeGateway === 'nmi') {
         Object.assign(payload, paymentMethod);
       } else {
