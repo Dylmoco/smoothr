@@ -78,6 +78,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
+  console.log('[debug] Raw payment_method:', payment_method);
+
   if (!Array.isArray(cart) || cart.length === 0) {
     warn('Empty cart');
     res.status(400).json({ error: 'Cart cannot be empty' });
@@ -154,6 +156,11 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
       return;
     }
+  }
+
+  if (provider === 'authorizeNet' && !payment_method?.dataValue) {
+    err('Missing opaque token from Accept.js');
+    return res.status(400).json({ error: 'Missing opaque token from Accept.js' });
   }
 
   const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
