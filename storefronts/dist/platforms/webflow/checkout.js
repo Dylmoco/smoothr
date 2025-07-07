@@ -1710,17 +1710,24 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
+    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -7867,29 +7874,33 @@ async function createPaymentMethod2() {
   const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number] input")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
   const expiry = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry] input")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
   const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc] input")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  const firstName = ((_h = (_g = document.querySelector('[name="billing_first_name"], [data-smoothr-bill-first-name]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
-  const lastName = ((_j = (_i = document.querySelector('[name="billing_last_name"], [data-smoothr-bill-last-name]')) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
+  const firstName = ((_h = (_g = document.querySelector('[name="billing_first_name"]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
+  const lastName = ((_j = (_i = document.querySelector('[name="billing_last_name"]')) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
   const fullName = `${firstName} ${lastName}`.trim();
-  if (!firstName || !lastName) {
-    warn2("Billing name incomplete for Authorize.Net", { firstName, lastName });
+  if (!fullName) {
+    console.warn("[Authorize.Net] \u274C fullName is empty \u2013 skipping tokenization");
+    return;
   }
+  console.log("[Authorize.Net] \u{1F9EA} Using fullName:", fullName);
   if (!cardNumber || !expiry) {
     return { error: { message: "Card details incomplete" } };
   }
   let [month, year] = expiry.split("/").map((p) => p.trim());
   if (year && year.length === 2) year = "20" + year;
+  const cardData = { cardNumber, month, year, cardCode, name: fullName };
   const secureData = {
     authData: { clientKey, apiLoginID },
-    cardData: { cardNumber, month, year, cardCode, name: fullName }
+    cardData
   };
   return new Promise((resolve) => {
     if (!window.Accept || !window.Accept.dispatchData) {
+      console.warn("[Authorize.Net] \u274C dispatchData was not triggered");
       resolve({ error: { message: "Accept.js unavailable" } });
       return;
     }
     submitting = true;
     updateDebug();
-    log2("Dispatching Accept.dispatchData");
+    console.log("[Authorize.Net] \u{1F9EA} Dispatching tokenization with cardData:", cardData);
     try {
       window.Accept.dispatchData(secureData, (response) => {
         var _a5, _b2, _c2, _d2;

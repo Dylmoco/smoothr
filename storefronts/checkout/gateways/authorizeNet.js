@@ -196,14 +196,17 @@ export async function createPaymentMethod() {
     document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
 
   const firstName =
-    document.querySelector('[name="billing_first_name"], [data-smoothr-bill-first-name]')?.value?.trim() || '';
+    document.querySelector('[name="billing_first_name"]')?.value?.trim() || '';
   const lastName =
-    document.querySelector('[name="billing_last_name"], [data-smoothr-bill-last-name]')?.value?.trim() || '';
+    document.querySelector('[name="billing_last_name"]')?.value?.trim() || '';
   const fullName = `${firstName} ${lastName}`.trim();
 
-  if (!firstName || !lastName) {
-    warn('Billing name incomplete for Authorize.Net', { firstName, lastName });
+  if (!fullName) {
+    console.warn('[Authorize.Net] \u274c fullName is empty \u2013 skipping tokenization');
+    return;
   }
+
+  console.log('[Authorize.Net] \ud83e\uddea Using fullName:', fullName);
 
   if (!cardNumber || !expiry) {
     return { error: { message: 'Card details incomplete' } };
@@ -212,19 +215,21 @@ export async function createPaymentMethod() {
   let [month, year] = expiry.split('/').map(p => p.trim());
   if (year && year.length === 2) year = '20' + year;
 
+  const cardData = { cardNumber, month, year, cardCode, name: fullName };
   const secureData = {
     authData: { clientKey, apiLoginID },
-    cardData: { cardNumber, month, year, cardCode, name: fullName }
+    cardData
   };
 
   return new Promise(resolve => {
     if (!window.Accept || !window.Accept.dispatchData) {
+      console.warn('[Authorize.Net] \u274c dispatchData was not triggered');
       resolve({ error: { message: 'Accept.js unavailable' } });
       return;
     }
     submitting = true;
     updateDebug();
-    log('Dispatching Accept.dispatchData');
+    console.log('[Authorize.Net] \ud83e\uddea Dispatching tokenization with cardData:', cardData);
     try {
       window.Accept.dispatchData(secureData, response => {
         submitting = false;
