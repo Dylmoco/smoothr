@@ -7831,6 +7831,16 @@ async function mountCardFields2() {
       input.placeholder = "CVC";
       cvc.appendChild(input);
     }
+    const readyCheck = () => (num == null ? void 0 : num.shadowRoot) && (exp == null ? void 0 : exp.shadowRoot) && (cvc == null ? void 0 : cvc.shadowRoot);
+    let waited = 0;
+    while (!readyCheck() && waited < 3e3) {
+      await new Promise((res) => setTimeout(res, 100));
+      waited += 100;
+    }
+    if (!readyCheck()) {
+      warn2("Timed out waiting for Accept.js card fields");
+      return;
+    }
     fieldsMounted2 = true;
     authorizeNetReady = true;
     updateDebug();
