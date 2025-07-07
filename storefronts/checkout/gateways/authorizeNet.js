@@ -163,7 +163,14 @@ export async function createPaymentMethod() {
     return { error: { message: 'Authorize.Net not ready' } };
   }
 
-  const { acceptReady, authorizeNetReady } = getReadiness();
+  const { acceptReady, authorizeNetReady, isSubmitting } =
+    getReadinessState();
+
+  log('createPaymentMethod readiness', {
+    acceptReady,
+    authorizeNetReady,
+    isSubmitting
+  });
 
   if (!acceptReady) {
     console.warn('[Smoothr AuthorizeNet] \u274c Accept.js not ready');
@@ -176,7 +183,7 @@ export async function createPaymentMethod() {
     return { error: { message: 'Card fields not ready' } };
   }
 
-  if (submitting) {
+  if (isSubmitting) {
     warn('Payment already submitting');
     return { error: { message: 'Already submitting' } };
   }
