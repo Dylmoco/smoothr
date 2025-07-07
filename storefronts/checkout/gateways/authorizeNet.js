@@ -4,6 +4,7 @@ let fieldsMounted = false;
 let mountPromise;
 let clientKey;
 let apiLoginID;
+let transactionKey;
 let scriptPromise;
 let authorizeNetReady = false;
 let acceptReady = false;
@@ -22,7 +23,9 @@ function updateDebug() {
     authorizeNetReady,
     isSubmitting: submitting,
     getReadinessState,
-    checkAuthorizeIframeStatus
+    checkAuthorizeIframeStatus,
+    getAcceptCredentials,
+    checkAcceptFieldPresence
   };
   if (!debugInitialized && acceptReady && authorizeNetReady) {
     debugInitialized = true;
@@ -40,6 +43,27 @@ function checkAuthorizeIframeStatus() {
     expInput: !!exp,
     cvcInput: !!cvc,
     fieldsMounted
+  };
+}
+
+function checkAcceptFieldPresence() {
+  const num = document.querySelector(
+    '[data-smoothr-card-number] input[data-accept-name="cardNumber"]'
+  );
+  const exp = document.querySelector(
+    '[data-smoothr-card-expiry] input[data-accept-name="expiry"]'
+  );
+  const cvc = document.querySelector(
+    '[data-smoothr-card-cvc] input[data-accept-name="cvv"]'
+  );
+  return !!num && !!exp && !!cvc;
+}
+
+function getAcceptCredentials() {
+  return {
+    clientKey,
+    apiLoginId: apiLoginID,
+    transactionKey
   };
 }
 
@@ -97,12 +121,14 @@ function loadAcceptJs() {
 }
 
 async function resolveCredentials() {
-  if (clientKey && apiLoginID) return { clientKey, apiLoginID };
+  if (clientKey && apiLoginID && transactionKey !== undefined)
+    return { clientKey, apiLoginID };
   const storeId = window.SMOOTHR_CONFIG?.storeId;
   if (!storeId) return { clientKey: null, apiLoginID: null };
   const cred = await getPublicCredential(storeId, 'authorizeNet');
   clientKey = cred?.settings?.clientKey || '';
   apiLoginID = cred?.api_key || cred?.settings?.loginId || '';
+  transactionKey = cred?.settings?.transactionKey || cred?.settings?.transaction_key || '';
   return { clientKey, apiLoginID };
 }
 
@@ -144,6 +170,8 @@ export async function mountCardFields() {
     if (!num.querySelector('input')) {
       const input = document.createElement('input');
       input.type = 'text';
+      input.setAttribute('data-accept-name', 'cardNumber');
+      input.classList.add('smoothr-accept-field');
       input.autocomplete = 'cc-number';
       input.placeholder = 'Card number';
       num.appendChild(input);
@@ -151,6 +179,8 @@ export async function mountCardFields() {
     if (!exp.querySelector('input')) {
       const input = document.createElement('input');
       input.type = 'text';
+      input.setAttribute('data-accept-name', 'expiry');
+      input.classList.add('smoothr-accept-field');
       input.autocomplete = 'cc-exp';
       input.placeholder = 'MM/YY';
       exp.appendChild(input);
@@ -158,9 +188,22 @@ export async function mountCardFields() {
     if (!cvc.querySelector('input')) {
       const input = document.createElement('input');
       input.type = 'text';
+      input.setAttribute('data-accept-name', 'cvv');
+      input.classList.add('smoothr-accept-field');
       input.autocomplete = 'cc-csc';
       input.placeholder = 'CVC';
       cvc.appendChild(input);
+    }
+
+    let wait = 0;
+    while (!checkAcceptFieldPresence() && wait < 3000) {
+      await new Promise(res => setTimeout(res, 100));
+      wait += 100;
+    }
+
+    if (!checkAcceptFieldPresence()) {
+      warn('Timed out waiting for Accept.js inputs');
+      return;
     }
 
     fieldsMounted = true;
@@ -213,6 +256,11 @@ export async function createPaymentMethod() {
     console.warn('[Smoothr AuthorizeNet] \u274c Card fields not mounted');
     alert('Payment form not ready: Card fields not ready');
     return { error: { message: 'Card fields not ready' } };
+  }
+
+  if (!checkAcceptFieldPresence()) {
+    warn('Accept.js input fields missing');
+    return { error: { message: 'Accept inputs missing' } };
   }
 
   if (isSubmitting) {
