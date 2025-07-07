@@ -281,7 +281,8 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     "payment_provider" "text",
     "payment_status" "text" DEFAULT 'unpaid',
     "paid_at" timestamp without time zone,
-    "payment_intent_id" "text"
+    "payment_intent_id" "text",
+    "cart_meta_hash" text
 );
 
 
@@ -1750,6 +1751,13 @@ BEGIN
     WHERE table_name = 'orders' AND column_name = 'payment_status'
   ) THEN
     ALTER TABLE public.orders ADD COLUMN payment_status text DEFAULT 'unpaid';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'orders' AND column_name = 'cart_meta_hash'
+  ) THEN
+    ALTER TABLE public.orders ADD COLUMN cart_meta_hash text;
   END IF;
 
   -- Ensure foreign key exists
