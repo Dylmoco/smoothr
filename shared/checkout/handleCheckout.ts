@@ -8,6 +8,12 @@ import paypalProvider from './providers/paypal';
 import nmiProvider from './providers/nmi';
 import segpayProvider from './providers/segpay';
 
+// Optional global to allow custom order number generation
+const generateOrderNumber =
+  (globalThis as any).generateOrderNumber as
+    | (() => string | Promise<string>)
+    | undefined;
+
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Smoothr Checkout]', ...args);
 const warn = (...args: any[]) => debug && console.warn('[Smoothr Checkout]', ...args);
@@ -133,7 +139,14 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
-  const cart_meta_hash = hashCartMeta(email, total, cart);
+  let cart_meta_hash = hashCartMeta(email, total, cart);
+  if (!cart_meta_hash) {
+    console.warn('[warn] cart_meta_hash is undefined — using fallback hash');
+    cart_meta_hash = crypto
+      .createHash('sha256')
+      .update(JSON.stringify(cart))
+      .digest('hex');
+  }
 
   const { data: existingOrders, error: lookupErr } = await supabase
     .from('orders')
@@ -251,7 +264,12 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   }
 
   const nextSequence = Number(order_sequence) + 1;
-  const orderNumber = `${prefix}-${String(nextSequence).padStart(4, '0')}`;
+  const orderNumber =
+    (await generateOrderNumber?.()) ??
+    `${prefix}-${String(nextSequence).padStart(4, '0')}`;
+  if (!orderNumber) throw new Error('Missing order_number');
+
+  console.log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
 
   const orderPayload = {
     order_number: orderNumber,
@@ -269,20 +287,27 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     customer_email: email,
     payment_intent_id: paymentIntentId
   };
-  log("Order payload:", orderPayload);
-  const { data: orderData, error: orderError } = await supabase
 
-    .from('orders')
-    .upsert(orderPayload, { onConflict: 'order_number' })
-    .select('id')
-    .single();
+  console.log('[debug] Final orderPayload:', orderPayload);
 
-  console.log('createOrder result:', JSON.stringify({ data: orderData, error: orderError }, null, 2));
-
-  if (orderError) {
-    console.error('Order creation failed:', orderError.message);
-    return res.status(400).json({ error: orderError.message || 'Order creation failed' });
+  let orderData;
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .upsert(orderPayload, { onConflict: 'order_number' })
+      .select('id')
+      .single();
+    if (error) {
+      console.error('[error] Supabase upsert failed:', error);
+      return res.status(500).json({ error: 'Order insert failed' });
+    }
+    orderData = data;
+  } catch (e) {
+    console.error('[error] Supabase upsert threw:', e);
+    return res.status(500).json({ error: 'Order insert failed' });
   }
+
+  console.log('createOrder result:', JSON.stringify({ data: orderData }, null, 2));
 
   if (orderData) {
     const itemRows = cart.map((item: any) => ({
