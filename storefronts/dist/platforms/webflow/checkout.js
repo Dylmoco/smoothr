@@ -1710,17 +1710,24 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
+    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -8312,14 +8319,16 @@ if (document.readyState !== "loading") {
 window.Smoothr = window.Smoothr || {};
 window.Smoothr.checkout = { version: "dev6" };
 async function submitGatewayPayment() {
-  var _a4;
+  var _a4, _b;
   const activeGateway = await getActivePaymentGateway();
   const gateway = gateways_default[activeGateway];
   if (!gateway) {
     warn3("Unknown payment gateway:", activeGateway);
     return;
   }
-  await ((_a4 = gateway.mountCardFields) == null ? void 0 : _a4.call(gateway));
+  if (!((_a4 = gateway.isMounted) == null ? void 0 : _a4.call(gateway))) {
+    await ((_b = gateway.mountCardFields) == null ? void 0 : _b.call(gateway));
+  }
   await gateway.createPaymentMethod();
 }
 window.__SMOOTHR_DEBUG__ = window.__SMOOTHR_DEBUG__ || {};
