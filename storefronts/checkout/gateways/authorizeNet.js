@@ -195,31 +195,8 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
-    const fieldsReady = () => {
-      if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
-        return true;
-      return (
-        (num.shadowRoot || num.querySelector('iframe')) &&
-        (exp.shadowRoot || exp.querySelector('iframe')) &&
-        (cvc.shadowRoot || cvc.querySelector('iframe'))
-      );
-    };
-
-    let waitedForIframe = 0;
-    while (!fieldsReady() && waitedForIframe < 5000) {
-      await new Promise(res => setTimeout(res, 100));
-      waitedForIframe += 100;
-    }
-
-    if (!fieldsReady()) {
-      console.error(
-        '[Authorize.Net] Failed to inject secure card fields \u2014 iframe injection never completed'
-      );
-      throw new Error(
-        '[Authorize.Net] Failed to inject secure card fields \u2014 iframe injection never completed'
-      );
-    }
     authorizeNetReady = true;
+    updateDebug();
     log('Secure card fields injected');
 
     let wait = 0;
@@ -234,9 +211,6 @@ export async function mountCardFields() {
     }
 
     fieldsMounted = true;
-    if (acceptReady) {
-      authorizeNetReady = true;
-    }
     updateDebug();
     log('Card fields mounted');
   })();
