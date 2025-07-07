@@ -8228,6 +8228,23 @@ async function initCheckout() {
     { version: "dev6" }
   );
   await gateway.mountCardFields();
+  const numberInput = document.querySelector("[data-smoothr-card-number] input") || document.querySelector("[data-smoothr-card-number]");
+  const expiryInput = document.querySelector("[data-smoothr-card-expiry] input") || document.querySelector("[data-smoothr-card-expiry]");
+  const cvcInput = document.querySelector("[data-smoothr-card-cvc] input") || document.querySelector("[data-smoothr-card-cvc]");
+  numberInput == null ? void 0 : numberInput.addEventListener("input", (e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 16);
+    e.target.value = digits.replace(/(.{4})/g, "$1 ").trim();
+  });
+  expiryInput == null ? void 0 : expiryInput.addEventListener("input", (e) => {
+    let digits = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (digits.length >= 3) {
+      digits = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    }
+    e.target.value = digits;
+  });
+  cvcInput == null ? void 0 : cvcInput.addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4);
+  });
   document.querySelectorAll("[data-smoothr-checkout]").forEach((checkoutBtn) => {
     var _a5;
     if (checkoutBtn.__smoothrBound) return;
