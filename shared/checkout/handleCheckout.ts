@@ -159,6 +159,15 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
   const metaCartString = JSON.stringify(metaCart).slice(0, 500);
 
+  const providerPayloadSummary = {
+    payment_method,
+    total,
+    currency,
+    store_id,
+    cart_items: cart.length
+  };
+  log("Provider payload summary:", providerPayloadSummary);
+
   let providerResult;
   try {
     providerResult = await providerHandler({
@@ -241,8 +250,9 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     customer_email: email,
     payment_intent_id: intent?.id || null
   };
-
+  log("Order payload:", orderPayload);
   const { data: orderData, error: orderError } = await supabase
+
     .from('orders')
     .upsert(orderPayload, { onConflict: 'order_number' })
     .select('id')
