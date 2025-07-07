@@ -143,10 +143,16 @@ export function ready() {
   );
 }
 
+export function getReadiness() {
+  return { acceptReady, authorizeNetReady };
+}
+
 export async function createPaymentMethod() {
   if (!ready()) {
     return { error: { message: 'Authorize.Net not ready' } };
   }
+
+  const { acceptReady, authorizeNetReady } = getReadiness();
 
   if (!acceptReady) {
     console.warn('[Smoothr AuthorizeNet] \u274c Accept.js not ready');
@@ -216,5 +222,6 @@ export default {
   mountCardFields,
   isMounted,
   ready,
+  getReadiness,
   createPaymentMethod
 };
