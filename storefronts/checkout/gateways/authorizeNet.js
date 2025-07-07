@@ -60,7 +60,11 @@ function loadAcceptJs() {
     let script = document.querySelector('script[data-smoothr-accept]');
     if (!script) {
       script = document.createElement('script');
-      script.src = 'https://jstest.authorize.net/v1/Accept.js';
+      const env = window.SMOOTHR_CONFIG?.env?.toLowerCase();
+      const isProd = env === 'production' || env === 'prod';
+      script.src = isProd
+        ? 'https://js.authorize.net/v1/Accept.js'
+        : 'https://jstest.authorize.net/v1/Accept.js';
       script.type = 'text/javascript';
       script.setAttribute('data-smoothr-accept', '');
       script.addEventListener('load', () => resolve());
