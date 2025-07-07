@@ -346,9 +346,12 @@ async function submitGatewayPayment() {
 }
 
 window.__SMOOTHR_DEBUG__ = window.__SMOOTHR_DEBUG__ || {};
+window.__SMOOTHR_DEBUG__.submitGatewayPayment = submitGatewayPayment;
+
+window.__SMOOTHR_DEBUG__ = window.__SMOOTHR_DEBUG__ || {};
 window.__SMOOTHR_DEBUG__.submitCheckout = () => {
   console.log('[Authorize.Net] \u{1F501} Submit triggered');
-  submitGatewayPayment?.();
+  window.__SMOOTHR_DEBUG__.submitGatewayPayment?.();
 };
 
 window.addEventListener('DOMContentLoaded', () => {
