@@ -139,13 +139,19 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
-  let cart_meta_hash = hashCartMeta(email, total, cart);
-  if (!cart_meta_hash) {
-    console.warn('[warn] cart_meta_hash is undefined — using fallback hash');
-    cart_meta_hash = crypto
-      .createHash('sha256')
-      .update(JSON.stringify(cart))
-      .digest('hex');
+  let cart_meta_hash;
+  try {
+    cart_meta_hash = hashCartMeta(email, total, cart);
+    if (!cart_meta_hash) {
+      console.warn('[warn] cart_meta_hash is missing — using fallback');
+      cart_meta_hash = crypto
+        .createHash('sha256')
+        .update(JSON.stringify(cart))
+        .digest('hex');
+    }
+  } catch (err) {
+    console.error('[error] Failed to compute cart_meta_hash:', err);
+    return res.status(500).json({ error: 'cart_meta_hash failed' });
   }
 
   const { data: existingOrders, error: lookupErr } = await supabase
@@ -179,6 +185,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     err('Missing opaque token from Accept.js');
     return res.status(400).json({ error: 'Missing opaque token from Accept.js' });
   }
+
+  console.log('[debug] Passed payment_method checks');
 
   const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
   const metaCartString = JSON.stringify(metaCart).slice(0, 500);
@@ -264,10 +272,18 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   }
 
   const nextSequence = Number(order_sequence) + 1;
-  const orderNumber =
-    (await generateOrderNumber?.()) ??
-    `${prefix}-${String(nextSequence).padStart(4, '0')}`;
-  if (!orderNumber) throw new Error('Missing order_number');
+  let orderNumber: string | undefined;
+  try {
+    orderNumber = await generateOrderNumber?.();
+    if (!orderNumber) {
+      throw new Error('orderNumber is undefined');
+    }
+  } catch (err) {
+    console.error('[error] Failed to generate orderNumber:', err);
+    return res.status(500).json({ error: 'orderNumber generation failed' });
+  }
+  orderNumber =
+    orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
 
   console.log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
 
