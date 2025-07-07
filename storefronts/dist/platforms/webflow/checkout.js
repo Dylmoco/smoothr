@@ -7869,13 +7869,13 @@ async function createPaymentMethod2() {
   const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number] input")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
   const expiry = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry] input")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
   const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc] input")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  const firstName = ((_h = (_g = document.querySelector('[name="billing_first_name"]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
-  const lastName = ((_j = (_i = document.querySelector('[name="billing_last_name"]')) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
-  const fullName = `${firstName} ${lastName}`.trim();
-  if (!fullName) {
-    console.warn("[Authorize.Net] \u274C fullName is empty \u2013 skipping tokenization");
+  const first = (_h = (_g = document.querySelector('[name="billing_first_name"]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim();
+  const last = (_j = (_i = document.querySelector('[name="billing_last_name"]')) == null ? void 0 : _i.value) == null ? void 0 : _j.trim();
+  if (!first || !last) {
+    console.warn("[Authorize.Net] \u274C Missing billing_first_name or billing_last_name");
     return;
   }
+  const fullName = `${first} ${last}`.trim();
   console.log("[Authorize.Net] \u{1F9EA} Using fullName:", fullName);
   if (!cardNumber || !expiry) {
     return { error: { message: "Card details incomplete" } };
