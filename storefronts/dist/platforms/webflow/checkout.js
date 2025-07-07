@@ -7844,7 +7844,7 @@ function getReadiness() {
   return { acceptReady, authorizeNetReady };
 }
 async function createPaymentMethod2() {
-  var _a4, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
+  var _a4, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   console.log("[Authorize.Net] \u{1F9EA} createPaymentMethod called");
   if (!ready2()) {
     return { error: { message: "Authorize.Net not ready" } };
@@ -7872,14 +7872,13 @@ async function createPaymentMethod2() {
   const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number] input")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
   const expiry = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry] input")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
   const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc] input")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  const first = ((_h = (_g = document.querySelector('[name="billing_first_name"]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || ((_j = (_i = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim());
-  const last = ((_l = (_k = document.querySelector('[name="billing_last_name"]')) == null ? void 0 : _k.value) == null ? void 0 : _l.trim()) || ((_n = (_m = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim());
+  const first = ((_h = (_g = document.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
+  const last = ((_j = (_i = document.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
+  const fullName = `${first} ${last}`.trim();
   if (!first || !last) {
-    console.warn("[Authorize.Net] \u274C Missing billing_first_name or billing_last_name");
+    console.warn("[Authorize.Net] \u274C Missing billing name fields \u2014 aborting tokenization");
     return;
   }
-  const fullName = `${first} ${last}`.trim();
-  console.log("[Authorize.Net] \u{1F9EA} Using fullName:", fullName);
   if (!cardNumber || !expiry) {
     return { error: { message: "Card details incomplete" } };
   }
@@ -7898,7 +7897,6 @@ async function createPaymentMethod2() {
     }
     submitting = true;
     updateDebug();
-    console.log("[Authorize.Net] \u{1F9EA} Using fullName:", cardData.name);
     console.log("[Authorize.Net] \u{1F9EA} Dispatching tokenization with cardData:", cardData);
     try {
       window.Accept.dispatchData(secureData, (response) => {

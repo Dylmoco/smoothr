@@ -202,20 +202,16 @@ export async function createPaymentMethod() {
     document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
 
   const first =
-    document.querySelector('[name="billing_first_name"]')?.value?.trim() ||
-    document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim();
+    document.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
   const last =
-    document.querySelector('[name="billing_last_name"]')?.value?.trim() ||
-    document.querySelector('[data-smoothr-bill-last-name]')?.value?.trim();
+    document.querySelector('[data-smoothr-bill-last-name]')?.value?.trim() || '';
+  const fullName = `${first} ${last}`.trim();
 
   if (!first || !last) {
-    console.warn('[Authorize.Net] \u274c Missing billing_first_name or billing_last_name');
+    console.warn('[Authorize.Net] \u274c Missing billing name fields \u2014 aborting tokenization');
     return;
   }
 
-  const fullName = `${first} ${last}`.trim();
-
-  console.log('[Authorize.Net] \ud83e\uddea Using fullName:', fullName);
 
   if (!cardNumber || !expiry) {
     return { error: { message: 'Card details incomplete' } };
@@ -238,7 +234,6 @@ export async function createPaymentMethod() {
     }
     submitting = true;
     updateDebug();
-    console.log('[Authorize.Net] \ud83e\uddea Using fullName:', cardData.name);
     console.log('[Authorize.Net] \ud83e\uddea Dispatching tokenization with cardData:', cardData);
     try {
       window.Accept.dispatchData(secureData, response => {
