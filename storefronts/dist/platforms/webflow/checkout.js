@@ -7389,7 +7389,7 @@ var SupabaseClient = class {
       return (_b = (_a4 = data.session) === null || _a4 === void 0 ? void 0 : _a4.access_token) !== null && _b !== void 0 ? _b : null;
     });
   }
-  _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, storageKey, flowType, lock, debug: debug3 }, headers, fetch3) {
+  _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, storageKey, flowType, lock, debug: debug4 }, headers, fetch3) {
     const authHeaders = {
       Authorization: `Bearer ${this.supabaseKey}`,
       apikey: `${this.supabaseKey}`
@@ -7404,7 +7404,7 @@ var SupabaseClient = class {
       storage,
       flowType,
       lock,
-      debug: debug3,
+      debug: debug4,
       fetch: fetch3,
       // auth checks if there is a custom authorizaiton header using this flag
       // so it knows whether to return an error when getUser is called with no session
@@ -7446,6 +7446,11 @@ var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       apikey: DEFAULT_SUPABASE_KEY,
       Authorization: `Bearer ${DEFAULT_SUPABASE_KEY}`
     }
+  },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
   }
 });
 var supabaseClient_default = supabase;
@@ -7455,6 +7460,7 @@ var fieldsMounted = false;
 var mountAttempts = 0;
 var stripe;
 var elements;
+var initPromise;
 var cachedKey;
 var cardNumberElement;
 var mountPromise;
@@ -7529,14 +7535,20 @@ async function resolveStripeKey() {
   return key;
 }
 async function getElements() {
-  if (!stripe) {
-    const stripeKey = await resolveStripeKey();
-    if (!stripeKey) return null;
-    log("Using Stripe key", stripeKey);
-    stripe = Stripe(stripeKey);
-    elements = stripe.elements();
+  if (stripe && elements) {
+    return { stripe, elements };
   }
-  return { stripe, elements };
+  if (!initPromise) {
+    initPromise = (async () => {
+      const stripeKey = await resolveStripeKey();
+      if (!stripeKey) return { stripe: null, elements: null };
+      log("Using Stripe key", stripeKey);
+      stripe = Stripe(stripeKey);
+      elements = stripe.elements();
+      return { stripe, elements };
+    })();
+  }
+  return initPromise;
 }
 async function mountCardFields() {
   if (mountPromise) return mountPromise;
@@ -7568,70 +7580,72 @@ async function mountCardFields() {
       return;
     }
     fieldsMounted = true;
-  if (numberTarget && !cardNumberElement) {
-    await waitForInteractable(numberTarget);
-    const el = elements.create("cardNumber");
-    el.mount("[data-smoothr-card-number]");
-    console.log("[Stripe] Mounted iframe");
-    setTimeout(() => {
-      var _a4;
-      const iframe = document.querySelector("[data-smoothr-card-number] iframe");
-      const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
-      console.log("[Stripe] iframe bbox", width);
-      if (iframe && width < 10) {
-        console.warn("[Stripe] iframe dead \u2192 remounting now...");
-        (_a4 = cardNumberElement == null ? void 0 : cardNumberElement.unmount) == null ? void 0 : _a4.call(cardNumberElement);
-        cardNumberElement = elements.create("cardNumber");
-        cardNumberElement.mount("[data-smoothr-card-number]");
-        forceStripeIframeStyle("[data-smoothr-card-number]");
-      }
-    }, 500);
-    forceStripeIframeStyle("[data-smoothr-card-number]");
-    cardNumberElement = el;
-    fieldsMounted = true;
-  }
-  if (expiryTarget) {
-    await waitForInteractable(expiryTarget);
-    const el = elements.create("cardExpiry");
-    el.mount("[data-smoothr-card-expiry]");
-    console.log("[Stripe] Mounted iframe");
-    setTimeout(() => {
-      var _a4;
-      const iframe = document.querySelector("[data-smoothr-card-expiry] iframe");
-      const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
-      console.log("[Stripe] iframe bbox", width);
-      if (iframe && width < 10) {
-        console.warn("[Stripe] iframe dead \u2192 remounting now...");
-        (_a4 = el == null ? void 0 : el.unmount) == null ? void 0 : _a4.call(el);
-        const remount = elements.create("cardExpiry");
-        remount.mount("[data-smoothr-card-expiry]");
-        forceStripeIframeStyle("[data-smoothr-card-expiry]");
-      }
-    }, 500);
-    forceStripeIframeStyle("[data-smoothr-card-expiry]");
-  }
-  if (cvcTarget) {
-    await waitForInteractable(cvcTarget);
-    const el = elements.create("cardCvc");
-    el.mount("[data-smoothr-card-cvc]");
-    console.log("[Stripe] Mounted iframe");
-    setTimeout(() => {
-      var _a4;
-      const iframe = document.querySelector("[data-smoothr-card-cvc] iframe");
-      const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
-      console.log("[Stripe] iframe bbox", width);
-      if (iframe && width < 10) {
-        console.warn("[Stripe] iframe dead \u2192 remounting now...");
-        (_a4 = el == null ? void 0 : el.unmount) == null ? void 0 : _a4.call(el);
-        const remount = elements.create("cardCvc");
-        remount.mount("[data-smoothr-card-cvc]");
-        forceStripeIframeStyle("[data-smoothr-card-cvc]");
-      }
-    }, 500);
-    forceStripeIframeStyle("[data-smoothr-card-cvc]");
-  }
-  log("Mounted split fields");
-})();
+    const existingNumber = els.getElement ? els.getElement("cardNumber") : null;
+    if (numberTarget && !existingNumber) {
+      await waitForInteractable(numberTarget);
+      const el = elements.create("cardNumber");
+      el.mount("[data-smoothr-card-number]");
+      console.log("[Stripe] Mounted iframe");
+      setTimeout(() => {
+        var _a4;
+        const iframe = document.querySelector("[data-smoothr-card-number] iframe");
+        const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
+        console.log("[Stripe] iframe bbox", width);
+        if (iframe && width < 10) {
+          console.warn("[Stripe] iframe dead \u2192 remounting now...");
+          (_a4 = cardNumberElement == null ? void 0 : cardNumberElement.unmount) == null ? void 0 : _a4.call(cardNumberElement);
+          cardNumberElement = elements.create("cardNumber");
+          cardNumberElement.mount("[data-smoothr-card-number]");
+          forceStripeIframeStyle("[data-smoothr-card-number]");
+        }
+      }, 500);
+      forceStripeIframeStyle("[data-smoothr-card-number]");
+      cardNumberElement = el;
+    }
+    const existingExpiry = els.getElement ? els.getElement("cardExpiry") : null;
+    if (expiryTarget && !existingExpiry) {
+      await waitForInteractable(expiryTarget);
+      const el = elements.create("cardExpiry");
+      el.mount("[data-smoothr-card-expiry]");
+      console.log("[Stripe] Mounted iframe");
+      setTimeout(() => {
+        var _a4;
+        const iframe = document.querySelector("[data-smoothr-card-expiry] iframe");
+        const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
+        console.log("[Stripe] iframe bbox", width);
+        if (iframe && width < 10) {
+          console.warn("[Stripe] iframe dead \u2192 remounting now...");
+          (_a4 = el == null ? void 0 : el.unmount) == null ? void 0 : _a4.call(el);
+          const remount = elements.create("cardExpiry");
+          remount.mount("[data-smoothr-card-expiry]");
+          forceStripeIframeStyle("[data-smoothr-card-expiry]");
+        }
+      }, 500);
+      forceStripeIframeStyle("[data-smoothr-card-expiry]");
+    }
+    const existingCvc = els.getElement ? els.getElement("cardCvc") : null;
+    if (cvcTarget && !existingCvc) {
+      await waitForInteractable(cvcTarget);
+      const el = elements.create("cardCvc");
+      el.mount("[data-smoothr-card-cvc]");
+      console.log("[Stripe] Mounted iframe");
+      setTimeout(() => {
+        var _a4;
+        const iframe = document.querySelector("[data-smoothr-card-cvc] iframe");
+        const width = iframe == null ? void 0 : iframe.getBoundingClientRect().width;
+        console.log("[Stripe] iframe bbox", width);
+        if (iframe && width < 10) {
+          console.warn("[Stripe] iframe dead \u2192 remounting now...");
+          (_a4 = el == null ? void 0 : el.unmount) == null ? void 0 : _a4.call(el);
+          const remount = elements.create("cardCvc");
+          remount.mount("[data-smoothr-card-cvc]");
+          forceStripeIframeStyle("[data-smoothr-card-cvc]");
+        }
+      }, 500);
+      forceStripeIframeStyle("[data-smoothr-card-cvc]");
+    }
+    log("Mounted split fields");
+  })();
   mountPromise = mountPromise.finally(() => {
     mountPromise = null;
   });
@@ -7661,13 +7675,14 @@ async function createPaymentMethod(billing_details) {
   if (!ready()) {
     return { error: { message: "Stripe not ready" } };
   }
-  const { stripe: stripeInstance } = await getElements();
-  if (!stripeInstance) {
+  const { stripe: stripeInstance, elements: els } = await getElements();
+  if (!stripeInstance || !els) {
     return { error: { message: "Stripe not ready" } };
   }
+  const card = cardNumberElement || (typeof els.getElement === "function" ? els.getElement("cardNumber") : null);
   return stripeInstance.createPaymentMethod({
     type: "card",
-    card: cardNumberElement,
+    card,
     billing_details
   });
 }
@@ -7687,42 +7702,220 @@ var authorizeNet_exports = {};
 __export(authorizeNet_exports, {
   createPaymentMethod: () => createPaymentMethod2,
   default: () => authorizeNet_default,
+  getReadiness: () => getReadiness,
   isMounted: () => isMounted2,
   mountCardFields: () => mountCardFields2,
   ready: () => ready2
 });
 var fieldsMounted2 = false;
-function mountCardFields2() {
-  const num = document.querySelector("[data-smoothr-card-number]");
-  const exp = document.querySelector("[data-smoothr-card-expiry]");
-  const cvc = document.querySelector("[data-smoothr-card-cvc]");
-  if (num && exp && cvc) fieldsMounted2 = true;
+var mountPromise2;
+var clientKey;
+var apiLoginID;
+var scriptPromise;
+var authorizeNetReady = false;
+var acceptReady = false;
+var submitting = false;
+var debugInitialized = false;
+function getReadinessState() {
+  return { acceptReady, authorizeNetReady, isSubmitting: submitting };
+}
+function updateDebug() {
+  window.__SMOOTHR_DEBUG__ = {
+    acceptReady,
+    authorizeNetReady,
+    isSubmitting: submitting,
+    getReadinessState
+  };
+  if (!debugInitialized && acceptReady && authorizeNetReady) {
+    debugInitialized = true;
+    log2("Debug helpers ready:", window.__SMOOTHR_DEBUG__);
+  }
+}
+var _a2;
+var debug2 = (_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.debug;
+var log2 = (...args) => debug2 && console.log("[Smoothr AuthorizeNet]", ...args);
+var warn2 = (...args) => debug2 && console.warn("[Smoothr AuthorizeNet]", ...args);
+async function getPublicCredential(storeId, integrationId) {
+  if (!storeId || !integrationId) return null;
+  try {
+    const { data, error } = await supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("integration_id", integrationId).maybeSingle();
+    if (error) {
+      warn2("Credential lookup failed:", error.message || error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    warn2("Credential fetch error:", (e == null ? void 0 : e.message) || e);
+    return null;
+  }
+}
+function loadAcceptJs() {
+  if (window.Accept) return Promise.resolve();
+  if (scriptPromise) return scriptPromise;
+  scriptPromise = new Promise((resolve) => {
+    let script = document.querySelector("script[data-smoothr-accept]");
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://jstest.authorize.net/v1/Accept.js";
+      script.type = "text/javascript";
+      script.setAttribute("data-smoothr-accept", "");
+      script.addEventListener("load", () => resolve());
+      document.head.appendChild(script);
+    } else if (window.Accept) {
+      resolve();
+    } else {
+      script.addEventListener("load", () => resolve());
+    }
+  });
+  return scriptPromise;
+}
+async function resolveCredentials() {
+  var _a4, _b, _c;
+  if (clientKey && apiLoginID) return { clientKey, apiLoginID };
+  const storeId = (_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.storeId;
+  if (!storeId) return { clientKey: null, apiLoginID: null };
+  const cred = await getPublicCredential(storeId, "authorizeNet");
+  clientKey = ((_b = cred == null ? void 0 : cred.settings) == null ? void 0 : _b.clientKey) || "";
+  apiLoginID = (cred == null ? void 0 : cred.api_key) || ((_c = cred == null ? void 0 : cred.settings) == null ? void 0 : _c.loginId) || "";
+  return { clientKey, apiLoginID };
+}
+async function mountCardFields2() {
+  if (mountPromise2) return mountPromise2;
+  if (fieldsMounted2) return;
+  mountPromise2 = (async () => {
+    log2("Mounting card fields");
+    const num = document.querySelector("[data-smoothr-card-number]");
+    const exp = document.querySelector("[data-smoothr-card-expiry]");
+    const cvc = document.querySelector("[data-smoothr-card-cvc]");
+    if (!num || !exp || !cvc) {
+      warn2("Card fields not found");
+      return;
+    }
+    await resolveCredentials();
+    await loadAcceptJs();
+    log2("Accept.js injected");
+    if (!acceptReady) {
+      acceptReady = true;
+      updateDebug();
+      log2("Accept.js ready");
+    }
+    if (!num.querySelector("input")) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.autocomplete = "cc-number";
+      input.placeholder = "Card number";
+      num.appendChild(input);
+    }
+    if (!exp.querySelector("input")) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.autocomplete = "cc-exp";
+      input.placeholder = "MM/YY";
+      exp.appendChild(input);
+    }
+    if (!cvc.querySelector("input")) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.autocomplete = "cc-csc";
+      input.placeholder = "CVC";
+      cvc.appendChild(input);
+    }
+    fieldsMounted2 = true;
+    authorizeNetReady = true;
+    updateDebug();
+    log2("Card fields mounted");
+  })();
+  mountPromise2 = mountPromise2.finally(() => {
+    mountPromise2 = null;
+  });
+  return mountPromise2;
 }
 function isMounted2() {
   return fieldsMounted2;
 }
 function ready2() {
-  const num = document.querySelector("[data-smoothr-card-number]");
-  const exp = document.querySelector("[data-smoothr-card-expiry]");
-  return !!num && !!exp;
+  return fieldsMounted2 && !!window.Accept && !!clientKey && !!apiLoginID;
+}
+function getReadiness() {
+  return { acceptReady, authorizeNetReady };
 }
 async function createPaymentMethod2() {
-  var _a4, _b, _c, _d, _e, _f;
+  var _a4, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   if (!ready2()) {
-    return { error: { message: "Card fields missing" } };
+    return { error: { message: "Authorize.Net not ready" } };
   }
-  const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number]")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
-  const expirationDate = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
-  const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-  if (!cardNumber || !expirationDate) {
+  const { acceptReady: acceptReady2, authorizeNetReady: authorizeNetReady2, isSubmitting } = getReadinessState();
+  log2("createPaymentMethod readiness", {
+    acceptReady: acceptReady2,
+    authorizeNetReady: authorizeNetReady2,
+    isSubmitting
+  });
+  if (!acceptReady2) {
+    console.warn("[Smoothr AuthorizeNet] \u274C Accept.js not ready");
+    alert("Payment form not ready: Accept.js not loaded");
+    return { error: { message: "Accept.js not loaded" } };
+  }
+  if (!authorizeNetReady2) {
+    console.warn("[Smoothr AuthorizeNet] \u274C Card fields not mounted");
+    alert("Payment form not ready: Card fields not ready");
+    return { error: { message: "Card fields not ready" } };
+  }
+  if (isSubmitting) {
+    warn2("Payment already submitting");
+    return { error: { message: "Already submitting" } };
+  }
+  const cardNumber = ((_b = (_a4 = document.querySelector("[data-smoothr-card-number] input")) == null ? void 0 : _a4.value) == null ? void 0 : _b.trim()) || "";
+  const expiry = ((_d = (_c = document.querySelector("[data-smoothr-card-expiry] input")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
+  const cardCode = ((_f = (_e = document.querySelector("[data-smoothr-card-cvc] input")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
+  const firstName = ((_h = (_g = document.querySelector('[name="billing_first_name"], [data-smoothr-bill-first-name]')) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
+  const lastName = ((_j = (_i = document.querySelector('[name="billing_last_name"], [data-smoothr-bill-last-name]')) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
+  const fullName = `${firstName} ${lastName}`.trim();
+  if (!firstName || !lastName) {
+    warn2("Billing name incomplete for Authorize.Net", { firstName, lastName });
+  }
+  if (!cardNumber || !expiry) {
     return { error: { message: "Card details incomplete" } };
   }
-  return { paymentMethod: { cardNumber, expirationDate, cardCode } };
+  let [month, year] = expiry.split("/").map((p) => p.trim());
+  if (year && year.length === 2) year = "20" + year;
+  const secureData = {
+    authData: { clientKey, apiLoginID },
+    cardData: { cardNumber, month, year, cardCode, name: fullName }
+  };
+  return new Promise((resolve) => {
+    if (!window.Accept || !window.Accept.dispatchData) {
+      resolve({ error: { message: "Accept.js unavailable" } });
+      return;
+    }
+    submitting = true;
+    updateDebug();
+    log2("Dispatching Accept.dispatchData");
+    try {
+      window.Accept.dispatchData(secureData, (response) => {
+        var _a5, _b2, _c2, _d2;
+        submitting = false;
+        updateDebug();
+        if (((_a5 = response.messages) == null ? void 0 : _a5.resultCode) === "Error") {
+          const message = ((_d2 = (_c2 = (_b2 = response.messages) == null ? void 0 : _b2.message) == null ? void 0 : _c2[0]) == null ? void 0 : _d2.text) || "Tokenization failed";
+          resolve({ error: { message } });
+        } else {
+          resolve({ success: true, payment_method: response.opaqueData });
+        }
+      });
+    } catch (e) {
+      submitting = false;
+      updateDebug();
+      console.error("[Smoothr AuthorizeNet]", "Tokenization error", e);
+      resolve({ error: { message: (e == null ? void 0 : e.message) || "Tokenization failed" } });
+    }
+  });
 }
 var authorizeNet_default = {
   mountCardFields: mountCardFields2,
   isMounted: isMounted2,
   ready: ready2,
+  getReadiness,
+  getReadinessState,
   createPaymentMethod: createPaymentMethod2
 };
 
@@ -7838,25 +8031,10 @@ var gateways_default = {
 };
 
 // storefronts/platforms/webflow/checkout.js
-var SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
-var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
-var supabase2 = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  global: {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-    }
-  }
-});
-var _a2;
-console.log(
-  "[debug] Supabase client created",
-  ((_a2 = supabase2 == null ? void 0 : supabase2.rest) == null ? void 0 : _a2.headers) || (supabase2 == null ? void 0 : supabase2.headers)
-);
 var _a3;
-var debug2 = (_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug;
-var log2 = (...args) => debug2 && console.log("[Smoothr Checkout]", ...args);
-var warn2 = (...args) => debug2 && console.warn("[Smoothr Checkout]", ...args);
+var debug3 = (_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug;
+var log3 = (...args) => debug3 && console.log("[Smoothr Checkout]", ...args);
+var warn3 = (...args) => debug3 && console.warn("[Smoothr Checkout]", ...args);
 async function getActivePaymentGateway() {
   var _a4;
   const cfg = window.SMOOTHR_CONFIG || {};
@@ -7865,20 +8043,20 @@ async function getActivePaymentGateway() {
   if (!storeId) return "stripe";
   try {
     console.log("[debug] Fetching store_settings for storeId:", storeId);
-    const { data, error } = await supabase2.from("store_settings").select("settings").eq("store_id", storeId).maybeSingle();
+    const { data, error } = await supabaseClient_default.from("store_settings").select("settings").eq("store_id", storeId).maybeSingle();
     console.log("[debug] store_settings response", { settingsData: data, settingsError: error });
     if (error) {
-      warn2("Store settings lookup failed:", error.message || error);
+      warn3("Store settings lookup failed:", error.message || error);
       return "stripe";
     }
     return ((_a4 = data == null ? void 0 : data.settings) == null ? void 0 : _a4.active_payment_gateway) || "stripe";
   } catch (e) {
-    warn2("Gateway lookup failed:", (e == null ? void 0 : e.message) || e);
+    warn3("Gateway lookup failed:", (e == null ? void 0 : e.message) || e);
     return "stripe";
   }
 }
 async function initCheckout() {
-  var _a4, _b;
+  var _a4;
   const Smoothr = window.Smoothr || window.smoothr;
   if (!(Smoothr == null ? void 0 : Smoothr.cart)) return;
   const cart = Smoothr.cart.getCart();
@@ -7931,18 +8109,24 @@ async function initCheckout() {
   console.log("[Smoothr Checkout] Using gateway:", activeGateway);
   const gateway = gateways_default[activeGateway];
   if (!gateway) {
-    warn2("Unknown payment gateway:", activeGateway);
+    warn3("Unknown payment gateway:", activeGateway);
     return;
   }
-  gateway.mountCardFields();
+  window.Smoothr.checkout = Object.assign(
+    {},
+    window.Smoothr.checkout,
+    gateway,
+    { version: "dev6" }
+  );
+  await gateway.mountCardFields();
   document.querySelectorAll("[data-smoothr-checkout]").forEach((checkoutBtn) => {
     var _a5;
     if (checkoutBtn.__smoothrBound) return;
     checkoutBtn.__smoothrBound = true;
     checkoutBtn.addEventListener("click", async () => {
-      var _a6, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P;
+      var _a6, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q;
       if (checkoutBtn.disabled) {
-        warn2("Checkout blocked: already in progress");
+        warn3("Checkout blocked: already in progress");
         return;
       }
       if (activeGateway === "stripe") {
@@ -7955,7 +8139,7 @@ async function initCheckout() {
             return;
           }
         } catch (err) {
-          warn2("Stripe init failed:", (err == null ? void 0 : err.message) || err);
+          warn3("Stripe init failed:", (err == null ? void 0 : err.message) || err);
           alert("Stripe key not configured");
           checkoutBtn.disabled = false;
           checkoutBtn.classList.remove("loading");
@@ -7965,7 +8149,7 @@ async function initCheckout() {
       checkoutBtn.disabled = true;
       checkoutBtn.classList.add("loading");
       try {
-        const email = ((_b2 = (_a6 = document.querySelector("[data-smoothr-email]")) == null ? void 0 : _a6.value) == null ? void 0 : _b2.trim()) || "";
+        const email = ((_b = (_a6 = document.querySelector("[data-smoothr-email]")) == null ? void 0 : _a6.value) == null ? void 0 : _b.trim()) || "";
         const first_name = ((_d = (_c = document.querySelector("[data-smoothr-first-name]")) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) || "";
         const last_name = ((_f = (_e = document.querySelector("[data-smoothr-last-name]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
         const line1 = ((_h = (_g = document.querySelector("[data-smoothr-ship-line1]")) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
@@ -8002,7 +8186,7 @@ async function initCheckout() {
         const anyBillingFilled = requiredBilling.concat(billing_line2, billing_state).some((f) => f);
         const allBillingFilled = requiredBilling.every((f) => f);
         if (anyBillingFilled && !allBillingFilled) {
-          warn2("Incomplete billing details provided");
+          warn3("Incomplete billing details provided");
         }
         const cart2 = Smoothr.cart.getCart();
         const total = Smoothr.cart.getTotal();
@@ -8010,7 +8194,21 @@ async function initCheckout() {
         const customer_id = ((_L = (_K = (_J = window.smoothr) == null ? void 0 : _J.auth) == null ? void 0 : _K.user) == null ? void 0 : _L.id) || null;
         const store_id = (_M = window.SMOOTHR_CONFIG) == null ? void 0 : _M.storeId;
         const platform = "webflow";
-        if (!email || !first_name || !last_name || !total) {
+        const isValid = !!(email && first_name && last_name && total);
+        log3("Validation state", {
+          email,
+          first_name,
+          last_name,
+          total,
+          isValid
+        });
+        const missing = [];
+        if (!email) missing.push("email");
+        if (!first_name) missing.push("first_name");
+        if (!last_name) missing.push("last_name");
+        if (!total) missing.push("total");
+        if (!isValid && !((_N = window.SMOOTHR_CONFIG) == null ? void 0 : _N.disableFrontendValidation)) {
+          warn3("Missing required fields:", missing);
           alert("Missing required fields");
           checkoutBtn.disabled = false;
           checkoutBtn.classList.remove("loading");
@@ -8023,8 +8221,8 @@ async function initCheckout() {
           checkoutBtn.classList.remove("loading");
           return;
         }
-        log2("billing_details:", billing_details);
-        log2("shipping:", shipping);
+        log3("billing_details:", billing_details);
+        log3("shipping:", shipping);
         const { error: pmError, paymentMethod } = await gateway.createPaymentMethod(
           billing_details
         );
@@ -8055,10 +8253,10 @@ async function initCheckout() {
         } else {
           payload.payment_method = paymentMethod.id;
         }
-        log2("Submitting payload:", payload);
-        log2("billing_details:", billing_details);
-        log2("shipping:", shipping);
-        const base = ((_N = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _N.apiBase) || "";
+        log3("Submitting payload:", payload);
+        log3("billing_details:", billing_details);
+        log3("shipping:", shipping);
+        const base = ((_O = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _O.apiBase) || "";
         const res = await fetch(`${base}/api/checkout/${activeGateway}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -8066,7 +8264,7 @@ async function initCheckout() {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.success) {
-          (_P = (_O = Smoothr.cart).clearCart) == null ? void 0 : _P.call(_O);
+          (_Q = (_P = Smoothr.cart).clearCart) == null ? void 0 : _Q.call(_P);
           window.location.href = "/checkout-success";
         } else {
           alert("Failed to start checkout");
@@ -8091,12 +8289,7 @@ if (document.readyState !== "loading") {
   initCheckout();
 }
 window.Smoothr = window.Smoothr || {};
-window.Smoothr.checkout = {
-  version: "dev6",
-  mountCardFields,
-  getStoreSettings,
-  createPaymentMethod
-};
+window.Smoothr.checkout = { version: "dev6" };
 export {
   initCheckout
 };

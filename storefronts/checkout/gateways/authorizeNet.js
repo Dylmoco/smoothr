@@ -195,6 +195,16 @@ export async function createPaymentMethod() {
   const cardCode =
     document.querySelector('[data-smoothr-card-cvc] input')?.value?.trim() || '';
 
+  const firstName =
+    document.querySelector('[name="billing_first_name"], [data-smoothr-bill-first-name]')?.value?.trim() || '';
+  const lastName =
+    document.querySelector('[name="billing_last_name"], [data-smoothr-bill-last-name]')?.value?.trim() || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  if (!firstName || !lastName) {
+    warn('Billing name incomplete for Authorize.Net', { firstName, lastName });
+  }
+
   if (!cardNumber || !expiry) {
     return { error: { message: 'Card details incomplete' } };
   }
@@ -204,7 +214,7 @@ export async function createPaymentMethod() {
 
   const secureData = {
     authData: { clientKey, apiLoginID },
-    cardData: { cardNumber, month, year, cardCode }
+    cardData: { cardNumber, month, year, cardCode, name: fullName }
   };
 
   return new Promise(resolve => {
