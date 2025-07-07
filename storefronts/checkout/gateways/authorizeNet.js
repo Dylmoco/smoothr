@@ -78,7 +78,7 @@ async function getPublicCredential(storeId, integrationId) {
       .from('store_integrations')
       .select('api_key, settings')
       .eq('store_id', storeId)
-      .eq('integration_id', integrationId)
+      .eq('provider', integrationId)
       .maybeSingle();
     if (error) {
       warn('Credential lookup failed:', error.message || error);

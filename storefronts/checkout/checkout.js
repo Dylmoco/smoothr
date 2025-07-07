@@ -15,7 +15,7 @@ async function getPublicCredential(storeId, integrationId) {
       .from('store_integrations')
       .select('api_key, settings')
       .eq('store_id', storeId)
-      .eq('integration_id', integrationId)
+      .eq('provider', integrationId)
       .maybeSingle();
     if (error) {
       console.warn('[Smoothr Checkout] Credential lookup failed:', error.message || error);

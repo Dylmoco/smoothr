@@ -126,7 +126,7 @@ active payment gateway. `initCheckout` chooses the gateway by first checking
 `storeId`. The default provider is `stripe`.
 
 To integrate Authorize.net create a record in the `store_integrations` table
-with `integration_id` set to `authorizeNet` and save your credentials in the
+with `provider` set to `authorizeNet` and save your credentials in the
 `settings` JSON column:
 
 ```json

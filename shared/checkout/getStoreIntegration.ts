@@ -6,7 +6,7 @@ export async function getStoreIntegration(storeId: string, integrationId: string
     .from('store_integrations')
     .select('api_key, settings')
     .eq('store_id', storeId)
-    .eq('integration_id', integrationId)
+    .eq('provider', integrationId)
     .maybeSingle();
   if (error) {
     console.warn('[getStoreIntegration]', error.message || error);
