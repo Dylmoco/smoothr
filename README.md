@@ -91,8 +91,9 @@ The admin dashboard exposes two endpoints for initiating a checkout:
 - `currency` – ISO currency code
 - `description` *(optional)* – order description
 
-   On success the endpoint responds with the created order ID and any payment
-   intent ID returned by the gateway.
+   On success the endpoint responds with the created order ID. The
+   `payment_intent_id` field contains the Stripe PaymentIntent ID or, when using
+   Authorize.Net, the Accept.js `opaqueData.dataValue` used for the charge.
 
 2. `/api/create-checkout-session` – generates a Stripe Checkout Session.
    This endpoint sets `success_url` to `<origin>/checkout-success` and

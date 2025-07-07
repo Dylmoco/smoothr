@@ -206,6 +206,11 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   }
 
   const intent = providerResult?.intent ?? providerResult;
+  const transactionId = intent?.id || null;
+  const paymentIntentId =
+    provider === 'authorizeNet'
+      ? payment_method.dataValue
+      : transactionId;
 
   let customerId: string | null = null;
   try {
@@ -248,14 +253,17 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     order_number: orderNumber,
     status: 'unpaid',
     payment_provider: provider,
-    raw_data: req.body,
+    raw_data:
+      provider === 'authorizeNet'
+        ? { ...req.body, transaction_id: transactionId }
+        : req.body,
     cart_meta_hash,
     total_price: total,
     store_id,
     platform: platform || 'webflow',
     customer_id: customerId,
     customer_email: email,
-    payment_intent_id: intent?.id || null
+    payment_intent_id: paymentIntentId
   };
   log("Order payload:", orderPayload);
   const { data: orderData, error: orderError } = await supabase
@@ -306,7 +314,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     success: true,
     order_id: orderData?.id,
     order_number: orderNumber,
-    payment_intent_id: intent?.id || null
+    payment_intent_id: paymentIntentId
   });
   } catch (err: any) {
     console.error(err);
