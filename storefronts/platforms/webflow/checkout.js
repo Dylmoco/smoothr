@@ -345,7 +345,9 @@ async function submitGatewayPayment() {
     warn('Unknown payment gateway:', activeGateway);
     return;
   }
-  await gateway.mountCardFields?.();
+  if (!gateway.isMounted?.()) {
+    await gateway.mountCardFields?.();
+  }
   await gateway.createPaymentMethod();
 }
 
