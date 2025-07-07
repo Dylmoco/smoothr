@@ -134,6 +134,19 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
+    const readyCheck = () =>
+      num?.shadowRoot && exp?.shadowRoot && cvc?.shadowRoot;
+    let waited = 0;
+    while (!readyCheck() && waited < 3000) {
+      await new Promise(res => setTimeout(res, 100));
+      waited += 100;
+    }
+
+    if (!readyCheck()) {
+      warn('Timed out waiting for Accept.js card fields');
+      return;
+    }
+
     fieldsMounted = true;
     authorizeNetReady = true;
     updateDebug();

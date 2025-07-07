@@ -1710,17 +1710,24 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
+    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
+    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -7823,6 +7830,16 @@ async function mountCardFields2() {
       input.autocomplete = "cc-csc";
       input.placeholder = "CVC";
       cvc.appendChild(input);
+    }
+    const readyCheck = () => (num == null ? void 0 : num.shadowRoot) && (exp == null ? void 0 : exp.shadowRoot) && (cvc == null ? void 0 : cvc.shadowRoot);
+    let waited = 0;
+    while (!readyCheck() && waited < 3e3) {
+      await new Promise((res) => setTimeout(res, 100));
+      waited += 100;
+    }
+    if (!readyCheck()) {
+      warn2("Timed out waiting for Accept.js card fields");
+      return;
     }
     fieldsMounted2 = true;
     authorizeNetReady = true;
