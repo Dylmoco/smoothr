@@ -120,7 +120,7 @@ the script retries mounting every 200ms for up to five attempts. Attach
 wrapping container causes clicks anywhere in the container to trigger checkout.
 
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
-active payment gateway. `initCheckout` chooses the gateway by first checking
+active payment gateway. This single endpoint handles all providers. `initCheckout` chooses the gateway by first checking
 `window.SMOOTHR_CONFIG.active_payment_gateway`. If not set it queries
 `store_settings.settings.active_payment_gateway` in Supabase using the provided
 `storeId`. The default provider is `stripe`.
@@ -137,8 +137,10 @@ with `provider` set to `authorizeNet` and save your credentials in the
 }
 ```
 
-Activate the gateway via `store_settings.settings.active_payment_gateway`
-or by defining the following snippet before loading the SDK:
+Activate the gateway via `store_settings.settings.active_payment_gateway`.
+Requests to `/api/checkout/authorizeNet` only succeed when this value is
+`authorizeNet`. Alternatively you can override the setting on the client by
+defining the following snippet before loading the SDK:
 
 ```html
 <script>
