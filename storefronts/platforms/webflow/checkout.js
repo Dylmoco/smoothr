@@ -14,7 +14,7 @@ async function getPublicCredential(storeId, integrationId) {
       .from('store_integrations')
       .select('api_key, settings')
       .eq('store_id', storeId)
-      .eq('integration_id', integrationId)
+      .eq('provider', integrationId)
       .maybeSingle();
     console.log('[debug] store_integrations response', { credsData: data, credsError: error });
     if (error) {

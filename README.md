@@ -105,7 +105,7 @@ from the store's `store_settings` table in Supabase using the configured
 defaults to `stripe` when no configuration is found.
 
 To enable Authorize.net create a row in the `store_integrations` table with
-`integration_id` set to `authorizeNet` and store your API credentials under the
+`provider` set to `authorizeNet` and store your API credentials under the
 `settings` column:
 
 ```json
