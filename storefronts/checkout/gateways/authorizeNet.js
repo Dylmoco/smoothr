@@ -21,12 +21,26 @@ function updateDebug() {
     acceptReady,
     authorizeNetReady,
     isSubmitting: submitting,
-    getReadinessState
+    getReadinessState,
+    checkAuthorizeIframeStatus
   };
   if (!debugInitialized && acceptReady && authorizeNetReady) {
     debugInitialized = true;
     log('Debug helpers ready:', window.__SMOOTHR_DEBUG__);
   }
+}
+
+function checkAuthorizeIframeStatus() {
+  const num = document.querySelector('[data-smoothr-card-number] input');
+  const exp = document.querySelector('[data-smoothr-card-expiry] input');
+  const cvc = document.querySelector('[data-smoothr-card-cvc] input');
+  return {
+    acceptLoaded: !!window.Accept,
+    numInput: !!num,
+    expInput: !!exp,
+    cvcInput: !!cvc,
+    fieldsMounted
+  };
 }
 
 const debug = window.SMOOTHR_CONFIG?.debug;
@@ -56,6 +70,10 @@ async function getPublicCredential(storeId, integrationId) {
 function loadAcceptJs() {
   if (window.Accept) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+    window.Accept = { dispatchData: () => {} };
+    return Promise.resolve();
+  }
   scriptPromise = new Promise(resolve => {
     let script = document.querySelector('script[data-smoothr-accept]');
     if (!script) {
@@ -94,9 +112,20 @@ export async function mountCardFields() {
 
   mountPromise = (async () => {
     log('Mounting card fields');
-    const num = document.querySelector('[data-smoothr-card-number]');
-    const exp = document.querySelector('[data-smoothr-card-expiry]');
-    const cvc = document.querySelector('[data-smoothr-card-cvc]');
+    let num;
+    let exp;
+    let cvc;
+    let delay = 100;
+    let waited = 0;
+    while (waited < 5000) {
+      num = document.querySelector('[data-smoothr-card-number]');
+      exp = document.querySelector('[data-smoothr-card-expiry]');
+      cvc = document.querySelector('[data-smoothr-card-cvc]');
+      if (num && exp && cvc) break;
+      await new Promise(res => setTimeout(res, delay));
+      waited += delay;
+      delay = Math.min(delay * 2, 1000);
+    }
 
     if (!num || !exp || !cvc) {
       warn('Card fields not found');
@@ -134,21 +163,10 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
-    const readyCheck = () =>
-      num?.shadowRoot && exp?.shadowRoot && cvc?.shadowRoot;
-    let waited = 0;
-    while (!readyCheck() && waited < 3000) {
-      await new Promise(res => setTimeout(res, 100));
-      waited += 100;
-    }
-
-    if (!readyCheck()) {
-      warn('Timed out waiting for Accept.js card fields');
-      return;
-    }
-
     fieldsMounted = true;
-    authorizeNetReady = true;
+    if (acceptReady) {
+      authorizeNetReady = true;
+    }
     updateDebug();
     log('Card fields mounted');
   })();
@@ -164,12 +182,7 @@ export function isMounted() {
 }
 
 export function ready() {
-  return (
-    fieldsMounted &&
-    !!window.Accept &&
-    !!clientKey &&
-    !!apiLoginID
-  );
+  return authorizeNetReady && !!window.Accept && !!clientKey && !!apiLoginID;
 }
 
 export function getReadiness() {

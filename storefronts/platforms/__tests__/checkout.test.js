@@ -57,9 +57,15 @@ beforeEach(() => {
   createInput('data-smoothr-ship-postal', 'S123');
   createInput('data-smoothr-ship-country', 'US');
 
-  const cardTarget = document.createElement('div');
-  cardTarget.setAttribute('data-smoothr-card-number', '');
-  document.body.appendChild(cardTarget);
+  const cardNumberTarget = document.createElement('div');
+  cardNumberTarget.setAttribute('data-smoothr-card-number', '');
+  document.body.appendChild(cardNumberTarget);
+  const cardExpiryTarget = document.createElement('div');
+  cardExpiryTarget.setAttribute('data-smoothr-card-expiry', '');
+  document.body.appendChild(cardExpiryTarget);
+  const cardCvcTarget = document.createElement('div');
+  cardCvcTarget.setAttribute('data-smoothr-card-cvc', '');
+  document.body.appendChild(cardCvcTarget);
 
   const elementsMock = { create: vi.fn(() => ({ mount: vi.fn() })) };
   createPaymentMethodMock = vi.fn(() =>
