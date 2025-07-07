@@ -1710,24 +1710,17 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
-    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -7979,15 +7972,24 @@ async function createPaymentMethod2() {
     submitting = true;
     updateDebug();
     log2("\u{1F9EA} Dispatching tokenization with cardData:", cardData);
+    const timeoutId = setTimeout(() => {
+      console.warn(
+        "[Authorize.Net] dispatchData callback never fired \u2014 possible sandbox issue"
+      );
+    }, 5e3);
     try {
       window.Accept.dispatchData(secureData, (response) => {
-        var _a5, _b2, _c2, _d2;
+        var _a5, _b2, _c2, _d2, _e2;
+        clearTimeout(timeoutId);
+        console.log("[Authorize.Net] Accept.js response:", response);
         submitting = false;
         updateDebug();
         if (((_a5 = response.messages) == null ? void 0 : _a5.resultCode) === "Error") {
-          const message = ((_d2 = (_c2 = (_b2 = response.messages) == null ? void 0 : _b2.message) == null ? void 0 : _c2[0]) == null ? void 0 : _d2.text) || "Tokenization failed";
+          console.error((_b2 = response.messages) == null ? void 0 : _b2.message);
+          const message = ((_e2 = (_d2 = (_c2 = response.messages) == null ? void 0 : _c2.message) == null ? void 0 : _d2[0]) == null ? void 0 : _e2.text) || "Tokenization failed";
           resolve({ error: { message } });
         } else {
+          console.log(response.opaqueData);
           resolve({ success: true, payment_method: response.opaqueData });
         }
       });
