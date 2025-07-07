@@ -126,7 +126,7 @@ it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`).
 </script>
 ```
 
-Include the Authorize.Net Accept.js script on pages that render the checkout form:
+Include the Authorize.Net **Accept.js** script on pages that render the checkout form. The integration uses plain Accept.js with custom input fields (not AcceptUI), so ensure your page contains elements for the card number, expiry and CVC:
 
 ```html
 <script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.js"></script>
