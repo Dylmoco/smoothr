@@ -1710,24 +1710,17 @@ var convertCell = (type, value) => {
       return toJson(value);
     case PostgresTypes.timestamp:
       return toTimestampString(value);
-    // Format to be consistent with PostgREST
     case PostgresTypes.abstime:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.date:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.daterange:
     case PostgresTypes.int4range:
     case PostgresTypes.int8range:
     case PostgresTypes.money:
     case PostgresTypes.reltime:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.text:
     case PostgresTypes.time:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.timestamptz:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.timetz:
-    // To allow users to cast it based on Timezone
     case PostgresTypes.tsrange:
     case PostgresTypes.tstzrange:
       return noop(value);
@@ -8253,7 +8246,8 @@ async function initCheckout() {
           paymentMethod,
           payment_method
         } = await gateway.createPaymentMethod(billing_details);
-        if (pmError || !paymentMethod) {
+        const token = payment_method || paymentMethod;
+        if (pmError || !token) {
           alert("Failed to create payment method");
           checkoutBtn.disabled = false;
           checkoutBtn.classList.remove("loading");
@@ -8272,13 +8266,13 @@ async function initCheckout() {
           platform
         };
         if (activeGateway === "stripe") {
-          payload.payment_method = paymentMethod.id;
+          payload.payment_method = token.id;
         } else if (activeGateway === "authorizeNet") {
-          payload.payment_method = payment_method;
+          payload.payment_method = token;
         } else if (activeGateway === "nmi") {
-          Object.assign(payload, paymentMethod);
+          Object.assign(payload, token);
         } else {
-          payload.payment_method = paymentMethod.id;
+          payload.payment_method = token.id;
         }
         log3("Submitting payload:", payload);
         log3("billing_details:", billing_details);

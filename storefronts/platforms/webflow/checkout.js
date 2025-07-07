@@ -259,18 +259,20 @@ export async function initCheckout() {
 
       log('billing_details:', billing_details);
       log('shipping:', shipping);
-      const {
-        error: pmError,
-        paymentMethod,
-        payment_method
-      } = await gateway.createPaymentMethod(billing_details);
+        const {
+          error: pmError,
+          paymentMethod,
+          payment_method
+        } = await gateway.createPaymentMethod(billing_details);
 
-      if (pmError || !paymentMethod) {
-        alert('Failed to create payment method');
-        checkoutBtn.disabled = false;
-        checkoutBtn.classList.remove('loading');
-        return;
-      }
+        const token = payment_method || paymentMethod;
+
+        if (pmError || !token) {
+          alert('Failed to create payment method');
+          checkoutBtn.disabled = false;
+          checkoutBtn.classList.remove('loading');
+          return;
+        }
 
       const payload = {
         email,
@@ -285,15 +287,15 @@ export async function initCheckout() {
         platform
       };
 
-      if (activeGateway === 'stripe') {
-        payload.payment_method = paymentMethod.id;
-      } else if (activeGateway === 'authorizeNet') {
-        payload.payment_method = payment_method;
-      } else if (activeGateway === 'nmi') {
-        Object.assign(payload, paymentMethod);
-      } else {
-        payload.payment_method = paymentMethod.id;
-      }
+        if (activeGateway === 'stripe') {
+          payload.payment_method = token.id;
+        } else if (activeGateway === 'authorizeNet') {
+          payload.payment_method = token;
+        } else if (activeGateway === 'nmi') {
+          Object.assign(payload, token);
+        } else {
+          payload.payment_method = token.id;
+        }
 
         log('Submitting payload:', payload);
         log('billing_details:', billing_details);
