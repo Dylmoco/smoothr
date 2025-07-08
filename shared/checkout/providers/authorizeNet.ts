@@ -68,40 +68,44 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   try {
     log('[AuthorizeNet] Sending request to:', baseUrl);
     log('[AuthorizeNet] Request body:', JSON.stringify(body, null, 2));
+
     const res = await fetch(baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
 
-    if (typeof (res as any).ok === 'boolean' && !(res as any).ok) {
-      let bodyText = '';
-      try {
-        if (typeof (res as any).text === 'function') {
-          bodyText = await (res as any).text();
-        } else if (typeof (res as any).json === 'function') {
-          bodyText = JSON.stringify(await (res as any).json());
-        }
-      } catch (_) {
-        // ignore parsing errors
-      }
-      console.error('[AuthorizeNet] Non-200 response:', res.status, bodyText);
-      return { success: false, error: `Authorize.Net returned ${res.status}` };
+    const status = res.status;
+    const text = await res.text();
+
+    console.log('[AuthorizeNet] Response status:', status);
+    console.log('[AuthorizeNet] Response body:', text);
+
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      console.error('[AuthorizeNet] Non-JSON response from gateway');
+      return {
+        success: false,
+        error: `Non-JSON response with status ${status}`,
+        raw: text
+      };
     }
 
-    const json = await res.json();
-    log('AuthorizeNet response:', JSON.stringify(json));
-
-    if (json.messages?.resultCode === 'Ok') {
-      const transactionId = json.transactionResponse?.transId;
-      return { success: true, intent: { id: transactionId } };
+    if (!res.ok) {
+      return {
+        success: false,
+        error: json?.messages?.message?.[0]?.text || `Error from gateway`,
+        raw: json,
+        status
+      };
     }
 
-    const message =
-      json.transactionResponse?.errors?.error?.[0]?.errorText ||
-      json.messages?.message?.[0]?.text ||
-      'Unknown error';
-    return { success: false, error: message };
+    return {
+      success: true,
+      data: json
+    };
   } catch (e: any) {
     console.error('[AuthorizeNet] Fatal fetch error:', e);
     return { success: false, error: e?.message || String(e) };
