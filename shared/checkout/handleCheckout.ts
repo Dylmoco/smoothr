@@ -11,7 +11,7 @@ import segpayProvider from './providers/segpay';
 // Optional global to allow custom order number generation
 const generateOrderNumber =
   (globalThis as any).generateOrderNumber as
-    | (() => string | Promise<string>)
+    | ((storeId: string) => string | Promise<string>)
     | undefined;
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
@@ -274,13 +274,9 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   const nextSequence = Number(order_sequence) + 1;
   let orderNumber: string | undefined;
   try {
-    orderNumber = await generateOrderNumber?.();
-    if (!orderNumber) {
-      throw new Error('orderNumber is undefined');
-    }
+    orderNumber = await generateOrderNumber?.(store_id);
   } catch (err) {
-    console.error('[error] Failed to generate orderNumber:', err);
-    return res.status(500).json({ error: 'orderNumber generation failed' });
+    err('Failed to generate orderNumber:', err);
   }
   orderNumber =
     orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
