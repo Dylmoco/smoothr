@@ -66,6 +66,8 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   };
 
   try {
+    log('[AuthorizeNet] Sending request to:', baseUrl);
+    log('[AuthorizeNet] Request body:', JSON.stringify(body, null, 2));
     const res = await fetch(baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,8 +103,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       'Unknown error';
     return { success: false, error: message };
   } catch (e: any) {
-    console.error('[AuthorizeNet] Fatal error during fetch:', e?.message || e);
-    err('AuthorizeNet error:', e?.message || e);
+    console.error('[AuthorizeNet] Fatal fetch error:', e);
     return { success: false, error: e?.message || String(e) };
   }
 }
