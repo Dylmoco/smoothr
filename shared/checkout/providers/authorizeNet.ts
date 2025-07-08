@@ -26,6 +26,8 @@ interface AuthorizeNetPayload {
 }
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
+  console.log('[AuthorizeNet] \ud83d\udd27 Handler triggered');
+  console.log('[AuthorizeNet] Incoming payload:', JSON.stringify(payload, null, 2));
   const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
   log('[Authorize.Net] Integration settings pulled:', integration);
   const loginId =
@@ -34,6 +36,10 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     integration?.settings?.transaction_key || envTransactionKey;
   const clientKey =
     integration?.settings?.client_key || envClientKey;
+  const integrationSource = envLoginId ? 'env' : 'storeIntegration';
+  console.log('[AuthorizeNet] Using credentials from:', integrationSource);
+  console.log('[AuthorizeNet] login_id:', loginId);
+  console.log('[AuthorizeNet] transaction_key:', transactionKey);
   log('[Authorize.Net] Fallback credentials:', {
     envLoginId,
     envTransactionKey,
@@ -65,9 +71,11 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     }
   };
 
+  console.log('[AuthorizeNet] Building request body...');
+
   try {
-    log('[AuthorizeNet] Sending request to:', baseUrl);
-    log('[AuthorizeNet] Request body:', JSON.stringify(body, null, 2));
+    console.log('[AuthorizeNet] Sending request to:', baseUrl);
+    console.log('[AuthorizeNet] Request body:', JSON.stringify(body, null, 2));
 
     const res = await fetch(baseUrl, {
       method: 'POST',
@@ -75,33 +83,37 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       body: JSON.stringify(body)
     });
 
-    const status = res.status;
     const text = await res.text();
 
-    console.log('[AuthorizeNet] Response status:', status);
-    console.log('[AuthorizeNet] Response body:', text);
+    console.log('[AuthorizeNet] \u2705 Response status:', res.status);
+    console.log('[AuthorizeNet] \u2705 Response body (raw):', text);
 
     let json;
     try {
       json = JSON.parse(text);
+      console.log('[AuthorizeNet] \u2705 Parsed JSON response:', json);
     } catch (e) {
-      console.error('[AuthorizeNet] Non-JSON response from gateway');
+      console.error('[AuthorizeNet] \u274c Failed to parse JSON response:', e);
       return {
         success: false,
-        error: `Non-JSON response with status ${status}`,
+        error: 'Non-JSON response from gateway',
         raw: text
       };
     }
 
     if (!res.ok) {
+      console.error(
+        '[AuthorizeNet] \u274c Gateway rejected:',
+        json?.messages?.message?.[0]?.text || 'Unknown error'
+      );
       return {
         success: false,
-        error: json?.messages?.message?.[0]?.text || `Error from gateway`,
-        raw: json,
-        status
+        error: json?.messages?.message?.[0]?.text || 'Unknown error',
+        raw: json
       };
     }
 
+    console.log('[AuthorizeNet] \u2705 Gateway approved transaction');
     return {
       success: true,
       data: json
