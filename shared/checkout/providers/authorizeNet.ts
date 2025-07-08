@@ -63,6 +63,22 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
+
+    if (typeof (res as any).ok === 'boolean' && !(res as any).ok) {
+      let bodyText = '';
+      try {
+        if (typeof (res as any).text === 'function') {
+          bodyText = await (res as any).text();
+        } else if (typeof (res as any).json === 'function') {
+          bodyText = JSON.stringify(await (res as any).json());
+        }
+      } catch (_) {
+        // ignore parsing errors
+      }
+      console.error('[AuthorizeNet] Non-200 response:', res.status, bodyText);
+      return { success: false, error: `Authorize.Net returned ${res.status}` };
+    }
+
     const json = await res.json();
     log('AuthorizeNet response:', JSON.stringify(json));
 
@@ -77,6 +93,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       'Unknown error';
     return { success: false, error: message };
   } catch (e: any) {
+    console.error('[AuthorizeNet] Fatal error during fetch:', e?.message || e);
     err('AuthorizeNet error:', e?.message || e);
     return { success: false, error: e?.message || String(e) };
   }
