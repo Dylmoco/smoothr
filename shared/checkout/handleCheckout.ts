@@ -139,6 +139,13 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
+  if (provider === 'authorizeNet' && !payment_method?.dataValue) {
+    err('Missing opaque token from Accept.js');
+    return res.status(400).json({ error: 'Missing opaque token from Accept.js' });
+  }
+
+  console.log('[debug] Passed payment_method checks');
+
   let cart_meta_hash;
   try {
     cart_meta_hash = hashCartMeta(email, total, cart);
@@ -180,13 +187,6 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       return;
     }
   }
-
-  if (provider === 'authorizeNet' && !payment_method?.dataValue) {
-    err('Missing opaque token from Accept.js');
-    return res.status(400).json({ error: 'Missing opaque token from Accept.js' });
-  }
-
-  console.log('[debug] Passed payment_method checks');
 
   const metaCart = cart.map((item: any) => ({ id: item.product_id, qty: item.quantity }));
   const metaCartString = JSON.stringify(metaCart).slice(0, 500);
