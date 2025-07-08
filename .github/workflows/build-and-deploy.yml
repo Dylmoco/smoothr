@@ -5,7 +5,10 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
+
+environment:
+  name: production
 
 jobs:
   build-and-deploy:
