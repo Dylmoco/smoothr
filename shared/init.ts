@@ -2,6 +2,13 @@ import supabase from './supabase/serverClient';
 
 if (!globalThis.generateOrderNumber) {
   globalThis.generateOrderNumber = async (storeId: string) => {
+    console.log('[generateOrderNumber] CALLED — storeId:', storeId);
+
+    if (!storeId) {
+      console.error('[generateOrderNumber] storeId is undefined or missing!');
+      throw new Error('storeId is required for order number generation');
+    }
+
     let store: { prefix: string; order_sequence: number } | null = null;
     try {
       const { data, error } = await supabase
