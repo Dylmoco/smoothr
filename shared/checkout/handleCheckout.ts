@@ -287,22 +287,28 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   console.log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
 
-  const orderPayload = {
-    order_number: orderNumber,
-    status: 'unpaid',
-    payment_provider: provider,
-    raw_data:
-      provider === 'authorizeNet'
-        ? { ...req.body, transaction_id: transactionId }
-        : req.body,
-    cart_meta_hash,
-    total_price: total,
-    store_id,
-    platform: platform || 'webflow',
-    customer_id: customerId,
-    customer_email: email,
-    payment_intent_id: paymentIntentId
-  };
+  let orderPayload;
+  try {
+    orderPayload = {
+      order_number: orderNumber,
+      status: 'unpaid',
+      payment_provider: provider,
+      raw_data:
+        provider === 'authorizeNet'
+          ? { ...req.body, transaction_id: transactionId }
+          : req.body,
+      cart_meta_hash,
+      total_price: total,
+      store_id,
+      platform: platform || 'webflow',
+      customer_id: customerId,
+      customer_email: email,
+      payment_intent_id: paymentIntentId
+    };
+  } catch (err) {
+    console.error('[error] Failed to build orderPayload:', err);
+    return res.status(500).json({ error: 'Failed to build orderPayload' });
+  }
 
   console.log('[debug] Final orderPayload:', orderPayload);
 
