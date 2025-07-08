@@ -276,7 +276,10 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   try {
     orderNumber = await generateOrderNumber?.(store_id);
   } catch (err) {
-    err('Failed to generate orderNumber:', err);
+    console.error(
+      '[generateOrderNumber] Failed to generate order number:',
+      err,
+    );
   }
   orderNumber =
     orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
