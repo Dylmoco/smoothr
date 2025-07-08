@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "postbuild": "node scripts/copy-checkout.js && node scripts/bundle-webflow-checkout.js && node scripts/check-sdk.js",
+    "postbuild": "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY node scripts/copy-checkout.js && NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY node scripts/bundle-webflow-checkout.js && node scripts/check-sdk.js",
     "dev": "vite",
     "test": "vitest run"
   },
