@@ -139,6 +139,11 @@ The checkout payload for Authorize.Net uses the same `total` field as the Stripe
 integration to specify the charge amount. All other attributes remain the same,
 so existing checkout code can submit the identical payload for either gateway.
 
+The `/api/checkout/[provider]` route imports `shared/init` so a global
+`generateOrderNumber` hook is registered before handling requests. The default
+implementation reads the store prefix and order sequence from Supabase. You can
+override this global to customize how order numbers are produced.
+
 
 ### Deployment Log
 

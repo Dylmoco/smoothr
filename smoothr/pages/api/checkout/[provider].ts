@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import 'shared/init';
 import { handleCheckout } from 'shared/checkout/handleCheckout';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
