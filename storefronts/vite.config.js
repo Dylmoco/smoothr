@@ -9,13 +9,17 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     define: {
-      __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
-      __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_URL || ''
+      ),
+      __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      ),
       __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__: JSON.stringify(
-        env.NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL
+        env.NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL || ''
       ),
       __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__: JSON.stringify(
-        env.NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL
+        env.NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL || ''
       )
     },
     build: {

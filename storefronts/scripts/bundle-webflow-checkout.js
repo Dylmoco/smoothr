@@ -25,8 +25,12 @@ try {
     platform: 'browser',
     target: 'es2018',
     define: {
-      __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
-      __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+      __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_URL || ''
+      ),
+      __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      )
     }
   });
   log(`Bundled ${entry} to ${outFile}`);
