@@ -2,7 +2,7 @@ import supabase from './supabase/serverClient';
 
 if (!globalThis.generateOrderNumber) {
   globalThis.generateOrderNumber = async (storeId: string) => {
-    console.log('[generateOrderNumber] CALLED — storeId:', storeId);
+    console.log('[generateOrderNumber] HOOK CALLED with storeId:', storeId);
 
     if (!storeId) {
       console.error('[generateOrderNumber] storeId is undefined or missing!');
@@ -34,7 +34,7 @@ if (!globalThis.generateOrderNumber) {
 
     const next = Number(store.order_sequence) + 1;
     const orderNumber = `${store.prefix}-${String(next).padStart(4, '0')}`;
-    console.log('[generateOrderNumber] Generated:', orderNumber);
+    console.log('[generateOrderNumber] Returning order number:', orderNumber);
     return orderNumber;
   };
 }
