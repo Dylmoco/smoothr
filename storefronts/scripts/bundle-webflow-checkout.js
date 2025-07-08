@@ -2,6 +2,7 @@ import { build } from 'esbuild';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
+import { loadEnv } from 'vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -12,8 +13,14 @@ const err = (...args) => debug && console.error('[bundle-webflow-checkout]', ...
 const entry = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
 const outFile = join(__dirname, '..', 'dist', 'platforms', 'webflow', 'checkout.js');
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  const env = loadEnv('', join(__dirname, '..'), '');
+  if (!supabaseUrl) supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseAnonKey) supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+}
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
