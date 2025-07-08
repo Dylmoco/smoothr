@@ -163,6 +163,11 @@ Actions** in GitHub and add:
 - `CLOUDFLARE_API_TOKEN` – a Pages API token
 - `CLOUDFLARE_ACCOUNT_ID` – your Cloudflare account ID
 - `CLOUDFLARE_PROJECT_NAME` – the Pages project name
+- `NEXT_PUBLIC_SUPABASE_URL` – your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` – your Supabase anon key
+
+These values are exported as environment variables so `npm run build` and the
+Webflow checkout bundler can access them during the workflow.
 
 Deployment logs and status can be monitored in the GitHub Actions tab.
 

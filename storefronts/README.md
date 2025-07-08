@@ -172,6 +172,11 @@ Actions** in GitHub:
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_PROJECT_NAME`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+The workflow exports these secrets so the build step and Webflow checkout
+bundler can read the Supabase configuration at runtime.
 
 Deployment status can be monitored in the GitHub Actions tab.
 
