@@ -1,4 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+
+import handleAuthorizeNet from '../../../../shared/checkout/providers/authorizeNet';
+
 import { handleAuthorizeNet } from '@/shared/providers/checkout/authorizeNet';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
