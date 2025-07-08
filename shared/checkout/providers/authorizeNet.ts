@@ -27,12 +27,20 @@ interface AuthorizeNetPayload {
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
+  log('[Authorize.Net] Integration settings pulled:', integration);
   const loginId =
     integration?.settings?.api_login_id || integration?.api_key || envLoginId;
   const transactionKey =
     integration?.settings?.transaction_key || envTransactionKey;
   const clientKey =
     integration?.settings?.client_key || envClientKey;
+  log('[Authorize.Net] Fallback credentials:', {
+    envLoginId,
+    envTransactionKey,
+    envClientKey,
+  });
+  log('[Authorize.Net] Selected loginId:', loginId);
+  log('[Authorize.Net] Selected transactionKey:', transactionKey);
   if (!loginId.trim() || !transactionKey.trim()) {
     err('Missing Authorize.Net credentials');
     return { success: false, error: 'Missing credentials' };
