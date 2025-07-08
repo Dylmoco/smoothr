@@ -1,15 +1,11 @@
 import supabase from './supabase/serverClient';
 
 if (!globalThis.generateOrderNumber) {
+  console.log('[init] Registering globalThis.generateOrderNumber');
+
   globalThis.generateOrderNumber = async (storeId: string) => {
-    console.log('[generateOrderNumber] HOOK CALLED with storeId:', storeId);
+    console.log('[hook] generateOrderNumber invoked with storeId:', storeId);
 
-    if (!storeId) {
-      console.error('[generateOrderNumber] storeId is undefined or missing!');
-      throw new Error('storeId is required for order number generation');
-    }
-
-    let store: { prefix: string; order_sequence: number } | null = null;
     try {
       const { data, error } = await supabase
         .from('stores')
@@ -17,25 +13,19 @@ if (!globalThis.generateOrderNumber) {
         .eq('id', storeId)
         .single();
 
-      store = data;
-      if (error || !store) throw new Error('No store returned');
+      if (error || !data) {
+        console.error('[hook] Supabase fetch failed:', error);
+        throw new Error('Failed to fetch store prefix/sequence');
+      }
+
+      const next = Number(data.order_sequence) + 1;
+      const result = `${data.prefix}-${String(next).padStart(4, '0')}`;
+      console.log('[hook] Returning order number:', result);
+      return result;
     } catch (err) {
-      console.error('[generateOrderNumber] Supabase query failed:', err);
+      console.error('[hook] generateOrderNumber threw:', err);
       throw err;
     }
-
-    if (!store?.prefix || store.order_sequence == null) {
-      console.error(
-        '[generateOrderNumber] Failed to fetch store prefix/sequence',
-        { storeId, error: null, data: store },
-      );
-      throw new Error('Invalid store data or missing prefix/sequence');
-    }
-
-    const next = Number(store.order_sequence) + 1;
-    const orderNumber = `${store.prefix}-${String(next).padStart(4, '0')}`;
-    console.log('[generateOrderNumber] Returning order number:', orderNumber);
-    return orderNumber;
   };
 }
 export {};
