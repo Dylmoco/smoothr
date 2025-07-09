@@ -298,11 +298,17 @@ export async function initCheckout() {
         return;
       }
 
-      const res = await fetch(`${apiBase}/api/checkout/${provider}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      let res;
+      try {
+        res = await fetch(`${apiBase}/api/checkout/${provider}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        console.error('[Smoothr Checkout] ❌ Fetch failed:', error);
+        throw error;
+      }
       const data = await res.clone().json().catch(() => ({}));
       log('fetch response', res.status, data);
       console.log('[Smoothr Checkout] fetch response', res.status, data);
