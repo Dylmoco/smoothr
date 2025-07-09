@@ -153,6 +153,18 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       };
     }
 
+    if (json?.messages?.resultCode !== 'Ok') {
+      console.error(
+        '[AuthorizeNet] \u274c Gateway error:',
+        json?.messages?.message?.[0]?.text || 'Unknown result code'
+      );
+      return {
+        success: false,
+        error: json?.messages?.message?.[0]?.text || 'Gateway error',
+        raw: json
+      };
+    }
+
     console.log('[AuthorizeNet] \u2705 Gateway approved transaction');
     return {
       success: true,
