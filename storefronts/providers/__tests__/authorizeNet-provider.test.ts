@@ -75,6 +75,19 @@ describe('handleAuthorizeNet', () => {
     expect(res.success).toBe(false);
   });
 
+  it('returns error when payment_method missing', async () => {
+    const payload: any = { ...basePayload };
+    delete payload.payment_method;
+    const res = await handleAuthorizeNet(payload);
+    expect(res).toEqual({ success: false, error: 'Missing payment_method' });
+  });
+
+  it('returns error when payment_method is incomplete', async () => {
+    const payload: any = { ...basePayload, payment_method: { dataDescriptor: 'desc' } };
+    const res = await handleAuthorizeNet(payload);
+    expect(res).toEqual({ success: false, error: 'Missing payment_method' });
+  });
+
   it('sends billing details when provided', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
