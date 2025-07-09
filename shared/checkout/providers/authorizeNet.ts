@@ -162,19 +162,28 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       .dataValue;
     console.log('[AuthorizeNet] Request body:', JSON.stringify(sanitizedBody, null, 2));
 
-    const res = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    let res;
+    let text;
+    try {
+      res = await fetch(baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      text = await res.text();
+    } catch (fetchError) {
+      console.error('[AuthorizeNet] ❌ Network fetch error:', fetchError);
+      return {
+        success: false,
+        error: 'Network error while contacting Authorize.Net',
+        raw: (fetchError as any).message || fetchError,
+      };
+    }
 
     console.log('[AuthorizeNet] ✅ Response status:', res.status);
     console.log('[AuthorizeNet] ✅ Response status text:', res.statusText);
 
-    const text = await res.text();
-
     console.log('[AuthorizeNet] ✅ Response body (raw):', text);
-
     let json;
     try {
       json = JSON.parse(text);
