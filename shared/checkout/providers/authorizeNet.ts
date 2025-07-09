@@ -71,8 +71,8 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     integration?.settings?.client_key || envClientKey;
   const integrationSource = envLoginId ? 'env' : 'storeIntegration';
   console.log('[AuthorizeNet] Using credentials from:', integrationSource);
-  console.log('[AuthorizeNet] login_id:', loginId);
-  console.log('[AuthorizeNet] transaction_key:', transactionKey);
+  log('[AuthorizeNet] login_id:', loginId);
+  log('[AuthorizeNet] transaction_key:', transactionKey);
   log('[Authorize.Net] Fallback credentials:', {
     envLoginId,
     envTransactionKey,
