@@ -1,4 +1,3 @@
-
 import { getStoreIntegration } from '../getStoreIntegration';
 
 const envLoginId = process.env.AUTHNET_API_LOGIN_ID || '';
@@ -17,18 +16,33 @@ const err = (...args: any[]) => debug && console.error('[Checkout AuthorizeNet]'
 
 interface AuthorizeNetPayload {
   total: number;
+  currency?: string;
+  store_id: string;
+  email?: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  billing_first_name?: string;
+  billing_last_name?: string;
   payment_method: {
     dataDescriptor: string;
     dataValue: string;
   };
-  currency?: string;
-  store_id: string;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-  name?: string;
   shipping?: {
     name?: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+      country?: string;
+    };
+  };
+  billing?: {
+    name?: string;
+    first_name?: string;
+    last_name?: string;
     address?: {
       line1?: string;
       line2?: string;
@@ -41,7 +55,7 @@ interface AuthorizeNetPayload {
 }
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
-  console.log('[AuthorizeNet] \ud83d\udd27 Handler triggered');
+  console.log('[AuthorizeNet] 🔧 Handler triggered');
   console.log('[AuthorizeNet] Incoming payload:', JSON.stringify(payload, null, 2));
   const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
   log('[Authorize.Net] Integration settings pulled:', integration);
@@ -66,13 +80,19 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     err('Missing Authorize.Net credentials');
     return { success: false, error: 'Missing credentials' };
   }
+
   const amount = (payload.total / 100).toFixed(2);
 
   const shipAddress = payload.shipping?.address || {};
   const billAddress = payload.billing?.address || shipAddress;
-  const billName = payload.billing?.name || `${payload.billing_first_name || payload.first_name} ${payload.billing_last_name || payload.last_name}`.trim();
+
+  const billName =
+    payload.billing?.name ||
+    `${payload.billing_first_name || payload.first_name} ${payload.billing_last_name || payload.last_name}`.trim();
+
   const [billFirst = '', ...billRest] = billName.split(' ');
   const billLast = billRest.join(' ');
+
   const billTo = {
     firstName: billFirst,
     lastName: billLast,
@@ -82,6 +102,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     zip: billAddress.postal_code || '',
     country: billAddress.country || 'GB',
   };
+
   const shipTo = {
     firstName: payload.first_name,
     lastName: payload.last_name,
@@ -126,55 +147,55 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     const res = await fetch(baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
 
     const text = await res.text();
 
-    console.log('[AuthorizeNet] \u2705 Response status:', res.status);
-    console.log('[AuthorizeNet] \u2705 Response body (raw):', text);
+    console.log('[AuthorizeNet] ✅ Response status:', res.status);
+    console.log('[AuthorizeNet] ✅ Response body (raw):', text);
 
     let json;
     try {
       json = JSON.parse(text);
-      console.log('[AuthorizeNet] \u2705 Parsed JSON response:', json);
+      console.log('[AuthorizeNet] ✅ Parsed JSON response:', json);
     } catch (e) {
-      console.error('[AuthorizeNet] \u274c Failed to parse JSON response:', e);
+      console.error('[AuthorizeNet] ❌ Failed to parse JSON response:', e);
       return {
         success: false,
         error: 'Non-JSON response from gateway',
-        raw: text
+        raw: text,
       };
     }
 
     if (!res.ok) {
       console.error(
-        '[AuthorizeNet] \u274c Gateway rejected:',
+        '[AuthorizeNet] ❌ Gateway rejected:',
         json?.messages?.message?.[0]?.text || 'Unknown error'
       );
       return {
         success: false,
         error: json?.messages?.message?.[0]?.text || 'Unknown error',
-        raw: json
+        raw: json,
       };
     }
 
     if (json?.messages?.resultCode !== 'Ok') {
       console.error(
-        '[AuthorizeNet] \u274c Gateway error:',
+        '[AuthorizeNet] ❌ Gateway error:',
         json?.messages?.message?.[0]?.text || 'Unknown result code'
       );
       return {
         success: false,
         error: json?.messages?.message?.[0]?.text || 'Gateway error',
-        raw: json
+        raw: json,
       };
     }
 
-    console.log('[AuthorizeNet] \u2705 Gateway approved transaction');
+    console.log('[AuthorizeNet] ✅ Gateway approved transaction');
     return {
       success: true,
-      data: json
+      data: json,
     };
   } catch (e: any) {
     console.error('[AuthorizeNet] Fatal fetch error:', e);
