@@ -62,21 +62,32 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       '[AuthorizeNet] Incoming payload:',
       JSON.stringify(payload, null, 2)
     );
-  const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
-  log('[Authorize.Net] Integration settings pulled:', integration);
-  const loginId =
-    integration?.settings?.api_login_id || integration?.api_key || envLoginId;
-  const transactionKey =
-    integration?.settings?.transaction_key || envTransactionKey;
-  const integrationSource = envLoginId ? 'env' : 'storeIntegration';
-  const api_login_id = loginId;
-  const transaction_key = transactionKey;
-  const source = envLoginId ? 'env' : 'store_integrations';
+  let creds;
+
+  try {
+    creds = await getStoreIntegration(payload.store_id, 'authorizeNet');
+    console.log('[AuthorizeNet] 🧩 Raw store_integrations:', creds);
+  } catch (err) {
+    console.error('[AuthorizeNet] ❌ getStoreIntegration() threw:', err);
+    return {
+      success: false,
+      error: 'Failed to load store credentials',
+    };
+  }
+
+  const { api_login_id, transaction_key } = creds || {};
+
+  console.log('[AuthorizeNet] 🟢 Handler invoked');
   console.log('[AuthorizeNet] 🔑 Credentials check:', {
-    from: source,
-    api_login_id,
-    transaction_key,
+    api_login_id: !!api_login_id,
+    transaction_key: !!transaction_key,
   });
+
+  log('[Authorize.Net] Integration settings pulled:', creds);
+  const loginId = api_login_id || (creds as any)?.api_key || envLoginId;
+  const transactionKey = transaction_key || envTransactionKey;
+  const integrationSource = envLoginId ? 'env' : 'storeIntegration';
+  const source = envLoginId ? 'env' : 'store_integrations';
   console.log('[AuthorizeNet] Using credentials from:', integrationSource);
   log('[AuthorizeNet] login_id:', loginId);
   log('[AuthorizeNet] transaction_key:', transactionKey);
@@ -90,7 +101,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     api_login_id: Boolean(loginId),
     transaction_key: Boolean(transactionKey),
   });
-  if (!api_login_id || !transaction_key) {
+  if (!loginId || !transactionKey) {
     console.warn('[AuthorizeNet] ❌ Missing credentials');
     return { success: false, error: 'Missing credentials' };
   }
