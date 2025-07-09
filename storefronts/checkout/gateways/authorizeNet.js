@@ -305,7 +305,7 @@ export async function createPaymentMethod() {
     cardData
   };
 
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     if (!window.Accept || !window.Accept.dispatchData) {
       console.warn('[Authorize.Net] \u274c dispatchData was not triggered');
       resolve({ error: { message: 'Accept.js unavailable' } });
@@ -330,23 +330,28 @@ export async function createPaymentMethod() {
       window.Accept.dispatchData(secureData, response => {
         clearTimeout(timeoutId);
         log('\uD83D\uDD01 dispatchData response:', response);
-        submitting = false;
-        updateDebug();
-        if (response.messages?.resultCode === 'Error') {
+        if (response.messages?.resultCode === 'Ok' && response.opaqueData?.dataValue) {
+          submitting = false;
+          updateDebug();
+          resolve({ success: true, payment_method: response.opaqueData });
+        } else if (response.messages?.resultCode === 'Error') {
+          submitting = false;
+          updateDebug();
           console.error(response.messages?.message);
           const message =
             response.messages?.message?.[0]?.text || 'Tokenization failed';
-          resolve({ error: { message } });
+          reject(new Error(message));
         } else {
-          console.log(response.opaqueData);
-          resolve({ success: true, payment_method: response.opaqueData });
+          submitting = false;
+          updateDebug();
+          reject(new Error('Authorize.Net tokenization failed'));
         }
       });
     } catch (e) {
       submitting = false;
       updateDebug();
       console.error('[Smoothr AuthorizeNet]', 'Tokenization error', e);
-      resolve({ error: { message: e?.message || 'Tokenization failed' } });
+      reject(new Error(e?.message || 'Tokenization failed'));
     }
   });
 }

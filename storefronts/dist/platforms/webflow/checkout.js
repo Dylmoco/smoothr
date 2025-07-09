@@ -32,7 +32,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// ../node_modules/@supabase/node-fetch/browser.js
+// node_modules/@supabase/node-fetch/browser.js
 var browser_exports = {};
 __export(browser_exports, {
   Headers: () => Headers2,
@@ -43,7 +43,7 @@ __export(browser_exports, {
 });
 var getGlobal, globalObject, fetch2, browser_default, Headers2, Request, Response2;
 var init_browser = __esm({
-  "../node_modules/@supabase/node-fetch/browser.js"() {
+  "node_modules/@supabase/node-fetch/browser.js"() {
     "use strict";
     getGlobal = function() {
       if (typeof self !== "undefined") {
@@ -66,9 +66,9 @@ var init_browser = __esm({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js
 var require_PostgrestError = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var PostgrestError2 = class extends Error {
@@ -84,9 +84,9 @@ var require_PostgrestError = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js
 var require_PostgrestBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -286,9 +286,9 @@ var require_PostgrestBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js
 var require_PostgrestTransformBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -501,9 +501,9 @@ var require_PostgrestTransformBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js
 var require_PostgrestFilterBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -867,9 +867,9 @@ var require_PostgrestFilterBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js
 var require_PostgrestQueryBuilder = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1139,9 +1139,9 @@ var require_PostgrestQueryBuilder = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/version.js
+// node_modules/@supabase/postgrest-js/dist/cjs/version.js
 var require_version = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/version.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/version.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.version = void 0;
@@ -1149,9 +1149,9 @@ var require_version = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/constants.js
+// node_modules/@supabase/postgrest-js/dist/cjs/constants.js
 var require_constants = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/constants.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DEFAULT_HEADERS = void 0;
@@ -1160,9 +1160,9 @@ var require_constants = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js
+// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js
 var require_PostgrestClient = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1270,9 +1270,9 @@ var require_PostgrestClient = __commonJS({
   }
 });
 
-// ../node_modules/@supabase/postgrest-js/dist/cjs/index.js
+// node_modules/@supabase/postgrest-js/dist/cjs/index.js
 var require_cjs = __commonJS({
-  "../node_modules/@supabase/postgrest-js/dist/cjs/index.js"(exports) {
+  "node_modules/@supabase/postgrest-js/dist/cjs/index.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1302,9 +1302,9 @@ var require_cjs = __commonJS({
   }
 });
 
-// ../node_modules/ws/browser.js
+// node_modules/ws/browser.js
 var require_browser = __commonJS({
-  "../node_modules/ws/browser.js"(exports, module) {
+  "node_modules/ws/browser.js"(exports, module) {
     "use strict";
     module.exports = function() {
       throw new Error(
@@ -1314,7 +1314,7 @@ var require_browser = __commonJS({
   }
 });
 
-// checkout/gateways/stripe.js
+// storefronts/checkout/gateways/stripe.js
 var stripe_exports = {};
 __export(stripe_exports, {
   createPaymentMethod: () => createPaymentMethod,
@@ -1328,7 +1328,7 @@ __export(stripe_exports, {
   waitForVisible: () => waitForVisible
 });
 
-// checkout/gateways/forceStripeIframeStyle.js
+// storefronts/checkout/gateways/forceStripeIframeStyle.js
 function forceStripeIframeStyle(selector) {
   if (typeof document === "undefined") return;
   let attempts = 0;
@@ -1355,7 +1355,7 @@ function forceStripeIframeStyle(selector) {
   }, 100);
 }
 
-// ../node_modules/@supabase/functions-js/dist/module/helper.js
+// node_modules/@supabase/functions-js/dist/module/helper.js
 var resolveFetch = (customFetch) => {
   let _fetch;
   if (customFetch) {
@@ -1368,7 +1368,7 @@ var resolveFetch = (customFetch) => {
   return (...args) => _fetch(...args);
 };
 
-// ../node_modules/@supabase/functions-js/dist/module/types.js
+// node_modules/@supabase/functions-js/dist/module/types.js
 var FunctionsError = class extends Error {
   constructor(message, name = "FunctionsError", context) {
     super(message);
@@ -1410,7 +1410,7 @@ var FunctionRegion;
   FunctionRegion2["UsWest2"] = "us-west-2";
 })(FunctionRegion || (FunctionRegion = {}));
 
-// ../node_modules/@supabase/functions-js/dist/module/FunctionsClient.js
+// node_modules/@supabase/functions-js/dist/module/FunctionsClient.js
 var __awaiter = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -1524,7 +1524,7 @@ var FunctionsClient = class {
   }
 };
 
-// ../node_modules/@supabase/postgrest-js/dist/esm/wrapper.mjs
+// node_modules/@supabase/postgrest-js/dist/esm/wrapper.mjs
 var import_cjs = __toESM(require_cjs(), 1);
 var {
   PostgrestClient,
@@ -1535,7 +1535,7 @@ var {
   PostgrestError
 } = import_cjs.default;
 
-// ../node_modules/@supabase/realtime-js/dist/module/WebSocket.js
+// node_modules/@supabase/realtime-js/dist/module/WebSocket.js
 var WebSocketImpl;
 if (typeof window === "undefined") {
   WebSocketImpl = require_browser();
@@ -1544,10 +1544,10 @@ if (typeof window === "undefined") {
 }
 var WebSocket_default = WebSocketImpl;
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/version.js
+// node_modules/@supabase/realtime-js/dist/module/lib/version.js
 var version = "2.11.10";
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/constants.js
+// node_modules/@supabase/realtime-js/dist/module/lib/constants.js
 var DEFAULT_HEADERS = { "X-Client-Info": `realtime-js/${version}` };
 var VSN = "1.0.0";
 var DEFAULT_TIMEOUT = 1e4;
@@ -1588,7 +1588,7 @@ var CONNECTION_STATE;
   CONNECTION_STATE2["Closed"] = "closed";
 })(CONNECTION_STATE || (CONNECTION_STATE = {}));
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/serializer.js
+// node_modules/@supabase/realtime-js/dist/module/lib/serializer.js
 var Serializer = class {
   constructor() {
     this.HEADER_LENGTH = 1;
@@ -1620,7 +1620,7 @@ var Serializer = class {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/timer.js
+// node_modules/@supabase/realtime-js/dist/module/lib/timer.js
 var Timer = class {
   constructor(callback, timerCalc) {
     this.callback = callback;
@@ -1644,7 +1644,7 @@ var Timer = class {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/transformers.js
+// node_modules/@supabase/realtime-js/dist/module/lib/transformers.js
 var PostgresTypes;
 (function(PostgresTypes2) {
   PostgresTypes2["abstime"] = "abstime";
@@ -1793,7 +1793,7 @@ var httpEndpointURL = (socketUrl) => {
   return url.replace(/\/+$/, "");
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/lib/push.js
+// node_modules/@supabase/realtime-js/dist/module/lib/push.js
 var Push = class {
   /**
    * Initializes the Push
@@ -1892,7 +1892,7 @@ var Push = class {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js
+// node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js
 var REALTIME_PRESENCE_LISTEN_EVENTS;
 (function(REALTIME_PRESENCE_LISTEN_EVENTS2) {
   REALTIME_PRESENCE_LISTEN_EVENTS2["SYNC"] = "sync";
@@ -2115,7 +2115,7 @@ var RealtimePresence = class _RealtimePresence {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js
+// node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js
 var REALTIME_POSTGRES_CHANGES_LISTEN_EVENT;
 (function(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2) {
   REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["ALL"] = "*";
@@ -2579,7 +2579,7 @@ var RealtimeChannel = class _RealtimeChannel {
   }
 };
 
-// ../node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js
+// node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js
 var noop2 = () => {
 };
 var WORKER_SCRIPT = `
@@ -3053,7 +3053,7 @@ var WSWebSocketDummy = class {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/errors.js
+// node_modules/@supabase/storage-js/dist/module/lib/errors.js
 var StorageError = class extends Error {
   constructor(message) {
     super(message);
@@ -3086,7 +3086,7 @@ var StorageUnknownError = class extends StorageError {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/helpers.js
+// node_modules/@supabase/storage-js/dist/module/lib/helpers.js
 var __awaiter2 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3145,7 +3145,7 @@ var recursiveToCamel = (item) => {
   return result;
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/fetch.js
+// node_modules/@supabase/storage-js/dist/module/lib/fetch.js
 var __awaiter3 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3236,7 +3236,7 @@ function remove(fetcher, url, body, options, parameters) {
   });
 }
 
-// ../node_modules/@supabase/storage-js/dist/module/packages/StorageFileApi.js
+// node_modules/@supabase/storage-js/dist/module/packages/StorageFileApi.js
 var __awaiter4 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3776,13 +3776,13 @@ var StorageFileApi = class {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/version.js
+// node_modules/@supabase/storage-js/dist/module/lib/version.js
 var version2 = "2.7.1";
 
-// ../node_modules/@supabase/storage-js/dist/module/lib/constants.js
+// node_modules/@supabase/storage-js/dist/module/lib/constants.js
 var DEFAULT_HEADERS2 = { "X-Client-Info": `storage-js/${version2}` };
 
-// ../node_modules/@supabase/storage-js/dist/module/packages/StorageBucketApi.js
+// node_modules/@supabase/storage-js/dist/module/packages/StorageBucketApi.js
 var __awaiter5 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3954,7 +3954,7 @@ var StorageBucketApi = class {
   }
 };
 
-// ../node_modules/@supabase/storage-js/dist/module/StorageClient.js
+// node_modules/@supabase/storage-js/dist/module/StorageClient.js
 var StorageClient = class extends StorageBucketApi {
   constructor(url, headers = {}, fetch3) {
     super(url, headers, fetch3);
@@ -3969,10 +3969,10 @@ var StorageClient = class extends StorageBucketApi {
   }
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/version.js
+// node_modules/@supabase/supabase-js/dist/module/lib/version.js
 var version3 = "2.50.0";
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/constants.js
+// node_modules/@supabase/supabase-js/dist/module/lib/constants.js
 var JS_ENV = "";
 if (typeof Deno !== "undefined") {
   JS_ENV = "deno";
@@ -3998,7 +3998,7 @@ var DEFAULT_AUTH_OPTIONS = {
 };
 var DEFAULT_REALTIME_OPTIONS = {};
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
+// node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
 init_browser();
 var __awaiter6 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
@@ -4061,7 +4061,7 @@ var fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
   });
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
+// node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
 var __awaiter7 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -4113,10 +4113,10 @@ function applySettingDefaults(options, defaults) {
   return result;
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/version.js
+// node_modules/@supabase/auth-js/dist/module/lib/version.js
 var version4 = "2.70.0";
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/constants.js
+// node_modules/@supabase/auth-js/dist/module/lib/constants.js
 var AUTO_REFRESH_TICK_DURATION_MS = 30 * 1e3;
 var AUTO_REFRESH_TICK_THRESHOLD = 3;
 var EXPIRY_MARGIN_MS = AUTO_REFRESH_TICK_THRESHOLD * AUTO_REFRESH_TICK_DURATION_MS;
@@ -4133,7 +4133,7 @@ var API_VERSIONS = {
 var BASE64URL_REGEX = /^([a-z0-9_-]{4})*($|[a-z0-9_-]{3}$|[a-z0-9_-]{2}$)$/i;
 var JWKS_TTL = 6e5;
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/errors.js
+// node_modules/@supabase/auth-js/dist/module/lib/errors.js
 var AuthError = class extends Error {
   constructor(message, status, code) {
     super(message);
@@ -4242,7 +4242,7 @@ var AuthInvalidJwtError = class extends CustomAuthError {
   }
 };
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/base64url.js
+// node_modules/@supabase/auth-js/dist/module/lib/base64url.js
 var TO_BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".split("");
 var IGNORE_BASE64URL = " 	\n\r=".split("");
 var FROM_BASE64URL = (() => {
@@ -4404,7 +4404,7 @@ function bytesToBase64URL(bytes) {
   return result.join("");
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/helpers.js
+// node_modules/@supabase/auth-js/dist/module/lib/helpers.js
 function expiresAt(expiresIn) {
   const timeNow = Math.round(Date.now() / 1e3);
   return timeNow + expiresIn;
@@ -4648,7 +4648,7 @@ function validateUUID(str) {
   }
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/fetch.js
+// node_modules/@supabase/auth-js/dist/module/lib/fetch.js
 var __rest = function(s, e) {
   var t = {};
   for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -4796,10 +4796,10 @@ function hasSession(data) {
   return data.access_token && data.refresh_token && data.expires_in;
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/types.js
+// node_modules/@supabase/auth-js/dist/module/lib/types.js
 var SIGN_OUT_SCOPES = ["global", "local", "others"];
 
-// ../node_modules/@supabase/auth-js/dist/module/GoTrueAdminApi.js
+// node_modules/@supabase/auth-js/dist/module/GoTrueAdminApi.js
 var __rest2 = function(s, e) {
   var t = {};
   for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -5060,7 +5060,7 @@ var GoTrueAdminApi = class {
   }
 };
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
+// node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
 var localStorageAdapter = {
   getItem: (key) => {
     if (!supportsLocalStorage()) {
@@ -5095,7 +5095,7 @@ function memoryLocalStorageAdapter(store = {}) {
   };
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/polyfills.js
+// node_modules/@supabase/auth-js/dist/module/lib/polyfills.js
 function polyfillGlobalThis() {
   if (typeof globalThis === "object")
     return;
@@ -5115,7 +5115,7 @@ function polyfillGlobalThis() {
   }
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/lib/locks.js
+// node_modules/@supabase/auth-js/dist/module/lib/locks.js
 var internals = {
   /**
    * @experimental
@@ -5183,7 +5183,7 @@ async function navigatorLock(name, acquireTimeout, fn) {
   }));
 }
 
-// ../node_modules/@supabase/auth-js/dist/module/GoTrueClient.js
+// node_modules/@supabase/auth-js/dist/module/GoTrueClient.js
 polyfillGlobalThis();
 var DEFAULT_OPTIONS = {
   url: GOTRUE_URL,
@@ -7189,18 +7189,18 @@ var GoTrueClient = class _GoTrueClient {
 };
 GoTrueClient.nextInstanceID = 0;
 
-// ../node_modules/@supabase/auth-js/dist/module/AuthClient.js
+// node_modules/@supabase/auth-js/dist/module/AuthClient.js
 var AuthClient = GoTrueClient;
 var AuthClient_default = AuthClient;
 
-// ../node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js
+// node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js
 var SupabaseAuthClient = class extends AuthClient_default {
   constructor(options) {
     super(options);
   }
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/SupabaseClient.js
+// node_modules/@supabase/supabase-js/dist/module/SupabaseClient.js
 var __awaiter8 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -7432,12 +7432,12 @@ var SupabaseClient = class {
   }
 };
 
-// ../node_modules/@supabase/supabase-js/dist/module/index.js
+// node_modules/@supabase/supabase-js/dist/module/index.js
 var createClient = (supabaseUrl, supabaseKey, options) => {
   return new SupabaseClient(supabaseUrl, supabaseKey, options);
 };
 
-// ../supabase/supabaseClient.js
+// supabase/supabaseClient.js
 var DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
 var DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
 var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
@@ -7455,7 +7455,7 @@ var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
 });
 var supabaseClient_default = supabase;
 
-// checkout/gateways/stripe.js
+// storefronts/checkout/gateways/stripe.js
 var fieldsMounted = false;
 var mountAttempts = 0;
 var stripe;
@@ -7697,7 +7697,7 @@ var stripe_default = {
   waitForInteractable
 };
 
-// checkout/gateways/authorizeNet.js
+// storefronts/checkout/gateways/authorizeNet.js
 var authorizeNet_exports = {};
 __export(authorizeNet_exports, {
   createPaymentMethod: () => createPaymentMethod2,
@@ -7915,7 +7915,7 @@ function getReadiness() {
 }
 async function createPaymentMethod2() {
   var _a4, _b, _c, _d, _e, _f;
-  log2("\u{1F9EA} createPaymentMethod called");
+  log2("\u26A0\uFE0F createPaymentMethod started");
   if (!ready2()) {
     return { error: { message: "Authorize.Net not ready" } };
   }
@@ -7959,6 +7959,7 @@ async function createPaymentMethod2() {
   const fullName = `${first} ${last}`.trim();
   if (!first || !last) {
     console.warn("[Authorize.Net] \u274C Missing billing name fields \u2014 aborting tokenization");
+    log2("\u274C Missing billing name");
     return;
   }
   if (!cardNumber || !month || !year) {
@@ -7969,7 +7970,7 @@ async function createPaymentMethod2() {
     authData: { clientKey, apiLoginID },
     cardData
   };
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (!window.Accept || !window.Accept.dispatchData) {
       console.warn("[Authorize.Net] \u274C dispatchData was not triggered");
       resolve({ error: { message: "Accept.js unavailable" } });
@@ -7987,28 +7988,35 @@ async function createPaymentMethod2() {
       console.warn(
         "[Authorize.Net] dispatchData callback never fired \u2014 possible sandbox issue"
       );
+      submitting = false;
+      updateDebug();
     }, 5e3);
     try {
       window.Accept.dispatchData(secureData, (response) => {
-        var _a5, _b2, _c2, _d2, _e2;
+        var _a5, _b2, _c2, _d2, _e2, _f2, _g;
         clearTimeout(timeoutId);
-        console.log("[Authorize.Net] Accept.js response:", response);
-        submitting = false;
-        updateDebug();
-        if (((_a5 = response.messages) == null ? void 0 : _a5.resultCode) === "Error") {
-          console.error((_b2 = response.messages) == null ? void 0 : _b2.message);
-          const message = ((_e2 = (_d2 = (_c2 = response.messages) == null ? void 0 : _c2.message) == null ? void 0 : _d2[0]) == null ? void 0 : _e2.text) || "Tokenization failed";
-          resolve({ error: { message } });
-        } else {
-          console.log(response.opaqueData);
+        log2("\u{1F501} dispatchData response:", response);
+        if (((_a5 = response.messages) == null ? void 0 : _a5.resultCode) === "Ok" && ((_b2 = response.opaqueData) == null ? void 0 : _b2.dataValue)) {
+          submitting = false;
+          updateDebug();
           resolve({ success: true, payment_method: response.opaqueData });
+        } else if (((_c2 = response.messages) == null ? void 0 : _c2.resultCode) === "Error") {
+          submitting = false;
+          updateDebug();
+          console.error((_d2 = response.messages) == null ? void 0 : _d2.message);
+          const message = ((_g = (_f2 = (_e2 = response.messages) == null ? void 0 : _e2.message) == null ? void 0 : _f2[0]) == null ? void 0 : _g.text) || "Tokenization failed";
+          reject(new Error(message));
+        } else {
+          submitting = false;
+          updateDebug();
+          reject(new Error("Authorize.Net tokenization failed"));
         }
       });
     } catch (e) {
       submitting = false;
       updateDebug();
       console.error("[Smoothr AuthorizeNet]", "Tokenization error", e);
-      resolve({ error: { message: (e == null ? void 0 : e.message) || "Tokenization failed" } });
+      reject(new Error((e == null ? void 0 : e.message) || "Tokenization failed"));
     }
   });
 }
@@ -8021,7 +8029,7 @@ var authorizeNet_default = {
   createPaymentMethod: createPaymentMethod2
 };
 
-// checkout/gateways/paypal.js
+// storefronts/checkout/gateways/paypal.js
 var paypal_exports = {};
 __export(paypal_exports, {
   createPaymentMethod: () => createPaymentMethod3,
@@ -8050,7 +8058,7 @@ var paypal_default = {
   createPaymentMethod: createPaymentMethod3
 };
 
-// checkout/gateways/nmi.js
+// storefronts/checkout/gateways/nmi.js
 var nmi_exports = {};
 __export(nmi_exports, {
   createPaymentMethod: () => createPaymentMethod4,
@@ -8094,7 +8102,7 @@ var nmi_default = {
   createPaymentMethod: createPaymentMethod4
 };
 
-// checkout/gateways/segpay.js
+// storefronts/checkout/gateways/segpay.js
 var segpay_exports = {};
 __export(segpay_exports, {
   createPaymentMethod: () => createPaymentMethod5,
@@ -8123,7 +8131,7 @@ var segpay_default = {
   createPaymentMethod: createPaymentMethod5
 };
 
-// checkout/gateways/index.js
+// storefronts/checkout/gateways/index.js
 var gateways_default = {
   stripe: stripe_exports,
   authorizeNet: authorizeNet_exports,
@@ -8132,7 +8140,7 @@ var gateways_default = {
   segpay: segpay_exports
 };
 
-// platforms/webflow/checkout.js
+// storefronts/platforms/webflow/checkout.js
 var _a3;
 var debug3 = (_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug;
 var log3 = (...args) => debug3 && console.log("[Smoothr Checkout]", ...args);
@@ -8381,7 +8389,7 @@ async function initCheckout() {
         log3("shipping:", shipping);
         const base = ((_O = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _O.apiBase) || "";
         if (!base.startsWith("https://")) {
-          console.error("[Smoothr Checkout] ❌ apiBase is invalid or missing:", base);
+          console.error("[Smoothr Checkout] \u274C apiBase is invalid or missing:", base);
           alert("Checkout is misconfigured. Please refresh the page or contact support.");
           return;
         }
