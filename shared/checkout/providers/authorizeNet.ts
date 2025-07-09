@@ -23,6 +23,19 @@ interface AuthorizeNetPayload {
   };
   currency?: string;
   store_id: string;
+  email?: string;
+  name?: string;
+  shipping?: {
+    name?: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+      country?: string;
+    };
+  };
 }
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
@@ -51,24 +64,56 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     err('Missing Authorize.Net credentials');
     return { success: false, error: 'Missing credentials' };
   }
+  const amount = (payload.total / 100).toFixed(2);
+
+  const name = payload.name || payload.shipping?.name || '';
+  const [firstName = '', ...restName] = name.split(' ');
+  const lastName = restName.join(' ');
+  const address = payload.shipping?.address || {};
+  const billTo = {
+    firstName,
+    lastName,
+    email: payload.email,
+    address: {
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      zip: address.postal_code,
+      country: address.country,
+    },
+  };
+  const shipTo = {
+    firstName,
+    lastName,
+    address: {
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      zip: address.postal_code,
+      country: address.country,
+    },
+  };
+
   const body = {
     createTransactionRequest: {
       merchantAuthentication: {
         name: loginId,
-        transactionKey
+        transactionKey,
       },
       transactionRequest: {
         transactionType: 'authCaptureTransaction',
-        amount: payload.total,
+        amount,
         ...(payload.currency ? { currencyCode: payload.currency } : {}),
         payment: {
           opaqueData: {
             dataDescriptor: payload.payment_method.dataDescriptor,
-            dataValue: payload.payment_method.dataValue
-          }
-        }
-      }
-    }
+            dataValue: payload.payment_method.dataValue,
+          },
+        },
+        billTo,
+        shipTo,
+      },
+    },
   };
 
   console.log('[AuthorizeNet] Building request body...');
