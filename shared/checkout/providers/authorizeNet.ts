@@ -62,191 +62,182 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       '[AuthorizeNet] Incoming payload:',
       JSON.stringify(payload, null, 2)
     );
-  let creds;
+    
+    let creds;
 
-  try {
-    creds = await getStoreIntegration(payload.store_id, 'authorizeNet');
-    console.log('[AuthorizeNet] 🧩 Raw store_integrations:', creds);
-  } catch (err) {
-    console.error('[AuthorizeNet] ❌ getStoreIntegration() threw:', err);
-    return {
-      success: false,
-      error: 'Failed to load store credentials',
-    };
-  }
-
-  const { api_login_id, transaction_key } = creds || {};
-
-  console.log('[AuthorizeNet] 🟢 Handler invoked');
-  console.log('[AuthorizeNet] 🔑 Credentials check:', {
-    api_login_id: !!api_login_id,
-    transaction_key: !!transaction_key,
-  });
-
-  log('[Authorize.Net] Integration settings pulled:', creds);
-  const loginId = api_login_id || (creds as any)?.api_key || envLoginId;
-  const transactionKey = transaction_key || envTransactionKey;
-  const integrationSource = envLoginId ? 'env' : 'storeIntegration';
-  const source = envLoginId ? 'env' : 'store_integrations';
-  console.log('[AuthorizeNet] Using credentials from:', integrationSource);
-  log('[AuthorizeNet] login_id:', loginId);
-  log('[AuthorizeNet] transaction_key:', transactionKey);
-  log('[Authorize.Net] Fallback credentials:', {
-    envLoginId,
-    envTransactionKey,
-  });
-  log('[Authorize.Net] Selected loginId:', loginId);
-  log('[Authorize.Net] Selected transactionKey:', transactionKey);
-  console.log('Credential presence:', {
-    api_login_id: Boolean(loginId),
-    transaction_key: Boolean(transactionKey),
-  });
-  if (!loginId || !transactionKey) {
-    console.warn(
-      '[AuthorizeNet] ❌ Missing credentials — either api_login_id or transaction_key is undefined'
-    );
-    return {
-      success: false,
-      error: 'Missing credentials for Authorize.Net',
-    };
-  }
-
-  const amount = (payload.total / 100).toFixed(2);
-
-  const shipAddress = payload.shipping?.address || {};
-  const billAddress = payload.billing?.address || shipAddress;
-
-  const billName =
-    payload.billing?.name ||
-    `${payload.billing_first_name || payload.first_name} ${payload.billing_last_name || payload.last_name}`.trim();
-
-  const [billFirst = '', ...billRest] = billName.split(' ');
-  const billLast = billRest.join(' ');
-
-  const billTo = {
-    firstName: billFirst,
-    lastName: billLast,
-    address: [billAddress.line1, billAddress.line2].filter(Boolean).join(' ') || '',
-    city: billAddress.city || '',
-    state: billAddress.state || '',
-    zip: billAddress.postal_code || '',
-    country: billAddress.country || 'GB',
-  };
-
-  const shipTo = {
-    firstName: payload.first_name,
-    lastName: payload.last_name,
-    address: [shipAddress.line1, shipAddress.line2].filter(Boolean).join(' ') || '',
-    city: shipAddress.city || '',
-    state: shipAddress.state || '',
-    zip: shipAddress.postal_code || '',
-    country: shipAddress.country || 'GB',
-  };
-
-  if (
-    !payload.payment_method ||
-    !payload.payment_method.dataDescriptor ||
-    !payload.payment_method.dataValue
-  ) {
-    err('Missing payment_method', payload.payment_method);
-    return { success: false, error: 'Missing payment_method' };
-  }
-
-  const body = {
-    createTransactionRequest: {
-      merchantAuthentication: {
-        name: loginId,
-        transactionKey,
-      },
-      transactionRequest: {
-        transactionType: 'authCaptureTransaction',
-        amount,
-        ...(payload.currency ? { currencyCode: payload.currency } : {}),
-        payment: {
-          opaqueData: {
-            dataDescriptor: payload.payment_method.dataDescriptor,
-            dataValue: payload.payment_method.dataValue,
-          },
-        },
-        customer: {
-          email: payload.email,
-        },
-        billTo,
-        shipTo,
-      },
-    },
-  };
-
-  console.log('[AuthorizeNet] Building request body...');
-
-  try {
-    console.log('[AuthorizeNet] Sending request to:', baseUrl);
-    const sanitizedBody = JSON.parse(JSON.stringify(body));
-    delete sanitizedBody.createTransactionRequest.transactionRequest.payment.opaqueData
-      .dataValue;
-    console.log('[AuthorizeNet] 📦 Sending transaction request:', {
-      endpoint: baseUrl,
-      payload: sanitizedBody,
-    });
-    console.log('[AuthorizeNet] Request body:', JSON.stringify(sanitizedBody, null, 2));
-
-    let res;
-    let text;
     try {
-      res = await fetch(baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      text = await res.text();
-      console.log('[AuthorizeNet] ✅ Gateway response received');
+      creds = await getStoreIntegration(payload.store_id, 'authorizeNet');
+      console.log('[AuthorizeNet] 🧩 Raw store_integrations:', creds);
     } catch (err) {
-      console.error('[AuthorizeNet] 💥 Caught fetch error:', err);
+      console.error('[AuthorizeNet] ❌ getStoreIntegration() threw:', err);
       return {
         success: false,
-        error: 'Network error while contacting Authorize.Net',
-        raw: (err as any).message,
+        error: 'Failed to load store credentials',
       };
     }
 
-    if (!res.ok) {
-      console.error('[AuthorizeNet] ❌ HTTP error:', res.status, res.statusText);
-    }
-    console.log('[AuthorizeNet] ✅ Response status:', res.status);
-    console.log('[AuthorizeNet] ✅ Response status text:', res.statusText);
+    const { api_login_id, transaction_key } = creds || {};
 
-    console.log('[AuthorizeNet] ✅ Response body (raw):', text);
-    let json;
-    try {
-      json = JSON.parse(text);
-      console.log('[AuthorizeNet] ✅ Parsed JSON response:', json);
-    } catch (e) {
-      console.error('[AuthorizeNet] ❌ Failed to parse JSON response:', e);
+    console.log('[AuthorizeNet] 🔑 Credentials check:', {
+      api_login_id: !!api_login_id,
+      transaction_key: !!transaction_key,
+      raw: { api_login_id, transaction_key },
+    });
+
+    const loginId = api_login_id || (creds as any)?.api_key || envLoginId;
+    const transactionKey = transaction_key || envTransactionKey;
+    const source = loginId === envLoginId ? 'env' : 'store_integrations';
+
+    console.log('[AuthorizeNet] 🧾 Final credentials used:', {
+      loginId,
+      transactionKey,
+      source,
+    });
+
+    if (!loginId || !transactionKey) {
+      console.warn('[AuthorizeNet] ❌ Missing credentials — either api_login_id or transaction_key is undefined');
       return {
         success: false,
-        error: 'Non-JSON response from gateway',
-        raw: text,
+        error: 'Missing credentials for Authorize.Net',
       };
     }
 
-    if (!res.ok || json?.messages?.resultCode !== 'Ok') {
-      const message =
-        json?.messages?.message?.[0]?.text || 'Unknown error';
-      const formattedMessage =
-        `The Authorize.Net gateway rejected the transaction: ${message}`;
-      console.error('[AuthorizeNet] ❌ Gateway error:', formattedMessage);
-      return { success: false, error: formattedMessage, raw: json };
-    }
+    const amount = (payload.total / 100).toFixed(2);
 
-    console.log('[AuthorizeNet] ✅ Gateway approved transaction');
-    return {
-      success: true,
-      data: json,
+    const shipAddress = payload.shipping?.address || {};
+    const billAddress = payload.billing?.address || shipAddress;
+
+    const billName =
+      payload.billing?.name ||
+      `${payload.billing_first_name || payload.first_name} ${payload.billing_last_name || payload.last_name}`.trim();
+
+    const [billFirst = '', ...billRest] = billName.split(' ');
+    const billLast = billRest.join(' ');
+
+    const billTo = {
+      firstName: billFirst,
+      lastName: billLast,
+      address: [billAddress.line1, billAddress.line2].filter(Boolean).join(' ') || '',
+      city: billAddress.city || '',
+      state: billAddress.state || '',
+      zip: billAddress.postal_code || '',
+      country: billAddress.country || 'GB',
     };
-  } catch (e: any) {
-    console.error('[AuthorizeNet] Fatal fetch error:', e);
-    return { success: false, error: e?.message || String(e) };
-  }
+
+    const shipTo = {
+      firstName: payload.first_name,
+      lastName: payload.last_name,
+      address: [shipAddress.line1, shipAddress.line2].filter(Boolean).join(' ') || '',
+      city: shipAddress.city || '',
+      state: shipAddress.state || '',
+      zip: shipAddress.postal_code || '',
+      country: shipAddress.country || 'GB',
+    };
+
+    if (
+      !payload.payment_method ||
+      !payload.payment_method.dataDescriptor ||
+      !payload.payment_method.dataValue
+    ) {
+      err('Missing payment_method', payload.payment_method);
+      return { success: false, error: 'Missing payment_method' };
+    }
+
+    const body = {
+      createTransactionRequest: {
+        merchantAuthentication: {
+          name: loginId,
+          transactionKey,
+        },
+        transactionRequest: {
+          transactionType: 'authCaptureTransaction',
+          amount,
+          ...(payload.currency ? { currencyCode: payload.currency } : {}),
+          payment: {
+            opaqueData: {
+              dataDescriptor: payload.payment_method.dataDescriptor,
+              dataValue: payload.payment_method.dataValue,
+            },
+          },
+          customer: {
+            email: payload.email,
+          },
+          billTo,
+          shipTo,
+        },
+      },
+    };
+
+    console.log('[AuthorizeNet] Building request body...');
+
+    try {
+      console.log('[AuthorizeNet] Sending request to:', baseUrl);
+      const sanitizedBody = JSON.parse(JSON.stringify(body));
+      delete sanitizedBody.createTransactionRequest.transactionRequest.payment.opaqueData
+        .dataValue;
+      console.log('[AuthorizeNet] 📦 Sending transaction request:', {
+        endpoint: baseUrl,
+        payload: sanitizedBody,
+      });
+      console.log('[AuthorizeNet] Request body:', JSON.stringify(sanitizedBody, null, 2));
+
+      let res;
+      let text;
+      try {
+        res = await fetch(baseUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        text = await res.text();
+        console.log('[AuthorizeNet] ✅ Gateway response received');
+      } catch (err) {
+        console.error('[AuthorizeNet] 💥 Caught fetch error:', err);
+        return {
+          success: false,
+          error: 'Network error while contacting Authorize.Net',
+          raw: (err as any).message,
+        };
+      }
+
+      if (!res.ok) {
+        console.error('[AuthorizeNet] ❌ HTTP error:', res.status, res.statusText);
+      }
+      console.log('[AuthorizeNet] ✅ Response status:', res.status);
+      console.log('[AuthorizeNet] ✅ Response status text:', res.statusText);
+
+      console.log('[AuthorizeNet] ✅ Response body (raw):', text);
+      let json;
+      try {
+        json = JSON.parse(text);
+        console.log('[AuthorizeNet] ✅ Parsed JSON response:', json);
+      } catch (e) {
+        console.error('[AuthorizeNet] ❌ Failed to parse JSON response:', e);
+        return {
+          success: false,
+          error: 'Non-JSON response from gateway',
+          raw: text,
+        };
+      }
+
+      if (!res.ok || json?.messages?.resultCode !== 'Ok') {
+        const message =
+          json?.messages?.message?.[0]?.text || 'Unknown error';
+        const formattedMessage =
+          `The Authorize.Net gateway rejected the transaction: ${message}`;
+        console.error('[AuthorizeNet] ❌ Gateway error:', formattedMessage);
+        return { success: false, error: formattedMessage, raw: json };
+      }
+
+      console.log('[AuthorizeNet] ✅ Gateway approved transaction');
+      return {
+        success: true,
+        data: json,
+      };
+    } catch (e: any) {
+      console.error('[AuthorizeNet] Fatal fetch error:', e);
+      return { success: false, error: e?.message || String(e) };
+    }
   } catch (e: any) {
     console.error('[AuthorizeNet] Top-level handler crash:', e);
     return {
