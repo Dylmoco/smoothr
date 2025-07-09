@@ -120,8 +120,8 @@ To enable Authorize.net create a row in the `store_integrations` table with
 Select Authorize.net by setting
 `store_settings.settings.active_payment_gateway` to `authorizeNet` (or override
 it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`). Requests
-to `/api/checkout/authorizeNet` will only succeed when this value is
-`authorizeNet`.
+to `/api/checkout/[provider]` must use `authorizeNet` for the `[provider]`
+segment in order to succeed.
 
 ```html
 <script>
