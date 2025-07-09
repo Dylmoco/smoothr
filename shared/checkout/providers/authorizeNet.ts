@@ -68,24 +68,21 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   }
   const amount = (payload.total / 100).toFixed(2);
 
-  const firstName = payload.first_name || payload.name?.split(' ')[0] || '';
-  const lastName =
-    payload.last_name || payload.name?.split(' ').slice(1).join(' ') || '';
   const address = payload.shipping?.address || {};
   const billTo = {
-    firstName,
-    lastName,
+    firstName: payload.first_name,
+    lastName: payload.last_name,
     email: payload.email,
-    address: address.line1 || '',
+    address1: address.line1 || '',
     city: address.city || '',
     state: address.state || '',
     zip: address.postal_code || '',
     country: address.country || 'GB',
   };
   const shipTo = {
-    firstName,
-    lastName,
-    address: address.line1 || '',
+    firstName: payload.first_name,
+    lastName: payload.last_name,
+    address1: address.line1 || '',
     city: address.city || '',
     state: address.state || '',
     zip: address.postal_code || '',
