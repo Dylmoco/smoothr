@@ -8,6 +8,43 @@ import paypalProvider from './providers/paypal';
 import nmiProvider from './providers/nmi';
 import segpayProvider from './providers/segpay';
 
+interface CheckoutPayload {
+  payment_method: any;
+  email: string;
+  first_name: string;
+  last_name: string;
+  shipping: {
+    name: string;
+    address: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+    };
+  };
+  billing?: {
+    name?: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+      country?: string;
+    };
+  };
+  billing_first_name?: string;
+  billing_last_name?: string;
+  cart: any[];
+  total: number;
+  currency: string;
+  description?: string;
+  customer_id?: string | null;
+  store_id: string;
+  platform?: string;
+}
 // Optional global to allow custom order number generation
 const generateOrderNumber =
   (globalThis as any).generateOrderNumber as
@@ -68,7 +105,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
-  const payload = req.body as any;
+  const payload = req.body as CheckoutPayload;
   if (!payload.store_id) {
     console.warn('Missing store_id in payload — setting fallback dev-store');
     payload.store_id = 'dev-store';
@@ -80,7 +117,22 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     console.log('[debug] Raw payment_method:', payload.payment_method);
   }
 
-  const { payment_method, email, first_name, last_name, shipping, cart, total, currency, store_id, platform, description } = payload;
+  const {
+    payment_method,
+    email,
+    first_name,
+    last_name,
+    billing,
+    billing_first_name,
+    billing_last_name,
+    shipping,
+    cart,
+    total,
+    currency,
+    store_id,
+    platform,
+    description
+  } = payload;
 
   if (!payment_method || !email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
     warn('Missing required fields');
@@ -211,6 +263,9 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
         name,
         address: { line1, line2: line2 || undefined, city, state, postal_code, country }
       },
+      billing,
+      billing_first_name,
+      billing_last_name,
       cart,
       total,
       currency,

@@ -226,9 +226,8 @@ export async function initCheckout() {
       const billing_state = document.querySelector('[data-smoothr-bill-state]')?.value?.trim() || '';
       const billing_postal = document.querySelector('[data-smoothr-bill-postal]')?.value?.trim() || '';
       const billing_country = document.querySelector('[data-smoothr-bill-country]')?.value?.trim() || '';
-      const billing_details = {
+      const billing = {
         name: `${billing_first_name} ${billing_last_name}`.trim(),
-        email,
         address: {
           line1: billing_line1,
           line2: billing_line2,
@@ -238,6 +237,7 @@ export async function initCheckout() {
           country: billing_country
         }
       };
+      const billing_details = { ...billing, email };
 
       const requiredBilling = [billing_first_name, billing_last_name, billing_line1, billing_city, billing_postal, billing_country];
       const anyBillingFilled = requiredBilling.concat(billing_line2, billing_state).some(f => f);
@@ -306,6 +306,7 @@ export async function initCheckout() {
         first_name,
         last_name,
         shipping,
+        billing,
         cart: cart.items,
         total,
         currency,
