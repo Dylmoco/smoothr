@@ -41,7 +41,11 @@ describe('handleAuthorizeNet', () => {
   it('returns error when request fails', async () => {
     fetchMock.mockRejectedValue(new Error('fail'));
     const res = await handleAuthorizeNet(basePayload);
-    expect(res).toEqual({ success: false, error: 'fail' });
+    expect(res).toEqual({
+      success: false,
+      error: 'Network error while contacting Authorize.Net',
+      raw: 'fail'
+    });
   });
 
   it('returns data on success', async () => {
