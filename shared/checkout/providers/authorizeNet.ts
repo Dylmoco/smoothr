@@ -72,7 +72,6 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   const billTo = {
     firstName: payload.first_name,
     lastName: payload.last_name,
-    email: payload.email,
     address: [address.line1, address.line2].filter(Boolean).join(' ') || '',
     city: address.city || '',
     state: address.state || '',
@@ -104,6 +103,9 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
             dataDescriptor: payload.payment_method.dataDescriptor,
             dataValue: payload.payment_method.dataValue,
           },
+        },
+        customer: {
+          email: payload.email,
         },
         billTo,
         shipTo,
