@@ -7438,8 +7438,8 @@ var createClient = (supabaseUrl, supabaseKey, options) => {
 };
 
 // supabase/supabaseClient.js
-var DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
-var DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
+var DEFAULT_SUPABASE_URL = "https://example.supabase.co";
+var DEFAULT_SUPABASE_KEY = "anonkey";
 var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
   global: {
     headers: {
@@ -7917,7 +7917,7 @@ async function createPaymentMethod2() {
   var _a5, _b, _c, _d, _e, _f;
   log2("\u26A0\uFE0F createPaymentMethod started");
   if (!ready2()) {
-    return { error: { message: "Authorize.Net not ready" } };
+    return { error: { message: "Authorize.Net not ready" }, payment_method: null };
   }
   const { acceptReady: acceptReady2, authorizeNetReady: authorizeNetReady2, isSubmitting } = getReadinessState();
   log2("createPaymentMethod readiness", {
@@ -7928,20 +7928,20 @@ async function createPaymentMethod2() {
   if (!acceptReady2) {
     console.warn("[Smoothr AuthorizeNet] \u274C Accept.js not ready");
     alert("Payment form not ready: Accept.js not loaded");
-    return { error: { message: "Accept.js not loaded" } };
+    return { error: { message: "Accept.js not loaded" }, payment_method: null };
   }
   if (!authorizeNetReady2) {
     console.warn("[Smoothr AuthorizeNet] \u274C Card fields not mounted");
     alert("Payment form not ready: Card fields not ready");
-    return { error: { message: "Card fields not ready" } };
+    return { error: { message: "Card fields not ready" }, payment_method: null };
   }
   if (!checkAcceptFieldPresence()) {
     warn2("Accept.js input fields missing");
-    return { error: { message: "Accept inputs missing" } };
+    return { error: { message: "Accept inputs missing" }, payment_method: null };
   }
   if (isSubmitting) {
     warn2("Payment already submitting");
-    return { error: { message: "Already submitting" } };
+    return { error: { message: "Already submitting" }, payment_method: null };
   }
   const cardNumberInput = document.querySelector("[data-smoothr-card-number] input");
   const expiryInput = document.querySelector("[data-smoothr-card-expiry] input");
@@ -7960,20 +7960,20 @@ async function createPaymentMethod2() {
   if (!first || !last) {
     console.warn("[Authorize.Net] \u274C Missing billing name fields \u2014 aborting tokenization");
     log2("\u274C Missing billing name");
-    return { error: { message: "Missing billing name" } };
+    return { error: { message: "Missing billing name" }, payment_method: null };
   }
   if (!cardNumber || !month || !year) {
-    return { error: { message: "Card details incomplete" } };
+    return { error: { message: "Card details incomplete" }, payment_method: null };
   }
   const cardData = { cardNumber, month, year, cardCode, name: fullName };
   const secureData = {
     authData: { clientKey, apiLoginID },
     cardData
   };
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!window.Accept || !window.Accept.dispatchData) {
       console.warn("[Authorize.Net] \u274C dispatchData was not triggered");
-      resolve({ error: { message: "Accept.js unavailable" } });
+      resolve({ error: { message: "Accept.js unavailable" }, payment_method: null });
       return;
     }
     submitting = true;
@@ -7999,24 +7999,24 @@ async function createPaymentMethod2() {
         if (((_a6 = response.messages) == null ? void 0 : _a6.resultCode) === "Ok" && ((_b2 = response.opaqueData) == null ? void 0 : _b2.dataValue)) {
           submitting = false;
           updateDebug();
-          resolve({ success: true, payment_method: response.opaqueData });
+          resolve({ error: null, payment_method: response.opaqueData });
         } else if (((_c2 = response.messages) == null ? void 0 : _c2.resultCode) === "Error") {
           submitting = false;
           updateDebug();
           console.error((_d2 = response.messages) == null ? void 0 : _d2.message);
           const message = ((_g = (_f2 = (_e2 = response.messages) == null ? void 0 : _e2.message) == null ? void 0 : _f2[0]) == null ? void 0 : _g.text) || "Tokenization failed";
-          reject(new Error(message));
+          resolve({ error: { message }, payment_method: null });
         } else {
           submitting = false;
           updateDebug();
-          reject(new Error("Authorize.Net tokenization failed"));
+          resolve({ error: { message: "Authorize.Net tokenization failed" }, payment_method: null });
         }
       });
     } catch (e) {
       submitting = false;
       updateDebug();
       console.error("[Smoothr AuthorizeNet]", "Tokenization error", e);
-      reject(new Error((e == null ? void 0 : e.message) || "Tokenization failed"));
+      resolve({ error: { message: (e == null ? void 0 : e.message) || "Tokenization failed" }, payment_method: null });
     }
   });
 }
