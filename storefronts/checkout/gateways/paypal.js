@@ -15,7 +15,7 @@ export function ready() {
 
 export async function createPaymentMethod() {
   // Return a placeholder object to satisfy checkout payload requirements
-  return { paymentMethod: { id: 'paypal' } };
+  return { payment_method: { id: 'paypal' } };
 }
 
 export default {

@@ -288,13 +288,16 @@ export async function initCheckout() {
       log('shipping:', shipping);
         const {
           error: pmError,
-          paymentMethod,
           payment_method
         } = await gateway.createPaymentMethod(billing_details);
 
-        const token = payment_method || paymentMethod;
+        const token = payment_method;
 
-        if (pmError || !token) {
+        if (!token || pmError) {
+          console.error('[Smoothr Checkout] Failed to create payment method', {
+            error: pmError,
+            payment_method: token
+          });
           alert('Failed to create payment method');
           checkoutBtn.disabled = false;
           checkoutBtn.classList.remove('loading');

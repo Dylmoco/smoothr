@@ -268,12 +268,18 @@ export async function createPaymentMethod(billing_details) {
     return { error: { message: 'Stripe not ready' } };
   }
 
-  const card = cardNumberElement || (typeof els.getElement === 'function' ? els.getElement('cardNumber') : null);
-  return stripeInstance.createPaymentMethod({
+  const card =
+    cardNumberElement ||
+    (typeof els.getElement === 'function' ? els.getElement('cardNumber') : null);
+  const res = await stripeInstance.createPaymentMethod({
     type: 'card',
     card,
     billing_details
   });
+  return {
+    error: res.error || null,
+    payment_method: res.paymentMethod || null
+  };
 }
 
 export default {

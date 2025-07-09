@@ -31,7 +31,7 @@ export async function createPaymentMethod() {
   if (!ccnumber || !ccexp) {
     return { error: { message: 'Card details incomplete' } };
   }
-  return { paymentMethod: { ccnumber, ccexp, cvv } };
+  return { payment_method: { ccnumber, ccexp, cvv } };
 }
 
 export default {

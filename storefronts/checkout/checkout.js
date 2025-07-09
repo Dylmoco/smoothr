@@ -239,10 +239,10 @@ export async function initCheckout() {
 
     try {
       const billing_details = { ...billing, email };
-      const { error: pmError, payment_method, paymentMethod } =
+      const { error: pmError, payment_method } =
         await gateway.createPaymentMethod(billing_details);
 
-      const token = payment_method || paymentMethod;
+      const token = payment_method;
       console.log('[AuthorizeNet] ✅ Got payment method:', token);
       if (
         provider === 'authorizeNet' &&
@@ -252,8 +252,8 @@ export async function initCheckout() {
         submitBtn.disabled = false;
         return;
       }
-      if (pmError || !token) {
-        err(`\u274C Failed to create payment method: ${pmError?.message}`);
+      if (!token || pmError) {
+        err('Failed to create payment method', { error: pmError, payment_method: token });
         submitBtn.disabled = false;
         return;
       }
