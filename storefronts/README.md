@@ -138,9 +138,9 @@ with `provider` set to `authorizeNet` and save your credentials in the
 ```
 
 Activate the gateway via `store_settings.settings.active_payment_gateway`.
-Requests to `/api/checkout/authorizeNet` only succeed when this value is
-`authorizeNet`. Alternatively you can override the setting on the client by
-defining the following snippet before loading the SDK:
+Requests to `/api/checkout/[provider]` must use `authorizeNet` for the
+`[provider]` segment in order to succeed. Alternatively you can override the
+setting on the client by defining the following snippet before loading the SDK:
 
 ```html
 <script>
