@@ -236,7 +236,7 @@ export function getReadiness() {
 export async function createPaymentMethod() {
   log('\u26A0\uFE0F createPaymentMethod started');
   if (!ready()) {
-    return { error: { message: 'Authorize.Net not ready' } };
+    return { error: { message: 'Authorize.Net not ready' }, payment_method: null };
   }
 
   const { acceptReady, authorizeNetReady, isSubmitting } =
@@ -251,22 +251,22 @@ export async function createPaymentMethod() {
   if (!acceptReady) {
     console.warn('[Smoothr AuthorizeNet] \u274c Accept.js not ready');
     alert('Payment form not ready: Accept.js not loaded');
-    return { error: { message: 'Accept.js not loaded' } };
+    return { error: { message: 'Accept.js not loaded' }, payment_method: null };
   }
   if (!authorizeNetReady) {
     console.warn('[Smoothr AuthorizeNet] \u274c Card fields not mounted');
     alert('Payment form not ready: Card fields not ready');
-    return { error: { message: 'Card fields not ready' } };
+    return { error: { message: 'Card fields not ready' }, payment_method: null };
   }
 
   if (!checkAcceptFieldPresence()) {
     warn('Accept.js input fields missing');
-    return { error: { message: 'Accept inputs missing' } };
+    return { error: { message: 'Accept inputs missing' }, payment_method: null };
   }
 
   if (isSubmitting) {
     warn('Payment already submitting');
-    return { error: { message: 'Already submitting' } };
+    return { error: { message: 'Already submitting' }, payment_method: null };
   }
 
   const cardNumberInput = document.querySelector('[data-smoothr-card-number] input');
@@ -291,12 +291,12 @@ export async function createPaymentMethod() {
   if (!first || !last) {
     console.warn('[Authorize.Net] \u274c Missing billing name fields \u2014 aborting tokenization');
     log('\u274c Missing billing name');
-    return { error: { message: 'Missing billing name' } };
+    return { error: { message: 'Missing billing name' }, payment_method: null };
   }
 
 
   if (!cardNumber || !month || !year) {
-    return { error: { message: 'Card details incomplete' } };
+    return { error: { message: 'Card details incomplete' }, payment_method: null };
   }
 
   const cardData = { cardNumber, month, year, cardCode, name: fullName };
@@ -305,10 +305,10 @@ export async function createPaymentMethod() {
     cardData
   };
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     if (!window.Accept || !window.Accept.dispatchData) {
       console.warn('[Authorize.Net] \u274c dispatchData was not triggered');
-      resolve({ error: { message: 'Accept.js unavailable' } });
+      resolve({ error: { message: 'Accept.js unavailable' }, payment_method: null });
       return;
     }
     submitting = true;
@@ -333,25 +333,25 @@ export async function createPaymentMethod() {
         if (response.messages?.resultCode === 'Ok' && response.opaqueData?.dataValue) {
           submitting = false;
           updateDebug();
-          resolve({ success: true, payment_method: response.opaqueData });
+          resolve({ error: null, payment_method: response.opaqueData });
         } else if (response.messages?.resultCode === 'Error') {
           submitting = false;
           updateDebug();
           console.error(response.messages?.message);
           const message =
             response.messages?.message?.[0]?.text || 'Tokenization failed';
-          reject(new Error(message));
+          resolve({ error: { message }, payment_method: null });
         } else {
           submitting = false;
           updateDebug();
-          reject(new Error('Authorize.Net tokenization failed'));
+          resolve({ error: { message: 'Authorize.Net tokenization failed' }, payment_method: null });
         }
       });
     } catch (e) {
       submitting = false;
       updateDebug();
       console.error('[Smoothr AuthorizeNet]', 'Tokenization error', e);
-      reject(new Error(e?.message || 'Tokenization failed'));
+      resolve({ error: { message: e?.message || 'Tokenization failed' }, payment_method: null });
     }
   });
 }

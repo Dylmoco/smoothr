@@ -316,6 +316,7 @@ export async function initCheckout() {
         }
       }
     } catch (error) {
+      console.error(error);
       err(`\u274C ${error.message}`);
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
