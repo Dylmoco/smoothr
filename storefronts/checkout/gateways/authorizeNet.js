@@ -323,6 +323,8 @@ export async function createPaymentMethod() {
       console.warn(
         '[Authorize.Net] dispatchData callback never fired \u2014 possible sandbox issue'
       );
+      submitting = false;
+      updateDebug();
     }, 5000);
     try {
       window.Accept.dispatchData(secureData, response => {
