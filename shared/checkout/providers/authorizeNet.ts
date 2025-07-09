@@ -113,6 +113,15 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     country: shipAddress.country || 'GB',
   };
 
+  if (
+    !payload.payment_method ||
+    !payload.payment_method.dataDescriptor ||
+    !payload.payment_method.dataValue
+  ) {
+    err('Missing payment_method', payload.payment_method);
+    return { success: false, error: 'Missing payment_method' };
+  }
+
   const body = {
     createTransactionRequest: {
       merchantAuthentication: {
