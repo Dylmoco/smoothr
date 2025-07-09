@@ -284,8 +284,8 @@ export async function initCheckout() {
 
       if (debug) {
         window.__latestSmoothrPayload = payload;
-        console.log('[Smoothr Checkout] Submitting payload:', window.__latestSmoothrPayload);
       }
+      console.log('[Smoothr Checkout] Submitting payload:', payload);
       const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
       log('POST', `${apiBase}/api/checkout/${provider}`);
 
@@ -305,6 +305,7 @@ export async function initCheckout() {
       });
       const data = await res.clone().json().catch(() => ({}));
       log('fetch response', res.status, data);
+      console.log('[Smoothr Checkout] fetch response', res.status, data);
       if (res.ok && data.success) {
         Smoothr?.cart?.clearCart?.();
         window.location.href = '/checkout-success';

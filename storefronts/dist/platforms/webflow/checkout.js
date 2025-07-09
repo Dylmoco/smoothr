@@ -8391,7 +8391,10 @@ async function initCheckout() {
         } else {
           payload.payment_method = token.id;
         }
-        log3("Submitting payload:", payload);
+        if (debug3) {
+          window.__latestSmoothrPayload = payload;
+        }
+        console.log("[Smoothr Checkout] Submitting payload:", payload);
         log3("billing_details:", billing_details);
         log3("shipping:", shipping);
         const base = ((_O = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _O.apiBase) || "";
@@ -8406,6 +8409,7 @@ async function initCheckout() {
           body: JSON.stringify(payload)
         });
         const data = await res.json().catch(() => ({}));
+        console.log("[Smoothr Checkout] fetch response", res.status, data);
         if (res.ok && data.success) {
           (_Q = (_P = Smoothr.cart).clearCart) == null ? void 0 : _Q.call(_P);
           window.location.href = "/checkout-success";
