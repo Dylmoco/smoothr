@@ -55,6 +55,7 @@ interface AuthorizeNetPayload {
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   try {
+    console.log('🟢 Provider handler invoked');
     console.log('[AuthorizeNet] 🔧 Handler triggered');
     console.log(
       '[AuthorizeNet] Incoming payload:',
@@ -76,14 +77,12 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   });
   log('[Authorize.Net] Selected loginId:', loginId);
   log('[Authorize.Net] Selected transactionKey:', transactionKey);
+  console.log('Credential presence:', {
+    api_login_id: Boolean(loginId),
+    transaction_key: Boolean(transactionKey),
+  });
   if (!loginId?.trim() || !transactionKey?.trim()) {
-    console.error('[AuthorizeNet] ❌ Missing credentials', {
-      loginId,
-      transactionKey,
-      source: integrationSource,
-      envLoginId,
-      envTransactionKey
-    });
+    console.error('❌ Missing credentials – check store_integrations or env');
     return { success: false, error: 'Missing credentials' };
   }
 
@@ -180,6 +179,9 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       };
     }
 
+    if (!res.ok) {
+      console.error('[AuthorizeNet] ❌ HTTP error:', res.status, res.statusText);
+    }
     console.log('[AuthorizeNet] ✅ Response status:', res.status);
     console.log('[AuthorizeNet] ✅ Response status text:', res.statusText);
 
