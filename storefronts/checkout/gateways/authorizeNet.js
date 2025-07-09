@@ -291,7 +291,7 @@ export async function createPaymentMethod() {
   if (!first || !last) {
     console.warn('[Authorize.Net] \u274c Missing billing name fields \u2014 aborting tokenization');
     log('\u274c Missing billing name');
-    return;
+    return { error: { message: 'Missing billing name' } };
   }
 
 

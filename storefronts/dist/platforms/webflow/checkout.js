@@ -7960,7 +7960,7 @@ async function createPaymentMethod2() {
   if (!first || !last) {
     console.warn("[Authorize.Net] \u274C Missing billing name fields \u2014 aborting tokenization");
     log2("\u274C Missing billing name");
-    return;
+    return { error: { message: "Missing billing name" } };
   }
   if (!cardNumber || !month || !year) {
     return { error: { message: "Card details incomplete" } };
