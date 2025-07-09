@@ -55,8 +55,12 @@ interface AuthorizeNetPayload {
 }
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
-  console.log('[AuthorizeNet] 🔧 Handler triggered');
-  console.log('[AuthorizeNet] Incoming payload:', JSON.stringify(payload, null, 2));
+  try {
+    console.log('[AuthorizeNet] 🔧 Handler triggered');
+    console.log(
+      '[AuthorizeNet] Incoming payload:',
+      JSON.stringify(payload, null, 2)
+    );
   const integration = await getStoreIntegration(payload.store_id, 'authorizeNet');
   log('[Authorize.Net] Integration settings pulled:', integration);
   const loginId =
@@ -200,5 +204,13 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   } catch (e: any) {
     console.error('[AuthorizeNet] Fatal fetch error:', e);
     return { success: false, error: e?.message || String(e) };
+  }
+  } catch (e: any) {
+    console.error('[AuthorizeNet] Top-level handler crash:', e);
+    return {
+      success: false,
+      error: 'Top-level handler crash',
+      details: e?.message
+    };
   }
 }
