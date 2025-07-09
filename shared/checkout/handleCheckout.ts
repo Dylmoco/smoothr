@@ -413,6 +413,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
         .insert(itemRows);
       if (itemsError) {
         err('Failed to insert order items:', itemsError.message);
+        return res.status(500).json({ error: 'Failed to insert order items' });
       }
     }
   }
