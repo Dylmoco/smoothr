@@ -8380,6 +8380,11 @@ async function initCheckout() {
         log3("billing_details:", billing_details);
         log3("shipping:", shipping);
         const base = ((_O = window == null ? void 0 : window.SMOOTHR_CONFIG) == null ? void 0 : _O.apiBase) || "";
+        if (!base.startsWith("https://")) {
+          console.error("[Smoothr Checkout] ❌ apiBase is invalid or missing:", base);
+          alert("Checkout is misconfigured. Please refresh the page or contact support.");
+          return;
+        }
         const res = await fetch(`${base}/api/checkout/${activeGateway}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
