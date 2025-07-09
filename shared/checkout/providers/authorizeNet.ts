@@ -24,6 +24,8 @@ interface AuthorizeNetPayload {
   currency?: string;
   store_id: string;
   email?: string;
+  first_name?: string;
+  last_name?: string;
   name?: string;
   shipping?: {
     name?: string;
@@ -66,32 +68,28 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   }
   const amount = (payload.total / 100).toFixed(2);
 
-  const name = payload.name || payload.shipping?.name || '';
-  const [firstName = '', ...restName] = name.split(' ');
-  const lastName = restName.join(' ');
+  const firstName = payload.first_name || payload.name?.split(' ')[0] || '';
+  const lastName =
+    payload.last_name || payload.name?.split(' ').slice(1).join(' ') || '';
   const address = payload.shipping?.address || {};
   const billTo = {
     firstName,
     lastName,
     email: payload.email,
-    address: {
-      line1: address.line1,
-      city: address.city,
-      state: address.state,
-      zip: address.postal_code,
-      country: address.country,
-    },
+    address: address.line1 || '',
+    city: address.city || '',
+    state: address.state || '',
+    zip: address.postal_code || '',
+    country: address.country || 'GB',
   };
   const shipTo = {
     firstName,
     lastName,
-    address: {
-      line1: address.line1,
-      city: address.city,
-      state: address.state,
-      zip: address.postal_code,
-      country: address.country,
-    },
+    address: address.line1 || '',
+    city: address.city || '',
+    state: address.state || '',
+    zip: address.postal_code || '',
+    country: address.country || 'GB',
   };
 
   const body = {
