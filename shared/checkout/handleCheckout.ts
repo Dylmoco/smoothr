@@ -286,11 +286,17 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   }
 
   const intent = providerResult?.intent ?? providerResult;
-  const transactionId = intent?.id || null;
-  const paymentIntentId =
-    provider === 'authorizeNet'
-      ? payment_method.dataValue
-      : transactionId;
+  let transactionId: string | null = null;
+  let paymentIntentId: string | null = null;
+
+  if (provider === 'authorizeNet') {
+    const transId = providerResult?.data?.transactionResponse?.transId;
+    transactionId = transId || null;
+    paymentIntentId = transId || null;
+  } else {
+    transactionId = intent?.id || null;
+    paymentIntentId = transactionId;
+  }
 
   let customerId: string | null = null;
   try {
@@ -343,9 +349,13 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   let orderPayload;
   try {
+    const authorizeNetSuccess =
+      provider === 'authorizeNet' && providerResult?.success !== false;
+
     orderPayload = {
       order_number: orderNumber,
-      status: 'unpaid',
+      status: authorizeNetSuccess ? 'paid' : 'unpaid',
+      payment_status: authorizeNetSuccess ? 'paid' : 'unpaid',
       payment_provider: provider,
       raw_data:
         provider === 'authorizeNet'
