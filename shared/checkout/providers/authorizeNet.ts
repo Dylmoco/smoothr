@@ -76,8 +76,14 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   });
   log('[Authorize.Net] Selected loginId:', loginId);
   log('[Authorize.Net] Selected transactionKey:', transactionKey);
-  if (!loginId.trim() || !transactionKey.trim()) {
-    err('Missing Authorize.Net credentials');
+  if (!loginId?.trim() || !transactionKey?.trim()) {
+    console.error('[AuthorizeNet] ❌ Missing credentials', {
+      loginId,
+      transactionKey,
+      source: integrationSource,
+      envLoginId,
+      envTransactionKey
+    });
     return { success: false, error: 'Missing credentials' };
   }
 
