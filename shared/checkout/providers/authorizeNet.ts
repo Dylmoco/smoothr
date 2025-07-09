@@ -73,7 +73,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     firstName: payload.first_name,
     lastName: payload.last_name,
     email: payload.email,
-    address1: address.line1 || '',
+    address: [address.line1, address.line2].filter(Boolean).join(' ') || '',
     city: address.city || '',
     state: address.state || '',
     zip: address.postal_code || '',
@@ -82,7 +82,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   const shipTo = {
     firstName: payload.first_name,
     lastName: payload.last_name,
-    address1: address.line1 || '',
+    address: [address.line1, address.line2].filter(Boolean).join(' ') || '',
     city: address.city || '',
     state: address.state || '',
     zip: address.postal_code || '',
