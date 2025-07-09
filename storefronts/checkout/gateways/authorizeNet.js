@@ -234,7 +234,7 @@ export function getReadiness() {
 }
 
 export async function createPaymentMethod() {
-  log('\ud83e\uddea createPaymentMethod called');
+  log('\u26A0\uFE0F createPaymentMethod started');
   if (!ready()) {
     return { error: { message: 'Authorize.Net not ready' } };
   }
@@ -290,6 +290,7 @@ export async function createPaymentMethod() {
 
   if (!first || !last) {
     console.warn('[Authorize.Net] \u274c Missing billing name fields \u2014 aborting tokenization');
+    log('\u274c Missing billing name');
     return;
   }
 
@@ -326,7 +327,7 @@ export async function createPaymentMethod() {
     try {
       window.Accept.dispatchData(secureData, response => {
         clearTimeout(timeoutId);
-        console.log('[Authorize.Net] Accept.js response:', response);
+        log('\uD83D\uDD01 dispatchData response:', response);
         submitting = false;
         updateDebug();
         if (response.messages?.resultCode === 'Error') {
