@@ -102,8 +102,13 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     transaction_key: Boolean(transactionKey),
   });
   if (!loginId || !transactionKey) {
-    console.warn('[AuthorizeNet] ❌ Missing credentials');
-    return { success: false, error: 'Missing credentials' };
+    console.warn(
+      '[AuthorizeNet] ❌ Missing credentials — either api_login_id or transaction_key is undefined'
+    );
+    return {
+      success: false,
+      error: 'Missing credentials for Authorize.Net',
+    };
   }
 
   const amount = (payload.total / 100).toFixed(2);
