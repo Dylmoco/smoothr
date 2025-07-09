@@ -76,6 +76,7 @@ export default async function handler(
         .from("orders")
         .update({
           status: "paid",
+          payment_status: "paid",
           paid_at: new Date().toISOString(),
         })
         .eq("payment_intent_id", id)
