@@ -8,7 +8,6 @@ function getAuthToken() {
   );
 }
 
-log("🔥 Smoothr live-rates function triggered");
 
 // Default endpoint used when no custom rateSource is provided. This proxies
 // requests through a Supabase Edge Function to avoid Cloudflare redirect
