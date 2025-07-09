@@ -2,7 +2,6 @@ import { getStoreIntegration } from '../getStoreIntegration';
 
 const envLoginId = process.env.AUTHNET_API_LOGIN_ID || '';
 const envTransactionKey = process.env.AUTHNET_TRANSACTION_KEY || '';
-const envClientKey = process.env.AUTHNET_CLIENT_KEY || '';
 
 const env = process.env.AUTHNET_ENV === 'production' ? 'production' : 'sandbox';
 const baseUrl =
@@ -67,8 +66,6 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     integration?.settings?.api_login_id || integration?.api_key || envLoginId;
   const transactionKey =
     integration?.settings?.transaction_key || envTransactionKey;
-  const clientKey =
-    integration?.settings?.client_key || envClientKey;
   const integrationSource = envLoginId ? 'env' : 'storeIntegration';
   console.log('[AuthorizeNet] Using credentials from:', integrationSource);
   log('[AuthorizeNet] login_id:', loginId);
@@ -76,7 +73,6 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   log('[Authorize.Net] Fallback credentials:', {
     envLoginId,
     envTransactionKey,
-    envClientKey,
   });
   log('[Authorize.Net] Selected loginId:', loginId);
   log('[Authorize.Net] Selected transactionKey:', transactionKey);
