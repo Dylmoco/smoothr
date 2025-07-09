@@ -243,6 +243,15 @@ export async function initCheckout() {
         await gateway.createPaymentMethod(billing_details);
 
       const token = payment_method || paymentMethod;
+      console.log('[AuthorizeNet] ✅ Got payment method:', token);
+      if (
+        provider === 'authorizeNet' &&
+        (!token?.dataDescriptor || !token?.dataValue)
+      ) {
+        alert('Invalid payment details. Please try again.');
+        submitBtn.disabled = false;
+        return;
+      }
       if (pmError || !token) {
         err(`\u274C Failed to create payment method: ${pmError?.message}`);
         submitBtn.disabled = false;
