@@ -53,7 +53,15 @@ beforeEach(() => {
         '[data-smoothr-ship-city]': { value: '' },
         '[data-smoothr-ship-postal]': { value: '' },
         '[data-smoothr-ship-state]': { value: '' },
-        '[data-smoothr-ship-country]': { value: '' }
+        '[data-smoothr-ship-country]': { value: '' },
+        '[data-smoothr-bill-first-name]': { value: 'Bill' },
+        '[data-smoothr-bill-last-name]': { value: 'Buyer' },
+        '[data-smoothr-bill-line1]': { value: '1 Bill St' },
+        '[data-smoothr-bill-line2]': { value: 'Suite B' },
+        '[data-smoothr-bill-city]': { value: 'Billtown' },
+        '[data-smoothr-bill-state]': { value: 'BL' },
+        '[data-smoothr-bill-postal]': { value: 'B987' },
+        '[data-smoothr-bill-country]': { value: 'US' }
       };
       return map[sel] || null;
     })
@@ -126,6 +134,19 @@ describe('checkout payload', () => {
           state: '',
           postal_code: '',
           country: ''
+        })
+      })
+    );
+    expect(payload.billing).toEqual(
+      expect.objectContaining({
+        name: 'Bill Buyer',
+        address: expect.objectContaining({
+          line1: '1 Bill St',
+          line2: 'Suite B',
+          city: 'Billtown',
+          state: 'BL',
+          postal_code: 'B987',
+          country: 'US'
         })
       })
     );

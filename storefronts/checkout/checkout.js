@@ -176,6 +176,34 @@ export async function initCheckout() {
       address: { line1, line2, city, state, postal_code, country }
     };
 
+    const bill_first_name =
+      block.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
+    const bill_last_name =
+      block.querySelector('[data-smoothr-bill-last-name]')?.value?.trim() || '';
+    const bill_line1 =
+      block.querySelector('[data-smoothr-bill-line1]')?.value?.trim() || '';
+    const bill_line2 =
+      block.querySelector('[data-smoothr-bill-line2]')?.value?.trim() || '';
+    const bill_city =
+      block.querySelector('[data-smoothr-bill-city]')?.value?.trim() || '';
+    const bill_state =
+      block.querySelector('[data-smoothr-bill-state]')?.value?.trim() || '';
+    const bill_postal =
+      block.querySelector('[data-smoothr-bill-postal]')?.value?.trim() || '';
+    const bill_country =
+      block.querySelector('[data-smoothr-bill-country]')?.value?.trim() || '';
+    const billing = {
+      name: `${bill_first_name} ${bill_last_name}`.trim(),
+      address: {
+        line1: bill_line1,
+        line2: bill_line2,
+        city: bill_city,
+        state: bill_state,
+        postal_code: bill_postal,
+        country: bill_country
+      }
+    };
+
     const Smoothr = window.Smoothr || window.smoothr;
     const cart = Smoothr?.cart?.getCart() || { items: [] };
     const total =
@@ -210,11 +238,9 @@ export async function initCheckout() {
     }
 
     try {
+      const billing_details = { ...billing, email };
       const { error: pmError, payment_method, paymentMethod } =
-        await gateway.createPaymentMethod({
-          name: `${first_name} ${last_name}`,
-          email
-        });
+        await gateway.createPaymentMethod(billing_details);
 
       const token = payment_method || paymentMethod;
       if (pmError || !token) {
@@ -228,6 +254,7 @@ export async function initCheckout() {
         first_name,
         last_name,
         shipping,
+        billing,
         cart: cart.items,
         total,
         currency,

@@ -74,4 +74,38 @@ describe('handleAuthorizeNet', () => {
     const res = await handleAuthorizeNet(basePayload);
     expect(res.success).toBe(false);
   });
+
+  it('sends billing details when provided', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({ messages: { resultCode: 'Ok' }, transactionResponse: {} })
+    });
+    const payload = {
+      ...basePayload,
+      email: 'user@example.com',
+      first_name: 'Jane',
+      last_name: 'Doe',
+      shipping: {
+        name: 'Jane Doe',
+        address: { line1: '1 Ship', city: 'Ship', state: 'ST', postal_code: 'S1', country: 'US' }
+      },
+      billing: {
+        name: 'Bill Buyer',
+        address: { line1: '1 Bill', city: 'Billtown', state: 'BL', postal_code: 'B1', country: 'US' }
+      }
+    };
+    await handleAuthorizeNet(payload);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.createTransactionRequest.transactionRequest.billTo).toEqual({
+      firstName: 'Bill',
+      lastName: 'Buyer',
+      address: '1 Bill',
+      city: 'Billtown',
+      state: 'BL',
+      zip: 'B1',
+      country: 'US'
+    });
+  });
 });

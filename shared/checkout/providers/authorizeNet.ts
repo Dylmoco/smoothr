@@ -68,24 +68,28 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   }
   const amount = (payload.total / 100).toFixed(2);
 
-  const address = payload.shipping?.address || {};
+  const shipAddress = payload.shipping?.address || {};
+  const billAddress = payload.billing?.address || shipAddress;
+  const billName = payload.billing?.name || `${payload.billing_first_name || payload.first_name} ${payload.billing_last_name || payload.last_name}`.trim();
+  const [billFirst = '', ...billRest] = billName.split(' ');
+  const billLast = billRest.join(' ');
   const billTo = {
-    firstName: payload.first_name,
-    lastName: payload.last_name,
-    address: [address.line1, address.line2].filter(Boolean).join(' ') || '',
-    city: address.city || '',
-    state: address.state || '',
-    zip: address.postal_code || '',
-    country: address.country || 'GB',
+    firstName: billFirst,
+    lastName: billLast,
+    address: [billAddress.line1, billAddress.line2].filter(Boolean).join(' ') || '',
+    city: billAddress.city || '',
+    state: billAddress.state || '',
+    zip: billAddress.postal_code || '',
+    country: billAddress.country || 'GB',
   };
   const shipTo = {
     firstName: payload.first_name,
     lastName: payload.last_name,
-    address: [address.line1, address.line2].filter(Boolean).join(' ') || '',
-    city: address.city || '',
-    state: address.state || '',
-    zip: address.postal_code || '',
-    country: address.country || 'GB',
+    address: [shipAddress.line1, shipAddress.line2].filter(Boolean).join(' ') || '',
+    city: shipAddress.city || '',
+    state: shipAddress.state || '',
+    zip: shipAddress.postal_code || '',
+    country: shipAddress.country || 'GB',
   };
 
   const body = {
