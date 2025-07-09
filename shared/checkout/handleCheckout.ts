@@ -349,13 +349,16 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   let orderPayload;
   try {
-    const authorizeNetSuccess =
-      provider === 'authorizeNet' && providerResult?.success !== false;
+    const providerIntent = providerResult?.intent ?? providerResult;
+    const paymentConfirmed =
+      (provider === 'authorizeNet' && providerResult?.success !== false) ||
+      (provider === 'stripe' && providerIntent?.status === 'succeeded') ||
+      (provider === 'nmi' && providerResult?.success === true);
 
     orderPayload = {
       order_number: orderNumber,
-      status: authorizeNetSuccess ? 'paid' : 'unpaid',
-      payment_status: authorizeNetSuccess ? 'paid' : 'unpaid',
+      status: paymentConfirmed ? 'paid' : 'unpaid',
+      payment_status: paymentConfirmed ? 'paid' : 'unpaid',
       payment_provider: provider,
       raw_data:
         provider === 'authorizeNet'
