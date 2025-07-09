@@ -7438,8 +7438,8 @@ var createClient = (supabaseUrl, supabaseKey, options) => {
 };
 
 // supabase/supabaseClient.js
-var DEFAULT_SUPABASE_URL = "https://example.supabase.co";
-var DEFAULT_SUPABASE_KEY = "anonkey";
+var DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
+var DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
 var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
   global: {
     headers: {
@@ -7680,11 +7680,15 @@ async function createPaymentMethod(billing_details) {
     return { error: { message: "Stripe not ready" } };
   }
   const card = cardNumberElement || (typeof els.getElement === "function" ? els.getElement("cardNumber") : null);
-  return stripeInstance.createPaymentMethod({
+  const res = await stripeInstance.createPaymentMethod({
     type: "card",
     card,
     billing_details
   });
+  return {
+    error: res.error || null,
+    payment_method: res.paymentMethod || null
+  };
 }
 var stripe_default = {
   mountCardFields,
@@ -8049,7 +8053,7 @@ function ready3() {
   return true;
 }
 async function createPaymentMethod3() {
-  return { paymentMethod: { id: "paypal" } };
+  return { payment_method: { id: "paypal" } };
 }
 var paypal_default = {
   mountCardFields: mountCardFields3,
@@ -8093,7 +8097,7 @@ async function createPaymentMethod4() {
   if (!ccnumber || !ccexp) {
     return { error: { message: "Card details incomplete" } };
   }
-  return { paymentMethod: { ccnumber, ccexp, cvv } };
+  return { payment_method: { ccnumber, ccexp, cvv } };
 }
 var nmi_default = {
   mountCardFields: mountCardFields4,
@@ -8122,7 +8126,7 @@ function ready5() {
   return true;
 }
 async function createPaymentMethod5() {
-  return { paymentMethod: { id: "segpay" } };
+  return { payment_method: { id: "segpay" } };
 }
 var segpay_default = {
   mountCardFields: mountCardFields5,
@@ -8352,11 +8356,14 @@ async function initCheckout() {
         log3("shipping:", shipping);
         const {
           error: pmError,
-          paymentMethod,
           payment_method
         } = await gateway.createPaymentMethod(billing_details);
-        const token = payment_method || paymentMethod;
-        if (pmError || !token) {
+        const token = payment_method;
+        if (!token || pmError) {
+          console.error("[Smoothr Checkout] Failed to create payment method", {
+            error: pmError,
+            payment_method: token
+          });
           alert("Failed to create payment method");
           checkoutBtn.disabled = false;
           checkoutBtn.classList.remove("loading");

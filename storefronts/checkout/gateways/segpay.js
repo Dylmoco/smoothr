@@ -15,7 +15,7 @@ export function ready() {
 
 export async function createPaymentMethod() {
   // Placeholder payment method identifier
-  return { paymentMethod: { id: 'segpay' } };
+  return { payment_method: { id: 'segpay' } };
 }
 
 export default {
