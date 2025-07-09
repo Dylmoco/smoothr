@@ -157,7 +157,10 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
 
   try {
     console.log('[AuthorizeNet] Sending request to:', baseUrl);
-    console.log('[AuthorizeNet] Request body:', JSON.stringify(body, null, 2));
+    const sanitizedBody = JSON.parse(JSON.stringify(body));
+    delete sanitizedBody.createTransactionRequest.transactionRequest.payment.opaqueData
+      .dataValue;
+    console.log('[AuthorizeNet] Request body:', JSON.stringify(sanitizedBody, null, 2));
 
     const res = await fetch(baseUrl, {
       method: 'POST',
@@ -165,9 +168,11 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       body: JSON.stringify(body),
     });
 
+    console.log('[AuthorizeNet] ✅ Response status:', res.status);
+    console.log('[AuthorizeNet] ✅ Response status text:', res.statusText);
+
     const text = await res.text();
 
-    console.log('[AuthorizeNet] ✅ Response status:', res.status);
     console.log('[AuthorizeNet] ✅ Response body (raw):', text);
 
     let json;
@@ -183,28 +188,13 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       };
     }
 
-    if (!res.ok) {
-      console.error(
-        '[AuthorizeNet] ❌ Gateway rejected:',
-        json?.messages?.message?.[0]?.text || 'Unknown error'
-      );
-      return {
-        success: false,
-        error: json?.messages?.message?.[0]?.text || 'Unknown error',
-        raw: json,
-      };
-    }
-
-    if (json?.messages?.resultCode !== 'Ok') {
-      console.error(
-        '[AuthorizeNet] ❌ Gateway error:',
-        json?.messages?.message?.[0]?.text || 'Unknown result code'
-      );
-      return {
-        success: false,
-        error: json?.messages?.message?.[0]?.text || 'Gateway error',
-        raw: json,
-      };
+    if (!res.ok || json?.messages?.resultCode !== 'Ok') {
+      const message =
+        json?.messages?.message?.[0]?.text || 'Unknown error';
+      const formattedMessage =
+        `The Authorize.Net gateway rejected the transaction: ${message}`;
+      console.error('[AuthorizeNet] ❌ Gateway error:', formattedMessage);
+      return { success: false, error: formattedMessage, raw: json };
     }
 
     console.log('[AuthorizeNet] ✅ Gateway approved transaction');
