@@ -395,15 +395,17 @@ window.__SMOOTHR_DEBUG__.submitCheckout = () => {
   window.__SMOOTHR_DEBUG__.submitGatewayPayment?.();
 };
 
-window.addEventListener('DOMContentLoaded', () => {
-  const checkoutButton = document.querySelector('[data-smoothr-checkout]');
-  if (checkoutButton) {
-    console.log('[Smoothr] \u2705 Binding checkout button');
-    checkoutButton.addEventListener('click', () => {
-      console.log('[Smoothr] \u{1F7E2} Button clicked \u2013 running submitCheckout');
-      window.__SMOOTHR_DEBUG__.submitCheckout?.();
-    });
-  } else {
-    console.warn('[Smoothr] \u274C [data-smoothr-checkout] not found');
-  }
-});
+if (window.SMOOTHR_CONFIG?.debug) {
+  window.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.querySelector('[data-smoothr-checkout]');
+    if (checkoutButton) {
+      console.log('[Smoothr] \u2705 Binding checkout button');
+      checkoutButton.addEventListener('click', () => {
+        console.log('[Smoothr] \u{1F7E2} Button clicked \u2013 running submitCheckout');
+        window.__SMOOTHR_DEBUG__.submitCheckout?.();
+      });
+    } else {
+      console.warn('[Smoothr] \u274C [data-smoothr-checkout] not found');
+    }
+  });
+}
