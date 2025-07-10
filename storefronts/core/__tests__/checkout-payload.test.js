@@ -110,7 +110,7 @@ beforeEach(() => {
 
 describe('checkout payload', () => {
   it('sends expected data to fetch', async () => {
-    await import('../../checkout/checkout.js');
+    await import('../../platforms/webflow/checkout.js');
     if (domReadyCb) {
       await domReadyCb();
     }
