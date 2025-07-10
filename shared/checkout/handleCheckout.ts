@@ -344,17 +344,27 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       raw_data: { ...(existingOrder.raw_data || {}), transaction_id: transactionId }
     };
 
-    const { data: updated, error: updateError } = await supabase
-      .from('orders')
-      .update(updatePayload)
-      .eq('order_number', orderNumber)
-      .select('id')
-      .single();
+    let updated;
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update(updatePayload)
+        .eq('order_number', orderNumber)
+        .select('id')
+        .single();
+      if (error) {
+        err('Failed to update order:', error.message);
+        return res.status(500).json({ error: 'Order update failed' });
+      }
+      updated = data;
+    } catch (e: any) {
+      err('Supabase update threw:', e?.message || e);
+      return res.status(500).json({ error: 'Order update failed' });
+    }
 
-    if (updateError) {
-      err('Failed to update order:', updateError.message);
-      res.status(500).json({ error: 'Order update failed' });
-      return;
+    if (!updated) {
+      warn('Order not updated:', orderNumber);
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     return res.status(200).json({
