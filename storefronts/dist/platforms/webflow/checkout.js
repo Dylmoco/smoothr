@@ -8774,6 +8774,9 @@ window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 if (!window.SMOOTHR_CONFIG.platform) {
   window.SMOOTHR_CONFIG.platform = "webflow";
 }
+if (window.__SMOOTHR_INITED__) {
+  console.warn("[Smoothr Checkout] Already initialized");
+}
 function bindWebflowInputs() {
   const numberInput = document.querySelector("[data-smoothr-card-number] input");
   const expiryInput = document.querySelector("[data-smoothr-card-expiry] input");
@@ -8834,6 +8837,11 @@ function bindCheckoutButton(gateway) {
   });
 }
 document.addEventListener("DOMContentLoaded", async () => {
+  if (window.__SMOOTHR_INITED__) {
+    console.warn("[Smoothr Checkout] Already initialized");
+    return;
+  }
+  window.__SMOOTHR_INITED__ = true;
   await waitForCheckoutDom();
   const { gateway } = await initCheckout(window.SMOOTHR_CONFIG);
   bindWebflowInputs();

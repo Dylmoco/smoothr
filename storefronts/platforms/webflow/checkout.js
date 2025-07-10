@@ -1,6 +1,10 @@
 import { initCheckout } from '../../checkout/checkout.js';
 export { initCheckout } from '../../checkout/checkout.js';
 
+if (window.__SMOOTHR_INITED__) {
+  console.warn('[Smoothr Checkout] Already initialized');
+}
+
 export async function waitForCheckoutDom(timeout = 5000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
@@ -89,6 +93,11 @@ export function bindCheckoutButton(gateway) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (window.__SMOOTHR_INITED__) {
+    console.warn('[Smoothr Checkout] Already initialized');
+    return;
+  }
+  window.__SMOOTHR_INITED__ = true;
   await waitForCheckoutDom();
   const { gateway } = await initCheckout(window.SMOOTHR_CONFIG);
   bindWebflowInputs();
