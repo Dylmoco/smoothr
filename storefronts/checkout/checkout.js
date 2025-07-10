@@ -61,7 +61,7 @@ export async function computeCartHash(cart, total, email) {
 export async function initCheckout() {
   const debug = window.SMOOTHR_CONFIG?.debug;
   const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
-  const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
+  const warn = (...args) => console.warn('[Smoothr Checkout]', ...args);
   const err = (...args) => debug && console.error('[Smoothr Checkout]', ...args);
 
   log('SDK initialized');
@@ -103,14 +103,11 @@ export async function initCheckout() {
 
   let hasShownCheckoutError = false;
 
-  let block = document.querySelector('[data-smoothr-checkout]');
-  if (!block) {
-    block = document.querySelector('.smoothr-checkout');
-  }
+  const block = document.querySelector('[data-smoothr-checkout]');
   if (block) {
     log('form detected', block);
   } else {
-    log('checkout form not found');
+    warn('missing [data-smoothr-checkout]');
     return;
   }
 
@@ -140,7 +137,9 @@ export async function initCheckout() {
   log('no polling loops active');
 
   // Initialize payment gateway fields
-  await gateway.mountCardFields();
+  if (!gateway.isMounted()) {
+    await gateway.mountCardFields();
+  }
   bindCardInputs();
 
   submitBtn?.addEventListener('click', async event => {
