@@ -7997,18 +7997,19 @@ async function createPaymentMethod2() {
     }, 5e3);
     try {
       window.Accept.dispatchData(secureData, (response) => {
-        var _a6, _b2, _c2, _d2, _e2, _f2, _g;
+        var _a6, _b2, _c2, _d2, _e2, _f2, _g, _h;
         clearTimeout(timeoutId);
+        console.log("[AuthorizeNet] Full dispatchData response:", response);
         log2("\u{1F501} dispatchData response:", response);
-        if (((_a6 = response.messages) == null ? void 0 : _a6.resultCode) === "Ok" && ((_b2 = response.opaqueData) == null ? void 0 : _b2.dataValue)) {
+        if (((_a6 = response.messages) == null ? void 0 : _a6.resultCode) === "Ok" && ((_b2 = response.opaqueData) == null ? void 0 : _b2.dataDescriptor) && ((_c2 = response.opaqueData) == null ? void 0 : _c2.dataValue)) {
           submitting = false;
           updateDebug();
           resolve({ error: null, payment_method: response.opaqueData });
-        } else if (((_c2 = response.messages) == null ? void 0 : _c2.resultCode) === "Error") {
+        } else if (((_d2 = response.messages) == null ? void 0 : _d2.resultCode) === "Error") {
           submitting = false;
           updateDebug();
-          console.error((_d2 = response.messages) == null ? void 0 : _d2.message);
-          const message = ((_g = (_f2 = (_e2 = response.messages) == null ? void 0 : _e2.message) == null ? void 0 : _f2[0]) == null ? void 0 : _g.text) || "Tokenization failed";
+          console.error((_e2 = response.messages) == null ? void 0 : _e2.message);
+          const message = ((_h = (_g = (_f2 = response.messages) == null ? void 0 : _f2.message) == null ? void 0 : _g[0]) == null ? void 0 : _h.text) || "Tokenization failed";
           resolve({ error: { message }, payment_method: null });
         } else {
           submitting = false;
