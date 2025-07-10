@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let domReadyCb;
 let clickHandler;
+let originalDocument;
 
 beforeEach(() => {
   vi.resetModules();
@@ -47,7 +48,7 @@ beforeEach(() => {
         '[data-smoothr-last-name]': lastNameInput,
         '[data-smoothr-total]': totalEl,
         '[data-smoothr-gateway]': {},
-        '[data-smoothr-submit]': submitBtn,
+        '[data-smoothr-checkout]': submitBtn,
         '[data-smoothr-card-number]': cardNumberEl,
         '[data-smoothr-card-expiry]': cardExpiryEl,
         '[data-smoothr-card-cvc]': cardCvcEl,
@@ -71,10 +72,11 @@ beforeEach(() => {
     })
   };
 
+  originalDocument = global.document;
   global.document = {
     querySelector: vi.fn(sel => {
       const map = {
-        '[data-smoothr-checkout]': block,
+        '[data-smoothr-checkout]': submitBtn,
         '[data-smoothr-card-number]': cardNumberEl,
         '[data-smoothr-card-expiry]': cardExpiryEl,
         '[data-smoothr-card-cvc]': cardCvcEl,
@@ -106,6 +108,11 @@ beforeEach(() => {
     }
   };
   global.window.smoothr = global.window.Smoothr;
+  originalDocument = global.document;
+});
+
+afterEach(() => {
+  global.document = originalDocument;
 });
 
 describe('checkout payload', () => {
