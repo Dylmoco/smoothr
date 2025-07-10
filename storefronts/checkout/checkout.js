@@ -1,5 +1,3 @@
-console.log('💥 LIVE');
-
 import supabase from '../../supabase/supabaseClient.js';
 
 const gatewayLoaders = {
