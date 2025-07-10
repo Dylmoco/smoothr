@@ -329,6 +329,7 @@ export async function createPaymentMethod() {
     try {
       window.Accept.dispatchData(secureData, response => {
         clearTimeout(timeoutId);
+        console.log('[AuthorizeNet] Full dispatchData response:', response);
         log('\uD83D\uDD01 dispatchData response:', response);
         if (response.messages?.resultCode === 'Ok' && response.opaqueData?.dataValue) {
           submitting = false;
