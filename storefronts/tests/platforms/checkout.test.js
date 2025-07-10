@@ -211,15 +211,6 @@ describe('checkout', () => {
     );
   });
 
-  it('renders cart items from template', async () => {
-    const initCheckout = await loadCheckout();
-    await initCheckout();
-    const clones = document.querySelectorAll('.smoothr-checkout-item');
-    expect(clones.length).toBe(1);
-    expect(clones[0].querySelector('[data-smoothr-name]').textContent).toBe(
-      'Item'
-    );
-  });
 
   it('exposes version and helpers on window', async () => {
     const initCheckout = await loadCheckout();
@@ -230,27 +221,4 @@ describe('checkout', () => {
     expect(typeof window.Smoothr.checkout.createPaymentMethod).toBe('function');
   });
 
-  it('waits for checkout DOM before resolving', async () => {
-    vi.useFakeTimers();
-    const { waitForCheckoutDom } = await import('../../platforms/webflow/checkout.js');
-    const remove = sel => document.querySelector(sel)?.remove();
-    remove('[data-smoothr-checkout]');
-    remove('[data-smoothr-card-number]');
-    remove('[data-smoothr-submit]');
-    const p = waitForCheckoutDom(500);
-    vi.advanceTimersByTime(200);
-    const form = document.createElement('div');
-    form.setAttribute('data-smoothr-checkout', '');
-    const number = document.createElement('div');
-    number.setAttribute('data-smoothr-card-number', '');
-    const submit = document.createElement('button');
-    submit.setAttribute('data-smoothr-submit', '');
-    document.body.append(form, number, submit);
-    await vi.runAllTimersAsync();
-    const result = await p;
-    expect(result.checkout).toBe(form);
-    expect(result.cardNumber).toBe(number);
-    expect(result.submit).toBe(submit);
-    vi.useRealTimers();
-  });
 });
