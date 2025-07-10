@@ -36,6 +36,11 @@ export default async function handler(
     store_id,
   } = req.body as Record<string, any>;
 
+  let items: any[] = Array.isArray(cart) ? cart : [];
+  if (!Array.isArray(cart)) {
+    console.warn('[create-order] cart missing or invalid. Defaulting to empty array');
+  }
+
   if (!store_id) {
     res.status(400).json({ error: 'store_id is required' });
     return;
@@ -59,6 +64,7 @@ export default async function handler(
       total_price,
       store_id,
       customer_email: email,
+      items,
       raw_data: { email, name, cart, total_price, currency, gateway, shipping, billing },
     })
     .select('*')
