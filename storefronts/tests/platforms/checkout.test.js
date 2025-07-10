@@ -140,7 +140,7 @@ afterEach(() => {
 });
 
 async function loadCheckout() {
-  const mod = await import('../webflow/checkout.js');
+  const mod = await import('../../platforms/webflow/checkout.js');
   window.Smoothr.checkout.submit = submitCheckout;
   return mod.initCheckout;
 }
