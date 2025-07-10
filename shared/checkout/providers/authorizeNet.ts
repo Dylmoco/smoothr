@@ -76,29 +76,44 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       };
     }
 
-    const { api_login_id, transaction_key } = creds || {};
+    const settings = creds?.settings || {};
 
-    console.log('[AuthorizeNet] 🔑 Credentials check:', {
-      api_login_id: !!api_login_id,
-      transaction_key: !!transaction_key,
-      raw: { api_login_id, transaction_key },
-    });
+    let loginId = '';
+    let loginIdSource = '';
+    if (typeof settings.api_login_id === 'string' && settings.api_login_id.trim()) {
+      loginId = settings.api_login_id.trim();
+      loginIdSource = 'store_integrations.settings';
+    } else if (typeof creds?.api_login_id === 'string' && creds.api_login_id.trim()) {
+      loginId = creds.api_login_id.trim();
+      loginIdSource = 'store_integrations';
+    } else if (typeof (creds as any)?.api_key === 'string' && (creds as any).api_key.trim()) {
+      loginId = (creds as any).api_key.trim();
+      loginIdSource = 'store_integrations.api_key';
+    }
 
-    const loginId = api_login_id || (creds as any)?.api_key || envLoginId;
-    const transactionKey = transaction_key || envTransactionKey;
-    const source = loginId === envLoginId ? 'env' : 'store_integrations';
+    let transactionKey = '';
+    let transactionKeySource = '';
+    if (typeof settings.transaction_key === 'string' && settings.transaction_key.trim()) {
+      transactionKey = settings.transaction_key.trim();
+      transactionKeySource = 'store_integrations.settings';
+    } else if (typeof creds?.transaction_key === 'string' && creds.transaction_key.trim()) {
+      transactionKey = creds.transaction_key.trim();
+      transactionKeySource = 'store_integrations';
+    }
 
     console.log('[AuthorizeNet] 🧾 Final credentials used:', {
       loginId,
+      loginIdSource,
       transactionKey,
-      source,
+      transactionKeySource,
     });
 
     if (!loginId || !transactionKey) {
-      console.warn('[AuthorizeNet] ❌ Missing credentials — either api_login_id or transaction_key is undefined');
+      console.warn('[AuthorizeNet] ❌ Missing Authorize.Net credentials for store');
       return {
         success: false,
-        error: 'Missing credentials for Authorize.Net',
+        error: 'Missing Authorize.Net credentials for store',
+        status: 400,
       };
     }
 

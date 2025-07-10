@@ -130,4 +130,32 @@ describe('handleAuthorizeNet', () => {
       country: 'US'
     });
   });
+
+  it('uses credentials from store_integrations.settings', async () => {
+    integrationMock.mockResolvedValue({
+      settings: { api_login_id: 'id1', transaction_key: 'key1' }
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({ messages: { resultCode: 'Ok' }, transactionResponse: {} })
+    });
+    await handleAuthorizeNet(basePayload);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.createTransactionRequest.merchantAuthentication).toEqual({
+      name: 'id1',
+      transactionKey: 'key1'
+    });
+  });
+
+  it('returns error when credentials missing', async () => {
+    integrationMock.mockResolvedValue({ settings: {} });
+    const res = await handleAuthorizeNet(basePayload);
+    expect(res).toEqual({
+      success: false,
+      error: 'Missing Authorize.Net credentials for store',
+      status: 400
+    });
+  });
 });
