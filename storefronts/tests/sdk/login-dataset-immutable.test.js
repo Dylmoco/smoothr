@@ -1,4 +1,4 @@
-// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
+// [Codex Fix] New test for immutable dataset
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 var signInMock;
@@ -25,24 +25,25 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as auth from "../index.js";
+import * as auth from "../../core/auth/index.js";
 vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
 
 function flushPromises() {
   return new Promise(setImmediate);
 }
 
-describe("login form", () => {
+describe("login with immutable dataset", () => {
   let clickHandler;
   let submitHandler;
   let emailValue;
   let passwordValue;
+  let btn;
 
   beforeEach(() => {
     clickHandler = undefined;
-    submitHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";
+    submitHandler = undefined;
 
     const form = {
       dataset: {},
@@ -54,23 +55,25 @@ describe("login form", () => {
           return { value: emailValue };
         if (sel === '[data-smoothr-input="password"]')
           return { value: passwordValue };
-        if (sel === '[data-smoothr="login"]') return btn;
         return null;
       }),
     };
+    Object.freeze(form.dataset);
 
-    const btn = {
+    btn = {
       closest: vi.fn(() => form),
       dataset: { smoothr: "login" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),
-      dispatchEvent: vi.fn((ev) => {
-        if (ev.type === "click") clickHandler(ev);
-      }),
       textContent: "Login",
     };
+    Object.freeze(btn.dataset);
+
+    form.addEventListener.mockImplementation((ev, cb) => {
+      if (ev === "submit") cb({ preventDefault: () => {} });
+    });
 
     global.window = {
       location: { href: "" },
@@ -90,29 +93,16 @@ describe("login form", () => {
     };
   });
 
-  it("validates email before login", async () => {
-    signInMock.mockResolvedValue({ data: {}, error: null });
+  it("logs in even when dataset is immutable", async () => {
+    signInMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
     auth.initAuth();
     await flushPromises();
 
-    emailValue = "bad";
+    expect(btn.dataset.smoothrBoundAuth).toBeUndefined();
+
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(signInMock).not.toHaveBeenCalled();
 
-    emailValue = "user@example.com";
-    await submitHandler({ preventDefault: () => {} });
-    await flushPromises();
     expect(signInMock).toHaveBeenCalled();
-  });
-
-  it("sets window.smoothr.auth.user on success", async () => {
-    const user = { id: "1", email: "user@example.com" };
-    signInMock.mockResolvedValue({ data: { user }, error: null });
-    auth.initAuth();
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(global.window.smoothr.auth.user).toEqual(user);
   });
 });

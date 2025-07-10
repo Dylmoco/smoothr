@@ -25,7 +25,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import { initAuth } from "../index.js";
+import { initAuth } from "../../core/auth/index.js";
 
 function flushPromises() {
   return new Promise(setImmediate);

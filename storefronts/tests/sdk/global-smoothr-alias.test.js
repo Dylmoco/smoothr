@@ -1,7 +1,7 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../auth/index.js", () => ({ initAuth: vi.fn(), user: null }));
+vi.mock("../../core/auth/index.js", () => ({ initAuth: vi.fn(), user: null }));
 
 beforeEach(() => {
   vi.resetModules();
@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe("global smoothr alias", () => {
   it("sets window.smoothr referencing the Smoothr object", async () => {
-    const core = await import("../index.js");
+    const core = await import("../../core/index.js");
     expect(global.window.Smoothr).toBe(core.default);
     expect(global.window.smoothr).toBe(core.default);
     expect(typeof global.window.smoothr.orders.renderOrders).toBe("function");

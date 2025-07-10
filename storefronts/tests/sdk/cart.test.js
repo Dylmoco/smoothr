@@ -27,7 +27,7 @@ beforeEach(() => {
 
 describe("cart module", () => {
   it("adds items and increments quantity", async () => {
-    const cart = await import("../cart.js");
+    const cart = await import("../../core/cart.js");
     cart.addItem({ product_id: "1", name: "Test", price: 100, quantity: 1 });
     cart.addItem({ product_id: "1", name: "Test", price: 100, quantity: 1 });
     const stored = JSON.parse(store["smoothr_cart"]);
@@ -36,7 +36,7 @@ describe("cart module", () => {
   });
 
   it("updates quantity and calculates totals with discount", async () => {
-    const cart = await import("../cart.js");
+    const cart = await import("../../core/cart.js");
     cart.addItem({ product_id: "1", name: "A", price: 100, quantity: 2 });
     cart.updateQuantity("1", 3);
     cart.applyDiscount({ code: "SAVE", type: "percent", amount: 50 });
@@ -45,7 +45,7 @@ describe("cart module", () => {
   });
 
   it("clears cart", async () => {
-    const cart = await import("../cart.js");
+    const cart = await import("../../core/cart.js");
     cart.addItem({ product_id: "1", name: "A", price: 100, quantity: 1 });
     cart.clearCart();
     expect(cart.getCart().items.length).toBe(0);
