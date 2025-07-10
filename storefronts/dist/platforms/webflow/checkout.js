@@ -7762,6 +7762,36 @@ var init_getPublicCredential = __esm({
   }
 });
 
+// storefronts/checkout/utils/inputFormatters.js
+function bindCardInputs() {
+  const numberInput = document.querySelector("[data-smoothr-card-number] input") || document.querySelector("[data-smoothr-card-number]");
+  const expiryInput = document.querySelector("[data-smoothr-card-expiry] input") || document.querySelector("[data-smoothr-card-expiry]");
+  const cvcInput = document.querySelector("[data-smoothr-card-cvc] input") || document.querySelector("[data-smoothr-card-cvc]");
+  if (numberInput && typeof numberInput.addEventListener === "function") {
+    numberInput.addEventListener("input", () => {
+      let val = numberInput.value.replace(/\D/g, "").slice(0, 16);
+      val = val.replace(/(.{4})/g, "$1 ").trim();
+      numberInput.value = val;
+    });
+  }
+  if (expiryInput && typeof expiryInput.addEventListener === "function") {
+    expiryInput.addEventListener("input", () => {
+      let val = expiryInput.value.replace(/\D/g, "").slice(0, 4);
+      if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2);
+      expiryInput.value = val;
+    });
+  }
+  if (cvcInput && typeof cvcInput.addEventListener === "function") {
+    cvcInput.addEventListener("input", () => {
+      cvcInput.value = cvcInput.value.replace(/\D/g, "").slice(0, 4);
+    });
+  }
+}
+var init_inputFormatters = __esm({
+  "storefronts/checkout/utils/inputFormatters.js"() {
+  }
+});
+
 // storefronts/checkout/gateways/forceStripeIframeStyle.js
 function forceStripeIframeStyle(selector) {
   if (typeof document === "undefined") return;
@@ -8600,7 +8630,8 @@ async function initCheckout() {
   if (!emailField) warn3("missing [data-smoothr-email]");
   if (!totalEl) warn3("missing [data-smoothr-total]");
   log3("no polling loops active");
-  gateway.mountCardFields();
+  await gateway.mountCardFields();
+  bindCardInputs();
   submitBtn == null ? void 0 : submitBtn.addEventListener("click", async (event) => {
     var _a4, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
     event.preventDefault();
@@ -8759,6 +8790,11 @@ var init_checkout = __esm({
   "storefronts/checkout/checkout.js"() {
     init_supabaseClient();
     init_getPublicCredential();
+    init_inputFormatters();
+    (() => {
+      if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
+      window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
+    })();
     gatewayLoaders = {
       stripe: () => Promise.resolve().then(() => (init_stripe(), stripe_exports)),
       authorizeNet: () => Promise.resolve().then(() => (init_authorizeNet(), authorizeNet_exports)),
@@ -8788,6 +8824,19 @@ async function waitForElement(selector, timeout = 5e3) {
 init_checkout();
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 window.SMOOTHR_CONFIG.platform = "webflow";
+async function waitForCheckoutDom(timeout = 5e3) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const checkout = document.querySelector("[data-smoothr-checkout]");
+    const cardNumber = document.querySelector("[data-smoothr-card-number]");
+    const submit = document.querySelector("[data-smoothr-submit]");
+    if (checkout && cardNumber && submit) {
+      return { checkout, cardNumber, submit };
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return null;
+}
 async function init() {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) {
     console.warn("[Smoothr Checkout] Already initialized");
@@ -8803,5 +8852,6 @@ if (document.readyState !== "loading") {
   init();
 }
 export {
-  initCheckout
+  initCheckout,
+  waitForCheckoutDom
 };

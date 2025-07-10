@@ -5,6 +5,7 @@ let submitCheckout;
 beforeEach(() => {
   vi.resetModules();
   document.body.innerHTML = '';
+  delete global.window.__SMOOTHR_CHECKOUT_INITIALIZED__;
 
   const list = document.createElement('div');
   list.setAttribute('data-smoothr-list', '');
@@ -137,6 +138,7 @@ beforeEach(() => {
 afterEach(() => {
   delete global.window.SMOOTHR_CONFIG;
   delete global.Stripe;
+  delete global.window.__SMOOTHR_CHECKOUT_INITIALIZED__;
 });
 
 async function loadCheckout() {
