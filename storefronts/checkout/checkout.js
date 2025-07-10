@@ -70,6 +70,14 @@ export async function initCheckout() {
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
 
+  window.Smoothr = window.Smoothr || window.smoothr || {};
+  window.smoothr = window.Smoothr;
+  window.Smoothr.checkout = {
+    ...(window.Smoothr.checkout || {}),
+    version: 'dev6',
+    ...gateway
+  };
+
   if (provider === 'stripe') {
     let stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
     if (!stripeKey) {

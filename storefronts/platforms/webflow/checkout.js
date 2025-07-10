@@ -1,6 +1,20 @@
 import { initCheckout } from '../../checkout/checkout.js';
 export { initCheckout } from '../../checkout/checkout.js';
 
+export async function waitForCheckoutDom(timeout = 5000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const checkout = document.querySelector('[data-smoothr-checkout]');
+    const cardNumber = document.querySelector('[data-smoothr-card-number]');
+    const submit = document.querySelector('[data-smoothr-submit]');
+    if (checkout && cardNumber && submit) {
+      return { checkout, cardNumber, submit };
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return null;
+}
+
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 if (!window.SMOOTHR_CONFIG.platform) {
   window.SMOOTHR_CONFIG.platform = 'webflow';
@@ -75,6 +89,7 @@ export function bindCheckoutButton(gateway) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await waitForCheckoutDom();
   const { gateway } = await initCheckout(window.SMOOTHR_CONFIG);
   bindWebflowInputs();
   bindCheckoutButton(gateway);

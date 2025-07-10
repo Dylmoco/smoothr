@@ -158,6 +158,10 @@ sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
 <script type="module" src="https://sdk.smoothr.io/platforms/webflow/checkout.js?v=dev-final"></script>
 ```
 
+The adapter polls the DOM for `[data-smoothr-checkout]`, `[data-smoothr-card-number]`
+and `[data-smoothr-submit]` elements before calling `initCheckout`. This allows
+the script to be loaded before the checkout markup is injected.
+
 
 ## CI/CD
 

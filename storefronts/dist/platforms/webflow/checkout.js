@@ -1719,17 +1719,24 @@ var init_transformers = __esm({
           return toJson(value);
         case PostgresTypes.timestamp:
           return toTimestampString(value);
+        // Format to be consistent with PostgREST
         case PostgresTypes.abstime:
+        // To allow users to cast it based on Timezone
         case PostgresTypes.date:
+        // To allow users to cast it based on Timezone
         case PostgresTypes.daterange:
         case PostgresTypes.int4range:
         case PostgresTypes.int8range:
         case PostgresTypes.money:
         case PostgresTypes.reltime:
+        // To allow users to cast it based on Timezone
         case PostgresTypes.text:
         case PostgresTypes.time:
+        // To allow users to cast it based on Timezone
         case PostgresTypes.timestamptz:
+        // To allow users to cast it based on Timezone
         case PostgresTypes.timetz:
+        // To allow users to cast it based on Timezone
         case PostgresTypes.tsrange:
         case PostgresTypes.tstzrange:
           return noop(value);
@@ -8750,6 +8757,19 @@ if (document.readyState !== "loading") {
 }
 
 // storefronts/platforms/webflow/checkout.js
+async function waitForCheckoutDom(timeout = 5e3) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const checkout = document.querySelector("[data-smoothr-checkout]");
+    const cardNumber = document.querySelector("[data-smoothr-card-number]");
+    const submit = document.querySelector("[data-smoothr-submit]");
+    if (checkout && cardNumber && submit) {
+      return { checkout, cardNumber, submit };
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return null;
+}
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 if (!window.SMOOTHR_CONFIG.platform) {
   window.SMOOTHR_CONFIG.platform = "webflow";
@@ -8814,6 +8834,7 @@ function bindCheckoutButton(gateway) {
   });
 }
 document.addEventListener("DOMContentLoaded", async () => {
+  await waitForCheckoutDom();
   const { gateway } = await initCheckout(window.SMOOTHR_CONFIG);
   bindWebflowInputs();
   bindCheckoutButton(gateway);
@@ -8821,5 +8842,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 export {
   bindCheckoutButton,
   bindWebflowInputs,
-  initCheckout
+  initCheckout,
+  waitForCheckoutDom
 };
