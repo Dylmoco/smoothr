@@ -8781,6 +8781,8 @@ async function initCheckout() {
         last_name,
         shipping,
         billing,
+        billing_first_name: bill_first_name,
+        billing_last_name: bill_last_name,
         cart: cart.items,
         total,
         currency,
@@ -8840,7 +8842,7 @@ async function initCheckout() {
             return;
           }
           const checkoutPayload = {
-            ...orderPayload,
+            ...payload,
             order_number: orderData.order_number,
             payment_method: token
           };
