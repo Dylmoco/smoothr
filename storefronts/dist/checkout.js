@@ -104,7 +104,7 @@ export async function initCheckout() {
   const emailField = block.querySelector('[data-smoothr-email]');
   const totalEl = block.querySelector('[data-smoothr-total]');
   const paymentContainer = block.querySelector('[data-smoothr-gateway]');
-  const submitBtn = block.querySelector('[data-smoothr-submit]');
+  const submitBtn = block.querySelector('[data-smoothr-checkout]');
   const cardNumberEl = block.querySelector('[data-smoothr-card-number]');
   const cardExpiryEl = block.querySelector('[data-smoothr-card-expiry]');
   const cardCvcEl = block.querySelector('[data-smoothr-card-cvc]');
@@ -114,7 +114,7 @@ export async function initCheckout() {
     ['[data-smoothr-email]', emailField?.value || ''],
     ['[data-smoothr-total]', totalEl?.textContent || ''],
     ['[data-smoothr-gateway]', paymentContainer ? 'found' : 'missing'],
-    ['[data-smoothr-submit]', submitBtn ? 'found' : 'missing'],
+    ['[data-smoothr-checkout]', submitBtn ? 'found' : 'missing'],
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
@@ -132,7 +132,7 @@ export async function initCheckout() {
     event.preventDefault();
     event.stopPropagation();
     submitBtn.disabled = true;
-    log('[data-smoothr-submit] clicked');
+    log('[data-smoothr-checkout] clicked');
 
     const email =
       emailField?.value?.trim() ||

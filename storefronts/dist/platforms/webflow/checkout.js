@@ -8630,7 +8630,7 @@ async function initCheckout() {
   const emailField = block.querySelector("[data-smoothr-email]");
   const totalEl = block.querySelector("[data-smoothr-total]");
   const paymentContainer = block.querySelector("[data-smoothr-gateway]");
-  const submitBtn = block.querySelector("[data-smoothr-submit]");
+  const submitBtn = block.querySelector("[data-smoothr-checkout]");
   const cardNumberEl = block.querySelector("[data-smoothr-card-number]");
   const cardExpiryEl = block.querySelector("[data-smoothr-card-expiry]");
   const cardCvcEl = block.querySelector("[data-smoothr-card-cvc]");
@@ -8640,7 +8640,7 @@ async function initCheckout() {
     ["[data-smoothr-email]", (emailField == null ? void 0 : emailField.value) || ""],
     ["[data-smoothr-total]", (totalEl == null ? void 0 : totalEl.textContent) || ""],
     ["[data-smoothr-gateway]", paymentContainer ? "found" : "missing"],
-    ["[data-smoothr-submit]", submitBtn ? "found" : "missing"],
+    ["[data-smoothr-checkout]", submitBtn ? "found" : "missing"],
     ["[data-smoothr-card-number]", cardNumberEl ? "found" : "missing"],
     ["[data-smoothr-card-expiry]", cardExpiryEl ? "found" : "missing"],
     ["[data-smoothr-card-cvc]", cardCvcEl ? "found" : "missing"],
@@ -8661,7 +8661,7 @@ async function initCheckout() {
     event.preventDefault();
     event.stopPropagation();
     submitBtn.disabled = true;
-    log3("[data-smoothr-submit] clicked");
+    log3("[data-smoothr-checkout] clicked");
     const email = ((_a4 = emailField == null ? void 0 : emailField.value) == null ? void 0 : _a4.trim()) || ((_b2 = emailField == null ? void 0 : emailField.getAttribute("data-smoothr-email")) == null ? void 0 : _b2.trim()) || "";
     const first_name = ((_d2 = (_c2 = block.querySelector("[data-smoothr-first-name]")) == null ? void 0 : _c2.value) == null ? void 0 : _d2.trim()) || "";
     const last_name = ((_f = (_e = block.querySelector("[data-smoothr-last-name]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";

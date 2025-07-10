@@ -3,11 +3,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 beforeEach(() => {
   vi.resetModules();
   document.body.innerHTML = `
-    <div data-smoothr-checkout>
+    <div>
       <div data-smoothr-card-number></div>
       <div data-smoothr-card-expiry></div>
       <div data-smoothr-card-cvc></div>
-      <button data-smoothr-submit></button>
+      <button data-smoothr-checkout></button>
     </div>
   `;
   delete (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__;
