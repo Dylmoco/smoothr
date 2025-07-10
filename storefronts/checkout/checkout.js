@@ -1,3 +1,8 @@
+(() => {
+  if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
+  window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
+})();
+
 import supabase from '../../supabase/supabaseClient.js';
 import { getPublicCredential } from './getPublicCredential.js';
 import bindCardInputs from './utils/inputFormatters.js';
