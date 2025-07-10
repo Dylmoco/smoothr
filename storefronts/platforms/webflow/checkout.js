@@ -1,3 +1,6 @@
+console.log('💥 LIVE');
+
+
 import gateways from '../../checkout/gateways/index.js';
 import * as stripeGateway from '../../checkout/gateways/stripe.js';
 import supabase from '../../../supabase/supabaseClient.js';
