@@ -1,4 +1,4 @@
-import supabase from '../../../supabase/supabaseClient.js';
+import { getPublicCredential } from '../getPublicCredential.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -71,25 +71,6 @@ const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr AuthorizeNet]', ...args);
 
-async function getPublicCredential(storeId, integrationId) {
-  if (!storeId || !integrationId) return null;
-  try {
-    const { data, error } = await supabase
-      .from('store_integrations')
-      .select('api_key, settings')
-      .eq('store_id', storeId)
-      .eq('provider', integrationId)
-      .maybeSingle();
-    if (error) {
-      warn('Credential lookup failed:', error.message || error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    warn('Credential fetch error:', e?.message || e);
-    return null;
-  }
-}
 
 function loadAcceptJs() {
   if (window.Accept) return Promise.resolve();

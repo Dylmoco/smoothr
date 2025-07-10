@@ -1,4 +1,5 @@
 import supabase from '../../supabase/supabaseClient.js';
+import { getPublicCredential } from './getPublicCredential.js';
 
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
@@ -8,25 +9,6 @@ const gatewayLoaders = {
   segpay: () => import('./gateways/segpay.js')
 };
 
-async function getPublicCredential(storeId, integrationId) {
-  if (!storeId || !integrationId) return null;
-  try {
-    const { data, error } = await supabase
-      .from('store_integrations')
-      .select('api_key, settings')
-      .eq('store_id', storeId)
-      .eq('provider', integrationId)
-      .maybeSingle();
-    if (error) {
-      console.warn('[Smoothr Checkout] Credential lookup failed:', error.message || error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    console.warn('[Smoothr Checkout] Credential fetch error:', e?.message || e);
-    return null;
-  }
-}
 
 async function getActivePaymentGateway(log, warn) {
   const cfg = window.SMOOTHR_CONFIG || {};
