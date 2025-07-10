@@ -26,7 +26,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as auth from "../index.js";
+import * as auth from "../../core/auth/index.js";
 
 vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
 

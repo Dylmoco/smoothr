@@ -4,7 +4,7 @@ import {
   convertPrice,
   setBaseCurrency,
   updateRates
-} from '../index.js';
+} from '../../core/currency/index.js';
 
 describe('currency utilities', () => {
   beforeEach(() => {
