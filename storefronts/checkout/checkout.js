@@ -1,5 +1,5 @@
-import initCoreCheckout from '../../core/checkout/initCheckout.js';
-import { computeCartHash } from '../../core/checkout/hash.js';
+import initCoreCheckout from '../core/checkout/initCheckout.js';
+import { computeCartHash } from '../core/checkout/hash.js';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
