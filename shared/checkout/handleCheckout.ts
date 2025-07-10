@@ -222,7 +222,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
     const { data: existingOrders, error: lookupErr } = await supabase
       .from('orders')
-      .select('id, created_at, payment_status')
+      .select('id, created_at, status')
       .eq('store_id', store_id)
       .eq('customer_email', email)
       .eq('total_price', total)
@@ -240,7 +240,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     if (existingOrders && existingOrders.length > 0) {
       const existing = existingOrders[0];
       const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
-      if (existing.payment_status !== 'paid' && ageMs < dedupWindowMs) {
+      if (existing.status !== 'paid' && ageMs < dedupWindowMs) {
         warn('Duplicate order detected within window', { order_id: existing.id });
         res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
         return;
@@ -337,7 +337,6 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
     const updatePayload = {
       status: 'paid',
-      payment_status: 'paid',
       paid_at: new Date().toISOString(),
       payment_intent_id: paymentIntentId,
       customer_id: customerId,
@@ -416,7 +415,6 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     orderPayload = {
       order_number: orderNumber,
       status: paymentConfirmed ? 'paid' : 'unpaid',
-      payment_status: paymentConfirmed ? 'paid' : 'unpaid',
       payment_provider: provider,
       raw_data:
         provider === 'authorizeNet'
