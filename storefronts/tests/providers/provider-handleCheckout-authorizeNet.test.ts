@@ -111,6 +111,5 @@ describe('handleCheckout authorizeNet', () => {
     expect(orderPayload.raw_data.transaction_id).toBe('t123');
     expect(orderPayload.payment_intent_id).toBe('t123');
     expect(orderPayload.status).toBe('paid');
-    expect(orderPayload.payment_status).toBe('paid');
   });
 });

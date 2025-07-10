@@ -55,7 +55,6 @@ export default async function handler(
     .insert({
       order_number: orderNumber,
       status: 'unpaid',
-      payment_status: 'unpaid',
       payment_provider: gateway,
       total_price,
       store_id,
