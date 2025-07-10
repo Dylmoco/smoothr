@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 let createPaymentMethodMock;
 let submitCheckout;
+let originalFetch;
 
 beforeEach(() => {
   vi.resetModules();
   document.body.innerHTML = '';
   delete global.window.__SMOOTHR_CHECKOUT_INITIALIZED__;
+  delete global.window.__SMOOTHR_CHECKOUT_BOUND__;
+  originalFetch = global.fetch;
 
   const list = document.createElement('div');
   list.setAttribute('data-smoothr-list', '');
@@ -120,11 +123,24 @@ beforeEach(() => {
       }
     };
     await createPaymentMethodMock({ billing_details });
-    await fetch(`/api/checkout/${provider}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}'
-    });
+    if (provider === 'authorizeNet') {
+      await fetch(`/api/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      await fetch(`/api/checkout/authorizeNet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+    } else {
+      await fetch(`/api/checkout/${provider}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+    }
   };
   global.window.SMOOTHR_CONFIG = {
     baseCurrency: 'GBP',
@@ -139,6 +155,7 @@ afterEach(() => {
   delete global.window.SMOOTHR_CONFIG;
   delete global.Stripe;
   delete global.window.__SMOOTHR_CHECKOUT_INITIALIZED__;
+  global.fetch = originalFetch;
 });
 
 async function loadCheckout() {
@@ -152,7 +169,7 @@ describe('checkout', () => {
     const initCheckout = await loadCheckout();
     await initCheckout();
 
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ clientSecret: 'test' })
     });
@@ -187,16 +204,19 @@ describe('checkout', () => {
     const initCheckout = await loadCheckout();
     await initCheckout();
 
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ clientSecret: 'test' })
     });
 
     await window.Smoothr.checkout.submit();
 
-    const provider = global.window.SMOOTHR_CONFIG.active_payment_gateway;
     expect(fetch).toHaveBeenCalledWith(
-      `/api/checkout/${provider}`,
+      `/api/create-order`,
+      expect.any(Object)
+    );
+    expect(fetch).toHaveBeenLastCalledWith(
+      `/api/checkout/authorizeNet`,
       expect.any(Object)
     );
   });

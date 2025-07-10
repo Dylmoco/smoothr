@@ -304,11 +304,46 @@ export async function initCheckout() {
 
       let res;
       try {
-        res = await fetch(`${apiBase}/api/checkout/${provider}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        if (provider === 'authorizeNet') {
+          const orderPayload = {
+            email,
+            name: `${first_name} ${last_name}`.trim(),
+            cart: cart.items,
+            total_price: total,
+            currency,
+            gateway: provider,
+            shipping,
+            billing,
+            store_id
+          };
+          const orderRes = await fetch(`${apiBase}/api/create-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload)
+          });
+          const orderData = await orderRes.clone().json().catch(() => ({}));
+          log('create-order response', orderRes.status, orderData);
+          if (!orderRes.ok || !orderData?.order_number) {
+            err('Order creation failed');
+            if ('disabled' in submitBtn) submitBtn.disabled = false;
+            isSubmitting = false;
+            return;
+          }
+          res = await fetch(`${apiBase}/api/checkout/authorizeNet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_number: orderData.order_number,
+              payment_method: token
+            })
+          });
+        } else {
+          res = await fetch(`${apiBase}/api/checkout/${provider}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
       } catch (error) {
         console.error('[Smoothr Checkout] ❌ Fetch failed:', error);
         throw error;

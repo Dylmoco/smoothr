@@ -3,11 +3,17 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 let domReadyCb;
 let clickHandler;
 let originalDocument;
+let originalFetch;
 
 beforeEach(() => {
   vi.resetModules();
   domReadyCb = null;
   clickHandler = null;
+
+  delete global.window?.__SMOOTHR_CHECKOUT_INITIALIZED__;
+  delete global.window?.__SMOOTHR_CHECKOUT_BOUND__;
+
+  originalFetch = global.fetch;
 
   global.fetch = vi.fn(() =>
     Promise.resolve({
@@ -113,6 +119,7 @@ beforeEach(() => {
 
 afterEach(() => {
   global.document = originalDocument;
+  global.fetch = originalFetch;
 });
 
 describe('checkout payload', () => {
