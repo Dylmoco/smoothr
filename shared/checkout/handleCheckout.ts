@@ -108,8 +108,9 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const payload = req.body as CheckoutPayload;
   if (!payload.store_id) {
-    console.warn('Missing store_id in payload — setting fallback dev-store');
-    payload.store_id = 'dev-store';
+    warn('Missing store_id');
+    res.status(400).json({ error: 'Missing store_id' });
+    return;
   }
 
   console.log('Incoming checkout payload:', JSON.stringify(payload, null, 2));
