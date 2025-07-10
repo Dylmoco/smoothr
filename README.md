@@ -203,6 +203,9 @@ functions and build scripts. Browser logs are controlled via
 - **Coding style**: follow the existing style—two space indentation, single
   quotes and trailing semicolons. Keep the code free of unused variables and
   prefer small, focused commits.
+- **Checkout modules**: after modifying any files under `storefronts/checkout/**`
+  run `npm run bundle:webflow-checkout` before committing so
+  `storefronts/dist/platforms/webflow/checkout.js` stays in sync.
 
 ## License
 
