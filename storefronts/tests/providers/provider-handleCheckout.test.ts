@@ -8,7 +8,7 @@ vi.mock('../../../shared/checkout/providers/authorizeNet.ts', () => {
   return { default: vi.fn(async () => ({ success: true, data: { transactionResponse: { transId: 't123' } } })) };
 });
 
-vi.mock('../../../smoothr/lib/findOrCreateCustomer.ts', () => {
+vi.mock('../../../../apps/admin-dashboard/lib/findOrCreateCustomer.ts', () => {
   return { findOrCreateCustomer: vi.fn(async () => 'cust-1') };
 });
 

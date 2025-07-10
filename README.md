@@ -12,7 +12,7 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
   - **/platforms/** – Adapters for various web builder platforms.
   - **/clonables/** – Embeddable widgets and plug‑and‑play code.
  - **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, abandoned cart, subscriptions, and Supabase helpers.
-- **/smoothr/** – Next.js admin dashboard application.
+ - **/apps/admin-dashboard/** – Next.js admin dashboard application.
   - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, dashboard, abandoned cart, and subscriptions.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
@@ -25,19 +25,19 @@ This README serves as the source of truth for new developers on how the reposito
 The repository is managed as a Node.js workspace. The root `package.json` lists
 two workspaces:
 
-- `smoothr` – the admin dashboard
+- `apps/admin-dashboard` – the admin dashboard
 - `storefronts` – the storefront SDK and widgets
 
 Running `npm install` from the repository root installs dependencies for all
 packages in one step.
 
 Afterwards run `npm install` (or `npm ci`) inside each workspace so dev
-dependencies like **vitest** are available in `storefronts` and `smoothr`:
+dependencies like **vitest** are available in `storefronts` and `apps/admin-dashboard`:
 
 ```bash
 npm install        # or npm ci
 (cd storefronts && npm install)
-(cd smoothr && npm install)
+(cd apps/admin-dashboard && npm install)
 ```
 
 All scripts in the repository are written using ECMAScript Module (ESM)
@@ -47,11 +47,11 @@ use Node 20+.
 
 ## Running the Admin Dashboard
 
-The admin dashboard lives in `/smoothr`. After installing dependencies you can
+The admin dashboard lives in `/apps/admin-dashboard`. After installing dependencies you can
 build it with:
 
 ```bash
-cd smoothr
+cd apps/admin-dashboard
 npm install
 npm run build
 ```
@@ -182,7 +182,7 @@ npm test
 
 The test command depends on `vitest` and other development packages. Vitest is
 declared in each workspace’s `package.json`, so **run `npm install` inside the
-`storefronts` directory (and in `smoothr` if it contains tests)** before
+`storefronts` directory (and in `apps/admin-dashboard` if it contains tests)** before
 executing `npm test`.
 
 All tests rely on a shared setup file that polyfills browser globals like
@@ -198,7 +198,7 @@ functions and build scripts. Browser logs are controlled via
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later with ECMAScript Modules enabled.
-- **Tests**: run `npm install` (or `npm ci`) in both `storefronts` and `smoothr`
+- **Tests**: run `npm install` (or `npm ci`) in both `storefronts` and `apps/admin-dashboard`
   before running `npm test` from the repository root.
 - **Coding style**: follow the existing style—two space indentation, single
   quotes and trailing semicolons. Keep the code free of unused variables and

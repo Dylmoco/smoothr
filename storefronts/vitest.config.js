@@ -11,7 +11,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, '../smoothr')
+      '@': resolve(__dirname, '../apps/admin-dashboard')
     }
   }
 });
