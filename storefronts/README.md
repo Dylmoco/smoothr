@@ -150,7 +150,9 @@ setting on the client by defining the following snippet before loading the SDK:
 </script>
 ```
 
-A Webflow‑specific version lives at `./platforms/webflow/checkout.js`. Embed it with:
+A Webflow‑specific adapter lives at `./platforms/webflow/checkout.js`. It merely
+sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
+`checkout/checkout.js` module. Embed it with:
 
 ```html
 <script type="module" src="https://sdk.smoothr.io/platforms/webflow/checkout.js?v=dev-final"></script>
