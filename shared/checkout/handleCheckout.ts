@@ -9,6 +9,7 @@ import nmiProvider from './providers/nmi';
 import segpayProvider from './providers/segpay';
 
 interface CheckoutPayload {
+  order_number?: string;
   payment_method: any;
   email: string;
   first_name: string;
@@ -196,47 +197,54 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return res.status(400).json({ error: 'Missing opaque token from Accept.js' });
   }
 
+  if (provider === 'authorizeNet' && !payload.order_number) {
+    warn('Missing order_number for Authorize.Net checkout');
+    return res.status(400).json({ error: 'order_number is required' });
+  }
+
   console.log('[debug] Passed payment_method checks');
 
   let cart_meta_hash;
-  try {
-    cart_meta_hash = hashCartMeta(email, total, cart);
-    if (!cart_meta_hash) {
-      console.warn('[warn] cart_meta_hash is missing — using fallback');
-      cart_meta_hash = crypto
-        .createHash('sha256')
-        .update(JSON.stringify(cart))
-        .digest('hex');
+  if (provider !== 'authorizeNet') {
+    try {
+      cart_meta_hash = hashCartMeta(email, total, cart);
+      if (!cart_meta_hash) {
+        console.warn('[warn] cart_meta_hash is missing — using fallback');
+        cart_meta_hash = crypto
+          .createHash('sha256')
+          .update(JSON.stringify(cart))
+          .digest('hex');
+      }
+    } catch (err) {
+      console.error('[error] Failed to compute cart_meta_hash:', err);
+      return res.status(500).json({ error: 'cart_meta_hash failed' });
     }
-  } catch (err) {
-    console.error('[error] Failed to compute cart_meta_hash:', err);
-    return res.status(500).json({ error: 'cart_meta_hash failed' });
-  }
 
-  const { data: existingOrders, error: lookupErr } = await supabase
-    .from('orders')
-    .select('id, created_at, payment_status')
-    .eq('store_id', store_id)
-    .eq('customer_email', email)
-    .eq('total_price', total)
-    .eq('cart_meta_hash', cart_meta_hash)
-    .order('created_at', { ascending: false })
-    .limit(1);
+    const { data: existingOrders, error: lookupErr } = await supabase
+      .from('orders')
+      .select('id, created_at, payment_status')
+      .eq('store_id', store_id)
+      .eq('customer_email', email)
+      .eq('total_price', total)
+      .eq('cart_meta_hash', cart_meta_hash)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-  if (lookupErr) {
-    err('Order deduplication check failed:', lookupErr.message);
-    res.status(500).json({ error: 'Order lookup failed' });
-    return;
-  }
-
-  const dedupWindowMs = 5 * 60 * 1000; // five minutes
-  if (existingOrders && existingOrders.length > 0) {
-    const existing = existingOrders[0];
-    const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
-    if (existing.payment_status !== 'paid' && ageMs < dedupWindowMs) {
-      warn('Duplicate order detected within window', { order_id: existing.id });
-      res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
+    if (lookupErr) {
+      err('Order deduplication check failed:', lookupErr.message);
+      res.status(500).json({ error: 'Order lookup failed' });
       return;
+    }
+
+    const dedupWindowMs = 5 * 60 * 1000; // five minutes
+    if (existingOrders && existingOrders.length > 0) {
+      const existing = existingOrders[0];
+      const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
+      if (existing.payment_status !== 'paid' && ageMs < dedupWindowMs) {
+        warn('Duplicate order detected within window', { order_id: existing.id });
+        res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
+        return;
+      }
     }
   }
 
@@ -305,6 +313,56 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     err('findOrCreateCustomer failed:', error?.message || error);
     res.status(500).json({ error: 'Failed to record customer' });
     return;
+  }
+
+  if (provider === 'authorizeNet') {
+    const orderNumber = payload.order_number!;
+    const { data: existingOrder, error: lookupError } = await supabase
+      .from('orders')
+      .select('id, raw_data')
+      .eq('order_number', orderNumber)
+      .maybeSingle();
+
+    if (lookupError) {
+      err('Order lookup failed:', lookupError.message);
+      res.status(500).json({ error: 'Order lookup failed' });
+      return;
+    }
+
+    if (!existingOrder) {
+      warn('Order not found:', orderNumber);
+      res.status(404).json({ error: 'Order not found' });
+      return;
+    }
+
+    const updatePayload = {
+      status: 'paid',
+      payment_status: 'paid',
+      paid_at: new Date().toISOString(),
+      payment_intent_id: paymentIntentId,
+      customer_id: customerId,
+      raw_data: { ...(existingOrder.raw_data || {}), transaction_id: transactionId }
+    };
+
+    const { data: updated, error: updateError } = await supabase
+      .from('orders')
+      .update(updatePayload)
+      .eq('order_number', orderNumber)
+      .select('id')
+      .single();
+
+    if (updateError) {
+      err('Failed to update order:', updateError.message);
+      res.status(500).json({ error: 'Order update failed' });
+      return;
+    }
+
+    return res.status(200).json({
+      success: true,
+      order_id: updated?.id,
+      order_number: orderNumber,
+      payment_intent_id: paymentIntentId
+    });
   }
 
   const { data: storeData, error: storeError } = await supabase

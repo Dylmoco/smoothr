@@ -26,21 +26,8 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
                 or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
               }))
             };
-          } else if (storeFromCall === 2) {
-            return {
-              select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(async () => ({ data: { prefix: 'ST', order_sequence: 1 }, error: null }))
-                }))
-              }))
-            };
-          } else {
-            return {
-              update: vi.fn(() => ({
-                eq: vi.fn(async () => ({ error: null }))
-              }))
-            };
           }
+          return {};
         }
         if (table === 'store_settings') {
           return {
@@ -54,29 +41,28 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
         if (table === 'orders') {
           ordersCall++;
           if (ordersCall === 1) {
-            const builder: any = {
-              select: vi.fn(() => builder),
-              eq: vi.fn(() => builder),
-              order: vi.fn(() => builder),
-              limit: vi.fn(async () => ({ data: [], error: null }))
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(async () => ({ data: { id: 'order-1', raw_data: {} }, error: null }))
+                }))
+              }))
             };
-            return builder;
           }
           if (ordersCall === 2) {
             return {
-              upsert: vi.fn((payload: any) => {
+              update: vi.fn((payload: any) => {
                 orderPayload = payload;
                 return {
-                  select: vi.fn(() => ({
-                    single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null }))
+                  eq: vi.fn(() => ({
+                    select: vi.fn(() => ({
+                      single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null }))
+                    }))
                   }))
                 };
               })
             };
           }
-        }
-        if (table === 'order_items') {
-          return { insert: vi.fn(async () => ({ error: null })) };
         }
         return {};
       }
@@ -109,7 +95,8 @@ describe('handleCheckout authorizeNet', () => {
         cart: [{ product_id: 'p1', quantity: 1, price: 100 }],
         total: 100,
         currency: 'USD',
-        store_id: 'store-1'
+        store_id: 'store-1',
+        order_number: 'ST-0001'
       }
     } as any;
 
