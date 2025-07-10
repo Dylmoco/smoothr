@@ -1,5 +1,12 @@
+(() => {
+  if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
+  window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
+})();
+
 import supabase from '../../supabase/supabaseClient.js';
 import { getPublicCredential } from './getPublicCredential.js';
+import bindCardInputs from './utils/inputFormatters.js';
+import waitForElement from './utils/waitForElement.js';
 
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
@@ -53,9 +60,12 @@ export async function computeCartHash(cart, total, email) {
 }
 
 export async function initCheckout() {
+  if (window.__SMOOTHR_CHECKOUT_BOUND__) return;
+  window.__SMOOTHR_CHECKOUT_BOUND__ = true;
+  let isSubmitting = false;
   const debug = window.SMOOTHR_CONFIG?.debug;
   const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
-  const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
+  const warn = (...args) => console.warn('[Smoothr Checkout]', ...args);
   const err = (...args) => debug && console.error('[Smoothr Checkout]', ...args);
 
   log('SDK initialized');
@@ -69,6 +79,14 @@ export async function initCheckout() {
   }
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
+
+  window.Smoothr = window.Smoothr || window.smoothr || {};
+  window.smoothr = window.Smoothr;
+  window.Smoothr.checkout = {
+    ...(window.Smoothr.checkout || {}),
+    version: 'dev6',
+    ...gateway
+  };
 
   if (provider === 'stripe') {
     let stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
@@ -89,26 +107,33 @@ export async function initCheckout() {
 
   let hasShownCheckoutError = false;
 
-  let block = document.querySelector('[data-smoothr-checkout]');
-  if (!block) {
-    block = document.querySelector('.smoothr-checkout');
-  }
-  if (block) {
-    log('form detected', block);
+  const select = sel => {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      return document.querySelector(sel);
+    }
+    return waitForElement(sel, 5000);
+  };
+
+  const submitBtn = await select('[data-smoothr-checkout]');
+  if (submitBtn) {
+    log('checkout trigger found', submitBtn);
   } else {
-    log('checkout form not found');
+    warn('missing [data-smoothr-checkout]');
     return;
   }
 
-  const productId = block.dataset.smoothrProductId;
-  const emailField = block.querySelector('[data-smoothr-email]');
-  const totalEl = block.querySelector('[data-smoothr-total]');
-  const paymentContainer = block.querySelector('[data-smoothr-gateway]');
-  const submitBtn = block.querySelector('[data-smoothr-checkout]');
-  const cardNumberEl = block.querySelector('[data-smoothr-card-number]');
-  const cardExpiryEl = block.querySelector('[data-smoothr-card-expiry]');
-  const cardCvcEl = block.querySelector('[data-smoothr-card-cvc]');
-  const postalEl = block.querySelector('[data-smoothr-postal]');
+  const block = submitBtn.closest?.('[data-smoothr-product-id]') || document;
+  const productId =
+    submitBtn.dataset?.smoothrProductId || block.dataset?.smoothrProductId;
+  const q = sel => block.querySelector(sel) || document.querySelector(sel);
+
+  const emailField = await select('[data-smoothr-email]');
+  const totalEl = await select('[data-smoothr-total]');
+  const paymentContainer = q('[data-smoothr-gateway]');
+  const cardNumberEl = q('[data-smoothr-card-number]');
+  const cardExpiryEl = q('[data-smoothr-card-expiry]');
+  const cardCvcEl = q('[data-smoothr-card-cvc]');
+  const postalEl = q('[data-smoothr-postal]');
   const themeEl = document.querySelector('#smoothr-checkout-theme');
   const fields = [
     ['[data-smoothr-email]', emailField?.value || ''],
@@ -126,54 +151,46 @@ export async function initCheckout() {
   log('no polling loops active');
 
   // Initialize payment gateway fields
-  gateway.mountCardFields();
+  if (!gateway.isMounted()) {
+    await gateway.mountCardFields();
+  }
+  bindCardInputs();
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
     event.stopPropagation();
-    submitBtn.disabled = true;
+    if (isSubmitting) {
+      warn('Checkout already in progress');
+      return;
+    }
+    isSubmitting = true;
+    if ('disabled' in submitBtn) submitBtn.disabled = true;
     log('[data-smoothr-checkout] clicked');
 
     const email =
       emailField?.value?.trim() ||
       emailField?.getAttribute('data-smoothr-email')?.trim() || '';
-    const first_name =
-      block.querySelector('[data-smoothr-first-name]')?.value?.trim() || '';
-    const last_name =
-      block.querySelector('[data-smoothr-last-name]')?.value?.trim() || '';
-    const line1 =
-      block.querySelector('[data-smoothr-ship-line1]')?.value?.trim() || '';
-    const line2 =
-      block.querySelector('[data-smoothr-ship-line2]')?.value?.trim() || '';
-    const city =
-      block.querySelector('[data-smoothr-ship-city]')?.value?.trim() || '';
-    const state =
-      block.querySelector('[data-smoothr-ship-state]')?.value?.trim() || '';
-    const postal_code =
-      block.querySelector('[data-smoothr-ship-postal]')?.value?.trim() || '';
-    const country =
-      block.querySelector('[data-smoothr-ship-country]')?.value?.trim() || '';
+    const first_name = q('[data-smoothr-first-name]')?.value?.trim() || '';
+    const last_name = q('[data-smoothr-last-name]')?.value?.trim() || '';
+    const line1 = q('[data-smoothr-ship-line1]')?.value?.trim() || '';
+    const line2 = q('[data-smoothr-ship-line2]')?.value?.trim() || '';
+    const city = q('[data-smoothr-ship-city]')?.value?.trim() || '';
+    const state = q('[data-smoothr-ship-state]')?.value?.trim() || '';
+    const postal_code = q('[data-smoothr-ship-postal]')?.value?.trim() || '';
+    const country = q('[data-smoothr-ship-country]')?.value?.trim() || '';
     const shipping = {
       name: `${first_name} ${last_name}`,
       address: { line1, line2, city, state, postal_code, country }
     };
 
-    const bill_first_name =
-      block.querySelector('[data-smoothr-bill-first-name]')?.value?.trim() || '';
-    const bill_last_name =
-      block.querySelector('[data-smoothr-bill-last-name]')?.value?.trim() || '';
-    const bill_line1 =
-      block.querySelector('[data-smoothr-bill-line1]')?.value?.trim() || '';
-    const bill_line2 =
-      block.querySelector('[data-smoothr-bill-line2]')?.value?.trim() || '';
-    const bill_city =
-      block.querySelector('[data-smoothr-bill-city]')?.value?.trim() || '';
-    const bill_state =
-      block.querySelector('[data-smoothr-bill-state]')?.value?.trim() || '';
-    const bill_postal =
-      block.querySelector('[data-smoothr-bill-postal]')?.value?.trim() || '';
-    const bill_country =
-      block.querySelector('[data-smoothr-bill-country]')?.value?.trim() || '';
+    const bill_first_name = q('[data-smoothr-bill-first-name]')?.value?.trim() || '';
+    const bill_last_name = q('[data-smoothr-bill-last-name]')?.value?.trim() || '';
+    const bill_line1 = q('[data-smoothr-bill-line1]')?.value?.trim() || '';
+    const bill_line2 = q('[data-smoothr-bill-line2]')?.value?.trim() || '';
+    const bill_city = q('[data-smoothr-bill-city]')?.value?.trim() || '';
+    const bill_state = q('[data-smoothr-bill-state]')?.value?.trim() || '';
+    const bill_postal = q('[data-smoothr-bill-postal]')?.value?.trim() || '';
+    const bill_country = q('[data-smoothr-bill-country]')?.value?.trim() || '';
     const billing = {
       name: `${bill_first_name} ${bill_last_name}`.trim(),
       address: {
@@ -199,14 +216,16 @@ export async function initCheckout() {
 
     if (!email || !first_name || !last_name || !total) {
       warn('Missing required fields; aborting checkout');
-      submitBtn.disabled = false;
+      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      isSubmitting = false;
       return;
     }
 
     const cartHash = await computeCartHash(cart.items, total, email);
     const lastHash = localStorage.getItem('smoothr_last_cart_hash');
     if (cartHash === lastHash) {
-      submitBtn.disabled = false;
+      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      isSubmitting = false;
       alert("You’ve already submitted this cart. Please wait or modify your order.");
       return;
     }
@@ -215,7 +234,8 @@ export async function initCheckout() {
     if (!gateway.isMounted()) await gateway.mountCardFields();
     if (!gateway.ready()) {
       err('Payment gateway not ready');
-      submitBtn.disabled = false;
+      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      isSubmitting = false;
       return;
     }
 
@@ -231,12 +251,14 @@ export async function initCheckout() {
         (!token?.dataDescriptor || !token?.dataValue)
       ) {
         alert('Invalid payment details. Please try again.');
-        submitBtn.disabled = false;
+        if ('disabled' in submitBtn) submitBtn.disabled = false;
+        isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err('Failed to create payment method', { error: pmError, payment_method: token });
-        submitBtn.disabled = false;
+        if ('disabled' in submitBtn) submitBtn.disabled = false;
+        isSubmitting = false;
         return;
       }
 
@@ -282,11 +304,48 @@ export async function initCheckout() {
 
       let res;
       try {
-        res = await fetch(`${apiBase}/api/checkout/${provider}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        if (provider === 'authorizeNet') {
+          const orderPayload = {
+            email,
+            name: `${first_name} ${last_name}`.trim(),
+            cart: cart.items,
+            total_price: total,
+            currency,
+            gateway: provider,
+            shipping,
+            billing,
+            store_id
+          };
+          const orderRes = await fetch(`${apiBase}/api/create-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderPayload)
+          });
+          const orderData = await orderRes.clone().json().catch(() => ({}));
+          log('create-order response', orderRes.status, orderData);
+          if (!orderRes.ok || !orderData?.order_number) {
+            err('Order creation failed');
+            if ('disabled' in submitBtn) submitBtn.disabled = false;
+            isSubmitting = false;
+            return;
+          }
+          const checkoutPayload = {
+            ...orderPayload,
+            order_number: orderData.order_number,
+            payment_method: token
+          };
+          res = await fetch(`${apiBase}/api/checkout/authorizeNet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(checkoutPayload)
+          });
+        } else {
+          res = await fetch(`${apiBase}/api/checkout/${provider}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
       } catch (error) {
         console.error('[Smoothr Checkout] ❌ Fetch failed:', error);
         throw error;
@@ -294,6 +353,9 @@ export async function initCheckout() {
       const data = await res.clone().json().catch(() => ({}));
       log('fetch response', res.status, data);
       console.log('[Smoothr Checkout] fetch response', res.status, data);
+      if (res.status === 403) {
+        console.warn('[Smoothr Auth] Supabase session missing or expired');
+      }
       if (res.ok && data.success) {
         Smoothr?.cart?.clearCart?.();
         window.location.href = '/checkout-success';
@@ -312,7 +374,8 @@ export async function initCheckout() {
         hasShownCheckoutError = true;
       }
     } finally {
-      submitBtn.disabled = false;
+      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      isSubmitting = false;
       log('submit handler complete');
     }
   });
