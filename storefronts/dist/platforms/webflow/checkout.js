@@ -8531,6 +8531,18 @@ function bindCardInputs() {
   }
 }
 
+// storefronts/checkout/utils/waitForElement.js
+async function waitForElement(selector, timeout = 5e3) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const el = document.querySelector(selector);
+    if (el)
+      return el;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return null;
+}
+
 // storefronts/checkout/checkout.js
 (() => {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__)
@@ -8579,7 +8591,11 @@ async function computeCartHash(cart, total, email) {
   return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 async function initCheckout() {
-  var _a3, _b, _c, _d;
+  var _a3, _b, _c, _d, _e, _f, _g;
+  if (window.__SMOOTHR_CHECKOUT_BOUND__)
+    return;
+  window.__SMOOTHR_CHECKOUT_BOUND__ = true;
+  let isSubmitting = false;
   const debug3 = (_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug;
   const log3 = (...args) => debug3 && console.log("[Smoothr Checkout]", ...args);
   const warn3 = (...args) => console.warn("[Smoothr Checkout]", ...args);
@@ -8619,22 +8635,29 @@ async function initCheckout() {
     log3("Stripe key confirmed");
   }
   let hasShownCheckoutError = false;
-  const block = document.querySelector("[data-smoothr-checkout]");
-  if (block) {
-    log3("form detected", block);
+  const select = (sel) => {
+    if (typeof process !== "undefined" && false) {
+      return document.querySelector(sel);
+    }
+    return waitForElement(sel, 5e3);
+  };
+  const submitBtn = await select("[data-smoothr-checkout]");
+  if (submitBtn) {
+    log3("checkout trigger found", submitBtn);
   } else {
     warn3("missing [data-smoothr-checkout]");
     return;
   }
-  const productId = block.dataset.smoothrProductId;
-  const emailField = block.querySelector("[data-smoothr-email]");
-  const totalEl = block.querySelector("[data-smoothr-total]");
-  const paymentContainer = block.querySelector("[data-smoothr-gateway]");
-  const submitBtn = block.querySelector("[data-smoothr-checkout]");
-  const cardNumberEl = block.querySelector("[data-smoothr-card-number]");
-  const cardExpiryEl = block.querySelector("[data-smoothr-card-expiry]");
-  const cardCvcEl = block.querySelector("[data-smoothr-card-cvc]");
-  const postalEl = block.querySelector("[data-smoothr-postal]");
+  const block = ((_e = submitBtn.closest) == null ? void 0 : _e.call(submitBtn, "[data-smoothr-product-id]")) || document;
+  const productId = ((_f = submitBtn.dataset) == null ? void 0 : _f.smoothrProductId) || ((_g = block.dataset) == null ? void 0 : _g.smoothrProductId);
+  const q = (sel) => block.querySelector(sel) || document.querySelector(sel);
+  const emailField = await select("[data-smoothr-email]");
+  const totalEl = await select("[data-smoothr-total]");
+  const paymentContainer = q("[data-smoothr-gateway]");
+  const cardNumberEl = q("[data-smoothr-card-number]");
+  const cardExpiryEl = q("[data-smoothr-card-expiry]");
+  const cardCvcEl = q("[data-smoothr-card-cvc]");
+  const postalEl = q("[data-smoothr-postal]");
   const themeEl = document.querySelector("#smoothr-checkout-theme");
   const fields = [
     ["[data-smoothr-email]", (emailField == null ? void 0 : emailField.value) || ""],
@@ -8657,32 +8680,38 @@ async function initCheckout() {
   }
   bindCardInputs();
   submitBtn == null ? void 0 : submitBtn.addEventListener("click", async (event) => {
-    var _a4, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
+    var _a4, _b2, _c2, _d2, _e2, _f2, _g2, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
     event.preventDefault();
     event.stopPropagation();
-    submitBtn.disabled = true;
+    if (isSubmitting) {
+      warn3("Checkout already in progress");
+      return;
+    }
+    isSubmitting = true;
+    if ("disabled" in submitBtn)
+      submitBtn.disabled = true;
     log3("[data-smoothr-checkout] clicked");
     const email = ((_a4 = emailField == null ? void 0 : emailField.value) == null ? void 0 : _a4.trim()) || ((_b2 = emailField == null ? void 0 : emailField.getAttribute("data-smoothr-email")) == null ? void 0 : _b2.trim()) || "";
-    const first_name = ((_d2 = (_c2 = block.querySelector("[data-smoothr-first-name]")) == null ? void 0 : _c2.value) == null ? void 0 : _d2.trim()) || "";
-    const last_name = ((_f = (_e = block.querySelector("[data-smoothr-last-name]")) == null ? void 0 : _e.value) == null ? void 0 : _f.trim()) || "";
-    const line1 = ((_h = (_g = block.querySelector("[data-smoothr-ship-line1]")) == null ? void 0 : _g.value) == null ? void 0 : _h.trim()) || "";
-    const line2 = ((_j = (_i = block.querySelector("[data-smoothr-ship-line2]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
-    const city = ((_l = (_k = block.querySelector("[data-smoothr-ship-city]")) == null ? void 0 : _k.value) == null ? void 0 : _l.trim()) || "";
-    const state = ((_n = (_m = block.querySelector("[data-smoothr-ship-state]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim()) || "";
-    const postal_code = ((_p = (_o = block.querySelector("[data-smoothr-ship-postal]")) == null ? void 0 : _o.value) == null ? void 0 : _p.trim()) || "";
-    const country = ((_r = (_q = block.querySelector("[data-smoothr-ship-country]")) == null ? void 0 : _q.value) == null ? void 0 : _r.trim()) || "";
+    const first_name = ((_d2 = (_c2 = q("[data-smoothr-first-name]")) == null ? void 0 : _c2.value) == null ? void 0 : _d2.trim()) || "";
+    const last_name = ((_f2 = (_e2 = q("[data-smoothr-last-name]")) == null ? void 0 : _e2.value) == null ? void 0 : _f2.trim()) || "";
+    const line1 = ((_h = (_g2 = q("[data-smoothr-ship-line1]")) == null ? void 0 : _g2.value) == null ? void 0 : _h.trim()) || "";
+    const line2 = ((_j = (_i = q("[data-smoothr-ship-line2]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
+    const city = ((_l = (_k = q("[data-smoothr-ship-city]")) == null ? void 0 : _k.value) == null ? void 0 : _l.trim()) || "";
+    const state = ((_n = (_m = q("[data-smoothr-ship-state]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim()) || "";
+    const postal_code = ((_p = (_o = q("[data-smoothr-ship-postal]")) == null ? void 0 : _o.value) == null ? void 0 : _p.trim()) || "";
+    const country = ((_r = (_q = q("[data-smoothr-ship-country]")) == null ? void 0 : _q.value) == null ? void 0 : _r.trim()) || "";
     const shipping = {
       name: `${first_name} ${last_name}`,
       address: { line1, line2, city, state, postal_code, country }
     };
-    const bill_first_name = ((_t = (_s = block.querySelector("[data-smoothr-bill-first-name]")) == null ? void 0 : _s.value) == null ? void 0 : _t.trim()) || "";
-    const bill_last_name = ((_v = (_u = block.querySelector("[data-smoothr-bill-last-name]")) == null ? void 0 : _u.value) == null ? void 0 : _v.trim()) || "";
-    const bill_line1 = ((_x = (_w = block.querySelector("[data-smoothr-bill-line1]")) == null ? void 0 : _w.value) == null ? void 0 : _x.trim()) || "";
-    const bill_line2 = ((_z = (_y = block.querySelector("[data-smoothr-bill-line2]")) == null ? void 0 : _y.value) == null ? void 0 : _z.trim()) || "";
-    const bill_city = ((_B = (_A = block.querySelector("[data-smoothr-bill-city]")) == null ? void 0 : _A.value) == null ? void 0 : _B.trim()) || "";
-    const bill_state = ((_D = (_C = block.querySelector("[data-smoothr-bill-state]")) == null ? void 0 : _C.value) == null ? void 0 : _D.trim()) || "";
-    const bill_postal = ((_F = (_E = block.querySelector("[data-smoothr-bill-postal]")) == null ? void 0 : _E.value) == null ? void 0 : _F.trim()) || "";
-    const bill_country = ((_H = (_G = block.querySelector("[data-smoothr-bill-country]")) == null ? void 0 : _G.value) == null ? void 0 : _H.trim()) || "";
+    const bill_first_name = ((_t = (_s = q("[data-smoothr-bill-first-name]")) == null ? void 0 : _s.value) == null ? void 0 : _t.trim()) || "";
+    const bill_last_name = ((_v = (_u = q("[data-smoothr-bill-last-name]")) == null ? void 0 : _u.value) == null ? void 0 : _v.trim()) || "";
+    const bill_line1 = ((_x = (_w = q("[data-smoothr-bill-line1]")) == null ? void 0 : _w.value) == null ? void 0 : _x.trim()) || "";
+    const bill_line2 = ((_z = (_y = q("[data-smoothr-bill-line2]")) == null ? void 0 : _y.value) == null ? void 0 : _z.trim()) || "";
+    const bill_city = ((_B = (_A = q("[data-smoothr-bill-city]")) == null ? void 0 : _A.value) == null ? void 0 : _B.trim()) || "";
+    const bill_state = ((_D = (_C = q("[data-smoothr-bill-state]")) == null ? void 0 : _C.value) == null ? void 0 : _D.trim()) || "";
+    const bill_postal = ((_F = (_E = q("[data-smoothr-bill-postal]")) == null ? void 0 : _E.value) == null ? void 0 : _F.trim()) || "";
+    const bill_country = ((_H = (_G = q("[data-smoothr-bill-country]")) == null ? void 0 : _G.value) == null ? void 0 : _H.trim()) || "";
     const billing = {
       name: `${bill_first_name} ${bill_last_name}`.trim(),
       address: {
@@ -8703,13 +8732,17 @@ async function initCheckout() {
     const platform = (_Q = window.SMOOTHR_CONFIG) == null ? void 0 : _Q.platform;
     if (!email || !first_name || !last_name || !total) {
       warn3("Missing required fields; aborting checkout");
-      submitBtn.disabled = false;
+      if ("disabled" in submitBtn)
+        submitBtn.disabled = false;
+      isSubmitting = false;
       return;
     }
     const cartHash = await computeCartHash(cart.items, total, email);
     const lastHash = localStorage.getItem("smoothr_last_cart_hash");
     if (cartHash === lastHash) {
-      submitBtn.disabled = false;
+      if ("disabled" in submitBtn)
+        submitBtn.disabled = false;
+      isSubmitting = false;
       alert("You\u2019ve already submitted this cart. Please wait or modify your order.");
       return;
     }
@@ -8718,7 +8751,9 @@ async function initCheckout() {
       await gateway.mountCardFields();
     if (!gateway.ready()) {
       err("Payment gateway not ready");
-      submitBtn.disabled = false;
+      if ("disabled" in submitBtn)
+        submitBtn.disabled = false;
+      isSubmitting = false;
       return;
     }
     try {
@@ -8728,12 +8763,16 @@ async function initCheckout() {
       console.log("[AuthorizeNet] \u2705 Got payment method:", token);
       if (provider === "authorizeNet" && (!(token == null ? void 0 : token.dataDescriptor) || !(token == null ? void 0 : token.dataValue))) {
         alert("Invalid payment details. Please try again.");
-        submitBtn.disabled = false;
+        if ("disabled" in submitBtn)
+          submitBtn.disabled = false;
+        isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err("Failed to create payment method", { error: pmError, payment_method: token });
-        submitBtn.disabled = false;
+        if ("disabled" in submitBtn)
+          submitBtn.disabled = false;
+        isSubmitting = false;
         return;
       }
       const payload = {
@@ -8774,11 +8813,49 @@ async function initCheckout() {
       }
       let res;
       try {
-        res = await fetch(`${apiBase}/api/checkout/${provider}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        if (provider === "authorizeNet") {
+          const orderPayload = {
+            email,
+            name: `${first_name} ${last_name}`.trim(),
+            cart: cart.items,
+            total_price: total,
+            currency,
+            gateway: provider,
+            shipping,
+            billing,
+            store_id
+          };
+          const orderRes = await fetch(`${apiBase}/api/create-order`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderPayload)
+          });
+          const orderData = await orderRes.clone().json().catch(() => ({}));
+          log3("create-order response", orderRes.status, orderData);
+          if (!orderRes.ok || !(orderData == null ? void 0 : orderData.order_number)) {
+            err("Order creation failed");
+            if ("disabled" in submitBtn)
+              submitBtn.disabled = false;
+            isSubmitting = false;
+            return;
+          }
+          const checkoutPayload = {
+            ...orderPayload,
+            order_number: orderData.order_number,
+            payment_method: token
+          };
+          res = await fetch(`${apiBase}/api/checkout/authorizeNet`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(checkoutPayload)
+          });
+        } else {
+          res = await fetch(`${apiBase}/api/checkout/${provider}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+        }
       } catch (error) {
         console.error("[Smoothr Checkout] \u274C Fetch failed:", error);
         throw error;
@@ -8786,6 +8863,9 @@ async function initCheckout() {
       const data = await res.clone().json().catch(() => ({}));
       log3("fetch response", res.status, data);
       console.log("[Smoothr Checkout] fetch response", res.status, data);
+      if (res.status === 403) {
+        console.warn("[Smoothr Auth] Supabase session missing or expired");
+      }
       if (res.ok && data.success) {
         (_T = (_S = Smoothr == null ? void 0 : Smoothr.cart) == null ? void 0 : _S.clearCart) == null ? void 0 : _T.call(_S);
         window.location.href = "/checkout-success";
@@ -8804,7 +8884,9 @@ async function initCheckout() {
         hasShownCheckoutError = true;
       }
     } finally {
-      submitBtn.disabled = false;
+      if ("disabled" in submitBtn)
+        submitBtn.disabled = false;
+      isSubmitting = false;
       log3("submit handler complete");
     }
   });

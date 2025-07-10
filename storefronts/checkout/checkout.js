@@ -329,13 +329,15 @@ export async function initCheckout() {
             isSubmitting = false;
             return;
           }
+          const checkoutPayload = {
+            ...orderPayload,
+            order_number: orderData.order_number,
+            payment_method: token
+          };
           res = await fetch(`${apiBase}/api/checkout/authorizeNet`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              order_number: orderData.order_number,
-              payment_method: token
-            })
+            body: JSON.stringify(checkoutPayload)
           });
         } else {
           res = await fetch(`${apiBase}/api/checkout/${provider}`, {
