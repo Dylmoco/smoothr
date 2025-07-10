@@ -321,6 +321,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     const { data: existingOrder, error: lookupError } = await supabase
       .from('orders')
       .select('id, raw_data')
+      .eq('store_id', store_id)
       .eq('order_number', orderNumber)
       .maybeSingle();
 
@@ -331,8 +332,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     }
 
     if (!existingOrder) {
-      warn('Order not found:', orderNumber);
-      res.status(404).json({ error: 'Order not found' });
+      warn('Order not found for store:', orderNumber, store_id);
+      res.status(404).json({ error: 'Order not found for store' });
       return;
     }
 
@@ -349,6 +350,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       const { data, error } = await supabase
         .from('orders')
         .update(updatePayload)
+        .eq('store_id', store_id)
         .eq('order_number', orderNumber)
         .select('id')
         .single();
