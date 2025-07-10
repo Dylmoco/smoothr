@@ -288,13 +288,16 @@ export async function initCheckout() {
       log('shipping:', shipping);
         const {
           error: pmError,
-          paymentMethod,
           payment_method
         } = await gateway.createPaymentMethod(billing_details);
 
-        const token = payment_method || paymentMethod;
+        const token = payment_method;
 
-        if (pmError || !token) {
+        if (!token || pmError) {
+          console.error('[Smoothr Checkout] Failed to create payment method', {
+            error: pmError,
+            payment_method: token
+          });
           alert('Failed to create payment method');
           checkoutBtn.disabled = false;
           checkoutBtn.classList.remove('loading');
@@ -325,7 +328,10 @@ export async function initCheckout() {
           payload.payment_method = token.id;
         }
 
-        log('Submitting payload:', payload);
+        if (debug) {
+          window.__latestSmoothrPayload = payload;
+        }
+        console.log('[Smoothr Checkout] Submitting payload:', payload);
         log('billing_details:', billing_details);
         log('shipping:', shipping);
       const base = window?.SMOOTHR_CONFIG?.apiBase || '';
@@ -336,12 +342,19 @@ export async function initCheckout() {
         return;
       }
 
-      const res = await fetch(`${base}/api/checkout/${activeGateway}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      let res;
+      try {
+        res = await fetch(`${base}/api/checkout/${activeGateway}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        console.error('[Smoothr Checkout] ❌ Fetch failed:', error);
+        throw error;
+      }
       const data = await res.json().catch(() => ({}));
+      console.log('[Smoothr Checkout] fetch response', res.status, data);
       if (res.ok && data.success) {
         Smoothr.cart.clearCart?.();
         window.location.href = '/checkout-success';
@@ -395,15 +408,17 @@ window.__SMOOTHR_DEBUG__.submitCheckout = () => {
   window.__SMOOTHR_DEBUG__.submitGatewayPayment?.();
 };
 
-window.addEventListener('DOMContentLoaded', () => {
-  const checkoutButton = document.querySelector('[data-smoothr-checkout]');
-  if (checkoutButton) {
-    console.log('[Smoothr] \u2705 Binding checkout button');
-    checkoutButton.addEventListener('click', () => {
-      console.log('[Smoothr] \u{1F7E2} Button clicked \u2013 running submitCheckout');
-      window.__SMOOTHR_DEBUG__.submitCheckout?.();
-    });
-  } else {
-    console.warn('[Smoothr] \u274C [data-smoothr-checkout] not found');
-  }
-});
+if (window.SMOOTHR_CONFIG?.debug) {
+  window.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.querySelector('[data-smoothr-checkout]');
+    if (checkoutButton) {
+      console.log('[Smoothr] \u2705 Binding checkout button');
+      checkoutButton.addEventListener('click', () => {
+        console.log('[Smoothr] \u{1F7E2} Button clicked \u2013 running submitCheckout');
+        window.__SMOOTHR_DEBUG__.submitCheckout?.();
+      });
+    } else {
+      console.warn('[Smoothr] \u274C [data-smoothr-checkout] not found');
+    }
+  });
+}

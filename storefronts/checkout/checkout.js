@@ -239,10 +239,10 @@ export async function initCheckout() {
 
     try {
       const billing_details = { ...billing, email };
-      const { error: pmError, payment_method, paymentMethod } =
+      const { error: pmError, payment_method } =
         await gateway.createPaymentMethod(billing_details);
 
-      const token = payment_method || paymentMethod;
+      const token = payment_method;
       console.log('[AuthorizeNet] ✅ Got payment method:', token);
       if (
         provider === 'authorizeNet' &&
@@ -252,8 +252,8 @@ export async function initCheckout() {
         submitBtn.disabled = false;
         return;
       }
-      if (pmError || !token) {
-        err(`\u274C Failed to create payment method: ${pmError?.message}`);
+      if (!token || pmError) {
+        err('Failed to create payment method', { error: pmError, payment_method: token });
         submitBtn.disabled = false;
         return;
       }
@@ -284,8 +284,8 @@ export async function initCheckout() {
 
       if (debug) {
         window.__latestSmoothrPayload = payload;
-        console.log('[Smoothr Checkout] Submitting payload:', window.__latestSmoothrPayload);
       }
+      console.log('[Smoothr Checkout] Submitting payload:', payload);
       const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
       log('POST', `${apiBase}/api/checkout/${provider}`);
 
@@ -298,13 +298,20 @@ export async function initCheckout() {
         return;
       }
 
-      const res = await fetch(`${apiBase}/api/checkout/${provider}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      let res;
+      try {
+        res = await fetch(`${apiBase}/api/checkout/${provider}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        console.error('[Smoothr Checkout] ❌ Fetch failed:', error);
+        throw error;
+      }
       const data = await res.clone().json().catch(() => ({}));
       log('fetch response', res.status, data);
+      console.log('[Smoothr Checkout] fetch response', res.status, data);
       if (res.ok && data.success) {
         Smoothr?.cart?.clearCart?.();
         window.location.href = '/checkout-success';
@@ -316,6 +323,7 @@ export async function initCheckout() {
         }
       }
     } catch (error) {
+      console.error(error);
       err(`\u274C ${error.message}`);
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
