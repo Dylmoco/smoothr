@@ -181,9 +181,10 @@ npm test
 ```
 
 The test command depends on `vitest` and other development packages. Vitest is
-declared in each workspace’s `package.json`, so **run `npm install` inside the
-`storefronts` directory (and in `smoothr` if it contains tests)** before
-executing `npm test`.
+declared in each workspace’s `package.json`, so **run `npm install` (or
+`npm ci`) inside each workspace – `storefronts`, `smoothr`, etc. – before
+executing `npm test`**. Missing workspace dependencies will result in
+`vitest: command not found` errors.
 
 All tests rely on a shared setup file that polyfills browser globals like
 `window`, `document` and `localStorage` for Node environments. The setup is
