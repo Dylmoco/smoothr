@@ -7,8 +7,13 @@ const originalFetch = global.fetch;
 
 vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
   integrationMock = vi.fn(async () => ({
-    api_key: 'login',
-    settings: { transaction_key: 'key', client_key: 'client' }
+    api_login_id: 'fakeLogin',
+    transaction_key: 'fakeKey',
+    settings: {
+      api_login_id: 'fakeLogin',
+      transaction_key: 'fakeKey',
+      client_key: 'client'
+    }
   }));
   return { getStoreIntegration: integrationMock };
 });

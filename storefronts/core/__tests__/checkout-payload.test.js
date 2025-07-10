@@ -9,7 +9,11 @@ beforeEach(() => {
   clickHandler = null;
 
   global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) })
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ success: true }),
+      clone: () => ({ json: () => Promise.resolve({ success: true }) })
+    })
   );
 
   const cardElement = { mount: vi.fn() };
@@ -87,7 +91,8 @@ beforeEach(() => {
     SMOOTHR_CONFIG: {
       stripeKey: 'pk_test',
       baseCurrency: 'USD',
-      active_payment_gateway: 'stripe'
+      active_payment_gateway: 'stripe',
+      apiBase: 'https://example.com'
     },
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
