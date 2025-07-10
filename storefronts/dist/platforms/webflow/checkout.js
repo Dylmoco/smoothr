@@ -7715,8 +7715,8 @@ var DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, supabase, supabaseClient_default
 var init_supabaseClient = __esm({
   "supabase/supabaseClient.js"() {
     init_module5();
-    DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
-    DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
+    DEFAULT_SUPABASE_URL = "https://example.supabase.co";
+    DEFAULT_SUPABASE_KEY = "anon";
     supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       global: {
         headers: {
@@ -7731,6 +7731,27 @@ var init_supabaseClient = __esm({
       }
     });
     supabaseClient_default = supabase;
+  }
+});
+
+// storefronts/checkout/getPublicCredential.js
+async function getPublicCredential(storeId, integrationId) {
+  if (!storeId || !integrationId) return null;
+  try {
+    const { data, error } = await supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("provider", integrationId).maybeSingle();
+    if (error) {
+      console.warn("[Smoothr] Credential lookup failed:", error.message || error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.warn("[Smoothr] Credential fetch error:", (e == null ? void 0 : e.message) || e);
+    return null;
+  }
+}
+var init_getPublicCredential = __esm({
+  "storefronts/checkout/getPublicCredential.js"() {
+    init_supabaseClient();
   }
 });
 
@@ -8083,20 +8104,6 @@ function getAcceptCredentials() {
     transactionKey
   };
 }
-async function getPublicCredential(storeId, integrationId) {
-  if (!storeId || !integrationId) return null;
-  try {
-    const { data, error } = await supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("provider", integrationId).maybeSingle();
-    if (error) {
-      warn2("Credential lookup failed:", error.message || error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    warn2("Credential fetch error:", (e == null ? void 0 : e.message) || e);
-    return null;
-  }
-}
 function loadAcceptJs() {
   if (window.Accept) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
@@ -8336,7 +8343,7 @@ async function createPaymentMethod2() {
 var fieldsMounted2, mountPromise2, clientKey, apiLoginID, transactionKey, scriptPromise, authorizeNetReady, acceptReady, submitting, debugInitialized, _a2, debug2, log2, warn2, authorizeNet_default;
 var init_authorizeNet = __esm({
   "storefronts/checkout/gateways/authorizeNet.js"() {
-    init_supabaseClient();
+    init_getPublicCredential();
     fieldsMounted2 = false;
     authorizeNetReady = false;
     acceptReady = false;
@@ -8475,6 +8482,7 @@ var init_segpay = __esm({
 
 // storefronts/checkout/checkout.js
 init_supabaseClient();
+init_getPublicCredential();
 var gatewayLoaders = {
   stripe: () => Promise.resolve().then(() => (init_stripe(), stripe_exports)),
   authorizeNet: () => Promise.resolve().then(() => (init_authorizeNet(), authorizeNet_exports)),
@@ -8482,20 +8490,6 @@ var gatewayLoaders = {
   nmi: () => Promise.resolve().then(() => (init_nmi(), nmi_exports)),
   segpay: () => Promise.resolve().then(() => (init_segpay(), segpay_exports))
 };
-async function getPublicCredential2(storeId, integrationId) {
-  if (!storeId || !integrationId) return null;
-  try {
-    const { data, error } = await supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("provider", integrationId).maybeSingle();
-    if (error) {
-      console.warn("[Smoothr Checkout] Credential lookup failed:", error.message || error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    console.warn("[Smoothr Checkout] Credential fetch error:", (e == null ? void 0 : e.message) || e);
-    return null;
-  }
-}
 async function getActivePaymentGateway(log3, warn3) {
   var _a3;
   const cfg = window.SMOOTHR_CONFIG || {};
@@ -8549,7 +8543,7 @@ async function initCheckout() {
     let stripeKey = (_b = window.SMOOTHR_CONFIG) == null ? void 0 : _b.stripeKey;
     if (!stripeKey) {
       const storeId = (_c = window.SMOOTHR_CONFIG) == null ? void 0 : _c.storeId;
-      const cred = await getPublicCredential2(storeId, "stripe");
+      const cred = await getPublicCredential(storeId, "stripe");
       stripeKey = (cred == null ? void 0 : cred.api_key) || ((_d = cred == null ? void 0 : cred.settings) == null ? void 0 : _d.publishable_key) || "";
       if (stripeKey) window.SMOOTHR_CONFIG.stripeKey = stripeKey;
     }
