@@ -1,5 +1,6 @@
 import supabase from '../../supabase/supabaseClient.js';
 import { getPublicCredential } from './getPublicCredential.js';
+import bindCardInputs from './utils/inputFormatters.js';
 
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
@@ -134,7 +135,8 @@ export async function initCheckout() {
   log('no polling loops active');
 
   // Initialize payment gateway fields
-  gateway.mountCardFields();
+  await gateway.mountCardFields();
+  bindCardInputs();
 
   submitBtn?.addEventListener('click', async event => {
     event.preventDefault();
