@@ -4184,17 +4184,17 @@ var init_fetch2 = __esm({
     fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
       const fetch3 = resolveFetch3(customFetch);
       const HeadersConstructor = resolveHeadersConstructor();
-      return (input, init) => __awaiter6(void 0, void 0, void 0, function* () {
+      return (input, init2) => __awaiter6(void 0, void 0, void 0, function* () {
         var _a3;
         const accessToken = (_a3 = yield getAccessToken()) !== null && _a3 !== void 0 ? _a3 : supabaseKey;
-        let headers = new HeadersConstructor(init === null || init === void 0 ? void 0 : init.headers);
+        let headers = new HeadersConstructor(init2 === null || init2 === void 0 ? void 0 : init2.headers);
         if (!headers.has("apikey")) {
           headers.set("apikey", supabaseKey);
         }
         if (!headers.has("Authorization")) {
           headers.set("Authorization", `Bearer ${accessToken}`);
         }
-        return fetch3(input, Object.assign(Object.assign({}, init), { headers }));
+        return fetch3(input, Object.assign(Object.assign({}, init2), { headers }));
       });
     };
   }
@@ -8488,15 +8488,11 @@ var init_segpay = __esm({
 });
 
 // storefronts/checkout/checkout.js
-init_supabaseClient();
-init_getPublicCredential();
-var gatewayLoaders = {
-  stripe: () => Promise.resolve().then(() => (init_stripe(), stripe_exports)),
-  authorizeNet: () => Promise.resolve().then(() => (init_authorizeNet(), authorizeNet_exports)),
-  paypal: () => Promise.resolve().then(() => (init_paypal(), paypal_exports)),
-  nmi: () => Promise.resolve().then(() => (init_nmi(), nmi_exports)),
-  segpay: () => Promise.resolve().then(() => (init_segpay(), segpay_exports))
-};
+var checkout_exports = {};
+__export(checkout_exports, {
+  computeCartHash: () => computeCartHash,
+  initCheckout: () => initCheckout
+});
 async function getActivePaymentGateway(log3, warn3) {
   var _a3;
   const cfg = window.SMOOTHR_CONFIG || {};
@@ -8546,6 +8542,13 @@ async function initCheckout() {
   }
   const gateway = (await loader()).default;
   log3(`Using gateway: ${provider}`);
+  window.Smoothr = window.Smoothr || window.smoothr || {};
+  window.smoothr = window.Smoothr;
+  window.Smoothr.checkout = {
+    ...window.Smoothr.checkout || {},
+    version: "dev6",
+    ...gateway
+  };
   if (provider === "stripe") {
     let stripeKey = (_b = window.SMOOTHR_CONFIG) == null ? void 0 : _b.stripeKey;
     if (!stripeKey) {
@@ -8751,105 +8754,54 @@ async function initCheckout() {
   });
   log3("submit handler attached");
 }
-document.addEventListener("DOMContentLoaded", initCheckout);
-if (document.readyState !== "loading") {
-  initCheckout();
-}
+var gatewayLoaders;
+var init_checkout = __esm({
+  "storefronts/checkout/checkout.js"() {
+    init_supabaseClient();
+    init_getPublicCredential();
+    gatewayLoaders = {
+      stripe: () => Promise.resolve().then(() => (init_stripe(), stripe_exports)),
+      authorizeNet: () => Promise.resolve().then(() => (init_authorizeNet(), authorizeNet_exports)),
+      paypal: () => Promise.resolve().then(() => (init_paypal(), paypal_exports)),
+      nmi: () => Promise.resolve().then(() => (init_nmi(), nmi_exports)),
+      segpay: () => Promise.resolve().then(() => (init_segpay(), segpay_exports))
+    };
+    document.addEventListener("DOMContentLoaded", initCheckout);
+    if (document.readyState !== "loading") {
+      initCheckout();
+    }
+  }
+});
 
-// storefronts/platforms/webflow/checkout.js
-async function waitForCheckoutDom(timeout = 5e3) {
+// storefronts/checkout/utils/waitForElement.js
+async function waitForElement(selector, timeout = 5e3) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
-    const checkout = document.querySelector("[data-smoothr-checkout]");
-    const cardNumber = document.querySelector("[data-smoothr-card-number]");
-    const submit = document.querySelector("[data-smoothr-submit]");
-    if (checkout && cardNumber && submit) {
-      return { checkout, cardNumber, submit };
-    }
+    const el = document.querySelector(selector);
+    if (el) return el;
     await new Promise((r) => setTimeout(r, 100));
   }
   return null;
 }
+
+// storefronts/platforms/webflow/checkout.js
+init_checkout();
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
-if (!window.SMOOTHR_CONFIG.platform) {
-  window.SMOOTHR_CONFIG.platform = "webflow";
-}
-if (window.__SMOOTHR_INITED__) {
-  console.warn("[Smoothr Checkout] Already initialized");
-}
-function bindWebflowInputs() {
-  const numberInput = document.querySelector("[data-smoothr-card-number] input");
-  const expiryInput = document.querySelector("[data-smoothr-card-expiry] input");
-  const cvcInput = document.querySelector("[data-smoothr-card-cvc] input");
-  if (numberInput) {
-    numberInput.addEventListener("input", () => {
-      let digits = numberInput.value.replace(/\D/g, "").slice(0, 16);
-      const parts = [];
-      for (let i = 0; i < digits.length; i += 4) {
-        parts.push(digits.slice(i, i + 4));
-      }
-      numberInput.value = parts.join(" ").trim();
-    });
-  }
-  if (expiryInput) {
-    expiryInput.addEventListener("input", () => {
-      let digits = expiryInput.value.replace(/\D/g, "").slice(0, 4);
-      expiryInput.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-    });
-  }
-  if (cvcInput) {
-    cvcInput.addEventListener("input", () => {
-      cvcInput.value = cvcInput.value.replace(/\D/g, "").slice(0, 4);
-    });
-  }
-}
-function bindCheckoutButton(gateway) {
-  const btn = document.querySelector("[data-smoothr-checkout]");
-  if (!btn) return;
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    console.log("[Smoothr Checkout] Submit clicked");
-    btn.disabled = true;
-    btn.classList.add("loading");
-    try {
-      if (!gateway || typeof gateway.createPaymentMethod !== "function") {
-        console.error("[Smoothr Checkout] No payment gateway available");
-        alert("Payment gateway unavailable");
-        return;
-      }
-      const { payment_method: token, error } = await gateway.createPaymentMethod({
-        name: "Webflow User",
-        email: "test@example.com",
-        address: { line1: "123 Webflow St" }
-      }) || {};
-      if (!token || error) {
-        console.error("[Smoothr Checkout] Tokenization failed", error);
-        alert("Payment failed");
-      } else {
-        console.log("[Smoothr Checkout] Token:", token);
-      }
-    } catch (err) {
-      console.error("[Smoothr Checkout] Tokenization error", err);
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove("loading");
-    }
-  });
-}
-document.addEventListener("DOMContentLoaded", async () => {
-  if (window.__SMOOTHR_INITED__) {
+window.SMOOTHR_CONFIG.platform = "webflow";
+async function init() {
+  if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) {
     console.warn("[Smoothr Checkout] Already initialized");
     return;
   }
-  window.__SMOOTHR_INITED__ = true;
-  await waitForCheckoutDom();
-  const { gateway } = await initCheckout(window.SMOOTHR_CONFIG);
-  bindWebflowInputs();
-  bindCheckoutButton(gateway);
-});
+  window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
+  await waitForElement("[data-smoothr-checkout]");
+  const mod = await Promise.resolve().then(() => (init_checkout(), checkout_exports));
+  await mod.initCheckout(window.SMOOTHR_CONFIG);
+}
+document.addEventListener("DOMContentLoaded", init);
+if (document.readyState !== "loading") {
+  init();
+}
 export {
-  bindCheckoutButton,
-  bindWebflowInputs,
-  initCheckout,
-  waitForCheckoutDom
+  initCheckout
 };
