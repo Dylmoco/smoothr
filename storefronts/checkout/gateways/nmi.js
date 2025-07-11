@@ -16,6 +16,7 @@ async function resolveTokenizationKey() {
   const cred = await getPublicCredential(storeId, 'nmi');
   tokenizationKey =
     cred?.settings?.tokenization_key || cred?.settings?.public_key || cred?.api_key || '';
+  console.log('[NMI DEBUG] tokenizationKey:', tokenizationKey);
   log('Using tokenization key', tokenizationKey ? 'resolved' : 'missing');
   return tokenizationKey;
 }
