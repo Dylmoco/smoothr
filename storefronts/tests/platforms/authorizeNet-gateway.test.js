@@ -53,7 +53,14 @@ beforeEach(async () => {
     borderWidth: '1px',
     borderStyle: 'solid',
     padding: '5px',
-    borderRadius: '3px'
+    borderRadius: '3px',
+    width: '100px',
+    height: '20px',
+    lineHeight: '24px',
+    letterSpacing: '1px',
+    textAlign: 'left',
+    fontWeight: '400',
+    fontStyle: 'normal'
   };
   computedStyle = {
     input: { ...style },
