@@ -88,6 +88,44 @@ describe('authorizeNet mountCardFields', () => {
     expect(config.paymentFields.expiry.style).toEqual(computedStyle);
     expect(config.paymentFields.cvv.style).toEqual(computedStyle);
   });
+
+  it('applies iframe styles using getComputedStyle after mount', async () => {
+    vi.useFakeTimers();
+    await mountCardFields();
+
+    const width = '80px';
+    const height = '40px';
+    const boxSizing = 'border-box';
+    window.getComputedStyle = vi.fn(() => {
+      const style = { width, height, boxSizing };
+      Object.defineProperty(style, 'getPropertyValue', {
+        value: prop => style[prop],
+        enumerable: false
+      });
+      Object.defineProperty(style, Symbol.iterator, {
+        enumerable: false,
+        value: function* () {
+          for (const key of Object.keys(style)) yield key;
+        }
+      });
+      return style;
+    });
+
+    ['cardNumber', 'expiry', 'cvv'].forEach(name => {
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('data-accept-id', '');
+      iframe.name = name;
+      document.body.appendChild(iframe);
+    });
+
+    await vi.advanceTimersByTimeAsync(100);
+    vi.useRealTimers();
+
+    const frame = document.querySelector('iframe[data-accept-id][name=cardNumber]');
+    expect(frame.style.width).toBe(width);
+    expect(frame.style.height).toBe(height);
+    expect(frame.style.boxSizing).toBe(boxSizing);
+  });
 });
 
 describe('authorizeNet createPaymentMethod', () => {
