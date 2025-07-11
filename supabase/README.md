@@ -113,3 +113,15 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS cart_meta_hash text;
 This statement is saved in
 `supabase/migrations/20250708000000_add-cart-meta-hash.sql` so it can be applied
 with the Supabase CLI or any PostgreSQL client.
+
+The following migration creates a `store_order_counters` table and a helper
+function `increment_store_order_number(store_id UUID)` used to generate
+sequential order numbers per store. Call it with a store ID and it returns the
+next number:
+
+```sql
+SELECT increment_store_order_number('00000000-0000-0000-0000-000000000000');
+```
+
+Both the table and function are defined in
+`supabase/migrations/20250709000000_add-store-order-counters.sql`.
