@@ -1,27 +1,18 @@
-import { getStoreIntegration } from '../getStoreIntegration';
-
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout NMI]', ...args);
 const err = (...args: any[]) => debug && console.error('[Checkout NMI]', ...args);
 
 interface NmiPayload {
-  amount: number;
   payment_token: string;
-  cvv?: string;
-  store_id: string;
+  amount: number;
 }
 
 export default async function handleNmi(payload: NmiPayload) {
-  const integration = await getStoreIntegration(payload.store_id, 'nmi');
-  const securityKey =
-    integration?.settings?.security_key ||
-    integration?.api_key ||
-    process.env.NMI_SECURITY_KEY ||
-    '';
+  const securityKey = process.env.NMI_SECURITY_KEY || '';
 
   if (!securityKey.trim()) {
-    console.warn('[Checkout NMI] Missing security key for store', payload.store_id);
-    return { success: false, error: 'Missing credentials' };
+    console.warn('[Checkout NMI] Missing security key');
+    return { success: false };
   }
 
   const params = new URLSearchParams({
@@ -30,7 +21,6 @@ export default async function handleNmi(payload: NmiPayload) {
     amount: (payload.amount / 100).toFixed(2),
     payment_token: payload.payment_token
   });
-  if (payload.cvv) params.append('cvv', payload.cvv);
 
   try {
     const res = await fetch(
@@ -47,13 +37,9 @@ export default async function handleNmi(payload: NmiPayload) {
       text.split('&').map(part => part.split('=') as [string, string])
     );
     if (data.response === '1') return { success: true, data };
-    return {
-      success: false,
-      error: decodeURIComponent(data.responsetext || ''),
-      data
-    };
+    return { success: false, data };
   } catch (e: any) {
     err('NMI error:', e?.message || e);
-    return { success: false, error: e?.message || String(e) };
+    return { success: false };
   }
 }
