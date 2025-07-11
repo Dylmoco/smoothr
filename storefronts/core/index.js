@@ -59,6 +59,17 @@ let setSelectedCurrency = setDomCurrency;
 
 if (typeof window !== 'undefined') {
   const cfg = window.SMOOTHR_CONFIG || {};
+  if (
+    typeof document !== 'undefined' &&
+    typeof document.createElement === 'function' &&
+    !document.querySelector('#smoothr-card-styles')
+  ) {
+    const style = document.createElement('style');
+    style.id = 'smoothr-card-styles';
+    style.textContent =
+      '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}';
+    document.head.appendChild(style);
+  }
   if (cfg.baseCurrency) {
     currency.setBaseCurrency(cfg.baseCurrency);
   }

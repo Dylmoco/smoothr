@@ -13,6 +13,18 @@ const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
+if (
+  typeof document !== 'undefined' &&
+  typeof document.createElement === 'function' &&
+  !document.querySelector('#smoothr-card-styles')
+) {
+  const style = document.createElement('style');
+  style.id = 'smoothr-card-styles';
+  style.textContent =
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}';
+  document.head.appendChild(style);
+}
+
 export async function waitForVisible(el, timeout = 1000) {
   if (!el || typeof el.getBoundingClientRect !== 'function') return;
   log('Waiting for element to be visible', el);
