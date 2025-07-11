@@ -150,6 +150,22 @@ setting on the client by defining the following snippet before loading the SDK:
 </script>
 ```
 
+A Network Merchants (NMI) integration is also supported. Create a new record in
+`store_integrations` with `provider` set to `nmi` and place your credentials in
+the `settings` JSON column:
+
+```json
+{
+  "api_key": "<API_KEY>",
+  "tokenization_key": "<TOKENIZATION_KEY>"
+}
+```
+
+Enable the gateway via `store_settings.settings.active_payment_gateway` or set
+`window.SMOOTHR_CONFIG.active_payment_gateway = 'nmi'` on the client. Include
+NMI's Collect.js library on checkout pages and call `mountNMIFields()` to mount
+the credit card fields before submitting the cart.
+
 A Webflow‑specific adapter lives at `./platforms/webflow/checkout.js`. It merely
 sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
 `checkout/checkout.js` module. Embed it with:
