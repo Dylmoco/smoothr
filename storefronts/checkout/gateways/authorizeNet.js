@@ -10,6 +10,7 @@ let scriptPromise;
 let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
+let iframeStylesApplied = false;
 
 let debugInitialized = false;
 
@@ -58,6 +59,36 @@ function checkAcceptFieldPresence() {
     '[data-smoothr-card-cvc] input[data-accept-name="cvv"]'
   );
   return !!num && !!exp && !!cvc;
+}
+
+function applyAcceptIframeStyles() {
+  if (iframeStylesApplied || typeof document === 'undefined') return;
+  let attempts = 0;
+  const interval = setInterval(() => {
+    const frames = [
+      ['[data-smoothr-card-number] input', 'iframe[data-accept-id][name=cardNumber]'],
+      ['[data-smoothr-card-expiry] input', 'iframe[data-accept-id][name=expiry]'],
+      ['[data-smoothr-card-cvc] input', 'iframe[data-accept-id][name=cvv]']
+    ];
+    let styled = 0;
+    frames.forEach(([inputSel, frameSel]) => {
+      const input = document.querySelector(inputSel);
+      const frame = document.querySelector(frameSel);
+      if (input && frame && !frame.dataset.smoothrStyled) {
+        const cs = window.getComputedStyle(input);
+        for (const prop of cs) {
+          frame.style[prop] = cs.getPropertyValue(prop);
+        }
+        frame.dataset.smoothrStyled = 'true';
+        console.log(`[Smoothr AuthorizeNet] Applied inline styles to ${frameSel}`);
+      }
+      if (frame?.dataset.smoothrStyled) styled++;
+    });
+    if (styled === frames.length || ++attempts >= 20) {
+      iframeStylesApplied = styled === frames.length;
+      clearInterval(interval);
+    }
+  }, 100);
 }
 
 
@@ -237,6 +268,7 @@ export async function mountCardFields() {
     }
 
     fieldsMounted = true;
+    applyAcceptIframeStyles();
     updateDebug();
     log('Card fields mounted');
   })();
