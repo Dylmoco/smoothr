@@ -7830,6 +7830,26 @@ async function waitForInteractable(el, timeout = 1500) {
   }
   warn("Mount target not interactable after 1.5s");
 }
+function elementStyleFromContainer(el) {
+  if (!el || typeof window === "undefined" || typeof window.getComputedStyle !== "function")
+    return {};
+  const cs = window.getComputedStyle(el);
+  const style = {
+    base: {
+      fontSize: cs.fontSize,
+      color: cs.color,
+      fontFamily: cs.fontFamily,
+      backgroundColor: cs.backgroundColor,
+      borderColor: cs.borderColor,
+      borderWidth: cs.borderWidth,
+      borderStyle: cs.borderStyle,
+      borderRadius: cs.borderRadius,
+      padding: cs.padding
+    }
+  };
+  console.log("[Stripe] element style from container", style);
+  return style;
+}
 async function resolveStripeKey() {
   var _a3;
   if (cachedKey)
@@ -7925,7 +7945,9 @@ async function mountCardFields() {
     const existingNumber = els.getElement ? els.getElement("cardNumber") : null;
     if (numberTarget && !existingNumber) {
       await waitForInteractable(numberTarget);
-      const el = elements.create("cardNumber");
+      const numStyle = elementStyleFromContainer(numberTarget);
+      console.log("[Stripe] cardNumber style", numStyle);
+      const el = elements.create("cardNumber", { style: numStyle });
       el.mount("[data-smoothr-card-number]");
       console.log("[Stripe] Mounted iframe");
       setTimeout(() => {
@@ -7936,7 +7958,7 @@ async function mountCardFields() {
         if (iframe && width < 10) {
           console.warn("[Stripe] iframe dead \u2192 remounting now...");
           (_a3 = cardNumberElement == null ? void 0 : cardNumberElement.unmount) == null ? void 0 : _a3.call(cardNumberElement);
-          cardNumberElement = elements.create("cardNumber");
+          cardNumberElement = elements.create("cardNumber", { style: numStyle });
           cardNumberElement.mount("[data-smoothr-card-number]");
           forceStripeIframeStyle("[data-smoothr-card-number]");
         }
@@ -7947,7 +7969,9 @@ async function mountCardFields() {
     const existingExpiry = els.getElement ? els.getElement("cardExpiry") : null;
     if (expiryTarget && !existingExpiry) {
       await waitForInteractable(expiryTarget);
-      const el = elements.create("cardExpiry");
+      const expiryStyle = elementStyleFromContainer(expiryTarget);
+      console.log("[Stripe] cardExpiry style", expiryStyle);
+      const el = elements.create("cardExpiry", { style: expiryStyle });
       el.mount("[data-smoothr-card-expiry]");
       console.log("[Stripe] Mounted iframe");
       setTimeout(() => {
@@ -7958,7 +7982,7 @@ async function mountCardFields() {
         if (iframe && width < 10) {
           console.warn("[Stripe] iframe dead \u2192 remounting now...");
           (_a3 = el == null ? void 0 : el.unmount) == null ? void 0 : _a3.call(el);
-          const remount = elements.create("cardExpiry");
+          const remount = elements.create("cardExpiry", { style: expiryStyle });
           remount.mount("[data-smoothr-card-expiry]");
           forceStripeIframeStyle("[data-smoothr-card-expiry]");
         }
@@ -7968,7 +7992,9 @@ async function mountCardFields() {
     const existingCvc = els.getElement ? els.getElement("cardCvc") : null;
     if (cvcTarget && !existingCvc) {
       await waitForInteractable(cvcTarget);
-      const el = elements.create("cardCvc");
+      const cvcStyle = elementStyleFromContainer(cvcTarget);
+      console.log("[Stripe] cardCvc style", cvcStyle);
+      const el = elements.create("cardCvc", { style: cvcStyle });
       el.mount("[data-smoothr-card-cvc]");
       console.log("[Stripe] Mounted iframe");
       setTimeout(() => {
@@ -7979,7 +8005,7 @@ async function mountCardFields() {
         if (iframe && width < 10) {
           console.warn("[Stripe] iframe dead \u2192 remounting now...");
           (_a3 = el == null ? void 0 : el.unmount) == null ? void 0 : _a3.call(el);
-          const remount = elements.create("cardCvc");
+          const remount = elements.create("cardCvc", { style: cvcStyle });
           remount.mount("[data-smoothr-card-cvc]");
           forceStripeIframeStyle("[data-smoothr-card-cvc]");
         }
@@ -8043,6 +8069,12 @@ var init_stripe = __esm({
     debug = (_a = window.SMOOTHR_CONFIG) == null ? void 0 : _a.debug;
     log = (...args) => debug && console.log("[Smoothr Stripe]", ...args);
     warn = (...args) => debug && console.warn("[Smoothr Stripe]", ...args);
+    if (typeof document !== "undefined" && typeof document.createElement === "function" && !document.querySelector("#smoothr-card-styles")) {
+      const style = document.createElement("style");
+      style.id = "smoothr-card-styles";
+      style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}";
+      document.head.appendChild(style);
+    }
     stripe_default = {
       mountCardFields,
       isMounted,
@@ -8053,6 +8085,44 @@ var init_stripe = __esm({
       waitForVisible,
       waitForInteractable
     };
+  }
+});
+
+// storefronts/checkout/utils/computedInputStyle.js
+function computedInputStyle(container) {
+  if (!container || typeof window === "undefined" || typeof window.getComputedStyle !== "function") {
+    return { input: {}, "::placeholder": {} };
+  }
+  const temp = document.createElement("input");
+  temp.type = "text";
+  temp.style.position = "absolute";
+  temp.style.visibility = "hidden";
+  temp.style.pointerEvents = "none";
+  container.appendChild(temp);
+  const cStyle = window.getComputedStyle(container);
+  const iStyle = window.getComputedStyle(temp);
+  const placeholder = window.getComputedStyle(temp, "::placeholder");
+  const style = {
+    input: {
+      fontSize: cStyle.fontSize || iStyle.fontSize,
+      fontFamily: cStyle.fontFamily || iStyle.fontFamily,
+      color: cStyle.color || iStyle.color,
+      backgroundColor: cStyle.backgroundColor || iStyle.backgroundColor,
+      borderColor: cStyle.borderColor || iStyle.borderColor,
+      borderWidth: cStyle.borderWidth || iStyle.borderWidth,
+      borderStyle: cStyle.borderStyle || iStyle.borderStyle,
+      padding: cStyle.padding || iStyle.padding,
+      borderRadius: cStyle.borderRadius || iStyle.borderRadius
+    },
+    "::placeholder": {
+      color: placeholder.color
+    }
+  };
+  container.removeChild(temp);
+  return style;
+}
+var init_computedInputStyle = __esm({
+  "storefronts/checkout/utils/computedInputStyle.js"() {
   }
 });
 
@@ -8220,6 +8290,38 @@ async function mountCardFields2() {
       input.placeholder = "CVC";
       cvc.appendChild(input);
     }
+    const numStyle = computedInputStyle(num);
+    const expStyle = computedInputStyle(exp);
+    const cvcStyle = computedInputStyle(cvc);
+    console.log("[Authorize.Net] cardNumber style", numStyle);
+    console.log("[Authorize.Net] cardExpiry style", expStyle);
+    console.log("[Authorize.Net] cardCVC style", cvcStyle);
+    const config = {
+      paymentFields: {
+        cardNumber: {
+          selector: "[data-smoothr-card-number] input",
+          placeholder: "Card number",
+          style: numStyle
+        },
+        expiry: {
+          selector: "[data-smoothr-card-expiry] input",
+          placeholder: "MM/YY",
+          style: expStyle
+        },
+        cvv: {
+          selector: "[data-smoothr-card-cvc] input",
+          placeholder: "CVC",
+          style: cvcStyle
+        }
+      }
+    };
+    log2("Configuring Accept.js fields", config);
+    if (window.Accept && typeof window.Accept.configure === "function") {
+      window.Accept.configure(config);
+      console.log("[Authorize.Net] Accept.configure called with", config);
+    } else {
+      warn2("Accept.configure not available");
+    }
     authorizeNetReady = true;
     updateDebug();
     log2("Secure card fields injected");
@@ -8363,6 +8465,7 @@ var fieldsMounted2, mountPromise2, clientKey, apiLoginID, transactionKey, script
 var init_authorizeNet = __esm({
   "storefronts/checkout/gateways/authorizeNet.js"() {
     init_getPublicCredential();
+    init_computedInputStyle();
     fieldsMounted2 = false;
     authorizeNetReady = false;
     acceptReady = false;
@@ -8549,6 +8652,12 @@ async function waitForElement(selector, timeout = 5e3) {
     return;
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
 })();
+if (typeof document !== "undefined" && typeof document.createElement === "function" && !document.querySelector("#smoothr-card-styles")) {
+  const style = document.createElement("style");
+  style.id = "smoothr-card-styles";
+  style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}";
+  document.head.appendChild(style);
+}
 var gatewayLoaders = {
   stripe: () => Promise.resolve().then(() => (init_stripe(), stripe_exports)),
   authorizeNet: () => Promise.resolve().then(() => (init_authorizeNet(), authorizeNet_exports)),
