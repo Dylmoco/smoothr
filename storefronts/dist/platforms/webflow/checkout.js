@@ -8072,7 +8072,7 @@ var init_stripe = __esm({
     if (typeof document !== "undefined" && typeof document.createElement === "function" && !document.querySelector("#smoothr-card-styles")) {
       const style = document.createElement("style");
       style.id = "smoothr-card-styles";
-      style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{width:100%;min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{width:100%!important;min-height:48px!important;display:block!important;}";
+      style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{min-height:48px!important;display:block!important;}";
       document.head.appendChild(style);
     }
     stripe_default = {
@@ -8112,7 +8112,14 @@ function computedInputStyle(container) {
       borderWidth: cStyle.borderWidth || iStyle.borderWidth,
       borderStyle: cStyle.borderStyle || iStyle.borderStyle,
       padding: cStyle.padding || iStyle.padding,
-      borderRadius: cStyle.borderRadius || iStyle.borderRadius
+      borderRadius: cStyle.borderRadius || iStyle.borderRadius,
+      width: cStyle.width || iStyle.width,
+      height: cStyle.height || iStyle.height,
+      lineHeight: cStyle.lineHeight || iStyle.lineHeight,
+      letterSpacing: cStyle.letterSpacing || iStyle.letterSpacing,
+      textAlign: cStyle.textAlign || iStyle.textAlign,
+      fontWeight: cStyle.fontWeight || iStyle.fontWeight,
+      fontStyle: cStyle.fontStyle || iStyle.fontStyle
     },
     "::placeholder": {
       color: placeholder.color
@@ -8293,6 +8300,15 @@ async function mountCardFields2() {
     const numStyle = computedInputStyle(num);
     const expStyle = computedInputStyle(exp);
     const cvcStyle = computedInputStyle(cvc);
+    const numInput = num.querySelector("input");
+    const expInput = exp.querySelector("input");
+    const cvcInput = cvc.querySelector("input");
+    if (numInput)
+      Object.assign(numInput.style, numStyle.input);
+    if (expInput)
+      Object.assign(expInput.style, expStyle.input);
+    if (cvcInput)
+      Object.assign(cvcInput.style, cvcStyle.input);
     console.log("[Authorize.Net] cardNumber style", numStyle);
     console.log("[Authorize.Net] cardExpiry style", expStyle);
     console.log("[Authorize.Net] cardCVC style", cvcStyle);
@@ -8655,7 +8671,7 @@ async function waitForElement(selector, timeout = 5e3) {
 if (typeof document !== "undefined" && typeof document.createElement === "function" && !document.querySelector("#smoothr-card-styles")) {
   const style = document.createElement("style");
   style.id = "smoothr-card-styles";
-  style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{width:100%;min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{width:100%!important;min-height:48px!important;display:block!important;}";
+  style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{min-height:48px!important;display:block!important;}";
   document.head.appendChild(style);
 }
 var gatewayLoaders = {
