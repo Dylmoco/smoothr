@@ -144,6 +144,25 @@ The `/api/checkout/[provider]` route imports `shared/init` so a global
 implementation reads the store prefix and order sequence from Supabase. You can
 override this global to customize how order numbers are produced.
 
+### NMI Integration
+
+To enable NMI create a row in the `store_integrations` table with `provider`
+set to `nmi` and store both the API key and tokenization key under the
+`settings` column:
+
+```json
+{
+  "api_key": "<API_KEY>",
+  "tokenization_key": "<TOKENIZATION_KEY>"
+}
+```
+
+Activate the gateway by setting
+`store_settings.settings.active_payment_gateway` to `nmi` (or override it on the
+client via `window.SMOOTHR_CONFIG.active_payment_gateway`). Include NMI's
+`Collect.js` script on pages displaying the checkout form and call
+`mountNMIFields()` to mount the card fields before submitting the cart.
+
 
 ### Deployment Log
 
