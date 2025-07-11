@@ -100,6 +100,11 @@ export async function mountNMIFields() {
     }
 
     const key = await resolveTokenizationKey();
+
+    if (num) num.setAttribute('data-tokenization-key', key);
+    if (exp) exp.setAttribute('data-tokenization-key', key);
+    if (cvc) cvc.setAttribute('data-tokenization-key', key);
+
     await loadCollectJs(key);
 
     if (num && !num.getAttribute('data-collect'))
