@@ -320,7 +320,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     const orderNumber = payload.order_number!;
     const { data: existingOrder, error: lookupError } = await supabase
       .from('orders')
-      .select('id, raw_data')
+      .select('id, raw_data, platform')
       .eq('store_id', store_id)
       .eq('order_number', orderNumber)
       .maybeSingle();
