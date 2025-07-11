@@ -14,6 +14,7 @@ export interface CreateOrderPayload {
   shipping?: any;
   billing?: any;
   store_id: string;
+  order_number?: string;
 }
 
 export async function createOrder(payload: CreateOrderPayload) {
@@ -28,6 +29,7 @@ export async function createOrder(payload: CreateOrderPayload) {
     shipping,
     billing,
     store_id,
+    order_number,
   } = payload;
 
   if (!store_id) {
@@ -36,12 +38,14 @@ export async function createOrder(payload: CreateOrderPayload) {
 
   const items = Array.isArray(cart) ? cart : [];
 
-  let orderNumber: string;
-  try {
-    if (!generateOrderNumber) throw new Error('generateOrderNumber not defined');
-    orderNumber = await generateOrderNumber(store_id);
-  } catch (err: any) {
-    throw new Error('Failed to generate order number');
+  let orderNumber: string | undefined = order_number;
+  if (!orderNumber) {
+    try {
+      if (!generateOrderNumber) throw new Error('generateOrderNumber not defined');
+      orderNumber = await generateOrderNumber(store_id);
+    } catch (err: any) {
+      throw new Error('Failed to generate order number');
+    }
   }
 
   const { data, error } = await supabase
