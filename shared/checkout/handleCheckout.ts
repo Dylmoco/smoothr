@@ -365,7 +365,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       }
       updated = data;
     } catch (e: any) {
-      err('Supabase update threw:', e?.message || e);
+      err('Supabase update threw:', e);
+      err('Update payload:', updatePayload);
       return res.status(500).json({ error: 'Order update failed' });
     }
 
