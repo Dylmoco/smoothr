@@ -1,4 +1,4 @@
-const securityKey = process.env.NMI_SECURITY_KEY || '';
+import { getStoreIntegration } from '../getStoreIntegration';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout NMI]', ...args);
@@ -9,9 +9,22 @@ interface NmiPayload {
   ccnumber: string;
   ccexp: string;
   cvv?: string;
+  store_id: string;
 }
 
 export default async function handleNmi(payload: NmiPayload) {
+  const integration = await getStoreIntegration(payload.store_id, 'nmi');
+  const securityKey =
+    integration?.settings?.security_key ||
+    integration?.api_key ||
+    process.env.NMI_SECURITY_KEY ||
+    '';
+
+  if (!securityKey.trim()) {
+    console.warn('[Checkout NMI] Missing security key for store', payload.store_id);
+    return { success: false, error: 'Missing credentials' };
+  }
+
   const params = new URLSearchParams({
     security_key: securityKey,
     type: 'sale',
