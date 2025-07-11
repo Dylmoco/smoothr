@@ -30,7 +30,8 @@ export default function computedInputStyle(container) {
       letterSpacing: cStyle.letterSpacing || iStyle.letterSpacing,
       textAlign: cStyle.textAlign || iStyle.textAlign,
       fontWeight: cStyle.fontWeight || iStyle.fontWeight,
-      fontStyle: cStyle.fontStyle || iStyle.fontStyle
+      fontStyle: cStyle.fontStyle || iStyle.fontStyle,
+      boxSizing: cStyle.boxSizing || iStyle.boxSizing
     },
     '::placeholder': {
       color: placeholder.color
