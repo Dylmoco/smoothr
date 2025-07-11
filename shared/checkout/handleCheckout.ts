@@ -113,10 +113,10 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
-  console.log('Incoming checkout payload:', JSON.stringify(payload, null, 2));
+  log('Incoming checkout payload:', JSON.stringify(payload, null, 2));
 
   if (debug) {
-    console.log('[debug] Raw payment_method:', payload.payment_method);
+    log('[debug] Raw payment_method:', payload.payment_method);
   }
 
   const {
@@ -142,7 +142,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return;
   }
 
-  console.log('[debug] Raw payment_method:', payment_method);
+  log('[debug] Raw payment_method:', payment_method);
 
   if (!Array.isArray(cart) || cart.length === 0) {
     warn('Empty cart');
@@ -203,21 +203,21 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return res.status(400).json({ error: 'order_number is required' });
   }
 
-  console.log('[debug] Passed payment_method checks');
+  log('[debug] Passed payment_method checks');
 
   let cart_meta_hash;
   if (provider !== 'authorizeNet') {
     try {
       cart_meta_hash = hashCartMeta(email, total, cart);
       if (!cart_meta_hash) {
-        console.warn('[warn] cart_meta_hash is missing — using fallback');
+        warn('cart_meta_hash is missing — using fallback');
         cart_meta_hash = crypto
           .createHash('sha256')
           .update(JSON.stringify(cart))
           .digest('hex');
       }
     } catch (err) {
-      console.error('[error] Failed to compute cart_meta_hash:', err);
+      err('[error] Failed to compute cart_meta_hash:', err);
       return res.status(500).json({ error: 'cart_meta_hash failed' });
     }
 
@@ -413,15 +413,12 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   try {
     orderNumber = await generateOrderNumber?.(store_id);
   } catch (err) {
-    console.error(
-      '[generateOrderNumber] Failed to generate order number:',
-      err,
-    );
+    err('[generateOrderNumber] Failed to generate order number:', err);
   }
   orderNumber =
     orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
 
-  console.log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
+  log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
 
   let orderPayload;
   try {
@@ -448,11 +445,11 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       payment_intent_id: paymentIntentId
     };
   } catch (err) {
-    console.error('[error] Failed to build orderPayload:', err);
+    err('[error] Failed to build orderPayload:', err);
     return res.status(500).json({ error: 'Failed to build orderPayload' });
   }
 
-  console.log('[debug] Final orderPayload:', orderPayload);
+  log('[debug] Final orderPayload:', orderPayload);
 
   let orderData;
   try {
@@ -462,16 +459,16 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       .select('id')
       .single();
     if (error) {
-      console.error('[error] Supabase upsert failed:', error);
+      err('[error] Supabase upsert failed:', error);
       return res.status(500).json({ error: 'Order insert failed' });
     }
     orderData = data;
   } catch (e) {
-    console.error('[error] Supabase upsert threw:', e);
+    err('[error] Supabase upsert threw:', e);
     return res.status(500).json({ error: 'Order insert failed' });
   }
 
-  console.log('createOrder result:', JSON.stringify({ data: orderData }, null, 2));
+  log('createOrder result:', JSON.stringify({ data: orderData }, null, 2));
 
   if (orderData) {
     const itemRows = cart.map((item: any) => ({
@@ -504,7 +501,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     payment_intent_id: paymentIntentId
   });
   } catch (err: any) {
-    console.error(err);
+    err(err);
     return res.status(400).json({ error: err.message });
   }
 }
