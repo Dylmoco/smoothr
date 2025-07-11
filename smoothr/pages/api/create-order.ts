@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import 'shared/init';
-import supabase from 'shared/supabase/serverClient';
-
-const generateOrderNumber =
-  (globalThis as any).generateOrderNumber as (storeId: string) => Promise<string>;
+import { createOrder } from 'shared/checkout/createOrder';
 
 export default async function handler(
   req: NextApiRequest,
@@ -24,59 +21,11 @@ export default async function handler(
     return;
   }
 
-  const {
-    email,
-    name,
-    cart,
-    total_price,
-    currency,
-    gateway,
-    platform,
-    shipping,
-    billing,
-    store_id,
-  } = req.body as Record<string, any>;
-
-  let items: any[] = Array.isArray(cart) ? cart : [];
-  if (!Array.isArray(cart)) {
-    console.warn('[create-order] cart missing or invalid. Defaulting to empty array');
-  }
-
-  if (!store_id) {
-    res.status(400).json({ error: 'store_id is required' });
-    return;
-  }
-
-  let orderNumber: string;
   try {
-    orderNumber = await generateOrderNumber(store_id);
+    const data = await createOrder(req.body as any);
+    res.status(200).json(data);
   } catch (err: any) {
-    console.error('[create-order] generateOrderNumber failed:', err);
-    res.status(500).json({ error: 'Failed to generate order number' });
-    return;
+    console.error('[create-order] failed:', err);
+    res.status(500).json({ error: err.message });
   }
-
-  const { data, error } = await supabase
-    .from('orders')
-    .insert({
-      order_number: orderNumber,
-      status: 'unpaid',
-      payment_provider: gateway,
-      total_price,
-      store_id,
-      platform: platform || null,
-      customer_email: email,
-      items,
-      raw_data: { email, name, cart, total_price, currency, gateway, platform, shipping, billing },
-    })
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('[create-order] insert failed:', error);
-    res.status(500).json({ error: error.message });
-    return;
-  }
-
-  res.status(200).json(data);
 }
