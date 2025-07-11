@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 vi.mock('../../../supabase/supabaseClient.js', () => {
   const maybeSingle = vi.fn(async () => ({
@@ -14,6 +14,8 @@ vi.mock('../../../supabase/supabaseClient.js', () => {
 
 let createPaymentMethod;
 let mountCardFields;
+let computedStyle;
+let originalGetComputedStyle;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -40,14 +42,54 @@ beforeEach(async () => {
   createPaymentMethod = mod.createPaymentMethod;
   mountCardFields = mod.mountCardFields;
 
-  await mountCardFields();
+  window.Accept = { configure: vi.fn(), dispatchData: vi.fn() };
 
-  document.querySelector('[data-smoothr-card-number] input').value = '41111111111111111';
-  document.querySelector('[data-smoothr-card-expiry] input').value = '12/29';
-  document.querySelector('[data-smoothr-card-cvc] input').value = '123';
+  const style = {
+    fontSize: '16px',
+    fontFamily: 'Arial',
+    color: '#000000',
+    backgroundColor: '#ffffff',
+    borderColor: '#cccccc',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    padding: '5px',
+    borderRadius: '3px'
+  };
+  computedStyle = {
+    input: { ...style },
+    '::placeholder': { color: '#888888' }
+  };
+  originalGetComputedStyle = window.getComputedStyle;
+  window.getComputedStyle = vi.fn((el, pseudo) => {
+    if (pseudo === '::placeholder') return { color: '#888888' };
+    return style;
+  });
+});
+
+afterEach(() => {
+  window.getComputedStyle = originalGetComputedStyle;
+  delete window.Accept;
+});
+
+describe('authorizeNet mountCardFields', () => {
+  it('configures Accept.js with computed styles', async () => {
+    await mountCardFields();
+    expect(window.Accept.configure).toHaveBeenCalled();
+    const config = window.Accept.configure.mock.calls[0][0];
+    expect(config.paymentFields.cardNumber.style).toEqual(computedStyle);
+    expect(config.paymentFields.expiry.style).toEqual(computedStyle);
+    expect(config.paymentFields.cvv.style).toEqual(computedStyle);
+  });
 });
 
 describe('authorizeNet createPaymentMethod', () => {
+  beforeEach(async () => {
+    await mountCardFields();
+    document.querySelector('[data-smoothr-card-number] input').value = '4111111111111111';
+    document.querySelector('[data-smoothr-card-expiry] input').value = '12/29';
+    document.querySelector('[data-smoothr-card-cvc] input').value = '123';
+  });
+
   it('returns opaqueData on successful dispatch', async () => {
     const dataDescriptor = 'desc';
     const dataValue = 'val';
