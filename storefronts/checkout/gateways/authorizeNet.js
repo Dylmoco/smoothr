@@ -59,6 +59,27 @@ function checkAcceptFieldPresence() {
   return !!num && !!exp && !!cvc;
 }
 
+function elementStyleFromContainer(el) {
+  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function')
+    return {};
+  const cs = window.getComputedStyle(el);
+  const style = {
+    base: {
+      fontSize: cs.fontSize,
+      color: cs.color,
+      fontFamily: cs.fontFamily,
+      backgroundColor: cs.backgroundColor,
+      borderColor: cs.borderColor,
+      borderWidth: cs.borderWidth,
+      borderStyle: cs.borderStyle,
+      borderRadius: cs.borderRadius,
+      padding: cs.padding
+    }
+  };
+  console.log('[Authorize.Net] element style from container', style);
+  return style;
+}
+
 function getAcceptCredentials() {
   return {
     clientKey,
@@ -174,6 +195,37 @@ export async function mountCardFields() {
       input.autocomplete = 'cc-csc';
       input.placeholder = 'CVC';
       cvc.appendChild(input);
+    }
+
+    const numStyle = elementStyleFromContainer(num);
+    const expStyle = elementStyleFromContainer(exp);
+    const cvcStyle = elementStyleFromContainer(cvc);
+
+    const config = {
+      paymentFields: {
+        cardNumber: {
+          selector: '[data-smoothr-card-number] input',
+          placeholder: 'Card number',
+          style: numStyle.base
+        },
+        expiry: {
+          selector: '[data-smoothr-card-expiry] input',
+          placeholder: 'MM/YY',
+          style: expStyle.base
+        },
+        cvv: {
+          selector: '[data-smoothr-card-cvc] input',
+          placeholder: 'CVC',
+          style: cvcStyle.base
+        }
+      }
+    };
+
+    log('Configuring Accept.js fields', config);
+    if (window.Accept && typeof window.Accept.configure === 'function') {
+      window.Accept.configure(config);
+    } else {
+      warn('Accept.configure not available');
     }
 
     authorizeNetReady = true;
