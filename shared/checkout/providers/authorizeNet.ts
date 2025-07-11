@@ -66,8 +66,8 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     try {
       creds = await getStoreIntegration(payload.store_id, 'authorizeNet');
       log('🧩 Raw store_integrations:', creds);
-    } catch (err) {
-      err('❌ getStoreIntegration() threw:', err);
+    } catch (e) {
+      err('❌ getStoreIntegration() threw:', e);
       return {
         success: false,
         error: 'Failed to load store credentials',
@@ -204,14 +204,14 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
         });
         text = await res.text();
         log('✅ Gateway response received');
-      } catch (err) {
-        err('💥 Caught fetch error:', err);
-        return {
-          success: false,
-          error: 'Network error while contacting Authorize.Net',
-          raw: (err as any).message,
-        };
-      }
+    } catch (e) {
+      err('💥 Caught fetch error:', e);
+      return {
+        success: false,
+        error: 'Network error while contacting Authorize.Net',
+        raw: (e as any).message,
+      };
+    }
 
       if (!res.ok) {
         err('❌ HTTP error:', res.status, res.statusText);

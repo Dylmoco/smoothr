@@ -6,8 +6,7 @@ const err = (...args: any[]) => debug && console.error('[Checkout NMI]', ...args
 
 interface NmiPayload {
   amount: number;
-  ccnumber: string;
-  ccexp: string;
+  payment_token: string;
   cvv?: string;
   store_id: string;
 }
@@ -29,8 +28,7 @@ export default async function handleNmi(payload: NmiPayload) {
     security_key: securityKey,
     type: 'sale',
     amount: (payload.amount / 100).toFixed(2),
-    ccnumber: payload.ccnumber,
-    ccexp: payload.ccexp
+    payment_token: payload.payment_token
   });
   if (payload.cvv) params.append('cvv', payload.cvv);
 
@@ -48,8 +46,12 @@ export default async function handleNmi(payload: NmiPayload) {
     const data = Object.fromEntries(
       text.split('&').map(part => part.split('=') as [string, string])
     );
-    if (data.response === '1') return { success: true };
-    return { success: false, error: decodeURIComponent(data.responsetext || '') };
+    if (data.response === '1') return { success: true, data };
+    return {
+      success: false,
+      error: decodeURIComponent(data.responsetext || ''),
+      data
+    };
   } catch (e: any) {
     err('NMI error:', e?.message || e);
     return { success: false, error: e?.message || String(e) };
