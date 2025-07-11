@@ -17,14 +17,13 @@ async function loadModule() {
 
 const basePayload = {
   amount: 100,
-  ccnumber: '4111111111111111',
-  ccexp: '1225',
+  payment_token: 'tok_test',
   store_id: 'store-1'
 };
 
 beforeEach(async () => {
   vi.resetModules();
-  fetchMock = vi.fn(async () => ({ text: async () => 'response=1' }));
+  fetchMock = vi.fn(async () => ({ text: async () => 'response=1&transactionid=tx1' }));
   global.fetch = fetchMock as any;
   await loadModule();
 });
@@ -37,7 +36,7 @@ afterEach(() => {
 describe('handleNmi', () => {
   it('returns success on response 1', async () => {
     const res = await handleNmi(basePayload);
-    expect(res).toEqual({ success: true });
+    expect(res).toEqual({ success: true, data: { response: '1', transactionid: 'tx1' } });
     expect(integrationMock).toHaveBeenCalledWith('store-1', 'nmi');
   });
 

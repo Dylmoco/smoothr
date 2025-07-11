@@ -11,6 +11,7 @@ import segpayProvider from './providers/segpay';
 interface CheckoutPayload {
   order_number?: string;
   payment_method: any;
+  payment_token?: string;
   email: string;
   first_name: string;
   last_name: string;
@@ -123,6 +124,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const {
     payment_method,
+    payment_token,
     email,
     first_name,
     last_name,
@@ -138,7 +140,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     description
   } = payload;
 
-  if (!payment_method || !email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
+  if (!email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
     warn('Missing required fields');
     res.status(400).json({ error: 'Missing required fields' });
     return;
@@ -205,6 +207,11 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     return res.status(400).json({ error: 'order_number is required' });
   }
 
+  if (provider === 'nmi' && !payment_token) {
+    warn('Missing payment_token for NMI checkout');
+    return res.status(400).json({ error: 'payment_token is required' });
+  }
+
   log('[debug] Passed payment_method checks');
 
   let cart_meta_hash;
@@ -256,6 +263,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const providerPayloadSummary = {
     payment_method,
+    payment_token,
     total,
     currency,
     store_id,
@@ -267,6 +275,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   try {
     providerResult = await providerHandler({
       payment_method,
+      payment_token,
       email,
       first_name,
       last_name,
@@ -302,6 +311,10 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   if (provider === 'authorizeNet') {
     const transId = providerResult?.data?.transactionResponse?.transId;
+    transactionId = transId || null;
+    paymentIntentId = transId || null;
+  } else if (provider === 'nmi') {
+    const transId = providerResult?.data?.transactionid;
     transactionId = transId || null;
     paymentIntentId = transId || null;
   } else {
@@ -427,8 +440,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
   let orderNumber: string | undefined;
   try {
     orderNumber = await generateOrderNumber?.(store_id);
-  } catch (err) {
-    err('[generateOrderNumber] Failed to generate order number:', err);
+  } catch (e) {
+    err('[generateOrderNumber] Failed to generate order number:', e);
   }
   orderNumber =
     orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
@@ -446,6 +459,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     orderPayload = {
       order_number: orderNumber,
       status: paymentConfirmed ? 'paid' : 'unpaid',
+      ...(paymentConfirmed ? { paid_at: new Date().toISOString() } : {}),
       payment_provider: provider,
       raw_data:
         provider === 'authorizeNet'
@@ -515,8 +529,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     order_number: orderNumber,
     payment_intent_id: paymentIntentId
   });
-  } catch (err: any) {
-    err(err);
-    return res.status(400).json({ error: err.message });
+  } catch (e: any) {
+    err(e);
+    return res.status(400).json({ error: e.message });
   }
 }
