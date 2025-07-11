@@ -100,9 +100,9 @@ function getAcceptCredentials() {
   };
 }
 
-const debug = window.SMOOTHR_CONFIG?.debug;
-const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
-const warn = (...args) => debug && console.warn('[Smoothr AuthorizeNet]', ...args);
+const DEBUG = true; // temporary
+const log = (...a) => DEBUG && console.log('[AuthorizeNet]', ...a);
+const warn = (...a) => DEBUG && console.warn('[AuthorizeNet]', ...a);
 
 
 function loadAcceptJs() {

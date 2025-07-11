@@ -20,5 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(405).end();
     return;
   }
-  await handleCheckout({ req, res });
+  try {
+    console.log('[API] invoking handleCheckout...');
+    await handleCheckout({ req, res });
+  } catch (err) {
+    console.error('[API] ❌ Crash inside handleCheckout', err);
+    res.status(500).json({ error: 'Internal server error (provider)' });
+  }
 }

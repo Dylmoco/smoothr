@@ -66,6 +66,8 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
 }
 
 export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: NextApiResponse; }) {
+  console.log('[handleCheckout] Invoked');
+  console.log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
   try {
 
   const origin = req.headers.origin as string | undefined;
@@ -350,6 +352,8 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       }
     };
 
+    console.log('[handleCheckout] updatePayload:', updatePayload);
+
     let updated;
     try {
       const { data, error } = await supabase
@@ -367,6 +371,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     } catch (e: any) {
       err('Supabase update threw:', e);
       err('Update payload:', updatePayload);
+      console.error(e);
       return res.status(500).json({ error: 'Order update failed' });
     }
 
