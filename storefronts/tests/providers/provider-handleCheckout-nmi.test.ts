@@ -86,6 +86,8 @@ describe('handleCheckout nmi', () => {
 
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
     expect(orderPayload.payment_intent_id).toBe('t123');
+    expect(orderPayload.raw_data.transaction_id).toBe('t123');
+    expect(orderPayload.raw_data.transactionResponse).toEqual({ transactionid: 't123' });
     expect(orderPayload.status).toBe('paid');
     expect(typeof orderPayload.paid_at).toBe('string');
   });

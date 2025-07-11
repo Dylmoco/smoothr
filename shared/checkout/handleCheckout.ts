@@ -464,7 +464,13 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       raw_data:
         provider === 'authorizeNet'
           ? { ...req.body, transaction_id: transactionId }
-          : req.body,
+          : provider === 'nmi' && providerResult?.success
+            ? {
+                ...req.body,
+                transaction_id: transactionId,
+                transactionResponse: providerResult.data
+              }
+            : req.body,
       cart_meta_hash,
       total_price: total,
       store_id,
