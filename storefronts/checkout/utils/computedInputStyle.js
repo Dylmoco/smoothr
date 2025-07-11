@@ -23,7 +23,14 @@ export default function computedInputStyle(container) {
       borderWidth: cStyle.borderWidth || iStyle.borderWidth,
       borderStyle: cStyle.borderStyle || iStyle.borderStyle,
       padding: cStyle.padding || iStyle.padding,
-      borderRadius: cStyle.borderRadius || iStyle.borderRadius
+      borderRadius: cStyle.borderRadius || iStyle.borderRadius,
+      width: cStyle.width || iStyle.width,
+      height: cStyle.height || iStyle.height,
+      lineHeight: cStyle.lineHeight || iStyle.lineHeight,
+      letterSpacing: cStyle.letterSpacing || iStyle.letterSpacing,
+      textAlign: cStyle.textAlign || iStyle.textAlign,
+      fontWeight: cStyle.fontWeight || iStyle.fontWeight,
+      fontStyle: cStyle.fontStyle || iStyle.fontStyle
     },
     '::placeholder': {
       color: placeholder.color
