@@ -11,20 +11,22 @@ interface NmiPayload {
 }
 
 export default async function handleNmi(payload: NmiPayload) {
-  let securityKey = process.env.NMI_SECURITY_KEY || '';
+  let securityKey = '';
+
+  try {
+    const creds = await getStoreIntegration(payload.store_id, 'nmi');
+    securityKey = creds?.settings?.api_key || creds?.api_key || '';
+  } catch (e) {
+    err('getStoreIntegration error:', e);
+  }
 
   if (!securityKey.trim()) {
-    try {
-      const creds = await getStoreIntegration(payload.store_id, 'nmi');
-      securityKey = creds?.settings?.api_key || creds?.api_key || '';
-    } catch (e) {
-      err('getStoreIntegration error:', e);
-    }
+    securityKey = process.env.NMI_SECURITY_KEY || '';
   }
 
   if (!securityKey.trim()) {
     console.warn('[Checkout NMI] Missing security key');
-    return { success: false };
+    return { success: false, error: 'Missing security key' };
   }
 
   const params = new URLSearchParams({
