@@ -21,7 +21,7 @@ if (
   const style = document.createElement('style');
   style.id = 'smoothr-card-styles';
   style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{min-height:48px!important;display:block!important;}';
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
   document.head.appendChild(style);
 }
 
