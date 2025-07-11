@@ -8072,7 +8072,7 @@ var init_stripe = __esm({
     if (typeof document !== "undefined" && typeof document.createElement === "function" && !document.querySelector("#smoothr-card-styles")) {
       const style = document.createElement("style");
       style.id = "smoothr-card-styles";
-      style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}";
+      style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{width:100%;min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{width:100%!important;min-height:48px!important;display:block!important;}";
       document.head.appendChild(style);
     }
     stripe_default = {
@@ -8655,7 +8655,7 @@ async function waitForElement(selector, timeout = 5e3) {
 if (typeof document !== "undefined" && typeof document.createElement === "function" && !document.querySelector("#smoothr-card-styles")) {
   const style = document.createElement("style");
   style.id = "smoothr-card-styles";
-  style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}";
+  style.textContent = "[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{width:100%;min-height:48px;display:block;position:relative;}\niframe[data-accept-id]{width:100%!important;min-height:48px!important;display:block!important;}";
   document.head.appendChild(style);
 }
 var gatewayLoaders = {
