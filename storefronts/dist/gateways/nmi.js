@@ -18,6 +18,10 @@ async function resolveTokenizationKey() {
     cred?.settings?.tokenization_key || cred?.settings?.public_key || cred?.api_key || '';
   console.log('[NMI DEBUG] tokenizationKey:', tokenizationKey);
   log('Using tokenization key', tokenizationKey ? 'resolved' : 'missing');
+  if (!tokenizationKey) {
+    console.warn('[NMI ERROR] No tokenization key found in Supabase credentials');
+    throw new Error('Missing tokenization key');
+  }
   return tokenizationKey;
 }
 
@@ -105,6 +109,13 @@ export async function mountNMIFields() {
     if (num) num.setAttribute('data-tokenization-key', key);
     if (exp) exp.setAttribute('data-tokenization-key', key);
     if (cvc) cvc.setAttribute('data-tokenization-key', key);
+
+    ['card-number', 'card-expiry', 'card-cvc'].forEach(field => {
+      const el = document.querySelector(`[data-smoothr-card-${field}]`);
+      if (el && !el.hasAttribute('data-tokenization-key')) {
+        console.warn(`[NMI AUDIT] Missing tokenization key on field: ${field}`);
+      }
+    });
 
     await loadCollectJs(key);
 
