@@ -62,9 +62,18 @@ describe('stripe element mounting', () => {
     await vi.runAllTimersAsync();
     vi.useRealTimers();
 
-    expect(elementsCreate).toHaveBeenCalledWith('cardNumber');
-    expect(elementsCreate).toHaveBeenCalledWith('cardExpiry');
-    expect(elementsCreate).toHaveBeenCalledWith('cardCvc');
+    expect(elementsCreate).toHaveBeenCalledWith(
+      'cardNumber',
+      expect.objectContaining({ style: expect.any(Object) })
+    );
+    expect(elementsCreate).toHaveBeenCalledWith(
+      'cardExpiry',
+      expect.objectContaining({ style: expect.any(Object) })
+    );
+    expect(elementsCreate).toHaveBeenCalledWith(
+      'cardCvc',
+      expect.objectContaining({ style: expect.any(Object) })
+    );
 
     expect(cardNumberEl.mount).toHaveBeenCalledWith('[data-smoothr-card-number]');
     expect(cardExpiryEl.mount).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
