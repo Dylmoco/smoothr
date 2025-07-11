@@ -24,7 +24,10 @@ const basePayload = {
 
 beforeEach(async () => {
   vi.resetModules();
-  fetchMock = vi.fn(async () => ({ text: async () => 'response=1&transactionid=tx1' }));
+  fetchMock = vi.fn(async () => ({
+    text: async () =>
+      'response=1&transactionid=tx1&responsetext=APPROVED+OK'
+  }));
   global.fetch = fetchMock as any;
   process.env.NMI_SECURITY_KEY = '';
   await loadModule();
@@ -40,7 +43,10 @@ describe('handleNmi', () => {
   it('uses store integration before env key', async () => {
     process.env.NMI_SECURITY_KEY = 'envKey';
     const res = await handleNmi(basePayload);
-    expect(res).toEqual({ success: true, data: { response: '1', transactionid: 'tx1' } });
+    expect(res.success).toBe(true);
+    expect(res.transaction_id).toBe('tx1');
+    expect(res.data).toBeInstanceOf(URLSearchParams);
+    expect(res.data.get('responsetext')).toBe('APPROVED OK');
     expect(integrationMock).toHaveBeenCalledWith('store-1', 'nmi');
     const body = fetchMock.mock.calls[0][1].body;
     const params = new URLSearchParams(body);
@@ -55,6 +61,7 @@ describe('handleNmi', () => {
     expect(params.get('security_key')).toBe('envKey');
     expect(integrationMock).toHaveBeenCalled();
     expect(res.success).toBe(true);
+    expect(res.transaction_id).toBe('tx1');
   });
 
   it('returns error when no security key found', async () => {

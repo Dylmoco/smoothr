@@ -47,11 +47,13 @@ export default async function handleNmi(payload: NmiPayload) {
     );
     const text = await res.text();
     log('NMI response:', text);
-    const data = Object.fromEntries(
-      text.split('&').map(part => part.split('=') as [string, string])
-    );
-    if (data.response === '1') return { success: true, data };
-    return { success: false, data };
+    const data = new URLSearchParams(text);
+    const success = data.get('response') === '1';
+    return {
+      success,
+      data,
+      transaction_id: data.get('transactionid') ?? null
+    };
   } catch (e: any) {
     err('NMI error:', e?.message || e);
     return { success: false };
