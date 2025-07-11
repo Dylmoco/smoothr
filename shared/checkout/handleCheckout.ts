@@ -352,6 +352,16 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       }
     };
 
+    if (provider === 'authorizeNet') {
+      const transId = providerResult?.data?.transactionResponse?.transId;
+      if (transId === '0') {
+        console.warn(
+          '[handleCheckout] \u26A0\uFE0F Received sandbox transId "0" \u2014 skipping insert'
+        );
+      }
+      updatePayload.payment_intent_id = transId && transId !== '0' ? transId : null;
+    }
+
     console.log('[handleCheckout] updatePayload:', updatePayload);
 
     let updated;
