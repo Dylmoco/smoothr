@@ -342,7 +342,12 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       paid_at: new Date().toISOString(),
       payment_intent_id: paymentIntentId,
       customer_id: customerId,
-      raw_data: { ...(existingOrder.raw_data || {}), transaction_id: transactionId }
+      platform: payload.platform || existingOrder.platform || null,
+      raw_data: {
+        ...(existingOrder.raw_data || {}),
+        transaction_id: transactionId,
+        transactionResponse: providerResult?.data?.transactionResponse
+      }
     };
 
     let updated;

@@ -34,6 +34,23 @@ if (!globalThis.generateOrderNumber) {
 
     const next = Number(store.order_sequence) + 1;
     const orderNumber = `${store.prefix}-${String(next).padStart(4, '0')}`;
+
+    try {
+      const { error: updateError } = await supabase
+        .from('stores')
+        .update({ order_sequence: next })
+        .eq('id', storeId);
+
+      if (updateError) {
+        console.error(
+          '[generateOrderNumber] Failed to update order sequence:',
+          updateError,
+        );
+      }
+    } catch (err) {
+      console.error('[generateOrderNumber] Update threw:', err);
+    }
+
     console.log('[generateOrderNumber] Generated:', orderNumber);
     return orderNumber;
   };
