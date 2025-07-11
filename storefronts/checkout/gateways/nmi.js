@@ -152,7 +152,7 @@ export async function createPaymentMethod() {
 export { mountNMIFields as mountCardFields };
 
 export default {
-  mountNMIFields,
+  mountCardFields: mountNMIFields,
   isMounted,
   ready,
   createPaymentMethod

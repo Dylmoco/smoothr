@@ -2,13 +2,25 @@ const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout NMI]', ...args);
 const err = (...args: any[]) => debug && console.error('[Checkout NMI]', ...args);
 
+import { getStoreIntegration } from '../getStoreIntegration';
+
 interface NmiPayload {
   payment_token: string;
   amount: number;
+  store_id: string;
 }
 
 export default async function handleNmi(payload: NmiPayload) {
-  const securityKey = process.env.NMI_SECURITY_KEY || '';
+  let securityKey = process.env.NMI_SECURITY_KEY || '';
+
+  if (!securityKey.trim()) {
+    try {
+      const creds = await getStoreIntegration(payload.store_id, 'nmi');
+      securityKey = creds?.settings?.api_key || creds?.api_key || '';
+    } catch (e) {
+      err('getStoreIntegration error:', e);
+    }
+  }
 
   if (!securityKey.trim()) {
     console.warn('[Checkout NMI] Missing security key');
