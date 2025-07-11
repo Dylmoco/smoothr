@@ -6526,6 +6526,12 @@ const Ko = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?bas
 let At = Uo;
 if (typeof window < "u") {
   const s = window.SMOOTHR_CONFIG || {};
+  if (typeof document < "u" && typeof document.createElement == "function" && !document.querySelector('#smoothr-card-styles')) {
+    const n = document.createElement('style');
+    n.id = 'smoothr-card-styles';
+    n.textContent = "[data-smoothr-card-number],[data-smoothr-card-expiry],[data-smoothr-card-cvc]{min-width:100%;display:block;}";
+    document.head.appendChild(n);
+  }
   s.baseCurrency && Er(s.baseCurrency), s.rates && ht(s.rates);
   const e = s.baseCurrency || $, t = s.rates ? Object.keys(s.rates) : Object.keys(V), r = s.rateSource || Ko;
   if (s.debug) {

@@ -3,6 +3,18 @@
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
 })();
 
+if (
+  typeof document !== 'undefined' &&
+  typeof document.createElement === 'function' &&
+  !document.querySelector('#smoothr-card-styles')
+) {
+  const style = document.createElement('style');
+  style.id = 'smoothr-card-styles';
+  style.textContent =
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{min-width:100%;display:block;}';
+  document.head.appendChild(style);
+}
+
 import supabase from '../../supabase/supabaseClient.js';
 import { getPublicCredential } from './getPublicCredential.js';
 import bindCardInputs from './utils/inputFormatters.js';
