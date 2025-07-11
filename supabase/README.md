@@ -125,3 +125,13 @@ SELECT increment_store_order_number('00000000-0000-0000-0000-000000000000');
 
 Both the table and function are defined in
 `supabase/migrations/20250709000000_add-store-order-counters.sql`.
+
+A migration adds a unique constraint to avoid duplicate order numbers per store:
+
+```sql
+ALTER TABLE public.orders
+ADD CONSTRAINT orders_store_id_order_number_key UNIQUE (store_id, order_number);
+```
+
+This statement is saved in
+`supabase/migrations/20250710000000_add-order-unique-store-id-order-number.sql`.
