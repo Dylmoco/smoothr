@@ -31,6 +31,7 @@ export default async function handler(
     total_price,
     currency,
     gateway,
+    platform,
     shipping,
     billing,
     store_id,
@@ -63,9 +64,10 @@ export default async function handler(
       payment_provider: gateway,
       total_price,
       store_id,
+      platform: platform || null,
       customer_email: email,
       items,
-      raw_data: { email, name, cart, total_price, currency, gateway, shipping, billing },
+      raw_data: { email, name, cart, total_price, currency, gateway, platform, shipping, billing },
     })
     .select('*')
     .single();
