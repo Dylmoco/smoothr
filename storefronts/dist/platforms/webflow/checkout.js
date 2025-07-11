@@ -7717,8 +7717,8 @@ var DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, supabase, supabaseClient_default
 var init_supabaseClient = __esm({
   "supabase/supabaseClient.js"() {
     init_module5();
-    DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
-    DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
+    DEFAULT_SUPABASE_URL = "https://test.supabase.co";
+    DEFAULT_SUPABASE_KEY = "anon";
     supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       global: {
         headers: {
@@ -8119,7 +8119,8 @@ function computedInputStyle(container) {
       letterSpacing: cStyle.letterSpacing || iStyle.letterSpacing,
       textAlign: cStyle.textAlign || iStyle.textAlign,
       fontWeight: cStyle.fontWeight || iStyle.fontWeight,
-      fontStyle: cStyle.fontStyle || iStyle.fontStyle
+      fontStyle: cStyle.fontStyle || iStyle.fontStyle,
+      boxSizing: cStyle.boxSizing || iStyle.boxSizing
     },
     "::placeholder": {
       color: placeholder.color
@@ -8185,6 +8186,37 @@ function checkAcceptFieldPresence() {
     '[data-smoothr-card-cvc] input[data-accept-name="cvv"]'
   );
   return !!num && !!exp && !!cvc;
+}
+function applyAcceptIframeStyles() {
+  if (iframeStylesApplied || typeof document === "undefined")
+    return;
+  let attempts = 0;
+  const interval = setInterval(() => {
+    const frames = [
+      ["[data-smoothr-card-number] input", "iframe[data-accept-id][name=cardNumber]"],
+      ["[data-smoothr-card-expiry] input", "iframe[data-accept-id][name=expiry]"],
+      ["[data-smoothr-card-cvc] input", "iframe[data-accept-id][name=cvv]"]
+    ];
+    let styled = 0;
+    frames.forEach(([inputSel, frameSel]) => {
+      const input = document.querySelector(inputSel);
+      const frame = document.querySelector(frameSel);
+      if (input && frame && !frame.dataset.smoothrStyled) {
+        const cs = window.getComputedStyle(input);
+        for (const prop of cs) {
+          frame.style[prop] = cs.getPropertyValue(prop);
+        }
+        frame.dataset.smoothrStyled = "true";
+        console.log(`[Smoothr AuthorizeNet] Applied inline styles to ${frameSel}`);
+      }
+      if (frame == null ? void 0 : frame.dataset.smoothrStyled)
+        styled++;
+    });
+    if (styled === frames.length || ++attempts >= 20) {
+      iframeStylesApplied = styled === frames.length;
+      clearInterval(interval);
+    }
+  }, 100);
 }
 function getAcceptCredentials() {
   return {
@@ -8351,6 +8383,7 @@ async function mountCardFields2() {
       return;
     }
     fieldsMounted2 = true;
+    applyAcceptIframeStyles();
     updateDebug();
     log2("Card fields mounted");
   })();
@@ -8477,7 +8510,7 @@ async function createPaymentMethod2() {
     }
   });
 }
-var fieldsMounted2, mountPromise2, clientKey, apiLoginID, transactionKey, scriptPromise, authorizeNetReady, acceptReady, submitting, debugInitialized, _a2, debug2, log2, warn2, authorizeNet_default;
+var fieldsMounted2, mountPromise2, clientKey, apiLoginID, transactionKey, scriptPromise, authorizeNetReady, acceptReady, submitting, iframeStylesApplied, debugInitialized, _a2, debug2, log2, warn2, authorizeNet_default;
 var init_authorizeNet = __esm({
   "storefronts/checkout/gateways/authorizeNet.js"() {
     init_getPublicCredential();
@@ -8486,6 +8519,7 @@ var init_authorizeNet = __esm({
     authorizeNetReady = false;
     acceptReady = false;
     submitting = false;
+    iframeStylesApplied = false;
     debugInitialized = false;
     debug2 = (_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.debug;
     log2 = (...args) => debug2 && console.log("[Smoothr AuthorizeNet]", ...args);

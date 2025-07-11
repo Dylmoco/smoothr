@@ -60,7 +60,8 @@ beforeEach(async () => {
     letterSpacing: '1px',
     textAlign: 'left',
     fontWeight: '400',
-    fontStyle: 'normal'
+    fontStyle: 'normal',
+    boxSizing: 'border-box'
   };
   computedStyle = {
     input: { ...style },
