@@ -492,14 +492,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     }
   }
 
-  const { error: updateError } = await supabase
-    .from('stores')
-    .update({ order_sequence: nextSequence })
-    .eq('id', store_id);
 
-  if (updateError) {
-    err('Failed to update store sequence:', updateError.message);
-  }
 
   log('Order creation result:', orderData);
 
