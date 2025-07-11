@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import 'shared/init';
+import supabase from 'shared/supabase/serverClient';
 import { createOrder } from 'shared/checkout/createOrder';
 
 export default async function handler(
@@ -22,7 +23,16 @@ export default async function handler(
   }
 
   try {
-    const data = await createOrder(req.body as any);
+    const { store_id } = req.body as any;
+    const { data: nextNumber, error } = await supabase.rpc(
+      'increment_store_order_number',
+      { store_id },
+    );
+    if (error || nextNumber == null) {
+      throw new Error(error?.message || 'Failed to generate order number');
+    }
+    const order_number = `ORD-${String(nextNumber).padStart(4, '0')}`;
+    const data = await createOrder({ ...req.body, order_number } as any);
     res.status(200).json(data);
   } catch (err: any) {
     console.error('[create-order] failed:', err);
