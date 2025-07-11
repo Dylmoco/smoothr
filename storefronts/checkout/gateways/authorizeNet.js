@@ -1,4 +1,5 @@
 import { getPublicCredential } from '../getPublicCredential.js';
+import computedInputStyle from '../utils/computedInputStyle.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -59,26 +60,6 @@ function checkAcceptFieldPresence() {
   return !!num && !!exp && !!cvc;
 }
 
-function elementStyleFromContainer(el) {
-  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function')
-    return {};
-  const cs = window.getComputedStyle(el);
-  const style = {
-    base: {
-      fontSize: cs.fontSize,
-      color: cs.color,
-      fontFamily: cs.fontFamily,
-      backgroundColor: cs.backgroundColor,
-      borderColor: cs.borderColor,
-      borderWidth: cs.borderWidth,
-      borderStyle: cs.borderStyle,
-      borderRadius: cs.borderRadius,
-      padding: cs.padding
-    }
-  };
-  console.log('[Authorize.Net] element style from container', style);
-  return style;
-}
 
 function getAcceptCredentials() {
   return {
@@ -197,26 +178,29 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
-    const numStyle = elementStyleFromContainer(num);
-    const expStyle = elementStyleFromContainer(exp);
-    const cvcStyle = elementStyleFromContainer(cvc);
+    const numStyle = computedInputStyle(num);
+    const expStyle = computedInputStyle(exp);
+    const cvcStyle = computedInputStyle(cvc);
+    console.log('[Authorize.Net] cardNumber style', numStyle);
+    console.log('[Authorize.Net] cardExpiry style', expStyle);
+    console.log('[Authorize.Net] cardCVC style', cvcStyle);
 
     const config = {
       paymentFields: {
         cardNumber: {
           selector: '[data-smoothr-card-number] input',
           placeholder: 'Card number',
-          style: numStyle.base
+          style: numStyle
         },
         expiry: {
           selector: '[data-smoothr-card-expiry] input',
           placeholder: 'MM/YY',
-          style: expStyle.base
+          style: expStyle
         },
         cvv: {
           selector: '[data-smoothr-card-cvc] input',
           placeholder: 'CVC',
-          style: cvcStyle.base
+          style: cvcStyle
         }
       }
     };
@@ -224,6 +208,7 @@ export async function mountCardFields() {
     log('Configuring Accept.js fields', config);
     if (window.Accept && typeof window.Accept.configure === 'function') {
       window.Accept.configure(config);
+      console.log('[Authorize.Net] Accept.configure called with', config);
     } else {
       warn('Accept.configure not available');
     }
