@@ -11,6 +11,7 @@ const baseUrl =
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout AuthorizeNet]', ...args);
+const warn = (...args: any[]) => debug && console.warn('[Checkout AuthorizeNet]', ...args);
 const err = (...args: any[]) => debug && console.error('[Checkout AuthorizeNet]', ...args);
 
 interface AuthorizeNetPayload {
@@ -55,21 +56,18 @@ interface AuthorizeNetPayload {
 
 export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
   try {
-    console.log('[AuthorizeNet] 🟢 Handler invoked');
-    console.log('🟢 Provider handler invoked');
-    console.log('[AuthorizeNet] 🔧 Handler triggered');
-    console.log(
-      '[AuthorizeNet] Incoming payload:',
-      JSON.stringify(payload, null, 2)
-    );
+    log('🟢 Handler invoked');
+    log('🟢 Provider handler invoked');
+    log('🔧 Handler triggered');
+    log('[AuthorizeNet] Incoming payload:', JSON.stringify(payload, null, 2));
     
     let creds;
 
     try {
       creds = await getStoreIntegration(payload.store_id, 'authorizeNet');
-      console.log('[AuthorizeNet] 🧩 Raw store_integrations:', creds);
+      log('🧩 Raw store_integrations:', creds);
     } catch (err) {
-      console.error('[AuthorizeNet] ❌ getStoreIntegration() threw:', err);
+      err('❌ getStoreIntegration() threw:', err);
       return {
         success: false,
         error: 'Failed to load store credentials',
@@ -101,7 +99,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       transactionKeySource = 'store_integrations';
     }
 
-    console.log('[AuthorizeNet] 🧾 Final credentials used:', {
+    log('🧾 Final credentials used:', {
       loginId,
       loginIdSource,
       transactionKey,
@@ -109,7 +107,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     });
 
     if (!loginId || !transactionKey) {
-      console.warn('[AuthorizeNet] ❌ Missing Authorize.Net credentials for store');
+      warn('❌ Missing Authorize.Net credentials for store');
       return {
         success: false,
         error: 'Missing Authorize.Net credentials for store',
@@ -183,18 +181,18 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       },
     };
 
-    console.log('[AuthorizeNet] Building request body...');
+    log('Building request body...');
 
     try {
-      console.log('[AuthorizeNet] Sending request to:', baseUrl);
+      log('Sending request to:', baseUrl);
       const sanitizedBody = JSON.parse(JSON.stringify(body));
       delete sanitizedBody.createTransactionRequest.transactionRequest.payment.opaqueData
         .dataValue;
-      console.log('[AuthorizeNet] 📦 Sending transaction request:', {
+      log('📦 Sending transaction request:', {
         endpoint: baseUrl,
         payload: sanitizedBody,
       });
-      console.log('[AuthorizeNet] Request body:', JSON.stringify(sanitizedBody, null, 2));
+      log('Request body:', JSON.stringify(sanitizedBody, null, 2));
 
       let res;
       let text;
@@ -205,9 +203,9 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
           body: JSON.stringify(body),
         });
         text = await res.text();
-        console.log('[AuthorizeNet] ✅ Gateway response received');
+        log('✅ Gateway response received');
       } catch (err) {
-        console.error('[AuthorizeNet] 💥 Caught fetch error:', err);
+        err('💥 Caught fetch error:', err);
         return {
           success: false,
           error: 'Network error while contacting Authorize.Net',
@@ -216,18 +214,18 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
       }
 
       if (!res.ok) {
-        console.error('[AuthorizeNet] ❌ HTTP error:', res.status, res.statusText);
+        err('❌ HTTP error:', res.status, res.statusText);
       }
-      console.log('[AuthorizeNet] ✅ Response status:', res.status);
-      console.log('[AuthorizeNet] ✅ Response status text:', res.statusText);
+      log('✅ Response status:', res.status);
+      log('✅ Response status text:', res.statusText);
 
-      console.log('[AuthorizeNet] ✅ Response body (raw):', text);
+      log('✅ Response body (raw):', text);
       let json;
       try {
         json = JSON.parse(text);
-        console.log('[AuthorizeNet] ✅ Parsed JSON response:', json);
+        log('✅ Parsed JSON response:', json);
       } catch (e) {
-        console.error('[AuthorizeNet] ❌ Failed to parse JSON response:', e);
+        err('❌ Failed to parse JSON response:', e);
         return {
           success: false,
           error: 'Non-JSON response from gateway',
@@ -240,21 +238,21 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
           json?.messages?.message?.[0]?.text || 'Unknown error';
         const formattedMessage =
           `The Authorize.Net gateway rejected the transaction: ${message}`;
-        console.error('[AuthorizeNet] ❌ Gateway error:', formattedMessage);
+        err('❌ Gateway error:', formattedMessage);
         return { success: false, error: formattedMessage, raw: json };
       }
 
-      console.log('[AuthorizeNet] ✅ Gateway approved transaction');
+      log('✅ Gateway approved transaction');
       return {
         success: true,
         data: json,
       };
     } catch (e: any) {
-      console.error('[AuthorizeNet] Fatal fetch error:', e);
+      err('Fatal fetch error:', e);
       return { success: false, error: e?.message || String(e) };
     }
   } catch (e: any) {
-    console.error('[AuthorizeNet] Top-level handler crash:', e);
+    err('Top-level handler crash:', e);
     return {
       success: false,
       error: 'Top-level handler crash',

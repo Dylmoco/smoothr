@@ -1,11 +1,15 @@
 import supabase from './supabase/serverClient';
 
+const debug = process.env.SMOOTHR_DEBUG === 'true';
+const log = (...args: any[]) => debug && console.log('[generateOrderNumber]', ...args);
+const err = (...args: any[]) => debug && console.error('[generateOrderNumber]', ...args);
+
 if (!globalThis.generateOrderNumber) {
   globalThis.generateOrderNumber = async (storeId: string) => {
-    console.log('[generateOrderNumber] CALLED — storeId:', storeId);
+    log('CALLED — storeId:', storeId);
 
     if (!storeId) {
-      console.error('[generateOrderNumber] storeId is undefined or missing!');
+      err('storeId is undefined or missing!');
       throw new Error('storeId is required for order number generation');
     }
 
@@ -20,7 +24,7 @@ if (!globalThis.generateOrderNumber) {
       prefix = data?.prefix;
       if (error || !prefix) throw new Error('No store prefix returned');
     } catch (err) {
-      console.error('[generateOrderNumber] Supabase query failed:', err);
+        err('Supabase query failed:', err);
       throw err;
     }
 
@@ -32,14 +36,14 @@ if (!globalThis.generateOrderNumber) {
       );
       if (error || data == null) throw error;
       next = data as number;
-    } catch (err) {
-      console.error('[generateOrderNumber] Counter increment failed:', err);
+      } catch (err) {
+        err('Counter increment failed:', err);
       throw err;
     }
 
     const orderNumber = `${prefix}-${String(next).padStart(4, '0')}`;
 
-    console.log('[generateOrderNumber] Generated:', orderNumber);
+    log('Generated:', orderNumber);
     return orderNumber;
   };
 }
