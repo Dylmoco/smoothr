@@ -9,47 +9,35 @@ if (!globalThis.generateOrderNumber) {
       throw new Error('storeId is required for order number generation');
     }
 
-    let store: { prefix: string; order_sequence: number } | null = null;
+    let prefix: string | undefined;
     try {
       const { data, error } = await supabase
         .from('stores')
-        .select('prefix, order_sequence')
+        .select('prefix')
         .eq('id', storeId)
         .single();
 
-      store = data;
-      if (error || !store) throw new Error('No store returned');
+      prefix = data?.prefix;
+      if (error || !prefix) throw new Error('No store prefix returned');
     } catch (err) {
       console.error('[generateOrderNumber] Supabase query failed:', err);
       throw err;
     }
 
-    if (!store?.prefix || store.order_sequence == null) {
-      console.error(
-        '[generateOrderNumber] Failed to fetch store prefix/sequence',
-        { storeId, error: null, data: store },
-      );
-      throw new Error('Invalid store data or missing prefix/sequence');
-    }
-
-    const next = Number(store.order_sequence) + 1;
-    const orderNumber = `${store.prefix}-${String(next).padStart(4, '0')}`;
-
+    let next: number | null = null;
     try {
-      const { error: updateError } = await supabase
-        .from('stores')
-        .update({ order_sequence: next })
-        .eq('id', storeId);
-
-      if (updateError) {
-        console.error(
-          '[generateOrderNumber] Failed to update order sequence:',
-          updateError,
-        );
-      }
+      const { data, error } = await supabase.rpc(
+        'increment_store_order_number',
+        { p_store_id: storeId },
+      );
+      if (error || data == null) throw error;
+      next = data as number;
     } catch (err) {
-      console.error('[generateOrderNumber] Update threw:', err);
+      console.error('[generateOrderNumber] Counter increment failed:', err);
+      throw err;
     }
+
+    const orderNumber = `${prefix}-${String(next).padStart(4, '0')}`;
 
     console.log('[generateOrderNumber] Generated:', orderNumber);
     return orderNumber;
