@@ -161,8 +161,11 @@ Activate the gateway by setting
 `store_settings.settings.active_payment_gateway` to `nmi` (or override it on the
 client via `window.SMOOTHR_CONFIG.active_payment_gateway`). Include NMI's
 `Collect.js` script on pages displaying the checkout form and call
-`mountNMIFields()` to mount the card fields before submitting the cart. The SDK
-automatically sets the `data-tokenization-key` attribute on those fields.
+`mountNMIFields()` to mount the card fields before submitting the cart. The client
+script injects `[data-tokenization-key]` attributes on those fields automatically.
+
+Checkout requests post the `{ payment_token }` returned by Collect.js in place of
+a Stripe `payment_method`.
 
 
 ### Deployment Log
