@@ -151,8 +151,8 @@ setting on the client by defining the following snippet before loading the SDK:
 ```
 
 A Network Merchants (NMI) integration is also supported. Create a new record in
-`store_integrations` with `provider` set to `nmi` and place your credentials in
-the `settings` JSON column:
+`store_integrations` with either `provider` or `settings.gateway` set to `nmi`
+and place your credentials in the `settings` JSON column:
 
 ```json
 {

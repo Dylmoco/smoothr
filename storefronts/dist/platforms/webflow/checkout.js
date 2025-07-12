@@ -8586,7 +8586,8 @@ async function resolveTokenizationKey() {
   const storeId = (_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.storeId;
   if (!storeId)
     return "";
-  const cred = await getPublicCredential(storeId, "nmi");
+  const gateway = (window.SMOOTHR_CONFIG == null ? void 0 : window.SMOOTHR_CONFIG.active_payment_gateway) || "nmi";
+  const cred = await getPublicCredential(storeId, "nmi", gateway);
   tokenizationKey = ((_b = cred == null ? void 0 : cred.settings) == null ? void 0 : _b.tokenization_key) || ((_c = cred == null ? void 0 : cred.settings) == null ? void 0 : _c.public_key) || (cred == null ? void 0 : cred.api_key) || "";
   console.log("[NMI DEBUG] tokenizationKey:", tokenizationKey);
   log3("Using tokenization key", tokenizationKey ? "resolved" : "missing");
