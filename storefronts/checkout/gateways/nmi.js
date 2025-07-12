@@ -262,11 +262,45 @@ export async function mountNMIFields() {
 }
 
 export function isMounted() {
-  return fieldsMounted;
+  const number = document.querySelector('[data-collect="cardNumber"]');
+  const cvc = document.querySelector('[data-collect="cvv"]');
+  const expiryVisible =
+    document.querySelector(
+      '[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]'
+    ) ||
+    document.querySelector(
+      '[data-smoothr-card-expiry] input:not([data-collect])'
+    ) ||
+    document.querySelector('[data-smoothr-card-expiry] input');
+  return !!number && !!cvc && !!expiryVisible;
 }
 
 export function ready() {
-  return fieldsMounted && !!window.CollectJS;
+  const number = document.querySelector('[data-collect="cardNumber"]');
+  const cvc = document.querySelector('[data-collect="cvv"]');
+  const expiryVisible =
+    document.querySelector(
+      '[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]'
+    ) ||
+    document.querySelector(
+      '[data-smoothr-card-expiry] input:not([data-collect])'
+    ) ||
+    document.querySelector('[data-smoothr-card-expiry] input');
+  const month = document.querySelector(
+    '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
+  );
+  const year = document.querySelector(
+    '[data-smoothr-card-expiry] input[data-collect="expYear"]'
+  );
+  const expiryValid = !!month?.value && !!year?.value;
+  return (
+    !!window.CollectJS &&
+    wrapperKeySet &&
+    !!number &&
+    !!cvc &&
+    !!expiryVisible &&
+    expiryValid
+  );
 }
 
 export async function createPaymentMethod() {
