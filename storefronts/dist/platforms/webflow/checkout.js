@@ -7717,8 +7717,8 @@ var DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, supabase, supabaseClient_default
 var init_supabaseClient = __esm({
   "../supabase/supabaseClient.js"() {
     init_module5();
-    DEFAULT_SUPABASE_URL = "http://localhost:54321";
-    DEFAULT_SUPABASE_KEY = "anon-key";
+    DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
+    DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
     supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       global: {
         headers: {
@@ -8587,227 +8587,42 @@ __export(nmi_exports, {
   mountNMIFields: () => mountNMIFields,
   ready: () => ready4
 });
-async function resolveTokenizationKey() {
-  var _a2, _b, _c;
-  if (tokenizationKey !== void 0)
-    return tokenizationKey;
-  const storeId = (_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.storeId;
-  if (!storeId)
-    return null;
-  const gateway = ((_b = window.SMOOTHR_CONFIG) == null ? void 0 : _b.active_payment_gateway) || "nmi";
-  try {
-    const cred = await getPublicCredential(storeId, "nmi", gateway);
-    tokenizationKey = ((_c = cred == null ? void 0 : cred.settings) == null ? void 0 : _c.tokenization_key) || null;
-  } catch (e) {
-    warn3("Integration fetch error:", (e == null ? void 0 : e.message) || e);
-    tokenizationKey = null;
-  }
-  if (!tokenizationKey) {
-    warn3("No tokenization key found for gateway", gateway);
-    return null;
-  }
-  log3("Using tokenization key resolved");
-  return tokenizationKey;
-}
-function loadCollectJs(key) {
-  if (window.CollectJS) {
-    if (key && window.CollectJS.configure) {
-      try {
-        window.CollectJS.configure({ tokenizationKey: key });
-      } catch (e) {
-        warn3("CollectJS.configure failed", e);
-      }
-    }
-    return Promise.resolve();
-  }
-  if (scriptPromise2)
-    return scriptPromise2;
-  if (typeof process !== "undefined" && false) {
-    window.CollectJS = {
-      configure: () => {
-      },
-      tokenize: (cb) => cb && cb({ token: "tok_test" })
-    };
-    return Promise.resolve();
-  }
-  scriptPromise2 = new Promise((resolve) => {
-    let script = document.querySelector("script[data-smoothr-collect]");
-    if (!script) {
-      script = document.createElement("script");
-      script.src = "https://secure.networkmerchants.com/token/Collect.js";
-      script.type = "text/javascript";
-      script.setAttribute("data-smoothr-collect", "");
-      script.addEventListener("load", () => {
-        var _a2;
-        if (((_a2 = window.CollectJS) == null ? void 0 : _a2.configure) && key) {
-          try {
-            window.CollectJS.configure({ tokenizationKey: key });
-          } catch (e) {
-            warn3("CollectJS.configure failed", e);
-          }
-        }
-        resolve();
-      });
-      document.head.appendChild(script);
-    } else {
-      script.addEventListener("load", () => {
-        var _a2;
-        if (((_a2 = window.CollectJS) == null ? void 0 : _a2.configure) && key) {
-          try {
-            window.CollectJS.configure({ tokenizationKey: key });
-          } catch (e) {
-            warn3("CollectJS.configure failed", e);
-          }
-        }
-        resolve();
-      });
-    }
-  });
-  return scriptPromise2;
-}
 async function mountNMIFields() {
-  if (mountPromise3)
-    return mountPromise3;
-  if (fieldsMounted4)
+  const wrapper = document.querySelector("[data-smoothr-nmi-wrapper]");
+  if (!wrapper)
     return;
-  mountPromise3 = (async () => {
-    log3("Mounting NMI fields");
-    let num;
-    let exp;
-    let cvc;
-    let postal;
-    let delay = 100;
-    let waited = 0;
-    while (waited < 5e3) {
-      num = document.querySelector("[data-smoothr-card-number]");
-      exp = document.querySelector("[data-smoothr-card-expiry]");
-      cvc = document.querySelector("[data-smoothr-card-cvc]");
-      postal = document.querySelector("[data-smoothr-postal]");
-      if (num && exp)
-        break;
-      await new Promise((res) => setTimeout(res, delay));
-      waited += delay;
-      delay = Math.min(delay * 2, 1e3);
+  wrapper.setAttribute("data-tokenization-key", tokenizationKey);
+  if (!wrapper.querySelector("[data-smoothr-card-expiry]")) {
+    const vis = document.createElement("input");
+    vis.setAttribute("data-smoothr-card-expiry", "");
+    vis.placeholder = "MM / YY";
+    wrapper.appendChild(vis);
+  }
+  ["expMonth", "expYear"].forEach((name) => {
+    if (!wrapper.querySelector(`[data-collect="${name}"]`)) {
+      const hid = document.createElement("input");
+      hid.type = "hidden";
+      hid.setAttribute("data-collect", name);
+      wrapper.appendChild(hid);
     }
-    if (!num || !exp) {
-      warn3("Card fields not found");
-      return;
-    }
-    if (exp && !exp.querySelector("input")) {
-      const visible = document.createElement("input");
-      visible.type = "text";
-      visible.inputMode = "numeric";
-      visible.placeholder = "MM/YY";
-      visible.autocomplete = "cc-exp";
-      visible.setAttribute("data-smoothr-expiry-visible", "");
-      exp.appendChild(visible);
-      visibleExpiryInjected = true;
-    }
-    const key = await resolveTokenizationKey();
-    if (!wrapperKeySet) {
-      if (key) {
-        const fields = [num, exp, cvc].filter(Boolean);
-        let wrapper = fields[0];
-        while (wrapper && !fields.every((f) => wrapper.contains(f))) {
-          wrapper = wrapper.parentElement;
-        }
-        if (wrapper) {
-          wrapper.setAttribute("data-tokenization-key", key);
-          wrapperKeySet = true;
-          log3("Tokenization key applied to wrapper");
-          await Promise.resolve();
-        } else {
-          warn3("Wrapper element for tokenization key not found");
-        }
-      } else {
-        warn3("No tokenization key available for mounting");
-      }
-    }
-    const wrapperAudit = [num, exp, cvc].filter(Boolean);
-    let auditWrapper = wrapperAudit[0];
-    while (auditWrapper && !wrapperAudit.every((f) => auditWrapper.contains(f))) {
-      auditWrapper = auditWrapper.parentElement;
-    }
-    if (auditWrapper && !auditWrapper.hasAttribute("data-tokenization-key")) {
-      console.warn("[NMI AUDIT] Missing tokenization key on wrapper");
-    }
-    const ensureInput = (target, collect, hidden) => {
-      if (!target)
-        return null;
-      let el = target.querySelector(`input[data-collect="${collect}"]`);
-      if (!el) {
-        el = document.createElement("input");
-        el.type = hidden ? "hidden" : "text";
-        el.setAttribute("data-collect", collect);
-        if (hidden)
-          el.style.display = "none";
-        target.appendChild(el);
-        log3("Injected input for", collect);
-      }
-      return el;
-    };
-    ensureInput(num, "cardNumber");
-    ensureInput(cvc, "cvv");
-    ensureInput(postal, "postal");
-    let monthInput = null;
-    let yearInput = null;
-    const expInput = (exp == null ? void 0 : exp.querySelector("input[data-smoothr-expiry-visible]")) || (exp == null ? void 0 : exp.querySelector("input:not([data-collect])")) || (exp == null ? void 0 : exp.querySelector("input"));
-    const syncExpiry = () => {
-      if (!expInput)
-        return;
-      const raw = expInput.value || "";
-      const match = raw.replace(/\s+/g, "").match(/^(\d{1,2})\/?(\d{2,4})$/);
-      if (match) {
-        if (!expiryInputsInjected) {
-          monthInput = ensureInput(exp, "expMonth", true);
-          yearInput = ensureInput(exp, "expYear", true);
-          expiryInputsInjected = !!monthInput && !!yearInput;
-          if (expiryInputsInjected) {
-            if (visibleExpiryInjected && !visibleAndHiddenLogged) {
-              console.log("[NMI] Injected visible expiry field + hidden expiry inputs");
-              visibleAndHiddenLogged = true;
-            } else {
-              log3("Injected expiry inputs after valid parsing");
-            }
-          }
-        }
-        if (!monthInput || !yearInput)
-          return;
-        let [, m, y] = match;
-        if (m.length === 1)
-          m = "0" + m;
-        if (y.length === 2)
-          y = "20" + y;
-        monthInput.value = m;
-        yearInput.value = y;
-        log3("Synced expiry", { expMonth: m, expYear: y });
-      } else {
-        if (monthInput)
-          monthInput.value = "";
-        if (yearInput)
-          yearInput.value = "";
-      }
-    };
-    if (expInput) {
-      expInput.addEventListener("keyup", syncExpiry);
-      expInput.addEventListener("change", syncExpiry);
-      syncExpiry();
-    }
-    log3("tokenization key DOM-ready");
-    await loadCollectJs(key);
-    if (num && !num.getAttribute("data-collect"))
-      num.setAttribute("data-collect", "ccnumber");
-    if (exp && !exp.getAttribute("data-collect"))
-      exp.setAttribute("data-collect", "ccexp");
-    if (cvc && !cvc.getAttribute("data-collect"))
-      cvc.setAttribute("data-collect", "cvv");
-    fieldsMounted4 = true;
-    log3("NMI fields mounted");
-  })();
-  mountPromise3 = mountPromise3.finally(() => {
-    mountPromise3 = null;
   });
-  return mountPromise3;
+  if (!window.CollectJS) {
+    const script = document.createElement("script");
+    script.src = "https://secure.networkmerchants.com/token/Collect.js";
+    script.setAttribute("data-tokenization-key", tokenizationKey);
+    document.head.appendChild(script);
+    script.onload = configureCollect;
+  } else {
+    configureCollect();
+  }
+}
+function configureCollect() {
+  const wrapper = document.querySelector("[data-smoothr-nmi-wrapper]");
+  const fields = {};
+  wrapper.querySelectorAll("[data-collect]").forEach((el) => {
+    fields[el.getAttribute("data-collect")] = el;
+  });
+  window.CollectJS.configure({ fields, tokenizationKey });
 }
 function isMounted4() {
   const number = document.querySelector('[data-collect="cardNumber"]');
@@ -8868,15 +8683,10 @@ async function createPaymentMethod4() {
     }
   });
 }
-var fieldsMounted4, mountPromise3, scriptPromise2, tokenizationKey, wrapperKeySet, expiryInputsInjected, visibleExpiryInjected, visibleAndHiddenLogged, DEBUG2, log3, warn3, nmi_default;
+var tokenizationKey, DEBUG2, log3, warn3, nmi_default;
 var init_nmi = __esm({
   "checkout/gateways/nmi.js"() {
     init_getPublicCredential();
-    fieldsMounted4 = false;
-    wrapperKeySet = false;
-    expiryInputsInjected = false;
-    visibleExpiryInjected = false;
-    visibleAndHiddenLogged = false;
     DEBUG2 = true;
     log3 = (...a) => DEBUG2 && console.log("[NMI]", ...a);
     warn3 = (...a) => DEBUG2 && console.warn("[NMI]", ...a);
@@ -8899,10 +8709,10 @@ __export(segpay_exports, {
   ready: () => ready5
 });
 function mountCardFields4() {
-  fieldsMounted5 = true;
+  fieldsMounted4 = true;
 }
 function isMounted5() {
-  return fieldsMounted5;
+  return fieldsMounted4;
 }
 function ready5() {
   return true;
@@ -8910,10 +8720,10 @@ function ready5() {
 async function createPaymentMethod5() {
   return { payment_method: { id: "segpay" } };
 }
-var fieldsMounted5, segpay_default;
+var fieldsMounted4, segpay_default;
 var init_segpay = __esm({
   "checkout/gateways/segpay.js"() {
-    fieldsMounted5 = false;
+    fieldsMounted4 = false;
     segpay_default = {
       mountCardFields: mountCardFields4,
       isMounted: isMounted5,
