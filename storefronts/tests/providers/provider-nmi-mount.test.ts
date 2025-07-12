@@ -39,8 +39,11 @@ describe('mountNMIFields', () => {
     const num = document.querySelector('[data-smoothr-card-number]');
     const cvc = document.querySelector('[data-smoothr-card-cvc]');
     const postal = document.querySelector('[data-smoothr-postal]');
+    const expiry = document.querySelector('[data-smoothr-card-expiry]');
     expect(num?.querySelector('input')?.getAttribute('data-collect')).toBe('cardNumber');
     expect(cvc?.querySelector('input')?.getAttribute('data-collect')).toBe('cvv');
     expect(postal?.querySelector('input')?.getAttribute('data-collect')).toBe('postal');
+    expect(expiry?.querySelector('input[data-collect="expMonth"]')).toBeTruthy();
+    expect(expiry?.querySelector('input[data-collect="expYear"]')).toBeTruthy();
   });
 });

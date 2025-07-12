@@ -8720,11 +8720,13 @@ async function mountNMIFields() {
     if (auditWrapper && !auditWrapper.hasAttribute("data-tokenization-key")) {
       console.warn("[NMI AUDIT] Missing tokenization key on wrapper");
     }
-    const ensureInput = (target, collect) => {
-      if (target && !target.querySelector("input")) {
+    const ensureInput = (target, collect, hidden) => {
+      if (target && !target.querySelector(`input[data-collect="${collect}"]`)) {
         const input = document.createElement("input");
-        input.type = "text";
+        input.type = hidden ? "hidden" : "text";
         input.setAttribute("data-collect", collect);
+        if (hidden)
+          input.style.display = "none";
         target.appendChild(input);
         log3("Injected input for", collect);
       }
@@ -8732,6 +8734,36 @@ async function mountNMIFields() {
     ensureInput(num, "cardNumber");
     ensureInput(cvc, "cvv");
     ensureInput(postal, "postal");
+    ensureInput(exp, "expMonth", true);
+    ensureInput(exp, "expYear", true);
+    const expInput = (exp == null ? void 0 : exp.querySelector("input:not([data-collect])")) || (exp == null ? void 0 : exp.querySelector("input"));
+    const monthInput = exp == null ? void 0 : exp.querySelector('input[data-collect="expMonth"]');
+    const yearInput = exp == null ? void 0 : exp.querySelector('input[data-collect="expYear"]');
+    const syncExpiry = () => {
+      if (!expInput || !monthInput || !yearInput)
+        return;
+      const raw = expInput.value || "";
+      const match = raw.replace(/\s+/g, "").match(/^(\d{1,2})\/?(\d{2,4})$/);
+      if (match) {
+        let [, m, y] = match;
+        if (m.length === 1)
+          m = "0" + m;
+        if (y.length === 2)
+          y = "20" + y;
+        monthInput.value = m;
+        yearInput.value = y;
+        log3("Synced expiry", { expMonth: m, expYear: y });
+      } else {
+        monthInput.value = "";
+        yearInput.value = "";
+        log3("Cleared expiry inputs");
+      }
+    };
+    if (expInput) {
+      expInput.addEventListener("input", syncExpiry);
+      expInput.addEventListener("blur", syncExpiry);
+      syncExpiry();
+    }
     await loadCollectJs(key);
     if (num && !num.getAttribute("data-collect"))
       num.setAttribute("data-collect", "ccnumber");
