@@ -44,7 +44,9 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
             return {
               select: vi.fn(() => ({
                 eq: vi.fn(() => ({
-                  maybeSingle: vi.fn(async () => ({ data: { id: 'order-1', raw_data: {} }, error: null }))
+                  eq: vi.fn(() => ({
+                    maybeSingle: vi.fn(async () => ({ data: { id: 'order-1', raw_data: {} }, error: null }))
+                  }))
                 }))
               }))
             };
@@ -53,13 +55,12 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
             return {
               update: vi.fn((payload: any) => {
                 orderPayload = payload;
-                return {
-                  eq: vi.fn(() => ({
-                    select: vi.fn(() => ({
-                      single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null }))
-                    }))
-                  }))
-                };
+                const chain: any = {};
+                chain.eq = vi.fn(() => chain);
+                chain.select = vi.fn(() => ({
+                  single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null }))
+                }));
+                return chain;
               })
             };
           }

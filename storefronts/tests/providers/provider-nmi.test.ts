@@ -51,6 +51,7 @@ describe('handleNmi', () => {
     const body = fetchMock.mock.calls[0][1].body;
     const params = new URLSearchParams(body);
     expect(params.get('security_key')).toBe('key');
+    expect(params.get('amount')).toBe('1.00');
   });
 
   it('falls back to env security key when integration missing', async () => {
@@ -59,6 +60,7 @@ describe('handleNmi', () => {
     const res = await handleNmi(basePayload);
     const params = new URLSearchParams(fetchMock.mock.calls[0][1].body);
     expect(params.get('security_key')).toBe('envKey');
+    expect(params.get('amount')).toBe('1.00');
     expect(integrationMock).toHaveBeenCalled();
     expect(res.success).toBe(true);
     expect(res.transaction_id).toBe('tx1');
