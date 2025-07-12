@@ -183,12 +183,8 @@ export async function mountNMIFields() {
     ensureInput(num, 'cardNumber');
     ensureInput(cvc, 'cvv');
     ensureInput(postal, 'postal');
-    let monthInput = ensureInput(exp, 'expMonth', true);
-    let yearInput = ensureInput(exp, 'expYear', true);
-    expiryInputsInjected = !!monthInput && !!yearInput;
-    if (expiryInputsInjected) {
-      log('Injected inputs for expMonth and expYear into expiry wrapper');
-    }
+    let monthInput = null;
+    let yearInput = null;
 
     const expInput =
       exp?.querySelector('input:not([data-collect])') || exp?.querySelector('input');
@@ -202,6 +198,9 @@ export async function mountNMIFields() {
           monthInput = ensureInput(exp, 'expMonth', true);
           yearInput = ensureInput(exp, 'expYear', true);
           expiryInputsInjected = !!monthInput && !!yearInput;
+          if (expiryInputsInjected) {
+            log('Injected expiry inputs after valid parsing');
+          }
         }
         if (!monthInput || !yearInput) return;
         let [, m, y] = match;
