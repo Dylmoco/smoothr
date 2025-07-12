@@ -11,6 +11,10 @@ beforeEach(async () => {
   ['card-number', 'card-expiry', 'card-cvc', 'postal'].forEach(attr => {
     const div = document.createElement('div');
     div.setAttribute(`data-smoothr-${attr}`, '');
+    if (attr === 'card-expiry') {
+      const input = document.createElement('input');
+      div.appendChild(input);
+    }
     wrapper.appendChild(div);
   });
   document.body.appendChild(wrapper);
@@ -51,11 +55,8 @@ describe('mountNMIFields', () => {
 
   it('does not inject hidden expiry inputs until value is valid', async () => {
     await mountNMIFields();
-    const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const input =
-      expiry?.querySelector('input[data-smoothr-expiry-visible]') ||
-      expiry?.querySelector('input:not([data-collect])') ||
-      expiry?.querySelector('input');
+    const expiry = document.querySelector('[data-smoothr-card-expiry] input');
+    const input = expiry;
     if (input) {
       input.value = '1';
       input.dispatchEvent(new Event('keyup'));
@@ -66,45 +67,47 @@ describe('mountNMIFields', () => {
 
   it('re-injects expiry inputs when corrected', async () => {
     await mountNMIFields();
-    const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const input =
-      expiry?.querySelector('input[data-smoothr-expiry-visible]') ||
-      expiry?.querySelector('input:not([data-collect])') ||
-      expiry?.querySelector('input');
+    const input = document.querySelector('[data-smoothr-card-expiry] input');
     if (input) {
       input.value = '1';
       input.dispatchEvent(new Event('keyup'));
       input.value = '12/34';
       input.dispatchEvent(new Event('keyup'));
     }
-    const month = expiry?.querySelector('input[data-collect="expMonth"]');
-    const year = expiry?.querySelector('input[data-collect="expYear"]');
+    const month = document.querySelector(
+      '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
+    );
+    const year = document.querySelector(
+      '[data-smoothr-card-expiry] input[data-collect="expYear"]'
+    );
     expect(month?.value).toBe('12');
     expect(year?.value).toBe('2034');
   });
 
-  it('injects visible expiry input and syncs hidden inputs', async () => {
+  it('syncs hidden expiry inputs when value changes', async () => {
     await mountNMIFields();
-    const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const visible = expiry?.querySelector('input[data-smoothr-expiry-visible]');
-    expect(visible).not.toBeNull();
-    if (visible) {
-      visible.value = '08/26';
-      visible.dispatchEvent(new Event('keyup'));
+    const expiry = document.querySelector('[data-smoothr-card-expiry] input');
+    expect(expiry).not.toBeNull();
+    if (expiry) {
+      expiry.value = '08/26';
+      expiry.dispatchEvent(new Event('keyup'));
     }
-    const month = expiry?.querySelector('input[data-collect="expMonth"]');
-    const year = expiry?.querySelector('input[data-collect="expYear"]');
+    const month = document.querySelector(
+      '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
+    );
+    const year = document.querySelector(
+      '[data-smoothr-card-expiry] input[data-collect="expYear"]'
+    );
     expect(month?.value).toBe('08');
     expect(year?.value).toBe('2026');
   });
 
   it('reports ready when all fields and tokenization key are present', async () => {
     await mountNMIFields();
-    const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const visible = expiry?.querySelector('input[data-smoothr-expiry-visible]');
-    if (visible) {
-      visible.value = '11/30';
-      visible.dispatchEvent(new Event('keyup'));
+    const expiry = document.querySelector('[data-smoothr-card-expiry] input');
+    if (expiry) {
+      expiry.value = '11/30';
+      expiry.dispatchEvent(new Event('keyup'));
     }
     expect(ready()).toBe(true);
   });
