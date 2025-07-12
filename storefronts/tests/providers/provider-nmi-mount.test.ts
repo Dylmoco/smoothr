@@ -6,11 +6,13 @@ let getCredMock: any;
 beforeEach(async () => {
   vi.resetModules();
   document.body.innerHTML = '';
+  const wrapper = document.createElement('div');
   ['card-number', 'card-expiry', 'card-cvc'].forEach(attr => {
     const div = document.createElement('div');
     div.setAttribute(`data-smoothr-${attr}`, '');
-    document.body.appendChild(div);
+    wrapper.appendChild(div);
   });
+  document.body.appendChild(wrapper);
 
   getCredMock = vi.fn(async () => ({ settings: { tokenization_key: 'tok_key' } }));
 
@@ -28,7 +30,7 @@ describe('mountNMIFields', () => {
   it('loads tokenization key and applies it', async () => {
     await mountNMIFields();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
-    const num = document.querySelector('[data-smoothr-card-number]');
-    expect(num?.getAttribute('data-tokenization-key')).toBe('tok_key');
+    const wrapper = document.querySelector('[data-smoothr-card-number]')?.parentElement;
+    expect(wrapper?.getAttribute('data-tokenization-key')).toBe('tok_key');
   });
 });

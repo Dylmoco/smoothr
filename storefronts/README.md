@@ -165,7 +165,7 @@ Enable the gateway via `store_settings.settings.active_payment_gateway` or set
 `window.SMOOTHR_CONFIG.active_payment_gateway = 'nmi'` on the client. Include
 NMI's Collect.js library on checkout pages and call `mountNMIFields()` to mount
 the credit card fields before submitting the cart. The SDK automatically injects
-the `data-tokenization-key` attribute on these inputs.
+a `data-tokenization-key` attribute on the wrapper containing the fields.
 
 A Webflow‑specific adapter lives at `./platforms/webflow/checkout.js`. It merely
 sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
