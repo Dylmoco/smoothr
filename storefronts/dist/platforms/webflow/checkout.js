@@ -7717,8 +7717,8 @@ var DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, supabase, supabaseClient_default
 var init_supabaseClient = __esm({
   "supabase/supabaseClient.js"() {
     init_module5();
-    DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
-    DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
+    DEFAULT_SUPABASE_URL = "http://example.com";
+    DEFAULT_SUPABASE_KEY = "anon";
     supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       global: {
         headers: {
@@ -7737,11 +7737,19 @@ var init_supabaseClient = __esm({
 });
 
 // storefronts/checkout/getPublicCredential.js
-async function getPublicCredential(storeId, integrationId) {
+async function getPublicCredential(storeId, integrationId, gateway) {
   if (!storeId || !integrationId)
     return null;
   try {
-    const { data, error } = await supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId).eq("provider", integrationId).maybeSingle();
+    let query = supabaseClient_default.from("store_integrations").select("api_key, settings").eq("store_id", storeId);
+    if (gateway) {
+      query = query.or(
+        `provider.eq.${integrationId},settings->>gateway.eq.${gateway}`
+      );
+    } else {
+      query = query.eq("provider", integrationId);
+    }
+    const { data, error } = await query.maybeSingle();
     if (error) {
       console.warn("[Smoothr] Credential lookup failed:", error.message || error);
       return null;
@@ -8585,12 +8593,20 @@ async function resolveTokenizationKey() {
     return tokenizationKey;
   const storeId = (_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.storeId;
   if (!storeId)
-    return "";
-  const gateway = (window.SMOOTHR_CONFIG == null ? void 0 : window.SMOOTHR_CONFIG.active_payment_gateway) || "nmi";
-  const cred = await getPublicCredential(storeId, "nmi", gateway);
-  tokenizationKey = ((_b = cred == null ? void 0 : cred.settings) == null ? void 0 : _b.tokenization_key) || ((_c = cred == null ? void 0 : cred.settings) == null ? void 0 : _c.public_key) || (cred == null ? void 0 : cred.api_key) || "";
-  console.log("[NMI DEBUG] tokenizationKey:", tokenizationKey);
-  log3("Using tokenization key", tokenizationKey ? "resolved" : "missing");
+    return null;
+  const gateway = ((_b = window.SMOOTHR_CONFIG) == null ? void 0 : _b.active_payment_gateway) || "nmi";
+  try {
+    const cred = await getPublicCredential(storeId, "nmi", gateway);
+    tokenizationKey = ((_c = cred == null ? void 0 : cred.settings) == null ? void 0 : _c.tokenization_key) || null;
+  } catch (e) {
+    warn3("Integration fetch error:", (e == null ? void 0 : e.message) || e);
+    tokenizationKey = null;
+  }
+  if (!tokenizationKey) {
+    warn3("No tokenization key found for gateway", gateway);
+    return null;
+  }
+  log3("Using tokenization key resolved");
   return tokenizationKey;
 }
 function loadCollectJs(key) {
@@ -8676,12 +8692,22 @@ async function mountNMIFields() {
       return;
     }
     const key = await resolveTokenizationKey();
-    if (num)
-      num.setAttribute("data-tokenization-key", key);
-    if (exp)
-      exp.setAttribute("data-tokenization-key", key);
-    if (cvc)
-      cvc.setAttribute("data-tokenization-key", key);
+    if (key) {
+      if (num)
+        num.setAttribute("data-tokenization-key", key);
+      if (exp)
+        exp.setAttribute("data-tokenization-key", key);
+      if (cvc)
+        cvc.setAttribute("data-tokenization-key", key);
+    } else {
+      warn3("No tokenization key available for mounting");
+    }
+    ["card-number", "card-expiry", "card-cvc"].forEach((field) => {
+      const el = document.querySelector(`[data-smoothr-card-${field}]`);
+      if (el && !el.hasAttribute("data-tokenization-key")) {
+        console.warn(`[NMI AUDIT] Missing tokenization key on field: ${field}`);
+      }
+    });
     await loadCollectJs(key);
     if (num && !num.getAttribute("data-collect"))
       num.setAttribute("data-collect", "ccnumber");
@@ -8704,12 +8730,28 @@ function ready4() {
   return fieldsMounted4 && !!window.CollectJS;
 }
 async function createPaymentMethod4() {
+  var _a2;
   if (!ready4()) {
     return { error: { message: "Collect.js not ready" }, payment_method: null };
   }
+  const expiryEl = ((_a2 = document.querySelector("[data-smoothr-card-expiry]")) == null ? void 0 : _a2.querySelector("input")) || document.querySelector("[data-smoothr-card-expiry]");
+  const expiryRaw = (expiryEl == null ? void 0 : expiryEl.value) || "";
+  const match = expiryRaw.replace(/\s+/g, "").match(/^(\d{1,2})\/?(\d{2,4})$/);
+  if (!match) {
+    warn3("Invalid expiry format:", expiryRaw);
+    return { error: { message: "Invalid card expiry" }, payment_method: null };
+  }
+  let [, month, year] = match;
+  if (month.length === 1)
+    month = "0" + month;
+  if (year.length === 2)
+    year = "20" + year;
+  const expMonth = month;
+  const expYear = year;
+  log3("Parsed expiry", { expMonth, expYear });
   return new Promise((resolve) => {
     try {
-      window.CollectJS.tokenize((response) => {
+      window.CollectJS.tokenize({ expMonth, expYear }, (response) => {
         log3("Tokenize response", response);
         if (response && response.token) {
           resolve({ error: null, payment_method: { payment_token: response.token } });
