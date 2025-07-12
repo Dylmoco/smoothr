@@ -6,7 +6,6 @@ let scriptPromise;
 let tokenizationKey;
 let wrapperKeySet = false;
 let expiryInputsInjected = false;
-let visibleExpiryInjected = false;
 let visibleAndHiddenLogged = false;
 
 const DEBUG = true; // enable console logs for troubleshooting
@@ -39,17 +38,8 @@ async function resolveTokenizationKey() {
   return tokenizationKey;
 }
 
-function loadCollectJs(key) {
-  if (window.CollectJS) {
-    if (key && window.CollectJS.configure) {
-      try {
-        window.CollectJS.configure({ tokenizationKey: key });
-      } catch (e) {
-        warn('CollectJS.configure failed', e);
-      }
-    }
-    return Promise.resolve();
-  }
+function loadCollectJs(tokenKey, wrapper) {
+  if (window.CollectJS) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
     window.CollectJS = {
@@ -59,34 +49,15 @@ function loadCollectJs(key) {
     return Promise.resolve();
   }
   scriptPromise = new Promise(resolve => {
-    let script = document.querySelector('script[data-smoothr-collect]');
+    let script = document.querySelector('script[data-tokenization-key]');
     if (!script) {
       script = document.createElement('script');
       script.src = 'https://secure.networkmerchants.com/token/Collect.js';
-      script.type = 'text/javascript';
-      script.setAttribute('data-smoothr-collect', '');
-      script.addEventListener('load', () => {
-        if (window.CollectJS?.configure && key) {
-          try {
-            window.CollectJS.configure({ tokenizationKey: key });
-          } catch (e) {
-            warn('CollectJS.configure failed', e);
-          }
-        }
-        resolve();
-      });
-      document.head.appendChild(script);
+      if (tokenKey) script.setAttribute('data-tokenization-key', tokenKey);
+      (wrapper || document.head).appendChild(script);
+      script.addEventListener('load', () => resolve());
     } else {
-      script.addEventListener('load', () => {
-        if (window.CollectJS?.configure && key) {
-          try {
-            window.CollectJS.configure({ tokenizationKey: key });
-          } catch (e) {
-            warn('CollectJS.configure failed', e);
-          }
-        }
-        resolve();
-      });
+      script.addEventListener('load', () => resolve());
     }
   });
   return scriptPromise;
@@ -102,6 +73,7 @@ export async function mountNMIFields() {
     let exp;
     let cvc;
     let postal;
+    let wrapper = null;
     let delay = 100;
     let waited = 0;
     while (waited < 5000) {
@@ -120,23 +92,19 @@ export async function mountNMIFields() {
       return;
     }
 
-    if (exp && !exp.querySelector('input')) {
-      const visible = document.createElement('input');
-      visible.type = 'text';
-      visible.inputMode = 'numeric';
-      visible.placeholder = 'MM/YY';
-      visible.autocomplete = 'cc-exp';
-      visible.setAttribute('data-smoothr-expiry-visible', '');
-      exp.appendChild(visible);
-      visibleExpiryInjected = true;
-    }
+    /*
+     * Previously a combined expiry input was injected here when none was
+     * present. This logic has been removed so that integrators supply their
+     * own visible expiry field. Only hidden expMonth and expYear inputs are
+     * injected when a valid value is detected.
+     */
 
     const key = await resolveTokenizationKey();
 
     if (!wrapperKeySet) {
       if (key) {
         const fields = [num, exp, cvc].filter(Boolean);
-        let wrapper = fields[0];
+        wrapper = fields[0];
         while (wrapper && !fields.every(f => wrapper.contains(f))) {
           wrapper = wrapper.parentElement;
         }
@@ -161,6 +129,14 @@ export async function mountNMIFields() {
     }
     if (auditWrapper && !auditWrapper.hasAttribute('data-tokenization-key')) {
       console.warn('[NMI AUDIT] Missing tokenization key on wrapper');
+    }
+
+    if (!wrapper) {
+      const fields = [num, exp, cvc].filter(Boolean);
+      wrapper = fields[0];
+      while (wrapper && !fields.every(f => wrapper.contains(f))) {
+        wrapper = wrapper.parentElement;
+      }
     }
 
     const ensureInput = (target, collect, hidden) => {
@@ -197,13 +173,9 @@ export async function mountNMIFields() {
           monthInput = ensureInput(exp, 'expMonth', true);
           yearInput = ensureInput(exp, 'expYear', true);
           expiryInputsInjected = !!monthInput && !!yearInput;
-          if (expiryInputsInjected) {
-            if (visibleExpiryInjected && !visibleAndHiddenLogged) {
-              console.log('[NMI] Injected visible expiry field + hidden expiry inputs');
-              visibleAndHiddenLogged = true;
-            } else {
-              log('Injected expiry inputs after valid parsing');
-            }
+          if (expiryInputsInjected && !visibleAndHiddenLogged) {
+            log('Injected expiry inputs after valid parsing');
+            visibleAndHiddenLogged = true;
           }
         }
         if (!monthInput || !yearInput) return;
@@ -226,8 +198,20 @@ export async function mountNMIFields() {
     }
 
     log('tokenization key DOM-ready');
-    await loadCollectJs(key);
+    await loadCollectJs(key, wrapper);
     log('Collect.js injected, window.CollectJS:', !!window.CollectJS);
+
+    if (window.CollectJS?.configure && wrapper) {
+      const fields = {};
+      wrapper.querySelectorAll('[data-collect]').forEach(input => {
+        fields[input.getAttribute('data-collect')] = input;
+      });
+      try {
+        window.CollectJS.configure({ fields, tokenizationKey: key });
+      } catch (e) {
+        warn('CollectJS.configure failed', e);
+      }
+    }
 
     if (num && !num.getAttribute('data-collect'))
       num.setAttribute('data-collect', 'ccnumber');
