@@ -1,4 +1,4 @@
-import { getPublicCredential } from '../getPublicCredential.js';
+import supabase from '../../../supabase/supabaseClient.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -12,16 +12,33 @@ const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 async function resolveTokenizationKey() {
   if (tokenizationKey !== undefined) return tokenizationKey;
   const storeId = window.SMOOTHR_CONFIG?.storeId;
-  if (!storeId) return '';
-  const cred = await getPublicCredential(storeId, 'nmi');
-  tokenizationKey =
-    cred?.settings?.tokenization_key || cred?.settings?.public_key || cred?.api_key || '';
-  console.log('[NMI DEBUG] tokenizationKey:', tokenizationKey);
-  log('Using tokenization key', tokenizationKey ? 'resolved' : 'missing');
-  if (!tokenizationKey) {
-    console.warn('[NMI ERROR] No tokenization key found in Supabase credentials');
-    throw new Error('Missing tokenization key');
+  if (!storeId) return null;
+
+  const gateway = window.SMOOTHR_CONFIG?.active_payment_gateway || 'nmi';
+
+  try {
+    const { data, error } = await supabase
+      .from('store_integrations')
+      .select('settings')
+      .eq('store_id', storeId)
+      .contains('settings', { gateway })
+      .maybeSingle();
+
+    if (error) {
+      warn('Integration lookup failed:', error.message || error);
+    }
+    tokenizationKey = data?.settings?.tokenization_key || null;
+  } catch (e) {
+    warn('Integration fetch error:', e?.message || e);
+    tokenizationKey = null;
   }
+
+  if (!tokenizationKey) {
+    warn('No tokenization key found for gateway', gateway);
+    return null;
+  }
+
+  log('Using tokenization key resolved');
   return tokenizationKey;
 }
 
@@ -106,9 +123,13 @@ export async function mountNMIFields() {
 
     const key = await resolveTokenizationKey();
 
-    if (num) num.setAttribute('data-tokenization-key', key);
-    if (exp) exp.setAttribute('data-tokenization-key', key);
-    if (cvc) cvc.setAttribute('data-tokenization-key', key);
+    if (key) {
+      if (num) num.setAttribute('data-tokenization-key', key);
+      if (exp) exp.setAttribute('data-tokenization-key', key);
+      if (cvc) cvc.setAttribute('data-tokenization-key', key);
+    } else {
+      warn('No tokenization key available for mounting');
+    }
 
     ['card-number', 'card-expiry', 'card-cvc'].forEach(field => {
       const el = document.querySelector(`[data-smoothr-card-${field}]`);
