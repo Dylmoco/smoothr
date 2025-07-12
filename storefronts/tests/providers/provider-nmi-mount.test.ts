@@ -50,10 +50,12 @@ describe('mountNMIFields', () => {
   it('removes expiry inputs when value is invalid', async () => {
     await mountNMIFields();
     const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const input = expiry?.querySelector('input:not([data-collect])') || expiry?.querySelector('input');
+    const input = expiry?.querySelector('input[data-smoothr-expiry-visible]') ||
+      expiry?.querySelector('input:not([data-collect])') ||
+      expiry?.querySelector('input');
     if (input) {
       input.value = '1';
-      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('keyup'));
     }
     expect(expiry?.querySelector('input[data-collect="expMonth"]')).toBeNull();
     expect(expiry?.querySelector('input[data-collect="expYear"]')).toBeNull();
@@ -62,16 +64,34 @@ describe('mountNMIFields', () => {
   it('re-injects expiry inputs when corrected', async () => {
     await mountNMIFields();
     const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const input = expiry?.querySelector('input:not([data-collect])') || expiry?.querySelector('input');
+    const input =
+      expiry?.querySelector('input[data-smoothr-expiry-visible]') ||
+      expiry?.querySelector('input:not([data-collect])') ||
+      expiry?.querySelector('input');
     if (input) {
       input.value = '1';
-      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('keyup'));
       input.value = '12/34';
-      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('keyup'));
     }
     const month = expiry?.querySelector('input[data-collect="expMonth"]');
     const year = expiry?.querySelector('input[data-collect="expYear"]');
     expect(month?.value).toBe('12');
     expect(year?.value).toBe('2034');
+  });
+
+  it('injects visible expiry input and syncs hidden inputs', async () => {
+    await mountNMIFields();
+    const expiry = document.querySelector('[data-smoothr-card-expiry]');
+    const visible = expiry?.querySelector('input[data-smoothr-expiry-visible]');
+    expect(visible).not.toBeNull();
+    if (visible) {
+      visible.value = '08/26';
+      visible.dispatchEvent(new Event('keyup'));
+    }
+    const month = expiry?.querySelector('input[data-collect="expMonth"]');
+    const year = expiry?.querySelector('input[data-collect="expYear"]');
+    expect(month?.value).toBe('08');
+    expect(year?.value).toBe('2026');
   });
 });
