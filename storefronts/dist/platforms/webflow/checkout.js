@@ -8587,6 +8587,26 @@ __export(nmi_exports, {
   mountNMIFields: () => mountNMIFields,
   ready: () => ready4
 });
+function clearExpiryInputs() {
+  const wrapper = document.querySelector("[data-smoothr-card-expiry]");
+  if (!wrapper)
+    return;
+  const month = wrapper.querySelector('input[data-collect="expMonth"]');
+  const year = wrapper.querySelector('input[data-collect="expYear"]');
+  let removed = false;
+  if (month) {
+    wrapper.removeChild(month);
+    removed = true;
+  }
+  if (year) {
+    wrapper.removeChild(year);
+    removed = true;
+  }
+  if (removed) {
+    expiryInputsInjected = false;
+    log3("Removed invalid expiry inputs from wrapper");
+  }
+}
 async function resolveTokenizationKey() {
   var _a2, _b, _c;
   if (tokenizationKey !== void 0)
@@ -8721,31 +8741,43 @@ async function mountNMIFields() {
       console.warn("[NMI AUDIT] Missing tokenization key on wrapper");
     }
     const ensureInput = (target, collect, hidden) => {
-      if (target && !target.querySelector(`input[data-collect="${collect}"]`)) {
-        const input = document.createElement("input");
-        input.type = hidden ? "hidden" : "text";
-        input.setAttribute("data-collect", collect);
+      if (!target)
+        return null;
+      let el = target.querySelector(`input[data-collect="${collect}"]`);
+      if (!el) {
+        el = document.createElement("input");
+        el.type = hidden ? "hidden" : "text";
+        el.setAttribute("data-collect", collect);
         if (hidden)
-          input.style.display = "none";
-        target.appendChild(input);
+          el.style.display = "none";
+        target.appendChild(el);
         log3("Injected input for", collect);
       }
+      return el;
     };
     ensureInput(num, "cardNumber");
     ensureInput(cvc, "cvv");
     ensureInput(postal, "postal");
-    ensureInput(exp, "expMonth", true);
-    ensureInput(exp, "expYear", true);
-    log3("Injected inputs for expMonth and expYear into expiry wrapper");
+    let monthInput = ensureInput(exp, "expMonth", true);
+    let yearInput = ensureInput(exp, "expYear", true);
+    expiryInputsInjected = !!monthInput && !!yearInput;
+    if (expiryInputsInjected) {
+      log3("Injected inputs for expMonth and expYear into expiry wrapper");
+    }
     const expInput = (exp == null ? void 0 : exp.querySelector("input:not([data-collect])")) || (exp == null ? void 0 : exp.querySelector("input"));
-    const monthInput = exp == null ? void 0 : exp.querySelector('input[data-collect="expMonth"]');
-    const yearInput = exp == null ? void 0 : exp.querySelector('input[data-collect="expYear"]');
     const syncExpiry = () => {
-      if (!expInput || !monthInput || !yearInput)
+      if (!expInput)
         return;
       const raw = expInput.value || "";
       const match = raw.replace(/\s+/g, "").match(/^(\d{1,2})\/?(\d{2,4})$/);
       if (match) {
+        if (!expiryInputsInjected) {
+          monthInput = ensureInput(exp, "expMonth", true);
+          yearInput = ensureInput(exp, "expYear", true);
+          expiryInputsInjected = !!monthInput && !!yearInput;
+        }
+        if (!monthInput || !yearInput)
+          return;
         let [, m, y] = match;
         if (m.length === 1)
           m = "0" + m;
@@ -8755,9 +8787,9 @@ async function mountNMIFields() {
         yearInput.value = y;
         log3("Synced expiry", { expMonth: m, expYear: y });
       } else {
-        monthInput.value = "";
-        yearInput.value = "";
-        log3("Cleared expiry inputs");
+        clearExpiryInputs();
+        monthInput = null;
+        yearInput = null;
       }
     };
     if (expInput) {
@@ -8822,12 +8854,13 @@ async function createPaymentMethod4() {
     }
   });
 }
-var fieldsMounted4, mountPromise3, scriptPromise2, tokenizationKey, wrapperKeySet, DEBUG2, log3, warn3, nmi_default;
+var fieldsMounted4, mountPromise3, scriptPromise2, tokenizationKey, wrapperKeySet, expiryInputsInjected, DEBUG2, log3, warn3, nmi_default;
 var init_nmi = __esm({
   "storefronts/checkout/gateways/nmi.js"() {
     init_getPublicCredential();
     fieldsMounted4 = false;
     wrapperKeySet = false;
+    expiryInputsInjected = false;
     DEBUG2 = true;
     log3 = (...a) => DEBUG2 && console.log("[NMI]", ...a);
     warn3 = (...a) => DEBUG2 && console.warn("[NMI]", ...a);

@@ -5,10 +5,31 @@ let mountPromise;
 let scriptPromise;
 let tokenizationKey;
 let wrapperKeySet = false;
+let expiryInputsInjected = false;
 
 const DEBUG = true; // enable console logs for troubleshooting
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
+
+function clearExpiryInputs() {
+  const wrapper = document.querySelector('[data-smoothr-card-expiry]');
+  if (!wrapper) return;
+  const month = wrapper.querySelector('input[data-collect="expMonth"]');
+  const year = wrapper.querySelector('input[data-collect="expYear"]');
+  let removed = false;
+  if (month) {
+    wrapper.removeChild(month);
+    removed = true;
+  }
+  if (year) {
+    wrapper.removeChild(year);
+    removed = true;
+  }
+  if (removed) {
+    expiryInputsInjected = false;
+    log('Removed invalid expiry inputs from wrapper');
+  }
+}
 
 async function resolveTokenizationKey() {
   if (tokenizationKey !== undefined) return tokenizationKey;
@@ -146,36 +167,43 @@ export async function mountNMIFields() {
     }
 
     const ensureInput = (target, collect, hidden) => {
-      if (
-        target &&
-        !target.querySelector(`input[data-collect="${collect}"]`)
-      ) {
-        const input = document.createElement('input');
-        input.type = hidden ? 'hidden' : 'text';
-        input.setAttribute('data-collect', collect);
-        if (hidden) input.style.display = 'none';
-        target.appendChild(input);
+      if (!target) return null;
+      let el = target.querySelector(`input[data-collect="${collect}"]`);
+      if (!el) {
+        el = document.createElement('input');
+        el.type = hidden ? 'hidden' : 'text';
+        el.setAttribute('data-collect', collect);
+        if (hidden) el.style.display = 'none';
+        target.appendChild(el);
         log('Injected input for', collect);
       }
+      return el;
     };
 
     ensureInput(num, 'cardNumber');
     ensureInput(cvc, 'cvv');
     ensureInput(postal, 'postal');
-    ensureInput(exp, 'expMonth', true);
-    ensureInput(exp, 'expYear', true);
-    log('Injected inputs for expMonth and expYear into expiry wrapper');
+    let monthInput = ensureInput(exp, 'expMonth', true);
+    let yearInput = ensureInput(exp, 'expYear', true);
+    expiryInputsInjected = !!monthInput && !!yearInput;
+    if (expiryInputsInjected) {
+      log('Injected inputs for expMonth and expYear into expiry wrapper');
+    }
 
     const expInput =
       exp?.querySelector('input:not([data-collect])') || exp?.querySelector('input');
-    const monthInput = exp?.querySelector('input[data-collect="expMonth"]');
-    const yearInput = exp?.querySelector('input[data-collect="expYear"]');
 
     const syncExpiry = () => {
-      if (!expInput || !monthInput || !yearInput) return;
+      if (!expInput) return;
       const raw = expInput.value || '';
       const match = raw.replace(/\s+/g, '').match(/^(\d{1,2})\/?(\d{2,4})$/);
       if (match) {
+        if (!expiryInputsInjected) {
+          monthInput = ensureInput(exp, 'expMonth', true);
+          yearInput = ensureInput(exp, 'expYear', true);
+          expiryInputsInjected = !!monthInput && !!yearInput;
+        }
+        if (!monthInput || !yearInput) return;
         let [, m, y] = match;
         if (m.length === 1) m = '0' + m;
         if (y.length === 2) y = '20' + y;
@@ -183,9 +211,9 @@ export async function mountNMIFields() {
         yearInput.value = y;
         log('Synced expiry', { expMonth: m, expYear: y });
       } else {
-        monthInput.value = '';
-        yearInput.value = '';
-        log('Cleared expiry inputs');
+        clearExpiryInputs();
+        monthInput = null;
+        yearInput = null;
       }
     };
 
