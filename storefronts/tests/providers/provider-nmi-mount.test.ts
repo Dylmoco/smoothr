@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 let mountNMIFields: any;
+let ready: any;
 let getCredMock: any;
 
 beforeEach(async () => {
@@ -24,6 +25,7 @@ beforeEach(async () => {
 
   const mod = await import('../../checkout/gateways/nmi.js');
   mountNMIFields = mod.mountNMIFields;
+  ready = mod.ready;
 });
 
 describe('mountNMIFields', () => {
@@ -47,10 +49,11 @@ describe('mountNMIFields', () => {
     expect(expiry?.querySelector('input[data-collect="expYear"]')).toBeNull();
   });
 
-  it('removes expiry inputs when value is invalid', async () => {
+  it('does not inject hidden expiry inputs until value is valid', async () => {
     await mountNMIFields();
     const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    const input = expiry?.querySelector('input[data-smoothr-expiry-visible]') ||
+    const input =
+      expiry?.querySelector('input[data-smoothr-expiry-visible]') ||
       expiry?.querySelector('input:not([data-collect])') ||
       expiry?.querySelector('input');
     if (input) {
@@ -93,5 +96,16 @@ describe('mountNMIFields', () => {
     const year = expiry?.querySelector('input[data-collect="expYear"]');
     expect(month?.value).toBe('08');
     expect(year?.value).toBe('2026');
+  });
+
+  it('reports ready when all fields and tokenization key are present', async () => {
+    await mountNMIFields();
+    const expiry = document.querySelector('[data-smoothr-card-expiry]');
+    const visible = expiry?.querySelector('input[data-smoothr-expiry-visible]');
+    if (visible) {
+      visible.value = '11/30';
+      visible.dispatchEvent(new Event('keyup'));
+    }
+    expect(ready()).toBe(true);
   });
 });

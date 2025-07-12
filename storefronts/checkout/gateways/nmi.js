@@ -13,25 +13,7 @@ const DEBUG = true; // enable console logs for troubleshooting
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
-function clearExpiryInputs() {
-  const wrapper = document.querySelector('[data-smoothr-card-expiry]');
-  if (!wrapper) return;
-  const month = wrapper.querySelector('input[data-collect="expMonth"]');
-  const year = wrapper.querySelector('input[data-collect="expYear"]');
-  let removed = false;
-  if (month) {
-    wrapper.removeChild(month);
-    removed = true;
-  }
-  if (year) {
-    wrapper.removeChild(year);
-    removed = true;
-  }
-  if (removed) {
-    expiryInputsInjected = false;
-    log('Removed invalid expiry inputs from wrapper');
-  }
-}
+
 
 async function resolveTokenizationKey() {
   if (tokenizationKey !== undefined) return tokenizationKey;
@@ -230,9 +212,8 @@ export async function mountNMIFields() {
         yearInput.value = y;
         log('Synced expiry', { expMonth: m, expYear: y });
       } else {
-        clearExpiryInputs();
-        monthInput = null;
-        yearInput = null;
+        if (monthInput) monthInput.value = '';
+        if (yearInput) yearInput.value = '';
       }
     };
 
@@ -278,28 +259,21 @@ export function isMounted() {
 export function ready() {
   const number = document.querySelector('[data-collect="cardNumber"]');
   const cvc = document.querySelector('[data-collect="cvv"]');
-  const expiryVisible =
-    document.querySelector(
-      '[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]'
-    ) ||
-    document.querySelector(
-      '[data-smoothr-card-expiry] input:not([data-collect])'
-    ) ||
-    document.querySelector('[data-smoothr-card-expiry] input');
   const month = document.querySelector(
     '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
   );
   const year = document.querySelector(
     '[data-smoothr-card-expiry] input[data-collect="expYear"]'
   );
-  const expiryValid = !!month?.value && !!year?.value;
+  const wrapper = document.querySelector('[data-tokenization-key]');
+  const key = wrapper?.getAttribute('data-tokenization-key') || tokenizationKey;
   return (
     !!window.CollectJS &&
-    wrapperKeySet &&
+    !!key &&
     !!number &&
     !!cvc &&
-    !!expiryVisible &&
-    expiryValid
+    !!month &&
+    !!year
   );
 }
 

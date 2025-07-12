@@ -7717,8 +7717,8 @@ var DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, supabase, supabaseClient_default
 var init_supabaseClient = __esm({
   "supabase/supabaseClient.js"() {
     init_module5();
-    DEFAULT_SUPABASE_URL = "http://localhost:54321";
-    DEFAULT_SUPABASE_KEY = "anon-key";
+    DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
+    DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
     supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       global: {
         headers: {
@@ -8587,26 +8587,6 @@ __export(nmi_exports, {
   mountNMIFields: () => mountNMIFields,
   ready: () => ready4
 });
-function clearExpiryInputs() {
-  const wrapper = document.querySelector("[data-smoothr-card-expiry]");
-  if (!wrapper)
-    return;
-  const month = wrapper.querySelector('input[data-collect="expMonth"]');
-  const year = wrapper.querySelector('input[data-collect="expYear"]');
-  let removed = false;
-  if (month) {
-    wrapper.removeChild(month);
-    removed = true;
-  }
-  if (year) {
-    wrapper.removeChild(year);
-    removed = true;
-  }
-  if (removed) {
-    expiryInputsInjected = false;
-    log3("Removed invalid expiry inputs from wrapper");
-  }
-}
 async function resolveTokenizationKey() {
   var _a2, _b, _c;
   if (tokenizationKey !== void 0)
@@ -8801,9 +8781,10 @@ async function mountNMIFields() {
         yearInput.value = y;
         log3("Synced expiry", { expMonth: m, expYear: y });
       } else {
-        clearExpiryInputs();
-        monthInput = null;
-        yearInput = null;
+        if (monthInput)
+          monthInput.value = "";
+        if (yearInput)
+          yearInput.value = "";
       }
     };
     if (expInput) {
@@ -8839,19 +8820,15 @@ function isMounted4() {
 function ready4() {
   const number = document.querySelector('[data-collect="cardNumber"]');
   const cvc = document.querySelector('[data-collect="cvv"]');
-  const expiryVisible = document.querySelector(
-    "[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]"
-  ) || document.querySelector(
-    "[data-smoothr-card-expiry] input:not([data-collect])"
-  ) || document.querySelector("[data-smoothr-card-expiry] input");
   const month = document.querySelector(
     '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
   );
   const year = document.querySelector(
     '[data-smoothr-card-expiry] input[data-collect="expYear"]'
   );
-  const expiryValid = !!(month == null ? void 0 : month.value) && !!(year == null ? void 0 : year.value);
-  return !!window.CollectJS && wrapperKeySet && !!number && !!cvc && !!expiryVisible && expiryValid;
+  const wrapper = document.querySelector("[data-tokenization-key]");
+  const key = (wrapper == null ? void 0 : wrapper.getAttribute("data-tokenization-key")) || tokenizationKey;
+  return !!window.CollectJS && !!key && !!number && !!cvc && !!month && !!year;
 }
 async function createPaymentMethod4() {
   var _a2, _b;
