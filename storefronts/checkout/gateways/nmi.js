@@ -144,8 +144,8 @@ export async function mountNMIFields() {
           wrapper.setAttribute('data-tokenization-key', key);
           wrapperKeySet = true;
           log('Tokenization key applied to wrapper');
-          // ensure the attribute is committed before loading Collect.js
-          await Promise.resolve();
+          await new Promise(r => requestAnimationFrame(r));
+          log('Wrapper mutation flushed; injecting Collect.js next');
         } else {
           warn('Wrapper element for tokenization key not found');
         }
@@ -227,6 +227,7 @@ export async function mountNMIFields() {
 
     log('tokenization key DOM-ready');
     await loadCollectJs(key);
+    log('Collect.js injected, window.CollectJS:', !!window.CollectJS);
 
     if (num && !num.getAttribute('data-collect'))
       num.setAttribute('data-collect', 'ccnumber');
