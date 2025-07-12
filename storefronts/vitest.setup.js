@@ -1,4 +1,10 @@
 import { vi } from "vitest";
+import { config } from 'dotenv';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load environment variables for tests
+config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '.env.test') });
 
 if (typeof globalThis.window === "undefined") {
   globalThis.window = { location: { origin: "", href: "", hostname: "" } };
