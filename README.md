@@ -204,6 +204,16 @@ repository root with:
 npm test
 ```
 
+### Install workspace dependencies first
+
+Before running `npm test`, ensure development packages are installed inside both
+workspaces:
+
+```bash
+cd storefronts && npm install
+cd smoothr && npm install
+```
+
 The test command depends on `vitest` and other development packages. Vitest is
 declared in each workspace’s `package.json`, so **run `npm install` (or
 `npm ci`) inside each workspace – `storefronts`, `smoothr`, etc. – before
