@@ -100,7 +100,7 @@ function getAcceptCredentials() {
   };
 }
 
-const DEBUG = true; // temporary
+const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[AuthorizeNet]', ...a);
 const warn = (...a) => DEBUG && console.warn('[AuthorizeNet]', ...a);
 
