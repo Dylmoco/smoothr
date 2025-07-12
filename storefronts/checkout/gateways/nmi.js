@@ -96,12 +96,14 @@ export async function mountNMIFields() {
     let num;
     let exp;
     let cvc;
+    let postal;
     let delay = 100;
     let waited = 0;
     while (waited < 5000) {
       num = document.querySelector('[data-smoothr-card-number]');
       exp = document.querySelector('[data-smoothr-card-expiry]');
       cvc = document.querySelector('[data-smoothr-card-cvc]');
+      postal = document.querySelector('[data-smoothr-postal]');
       if (num && exp) break;
       await new Promise(res => setTimeout(res, delay));
       waited += delay;
@@ -142,6 +144,20 @@ export async function mountNMIFields() {
     if (auditWrapper && !auditWrapper.hasAttribute('data-tokenization-key')) {
       console.warn('[NMI AUDIT] Missing tokenization key on wrapper');
     }
+
+    const ensureInput = (target, collect) => {
+      if (target && !target.querySelector('input')) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.setAttribute('data-collect', collect);
+        target.appendChild(input);
+        log('Injected input for', collect);
+      }
+    };
+
+    ensureInput(num, 'cardNumber');
+    ensureInput(cvc, 'cvv');
+    ensureInput(postal, 'postal');
 
     await loadCollectJs(key);
 
