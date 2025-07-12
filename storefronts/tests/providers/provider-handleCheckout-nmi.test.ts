@@ -3,9 +3,17 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 let handleCheckout: any;
 let orderPayload: any;
+let nmiMock: any;
+let ordersCall = 0;
+let storeFromCall = 0;
 
 vi.mock('../../../shared/checkout/providers/nmi.ts', () => {
-  return { default: vi.fn(async () => ({ success: true, data: { transactionid: 't123' } })) };
+  nmiMock = vi.fn(async () => ({
+    success: true,
+    transaction_id: 't123',
+    data: new URLSearchParams('response=1&transactionid=t123')
+  }));
+  return { default: nmiMock };
 });
 
 vi.mock('../../../smoothr/lib/findOrCreateCustomer.ts', () => {
@@ -17,11 +25,26 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
     default: {
       from: (table: string) => {
         if (table === 'stores') {
-          return {
-            select: vi.fn(() => ({
-              or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
-            }))
-          };
+          storeFromCall++;
+          if (storeFromCall === 1) {
+            return {
+              select: vi.fn(() => ({
+                or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
+              }))
+            };
+          }
+          if (storeFromCall === 2) {
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(async () => ({
+                    data: { prefix: 'ST', order_sequence: 1 },
+                    error: null
+                  }))
+                }))
+              }))
+            };
+          }
         }
         if (table === 'store_settings') {
           return {
@@ -33,14 +56,34 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
           };
         }
         if (table === 'orders') {
-          return {
-            upsert: vi.fn((payload: any) => {
-              orderPayload = payload;
-              return {
-                select: vi.fn(() => ({ single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null })) }))
-              };
-            })
-          };
+          ordersCall++;
+          if (ordersCall === 1) {
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  eq: vi.fn(() => ({
+                    eq: vi.fn(() => ({
+                      eq: vi.fn(() => ({
+                        order: vi.fn(() => ({
+                          limit: vi.fn(async () => ({ data: [], error: null }))
+                        }))
+                      }))
+                    }))
+                  }))
+                }))
+              }))
+            };
+          }
+          if (ordersCall === 2) {
+            return {
+              upsert: vi.fn((payload: any) => {
+                orderPayload = payload;
+                return {
+                  select: vi.fn(() => ({ single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null })) }))
+                };
+              })
+            };
+          }
         }
         return {};
       }
@@ -56,6 +99,7 @@ async function loadModule() {
 beforeEach(async () => {
   vi.resetModules();
   orderPayload = undefined;
+  ordersCall = 0;
   await loadModule();
 });
 
@@ -85,9 +129,13 @@ describe('handleCheckout nmi', () => {
     };
 
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
+    expect(nmiMock).toHaveBeenCalledWith(
+      expect.objectContaining({ payment_token: 'tok_123', amount: 100 })
+    );
     expect(orderPayload.payment_intent_id).toBe('t123');
     expect(orderPayload.raw_data.transaction_id).toBe('t123');
-    expect(orderPayload.raw_data.transactionResponse).toEqual({ transactionid: 't123' });
+    expect(orderPayload.raw_data.transactionResponse).toBeInstanceOf(URLSearchParams);
+    expect(orderPayload.raw_data.transactionResponse.get('transactionid')).toBe('t123');
     expect(orderPayload.status).toBe('paid');
     expect(typeof orderPayload.paid_at).toBe('string');
   });

@@ -288,6 +288,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       billing_last_name,
       cart,
       total,
+      ...(provider === 'nmi' ? { amount: total } : {}),
       currency,
       description,
       metaCartString,
@@ -314,7 +315,11 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     transactionId = transId || null;
     paymentIntentId = transId || null;
   } else if (provider === 'nmi') {
-    const transId = providerResult?.data?.transactionid;
+    const transId =
+      providerResult?.transaction_id ??
+      (typeof providerResult?.data?.get === 'function'
+        ? providerResult.data.get('transactionid')
+        : undefined);
     transactionId = transId || null;
     paymentIntentId = transId || null;
   } else {
