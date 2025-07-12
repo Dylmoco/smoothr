@@ -40,6 +40,14 @@ describe('mountNMIFields', () => {
     expect(wrapper?.getAttribute('data-tokenization-key')).toBe('tok_key');
   });
 
+  it('only sets tokenization key on the common wrapper', async () => {
+    await mountNMIFields();
+    const wrappers = document.querySelectorAll('[data-tokenization-key]');
+    expect(wrappers.length).toBe(1);
+    const wrapper = document.querySelector('[data-smoothr-card-number]')?.parentElement;
+    expect(wrappers[0]).toBe(wrapper);
+  });
+
   it('injects other inputs and removes expiry inputs when empty', async () => {
     await mountNMIFields();
     const num = document.querySelector('[data-smoothr-card-number]');

@@ -38,7 +38,7 @@ async function resolveTokenizationKey() {
   return tokenizationKey;
 }
 
-function loadCollectJs(tokenKey, wrapper) {
+function loadCollectJs(_tokenKey, wrapper) {
   if (window.CollectJS) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
@@ -49,11 +49,12 @@ function loadCollectJs(tokenKey, wrapper) {
     return Promise.resolve();
   }
   scriptPromise = new Promise(resolve => {
-    let script = document.querySelector('script[data-tokenization-key]');
+    let script = document.querySelector(
+      'script[src*="secure.networkmerchants.com/token/Collect.js"]'
+    );
     if (!script) {
       script = document.createElement('script');
       script.src = 'https://secure.networkmerchants.com/token/Collect.js';
-      if (tokenKey) script.setAttribute('data-tokenization-key', tokenKey);
       (wrapper || document.head).appendChild(script);
       script.addEventListener('load', () => resolve());
     } else {
@@ -100,26 +101,22 @@ export async function mountNMIFields() {
      */
 
     const key = await resolveTokenizationKey();
+    const fields = [num, exp, cvc].filter(Boolean);
+    wrapper = fields[0];
+    while (wrapper && !fields.every(f => wrapper.contains(f))) {
+      wrapper = wrapper.parentElement;
+    }
 
-    if (!wrapperKeySet) {
-      if (key) {
-        const fields = [num, exp, cvc].filter(Boolean);
-        wrapper = fields[0];
-        while (wrapper && !fields.every(f => wrapper.contains(f))) {
-          wrapper = wrapper.parentElement;
-        }
-        if (wrapper) {
-          wrapper.setAttribute('data-tokenization-key', key);
-          wrapperKeySet = true;
-          log('Tokenization key applied to wrapper');
-          await new Promise(r => requestAnimationFrame(r));
-          log('Wrapper mutation flushed; injecting Collect.js next');
-        } else {
-          warn('Wrapper element for tokenization key not found');
-        }
-      } else {
-        warn('No tokenization key available for mounting');
-      }
+    if (key && wrapper && !wrapperKeySet) {
+      wrapper.setAttribute('data-tokenization-key', key);
+      wrapperKeySet = true;
+      log('Tokenization key applied to wrapper');
+      await new Promise(r => requestAnimationFrame(r));
+      log('Wrapper mutation flushed; injecting Collect.js next');
+    } else if (!key) {
+      warn('No tokenization key available for mounting');
+    } else if (!wrapper) {
+      warn('Wrapper element for tokenization key not found');
     }
 
     const wrapperAudit = [num, exp, cvc].filter(Boolean);
@@ -131,13 +128,6 @@ export async function mountNMIFields() {
       console.warn('[NMI AUDIT] Missing tokenization key on wrapper');
     }
 
-    if (!wrapper) {
-      const fields = [num, exp, cvc].filter(Boolean);
-      wrapper = fields[0];
-      while (wrapper && !fields.every(f => wrapper.contains(f))) {
-        wrapper = wrapper.parentElement;
-      }
-    }
 
     const ensureInput = (target, collect, hidden) => {
       if (!target) return null;
