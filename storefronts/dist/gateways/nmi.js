@@ -6,30 +6,14 @@ let scriptPromise;
 let tokenizationKey;
 let wrapperKeySet = false;
 let expiryInputsInjected = false;
+let visibleExpiryInjected = false;
+let visibleAndHiddenLogged = false;
 
 const DEBUG = true; // enable console logs for troubleshooting
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
-function clearExpiryInputs() {
-  const wrapper = document.querySelector('[data-smoothr-card-expiry]');
-  if (!wrapper) return;
-  const month = wrapper.querySelector('input[data-collect="expMonth"]');
-  const year = wrapper.querySelector('input[data-collect="expYear"]');
-  let removed = false;
-  if (month) {
-    wrapper.removeChild(month);
-    removed = true;
-  }
-  if (year) {
-    wrapper.removeChild(year);
-    removed = true;
-  }
-  if (removed) {
-    expiryInputsInjected = false;
-    log('Removed invalid expiry inputs from wrapper');
-  }
-}
+
 
 async function resolveTokenizationKey() {
   if (tokenizationKey !== undefined) return tokenizationKey;
@@ -136,6 +120,17 @@ export async function mountNMIFields() {
       return;
     }
 
+    if (exp && !exp.querySelector('input')) {
+      const visible = document.createElement('input');
+      visible.type = 'text';
+      visible.inputMode = 'numeric';
+      visible.placeholder = 'MM/YY';
+      visible.autocomplete = 'cc-exp';
+      visible.setAttribute('data-smoothr-expiry-visible', '');
+      exp.appendChild(visible);
+      visibleExpiryInjected = true;
+    }
+
     const key = await resolveTokenizationKey();
 
     if (!wrapperKeySet) {
@@ -149,6 +144,8 @@ export async function mountNMIFields() {
           wrapper.setAttribute('data-tokenization-key', key);
           wrapperKeySet = true;
           log('Tokenization key applied to wrapper');
+          // ensure the attribute is committed before loading Collect.js
+          await Promise.resolve();
         } else {
           warn('Wrapper element for tokenization key not found');
         }
@@ -187,7 +184,9 @@ export async function mountNMIFields() {
     let yearInput = null;
 
     const expInput =
-      exp?.querySelector('input:not([data-collect])') || exp?.querySelector('input');
+      exp?.querySelector('input[data-smoothr-expiry-visible]') ||
+      exp?.querySelector('input:not([data-collect])') ||
+      exp?.querySelector('input');
 
     const syncExpiry = () => {
       if (!expInput) return;
@@ -199,7 +198,12 @@ export async function mountNMIFields() {
           yearInput = ensureInput(exp, 'expYear', true);
           expiryInputsInjected = !!monthInput && !!yearInput;
           if (expiryInputsInjected) {
-            log('Injected expiry inputs after valid parsing');
+            if (visibleExpiryInjected && !visibleAndHiddenLogged) {
+              console.log('[NMI] Injected visible expiry field + hidden expiry inputs');
+              visibleAndHiddenLogged = true;
+            } else {
+              log('Injected expiry inputs after valid parsing');
+            }
           }
         }
         if (!monthInput || !yearInput) return;
@@ -210,18 +214,18 @@ export async function mountNMIFields() {
         yearInput.value = y;
         log('Synced expiry', { expMonth: m, expYear: y });
       } else {
-        clearExpiryInputs();
-        monthInput = null;
-        yearInput = null;
+        if (monthInput) monthInput.value = '';
+        if (yearInput) yearInput.value = '';
       }
     };
 
     if (expInput) {
-      expInput.addEventListener('input', syncExpiry);
-      expInput.addEventListener('blur', syncExpiry);
+      expInput.addEventListener('keyup', syncExpiry);
+      expInput.addEventListener('change', syncExpiry);
       syncExpiry();
     }
 
+    log('tokenization key DOM-ready');
     await loadCollectJs(key);
 
     if (num && !num.getAttribute('data-collect'))
@@ -242,11 +246,38 @@ export async function mountNMIFields() {
 }
 
 export function isMounted() {
-  return fieldsMounted;
+  const number = document.querySelector('[data-collect="cardNumber"]');
+  const cvc = document.querySelector('[data-collect="cvv"]');
+  const expiryVisible =
+    document.querySelector(
+      '[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]'
+    ) ||
+    document.querySelector(
+      '[data-smoothr-card-expiry] input:not([data-collect])'
+    ) ||
+    document.querySelector('[data-smoothr-card-expiry] input');
+  return !!number && !!cvc && !!expiryVisible;
 }
 
 export function ready() {
-  return fieldsMounted && !!window.CollectJS;
+  const number = document.querySelector('[data-collect="cardNumber"]');
+  const cvc = document.querySelector('[data-collect="cvv"]');
+  const month = document.querySelector(
+    '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
+  );
+  const year = document.querySelector(
+    '[data-smoothr-card-expiry] input[data-collect="expYear"]'
+  );
+  const wrapper = document.querySelector('[data-tokenization-key]');
+  const key = wrapper?.getAttribute('data-tokenization-key') || tokenizationKey;
+  return (
+    !!window.CollectJS &&
+    !!key &&
+    !!number &&
+    !!cvc &&
+    !!month &&
+    !!year
+  );
 }
 
 export async function createPaymentMethod() {
@@ -255,6 +286,7 @@ export async function createPaymentMethod() {
   }
 
   const expiryEl =
+    document.querySelector('[data-smoothr-card-expiry]')?.querySelector('input[data-smoothr-expiry-visible]') ||
     document.querySelector('[data-smoothr-card-expiry]')?.querySelector('input') ||
     document.querySelector('[data-smoothr-card-expiry]');
   const expiryRaw = expiryEl?.value || '';
