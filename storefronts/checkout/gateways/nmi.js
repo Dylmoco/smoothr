@@ -1,4 +1,4 @@
-import supabase from '../../../supabase/supabaseClient.js';
+import { getPublicCredential } from '../getPublicCredential.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -17,17 +17,8 @@ async function resolveTokenizationKey() {
   const gateway = window.SMOOTHR_CONFIG?.active_payment_gateway || 'nmi';
 
   try {
-    const { data, error } = await supabase
-      .from('store_integrations')
-      .select('settings')
-      .eq('store_id', storeId)
-      .contains('settings', { gateway })
-      .maybeSingle();
-
-    if (error) {
-      warn('Integration lookup failed:', error.message || error);
-    }
-    tokenizationKey = data?.settings?.tokenization_key || null;
+    const cred = await getPublicCredential(storeId, 'nmi', gateway);
+    tokenizationKey = cred?.settings?.tokenization_key || null;
   } catch (e) {
     warn('Integration fetch error:', e?.message || e);
     tokenizationKey = null;

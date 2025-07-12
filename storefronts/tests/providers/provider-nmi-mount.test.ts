@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 let mountNMIFields: any;
-let fromMock: any;
-let eqMock: any;
-let containsMock: any;
-let maybeSingleMock: any;
-let selectMock: any;
+let getCredMock: any;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -16,14 +12,10 @@ beforeEach(async () => {
     document.body.appendChild(div);
   });
 
-  maybeSingleMock = vi.fn(async () => ({ data: { settings: { tokenization_key: 'tok_key' } }, error: null }));
-  containsMock = vi.fn(() => ({ maybeSingle: maybeSingleMock }));
-  eqMock = vi.fn(() => ({ contains: containsMock }));
-  selectMock = vi.fn(() => ({ eq: eqMock }));
-  fromMock = vi.fn(() => ({ select: selectMock }));
+  getCredMock = vi.fn(async () => ({ settings: { tokenization_key: 'tok_key' } }));
 
-  vi.mock('../../../supabase/supabaseClient.js', () => ({
-    default: { from: fromMock }
+  vi.mock('../../checkout/getPublicCredential.js', () => ({
+    getPublicCredential: getCredMock
   }));
 
   window.SMOOTHR_CONFIG = { storeId: 'store-1', active_payment_gateway: 'nmi' } as any;
@@ -33,11 +25,9 @@ beforeEach(async () => {
 });
 
 describe('mountNMIFields', () => {
-  it('loads tokenization key from supabase and applies it', async () => {
+  it('loads tokenization key and applies it', async () => {
     await mountNMIFields();
-    expect(fromMock).toHaveBeenCalledWith('store_integrations');
-    expect(eqMock).toHaveBeenCalledWith('store_id', 'store-1');
-    expect(containsMock).toHaveBeenCalledWith('settings', { gateway: 'nmi' });
+    expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
     const num = document.querySelector('[data-smoothr-card-number]');
     expect(num?.getAttribute('data-tokenization-key')).toBe('tok_key');
   });

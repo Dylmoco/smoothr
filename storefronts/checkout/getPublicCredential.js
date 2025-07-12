@@ -1,14 +1,20 @@
 import supabase from '../../supabase/supabaseClient.js';
 
-export async function getPublicCredential(storeId, integrationId) {
+export async function getPublicCredential(storeId, integrationId, gateway) {
   if (!storeId || !integrationId) return null;
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('store_integrations')
       .select('api_key, settings')
-      .eq('store_id', storeId)
-      .eq('provider', integrationId)
-      .maybeSingle();
+      .eq('store_id', storeId);
+    if (gateway) {
+      query = query.or(
+        `provider.eq.${integrationId},settings->>gateway.eq.${gateway}`
+      );
+    } else {
+      query = query.eq('provider', integrationId);
+    }
+    const { data, error } = await query.maybeSingle();
     if (error) {
       console.warn('[Smoothr] Credential lookup failed:', error.message || error);
       return null;
