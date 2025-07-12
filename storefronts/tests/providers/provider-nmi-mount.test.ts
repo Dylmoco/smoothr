@@ -7,7 +7,7 @@ beforeEach(async () => {
   vi.resetModules();
   document.body.innerHTML = '';
   const wrapper = document.createElement('div');
-  ['card-number', 'card-expiry', 'card-cvc'].forEach(attr => {
+  ['card-number', 'card-expiry', 'card-cvc', 'postal'].forEach(attr => {
     const div = document.createElement('div');
     div.setAttribute(`data-smoothr-${attr}`, '');
     wrapper.appendChild(div);
@@ -32,5 +32,15 @@ describe('mountNMIFields', () => {
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
     const wrapper = document.querySelector('[data-smoothr-card-number]')?.parentElement;
     expect(wrapper?.getAttribute('data-tokenization-key')).toBe('tok_key');
+  });
+
+  it('injects inputs when missing', async () => {
+    await mountNMIFields();
+    const num = document.querySelector('[data-smoothr-card-number]');
+    const cvc = document.querySelector('[data-smoothr-card-cvc]');
+    const postal = document.querySelector('[data-smoothr-postal]');
+    expect(num?.querySelector('input')?.getAttribute('data-collect')).toBe('cardNumber');
+    expect(cvc?.querySelector('input')?.getAttribute('data-collect')).toBe('cvv');
+    expect(postal?.querySelector('input')?.getAttribute('data-collect')).toBe('postal');
   });
 });

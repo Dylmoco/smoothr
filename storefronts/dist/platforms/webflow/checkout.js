@@ -7717,8 +7717,8 @@ var DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, supabase, supabaseClient_default
 var init_supabaseClient = __esm({
   "supabase/supabaseClient.js"() {
     init_module5();
-    DEFAULT_SUPABASE_URL = "http://example.com";
-    DEFAULT_SUPABASE_KEY = "anon";
+    DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
+    DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
     supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
       global: {
         headers: {
@@ -8675,12 +8675,14 @@ async function mountNMIFields() {
     let num;
     let exp;
     let cvc;
+    let postal;
     let delay = 100;
     let waited = 0;
     while (waited < 5e3) {
       num = document.querySelector("[data-smoothr-card-number]");
       exp = document.querySelector("[data-smoothr-card-expiry]");
       cvc = document.querySelector("[data-smoothr-card-cvc]");
+      postal = document.querySelector("[data-smoothr-postal]");
       if (num && exp)
         break;
       await new Promise((res) => setTimeout(res, delay));
@@ -8692,22 +8694,44 @@ async function mountNMIFields() {
       return;
     }
     const key = await resolveTokenizationKey();
-    if (key) {
-      if (num)
-        num.setAttribute("data-tokenization-key", key);
-      if (exp)
-        exp.setAttribute("data-tokenization-key", key);
-      if (cvc)
-        cvc.setAttribute("data-tokenization-key", key);
-    } else {
-      warn3("No tokenization key available for mounting");
-    }
-    ["card-number", "card-expiry", "card-cvc"].forEach((field) => {
-      const el = document.querySelector(`[data-smoothr-card-${field}]`);
-      if (el && !el.hasAttribute("data-tokenization-key")) {
-        console.warn(`[NMI AUDIT] Missing tokenization key on field: ${field}`);
+    if (!wrapperKeySet) {
+      if (key) {
+        const fields = [num, exp, cvc].filter(Boolean);
+        let wrapper = fields[0];
+        while (wrapper && !fields.every((f) => wrapper.contains(f))) {
+          wrapper = wrapper.parentElement;
+        }
+        if (wrapper) {
+          wrapper.setAttribute("data-tokenization-key", key);
+          wrapperKeySet = true;
+          log3("Tokenization key applied to wrapper");
+        } else {
+          warn3("Wrapper element for tokenization key not found");
+        }
+      } else {
+        warn3("No tokenization key available for mounting");
       }
-    });
+    }
+    const wrapperAudit = [num, exp, cvc].filter(Boolean);
+    let auditWrapper = wrapperAudit[0];
+    while (auditWrapper && !wrapperAudit.every((f) => auditWrapper.contains(f))) {
+      auditWrapper = auditWrapper.parentElement;
+    }
+    if (auditWrapper && !auditWrapper.hasAttribute("data-tokenization-key")) {
+      console.warn("[NMI AUDIT] Missing tokenization key on wrapper");
+    }
+    const ensureInput = (target, collect) => {
+      if (target && !target.querySelector("input")) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.setAttribute("data-collect", collect);
+        target.appendChild(input);
+        log3("Injected input for", collect);
+      }
+    };
+    ensureInput(num, "cardNumber");
+    ensureInput(cvc, "cvv");
+    ensureInput(postal, "postal");
     await loadCollectJs(key);
     if (num && !num.getAttribute("data-collect"))
       num.setAttribute("data-collect", "ccnumber");
@@ -8765,11 +8789,12 @@ async function createPaymentMethod4() {
     }
   });
 }
-var fieldsMounted4, mountPromise3, scriptPromise2, tokenizationKey, DEBUG2, log3, warn3, nmi_default;
+var fieldsMounted4, mountPromise3, scriptPromise2, tokenizationKey, wrapperKeySet, DEBUG2, log3, warn3, nmi_default;
 var init_nmi = __esm({
   "storefronts/checkout/gateways/nmi.js"() {
     init_getPublicCredential();
     fieldsMounted4 = false;
+    wrapperKeySet = false;
     DEBUG2 = true;
     log3 = (...a) => DEBUG2 && console.log("[NMI]", ...a);
     warn3 = (...a) => DEBUG2 && console.warn("[NMI]", ...a);
