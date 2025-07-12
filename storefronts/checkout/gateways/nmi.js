@@ -8,7 +8,7 @@ let wrapperKeySet = false;
 let expiryInputsInjected = false;
 let visibleAndHiddenLogged = false;
 
-const DEBUG = true; // enable console logs for troubleshooting
+const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
