@@ -4,6 +4,7 @@ let fieldsMounted = false;
 let mountPromise;
 let scriptPromise;
 let tokenizationKey;
+let wrapperKeySet = false;
 
 const DEBUG = true; // enable console logs for troubleshooting
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -114,20 +115,33 @@ export async function mountNMIFields() {
 
     const key = await resolveTokenizationKey();
 
-    if (key) {
-      if (num) num.setAttribute('data-tokenization-key', key);
-      if (exp) exp.setAttribute('data-tokenization-key', key);
-      if (cvc) cvc.setAttribute('data-tokenization-key', key);
-    } else {
-      warn('No tokenization key available for mounting');
+    if (!wrapperKeySet) {
+      if (key) {
+        const fields = [num, exp, cvc].filter(Boolean);
+        let wrapper = fields[0];
+        while (wrapper && !fields.every(f => wrapper.contains(f))) {
+          wrapper = wrapper.parentElement;
+        }
+        if (wrapper) {
+          wrapper.setAttribute('data-tokenization-key', key);
+          wrapperKeySet = true;
+          log('Tokenization key applied to wrapper');
+        } else {
+          warn('Wrapper element for tokenization key not found');
+        }
+      } else {
+        warn('No tokenization key available for mounting');
+      }
     }
 
-    ['card-number', 'card-expiry', 'card-cvc'].forEach(field => {
-      const el = document.querySelector(`[data-smoothr-card-${field}]`);
-      if (el && !el.hasAttribute('data-tokenization-key')) {
-        console.warn(`[NMI AUDIT] Missing tokenization key on field: ${field}`);
-      }
-    });
+    const wrapperAudit = [num, exp, cvc].filter(Boolean);
+    let auditWrapper = wrapperAudit[0];
+    while (auditWrapper && !wrapperAudit.every(f => auditWrapper.contains(f))) {
+      auditWrapper = auditWrapper.parentElement;
+    }
+    if (auditWrapper && !auditWrapper.hasAttribute('data-tokenization-key')) {
+      console.warn('[NMI AUDIT] Missing tokenization key on wrapper');
+    }
 
     await loadCollectJs(key);
 
