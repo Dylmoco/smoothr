@@ -213,6 +213,17 @@ directory first so that Vitest and other dev dependencies from the local
 npm test
 ```
 
+## Testing
+
+Create a `.env.test` file in this directory with your Supabase project
+credentials. The test runner automatically loads this file so unit tests can
+access the configuration:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
 
 ## Supabase Proxy Live Rates Function
 
