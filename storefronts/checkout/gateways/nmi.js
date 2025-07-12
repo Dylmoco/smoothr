@@ -6,6 +6,8 @@ let scriptPromise;
 let tokenizationKey;
 let wrapperKeySet = false;
 let expiryInputsInjected = false;
+let visibleExpiryInjected = false;
+let visibleAndHiddenLogged = false;
 
 const DEBUG = true; // enable console logs for troubleshooting
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -136,6 +138,17 @@ export async function mountNMIFields() {
       return;
     }
 
+    if (exp && !exp.querySelector('input')) {
+      const visible = document.createElement('input');
+      visible.type = 'text';
+      visible.inputMode = 'numeric';
+      visible.placeholder = 'MM/YY';
+      visible.autocomplete = 'cc-exp';
+      visible.setAttribute('data-smoothr-expiry-visible', '');
+      exp.appendChild(visible);
+      visibleExpiryInjected = true;
+    }
+
     const key = await resolveTokenizationKey();
 
     if (!wrapperKeySet) {
@@ -187,7 +200,9 @@ export async function mountNMIFields() {
     let yearInput = null;
 
     const expInput =
-      exp?.querySelector('input:not([data-collect])') || exp?.querySelector('input');
+      exp?.querySelector('input[data-smoothr-expiry-visible]') ||
+      exp?.querySelector('input:not([data-collect])') ||
+      exp?.querySelector('input');
 
     const syncExpiry = () => {
       if (!expInput) return;
@@ -199,7 +214,12 @@ export async function mountNMIFields() {
           yearInput = ensureInput(exp, 'expYear', true);
           expiryInputsInjected = !!monthInput && !!yearInput;
           if (expiryInputsInjected) {
-            log('Injected expiry inputs after valid parsing');
+            if (visibleExpiryInjected && !visibleAndHiddenLogged) {
+              console.log('[NMI] Injected visible expiry field + hidden expiry inputs');
+              visibleAndHiddenLogged = true;
+            } else {
+              log('Injected expiry inputs after valid parsing');
+            }
           }
         }
         if (!monthInput || !yearInput) return;
@@ -217,8 +237,8 @@ export async function mountNMIFields() {
     };
 
     if (expInput) {
-      expInput.addEventListener('input', syncExpiry);
-      expInput.addEventListener('blur', syncExpiry);
+      expInput.addEventListener('keyup', syncExpiry);
+      expInput.addEventListener('change', syncExpiry);
       syncExpiry();
     }
 
@@ -255,6 +275,7 @@ export async function createPaymentMethod() {
   }
 
   const expiryEl =
+    document.querySelector('[data-smoothr-card-expiry]')?.querySelector('input[data-smoothr-expiry-visible]') ||
     document.querySelector('[data-smoothr-card-expiry]')?.querySelector('input') ||
     document.querySelector('[data-smoothr-card-expiry]');
   const expiryRaw = expiryEl?.value || '';
