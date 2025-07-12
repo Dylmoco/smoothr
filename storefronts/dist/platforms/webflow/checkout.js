@@ -8736,6 +8736,7 @@ async function mountNMIFields() {
     ensureInput(postal, "postal");
     ensureInput(exp, "expMonth", true);
     ensureInput(exp, "expYear", true);
+    log3("Injected inputs for expMonth and expYear into expiry wrapper");
     const expInput = (exp == null ? void 0 : exp.querySelector("input:not([data-collect])")) || (exp == null ? void 0 : exp.querySelector("input"));
     const monthInput = exp == null ? void 0 : exp.querySelector('input[data-collect="expMonth"]');
     const yearInput = exp == null ? void 0 : exp.querySelector('input[data-collect="expYear"]');
