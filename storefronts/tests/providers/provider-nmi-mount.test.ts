@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let mountNMIFields: any;
 let ready: any;
 let getCredMock: any;
+let appendChildSpy: any;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -19,6 +20,15 @@ beforeEach(async () => {
   });
   document.body.appendChild(wrapper);
 
+  appendChildSpy = vi.spyOn(document.head, 'appendChild').mockImplementation(el => {
+    if ((el as HTMLElement).tagName === 'SCRIPT') {
+      window.CollectJS = { configure: vi.fn(), tokenize: vi.fn() } as any;
+      setTimeout(() => el.dispatchEvent(new Event('load')));
+      return el;
+    }
+    return HTMLElement.prototype.appendChild.call(document.head, el);
+  });
+
   getCredMock = vi.fn(async () => ({ settings: { tokenization_key: 'tok_key' } }));
 
   vi.mock('../../checkout/getPublicCredential.js', () => ({
@@ -32,11 +42,16 @@ beforeEach(async () => {
   ready = mod.ready;
 });
 
+afterEach(() => {
+  appendChildSpy?.mockRestore();
+  window.CollectJS = undefined as any;
+});
+
 describe('mountNMIFields', () => {
   it('loads tokenization key and applies it', async () => {
     await mountNMIFields();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
-    const els = document.querySelectorAll('[data-tokenization-key]');
+    const els = document.querySelectorAll('div[data-tokenization-key]');
     expect(els.length).toBe(3);
     els.forEach(el => {
       expect(el.getAttribute('data-tokenization-key')).toBe('tok_key');
