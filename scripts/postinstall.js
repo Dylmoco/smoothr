@@ -3,21 +3,14 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
-// ESM-compatible __dirname
+// ✅ ESM-safe __dirname
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ✅ Guard: only run from monorepo root
-if (process.cwd() !== path.resolve(__dirname, '..')) {
-  console.log('[Smoothr] Skipping postinstall — not at monorepo root');
+// 🔒 Only run this script if we're at the monorepo root (not inside a workspace)
+const cwd = process.cwd();
+const root = path.resolve(__dirname, '..');
+
+if (cwd !== root) {
+  console.log(`[Smoothr] Skipping postinstall — running from ${cwd}, not monorepo root`);
   process.exit(0);
-}
-
-const workspaces = ['storefronts', 'smoothr'];
-
-for (const ws of workspaces) {
-  const modulesDir = `${ws}/node_modules`;
-  if (!fs.existsSync(modulesDir)) {
-    console.log(`Installing dependencies for ${ws}...`);
-    execSync(`npm --workspace ${ws} install`, { stdio: 'inherit' });
-  }
 }
