@@ -4,7 +4,7 @@ import waitForElement from '../utils/waitForElement.js';
 let tokenizationKey;
 let cardNumberDiv;
 let expiryDiv;
-cvcDiv;
+let cvcDiv; // Fixed: Added 'let' to prevent ReferenceError
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -79,6 +79,13 @@ export async function mountNMIFields() {
       throw new Error('Required card input divs not found');
     }
 
+    log('Found card input divs:', {
+      cardNumber: !!cardNumberDiv,
+      expiry: !!expiryDiv,
+      cvc: !!cvcDiv,
+      postal: !!postalDiv,
+    });
+
     [cardNumberDiv, expiryDiv, cvcDiv].forEach(el =>
       el.setAttribute('data-tokenization-key', tokenizationKey)
     );
@@ -92,6 +99,7 @@ export async function mountNMIFields() {
       expiryInput = document.createElement('input');
       expiryInput.setAttribute('data-collect', 'ccexp');
       expiryInput.type = 'text';
+      expiryInput.placeholder = 'MM/YY';
       expiryDiv.appendChild(expiryInput);
     }
 
@@ -131,6 +139,9 @@ export async function mountNMIFields() {
             },
             callback: () => {
               log('CollectJS configured successfully');
+              // Check for iframes after configuration
+              const iframes = document.querySelectorAll('iframe');
+              log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
               resolve();
             },
             fieldsAvailable: () => {
@@ -163,12 +174,16 @@ export async function mountNMIFields() {
           reject(new Error('Collect.js script failed to load'));
         });
       } else if (window.CollectJS && typeof window.CollectJS.tokenize === 'function') {
+        log('CollectJS already loaded');
         setupCollect();
       } else {
         script.src = scriptSrc; // Force reload with cache-busting
         document.head.appendChild(script);
         script.addEventListener('load', setupCollect);
-        script.addEventListener('error', reject);
+        script.addEventListener('error', () => {
+          warn('Failed to load Collect.js script');
+          reject(new Error('Collect.js script failed to load'));
+        });
       }
     });
   } catch (e) {
@@ -183,6 +198,16 @@ export function isMounted() {
   const cvcFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_CVC} iframe`);
   const monthInput = document.querySelector('input[data-collect="expMonth"]');
   const yearInput = document.querySelector('input[data-collect="expYear"]');
+
+  log('isMounted check:', {
+    collectJS: !!window.CollectJS,
+    tokenize: typeof window.CollectJS?.tokenize,
+    numberFrame: !!numberFrame,
+    expiryFrame: !!expiryFrame,
+    cvcFrame: !!cvcFrame,
+    monthInput: !!monthInput,
+    yearInput: !!yearInput,
+  });
 
   return (
     !!window.CollectJS &&
@@ -204,6 +229,17 @@ export function ready() {
   const year = document.querySelector('input[data-collect="expYear"]');
   const expiryInput = document.querySelector('[data-collect="ccexp"]');
 
+  log('ready check:', {
+    collectJS: !!window.CollectJS,
+    tokenize: typeof window.CollectJS?.tokenize,
+    key: !!key,
+    number: !!number,
+    cvc: !!cvc,
+    month: !!month,
+    year: !!year,
+    expiryInput: !!expiryInput,
+  });
+
   return (
     !!window.CollectJS &&
     typeof window.CollectJS.tokenize === 'function' &&
@@ -219,6 +255,7 @@ export function ready() {
 export async function createPaymentMethod() {
   if (!ready()) {
     warn('Collect.js not ready');
+    alert('Payment error: Form not ready. Please refresh and try again.');
     return { error: { message: 'Collect.js not ready' }, payment_method: null };
   }
 
@@ -228,6 +265,7 @@ export async function createPaymentMethod() {
 
   if (!expMonth || !expYear) {
     warn('Invalid expiry format:', expiryRaw);
+    alert('Invalid card expiry. Please use MM/YY format.');
     return { error: { message: 'Invalid card expiry' }, payment_method: null };
   }
 
