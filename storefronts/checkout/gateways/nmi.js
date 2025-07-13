@@ -1,7 +1,6 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
-let scriptPromise;
 let tokenizationKey;
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
@@ -56,6 +55,7 @@ export async function mountNMIFields() {
   // Remove any stale hidden expiry fields
   expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
     .forEach(i => i.remove());
+  syncHiddenExpiryFields(expEl, '', '');
 
   // Inject hidden cardNumber
   if (!numEl.querySelector('input[data-collect="cardNumber"]')) {

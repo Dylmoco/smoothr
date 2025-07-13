@@ -8677,6 +8677,7 @@ async function mountNMIFields() {
     (el) => el.setAttribute("data-tokenization-key", tokenizationKey)
   );
   expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]').forEach((i) => i.remove());
+  syncHiddenExpiryFields(expEl, "", "");
   if (!numEl.querySelector('input[data-collect="cardNumber"]')) {
     const i = document.createElement("input");
     i.type = "hidden";
