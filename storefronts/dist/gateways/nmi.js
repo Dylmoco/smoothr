@@ -7,6 +7,18 @@ const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
+function waitForCollectJsReady(callback, retries = 10) {
+  if (window.CollectJS) {
+    callback();
+    return;
+  }
+  if (retries <= 0) {
+    warn('Collect.js not found');
+    return;
+  }
+  setTimeout(() => waitForCollectJsReady(callback, retries - 1), 100);
+}
+
 
 
 
@@ -98,17 +110,17 @@ export async function mountNMIFields() {
   });
 
   // Load and configure Collect.js only once
-  const setupCollect = () => {
-    window.CollectJS.configure({
-      tokenizationKey,
-      fields: {
-        cardNumber: document.querySelector('input[data-collect="cardNumber"]'),
-        cvv:        document.querySelector('input[data-collect="cvv"]'),
-        expMonth:   document.querySelector('input[data-collect="expMonth"]'),
-        expYear:    document.querySelector('input[data-collect="expYear"]'),
-      }
+  const setupCollect = () =>
+    waitForCollectJsReady(() => {
+      window.CollectJS.configure({
+        tokenizationKey,
+        fields: {
+          cardNumber: '[data-smoothr-card-number]',
+          expiry: '[data-smoothr-card-expiry]',
+          cvv: '[data-smoothr-card-cvc]'
+        }
+      });
     });
-  };
   if (!window.CollectJS) {
     let script = document.querySelector(
       'script[src*="secure.networkmerchants.com/token/Collect.js"]'

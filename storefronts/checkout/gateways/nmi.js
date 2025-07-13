@@ -112,18 +112,13 @@ export async function mountNMIFields() {
   // Load and configure Collect.js only once
   const setupCollect = () =>
     waitForCollectJsReady(() => {
-      const fields = {};
-      const cardNumber = document.querySelector('input[data-collect="cardNumber"]');
-      const cvv = document.querySelector('input[data-collect="cvv"]');
-      const expMonth = document.querySelector('input[data-collect="expMonth"]');
-      const expYear = document.querySelector('input[data-collect="expYear"]');
-      if (cardNumber) fields.cardNumber = cardNumber;
-      if (cvv) fields.cvv = cvv;
-      if (expMonth) fields.expMonth = expMonth;
-      if (expYear) fields.expYear = expYear;
       window.CollectJS.configure({
         tokenizationKey,
-        fields
+        fields: {
+          cardNumber: '[data-smoothr-card-number]',
+          expiry: '[data-smoothr-card-expiry]',
+          cvv: '[data-smoothr-card-cvc]'
+        }
       });
     });
   if (!window.CollectJS) {
