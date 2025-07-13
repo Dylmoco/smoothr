@@ -162,8 +162,8 @@ Activate the gateway by setting
 client via `window.SMOOTHR_CONFIG.active_payment_gateway`). Include NMI's
 `Collect.js` script on pages displaying the checkout form and call
 `mountNMIFields()` to mount the card fields before submitting the cart. The client
-script injects a `[data-tokenization-key]` attribute on the wrapper containing the
-fields automatically.
+script injects a `[data-tokenization-key]` attribute on each field container
+automatically.
 
 Checkout requests post the `{ payment_token }` returned by Collect.js in place of
 a Stripe `payment_method`.
