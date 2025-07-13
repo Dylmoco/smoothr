@@ -1,10 +1,11 @@
+
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
 let tokenizationKey;
 let cardNumberDiv;
 let expiryDiv;
-let cvcDiv; // Fixed: Added 'let' to prevent ReferenceError
+let cvcDiv;
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -64,9 +65,15 @@ function syncHiddenExpiryFields(container, mon, yr) {
 export async function mountNMIFields() {
   try {
     tokenizationKey = await resolveTokenizationKey();
-    if (!tokenizationKey || typeof tokenizationKey !== 'string' || !tokenizationKey.startsWith('TSEP_')) {
-      warn('Invalid or missing NMI tokenization key from Supabase');
+    log('Raw tokenization key from Supabase:', tokenizationKey);
+    if (!tokenizationKey || typeof tokenizationKey !== 'string') {
+      warn('Invalid or missing NMI tokenization key from Supabase:', tokenizationKey);
       throw new Error('Invalid NMI tokenization key');
+    }
+    // Temporarily relax TSEP_ check for debugging
+    if (!tokenizationKey.startsWith('TSEP_')) {
+      warn('Tokenization key does not start with TSEP_:', tokenizationKey);
+      // Proceed to test if key is valid
     }
     log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
 
@@ -139,7 +146,6 @@ export async function mountNMIFields() {
             },
             callback: () => {
               log('CollectJS configured successfully');
-              // Check for iframes after configuration
               const iframes = document.querySelectorAll('iframe');
               log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
               resolve();
