@@ -26,6 +26,8 @@ out/
 !/storefronts/dist/platforms/
 !/storefronts/dist/platforms/webflow/
 !/storefronts/dist/platforms/webflow/checkout.js
+!/storefronts/dist/gateways/
+!/storefronts/dist/gateways/nmi.js
 
 # Misc
 .DS_Store
@@ -40,3 +42,5 @@ supabase/functions/.env
 # Supabase temp directories
 supabase/.temp/
 supabase/functions/**/.temp/
+.vercel
+.env*.local
