@@ -100,9 +100,9 @@ function getAcceptCredentials() {
   };
 }
 
-const debug = window.SMOOTHR_CONFIG?.debug;
-const log = (...args) => debug && console.log('[Smoothr AuthorizeNet]', ...args);
-const warn = (...args) => debug && console.warn('[Smoothr AuthorizeNet]', ...args);
+const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
+const log = (...a) => DEBUG && console.log('[AuthorizeNet]', ...a);
+const warn = (...a) => DEBUG && console.warn('[AuthorizeNet]', ...a);
 
 
 function loadAcceptJs() {
@@ -212,6 +212,14 @@ export async function mountCardFields() {
     const numStyle = computedInputStyle(num);
     const expStyle = computedInputStyle(exp);
     const cvcStyle = computedInputStyle(cvc);
+
+    const numInput = num.querySelector('input');
+    const expInput = exp.querySelector('input');
+    const cvcInput = cvc.querySelector('input');
+
+    if (numInput) Object.assign(numInput.style, numStyle.input);
+    if (expInput) Object.assign(expInput.style, expStyle.input);
+    if (cvcInput) Object.assign(cvcInput.style, cvcStyle.input);
     console.log('[Authorize.Net] cardNumber style', numStyle);
     console.log('[Authorize.Net] cardExpiry style', expStyle);
     console.log('[Authorize.Net] cardCVC style', cvcStyle);

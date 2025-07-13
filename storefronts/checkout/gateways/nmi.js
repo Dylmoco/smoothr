@@ -1,6 +1,5 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
 
-let fieldsMounted = false;
 let mountPromise;
 let scriptPromise;
 let tokenizationKey;
@@ -12,7 +11,7 @@ const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
 
 
-function loadCollectJs(_tokenKey, wrapper) {
+function loadCollectJs(wrapper) {
   if (window.CollectJS) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
