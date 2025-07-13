@@ -2,3 +2,5 @@
 node_modules/
 .vite/
 dist/
+!dist/gateways/nmi.js
+!dist/platforms/webflow/checkout.js
