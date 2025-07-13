@@ -235,3 +235,8 @@ export default {
   ready,
   createPaymentMethod
 };
+
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.mountNMIFields = mountNMIFields;
+}
