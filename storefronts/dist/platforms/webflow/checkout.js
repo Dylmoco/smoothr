@@ -9002,15 +9002,15 @@ async function initCheckout() {
     }
     return waitForElement(sel, 5e3);
   };
-  const submitBtn = await select("[data-smoothr-checkout]");
-  if (submitBtn) {
-    log5("checkout trigger found", submitBtn);
+  const checkoutEl = await select("[data-smoothr-checkout]");
+  if (checkoutEl) {
+    log5("checkout trigger found", checkoutEl);
   } else {
     warn5("missing [data-smoothr-checkout]");
     return;
   }
-  const block = ((_e = submitBtn.closest) == null ? void 0 : _e.call(submitBtn, "[data-smoothr-product-id]")) || document;
-  const productId = ((_f = submitBtn.dataset) == null ? void 0 : _f.smoothrProductId) || ((_g = block.dataset) == null ? void 0 : _g.smoothrProductId);
+  const block = ((_e = checkoutEl.closest) == null ? void 0 : _e.call(checkoutEl, "[data-smoothr-product-id]")) || document;
+  const productId = ((_f = checkoutEl.dataset) == null ? void 0 : _f.smoothrProductId) || ((_g = block.dataset) == null ? void 0 : _g.smoothrProductId);
   const q = (sel) => block.querySelector(sel) || document.querySelector(sel);
   const emailField = await select("[data-smoothr-email]");
   const totalEl = await select("[data-smoothr-total]");
@@ -9024,7 +9024,7 @@ async function initCheckout() {
     ["[data-smoothr-email]", (emailField == null ? void 0 : emailField.value) || ""],
     ["[data-smoothr-total]", (totalEl == null ? void 0 : totalEl.textContent) || ""],
     ["[data-smoothr-gateway]", paymentContainer ? "found" : "missing"],
-    ["[data-smoothr-checkout]", submitBtn ? "found" : "missing"],
+    ["[data-smoothr-checkout]", checkoutEl ? "found" : "missing"],
     ["[data-smoothr-card-number]", cardNumberEl ? "found" : "missing"],
     ["[data-smoothr-card-expiry]", cardExpiryEl ? "found" : "missing"],
     ["[data-smoothr-card-cvc]", cardCvcEl ? "found" : "missing"],
@@ -9040,7 +9040,9 @@ async function initCheckout() {
     await gateway.mountCardFields();
   }
   bindCardInputs();
-  submitBtn == null ? void 0 : submitBtn.addEventListener("click", async (event) => {
+  const isForm = checkoutEl.tagName?.toLowerCase() === "form";
+  const eventName = isForm ? "submit" : "click";
+  checkoutEl == null ? void 0 : checkoutEl.addEventListener(eventName, async (event) => {
     var _a6, _b2, _c2, _d2, _e2, _f2, _g2, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
     event.preventDefault();
     event.stopPropagation();
@@ -9049,9 +9051,9 @@ async function initCheckout() {
       return;
     }
     isSubmitting = true;
-    if ("disabled" in submitBtn)
-      submitBtn.disabled = true;
-    log5("[data-smoothr-checkout] clicked");
+    if ("disabled" in checkoutEl)
+      checkoutEl.disabled = true;
+    log5("[data-smoothr-checkout] triggered");
     const email = ((_a6 = emailField == null ? void 0 : emailField.value) == null ? void 0 : _a6.trim()) || ((_b2 = emailField == null ? void 0 : emailField.getAttribute("data-smoothr-email")) == null ? void 0 : _b2.trim()) || "";
     const first_name = ((_d2 = (_c2 = q("[data-smoothr-first-name]")) == null ? void 0 : _c2.value) == null ? void 0 : _d2.trim()) || "";
     const last_name = ((_f2 = (_e2 = q("[data-smoothr-last-name]")) == null ? void 0 : _e2.value) == null ? void 0 : _f2.trim()) || "";
@@ -9093,16 +9095,16 @@ async function initCheckout() {
     const platform = (_Q = window.SMOOTHR_CONFIG) == null ? void 0 : _Q.platform;
     if (!email || !first_name || !last_name || !total) {
       warn5("Missing required fields; aborting checkout");
-      if ("disabled" in submitBtn)
-        submitBtn.disabled = false;
+      if ("disabled" in checkoutEl)
+        checkoutEl.disabled = false;
       isSubmitting = false;
       return;
     }
     const cartHash = await computeCartHash(cart.items, total, email);
     const lastHash = localStorage.getItem("smoothr_last_cart_hash");
     if (cartHash === lastHash) {
-      if ("disabled" in submitBtn)
-        submitBtn.disabled = false;
+      if ("disabled" in checkoutEl)
+        checkoutEl.disabled = false;
       isSubmitting = false;
       alert("You\u2019ve already submitted this cart. Please wait or modify your order.");
       return;
@@ -9112,8 +9114,8 @@ async function initCheckout() {
       await gateway.mountCardFields();
     if (!gateway.ready()) {
       err("Payment gateway not ready");
-      if ("disabled" in submitBtn)
-        submitBtn.disabled = false;
+      if ("disabled" in checkoutEl)
+        checkoutEl.disabled = false;
       isSubmitting = false;
       return;
     }
@@ -9124,15 +9126,15 @@ async function initCheckout() {
       console.log("[AuthorizeNet] \u2705 Got payment method:", token);
       if (provider === "authorizeNet" && (!(token == null ? void 0 : token.dataDescriptor) || !(token == null ? void 0 : token.dataValue))) {
         alert("Invalid payment details. Please try again.");
-        if ("disabled" in submitBtn)
-          submitBtn.disabled = false;
+        if ("disabled" in checkoutEl)
+          checkoutEl.disabled = false;
         isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err("Failed to create payment method", { error: pmError, payment_method: token });
-        if ("disabled" in submitBtn)
-          submitBtn.disabled = false;
+        if ("disabled" in checkoutEl)
+          checkoutEl.disabled = false;
         isSubmitting = false;
         return;
       }
@@ -9197,8 +9199,8 @@ async function initCheckout() {
           log5("create-order response", orderRes.status, orderData);
           if (!orderRes.ok || !(orderData == null ? void 0 : orderData.order_number)) {
             err("Order creation failed");
-            if ("disabled" in submitBtn)
-              submitBtn.disabled = false;
+            if ("disabled" in checkoutEl)
+              checkoutEl.disabled = false;
             isSubmitting = false;
             return;
           }
@@ -9247,13 +9249,13 @@ async function initCheckout() {
         hasShownCheckoutError = true;
       }
     } finally {
-      if ("disabled" in submitBtn)
-        submitBtn.disabled = false;
+      if ("disabled" in checkoutEl)
+        checkoutEl.disabled = false;
       isSubmitting = false;
       log5("submit handler complete");
     }
   });
-  log5("submit handler attached");
+  log5(`${eventName} handler attached`);
 }
 document.addEventListener("DOMContentLoaded", initCheckout);
 if (document.readyState !== "loading") {

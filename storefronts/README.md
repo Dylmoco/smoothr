@@ -116,8 +116,10 @@ Call `renderCart()` after page load to display items and totals. Use
 with the attributes `data-smoothr-card-number`, `data-smoothr-card-expiry` and
 `data-smoothr-card-cvc` where the fields should render. If any target is missing
 the script retries mounting every 200ms for up to five attempts. Attach
-`data-smoothr-checkout` to the checkout button only—placing this attribute on a
-wrapping container causes clicks anywhere in the container to trigger checkout.
+`data-smoothr-checkout` to a checkout button or form. If placed on a `<form>`
+the SDK listens for the `submit` event so clicks on child elements won't start
+checkout. Avoid adding the attribute to generic containers to prevent unwanted
+triggers.
 
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
 active payment gateway. This single endpoint handles all providers. `initCheckout` chooses the gateway by first checking
