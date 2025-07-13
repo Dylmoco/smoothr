@@ -1,4 +1,5 @@
 import { getPublicCredential } from '../getPublicCredential.js';
+import { resolveTokenizationKey } from '../providers/nmi';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -62,6 +63,8 @@ function loadCollectJs(_tokenKey, wrapper) {
 }
 
 export async function mountNMIFields() {
+  const tokenizationKey = await resolveTokenizationKey();
+  if (!tokenizationKey) return;
   const numEl    = document.querySelector('[data-smoothr-card-number]');
   const expEl    = document.querySelector('[data-smoothr-card-expiry]');
   const cvvEl    = document.querySelector('[data-smoothr-card-cvc]');
