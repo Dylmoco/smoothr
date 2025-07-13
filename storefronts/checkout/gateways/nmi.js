@@ -6,6 +6,7 @@ let isMountedFlag = false;
 let hasMounted = false;
 let mountCount = 0;
 let mountTimeout = null;
+let isLocked = false; // New lock to prevent retries after failure
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -63,14 +64,14 @@ function syncHiddenExpiryFields(container, mon, yr) {
 }
 
 export async function mountNMIFields() {
-  if (hasMounted) {
-    log('NMI fields already mounted, skipping');
+  if (hasMounted || isLocked) {
+    log('NMI fields already mounted or locked, skipping');
     return Promise.resolve();
   }
 
   mountCount++;
-  log(`mountNMIFields called ${mountCount} times`);
-  hasMounted = true; // Set immediately to prevent further calls
+  log(`mountNMIFields called ${mountCount} times from:`, new Error().stack.split('\n')[2]);
+  hasMounted = true;
 
   if (mountTimeout) {
     log('Debouncing mountNMIFields');
@@ -178,6 +179,7 @@ export async function mountNMIFields() {
       });
     } catch (e) {
       warn('Failed to mount NMI fields:', e.message);
+      isLocked = true; // Lock after failure to prevent further attempts
       throw e;
     }
   }, 500);
@@ -303,10 +305,13 @@ if (typeof window !== 'undefined') {
   window.Smoothr.mountNMIFields = mountNMIFields;
 
   const observer = new MutationObserver((mutations) => {
-    if (!hasMounted && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
-      log('Mutation detected, attempting mount');
-      observer.disconnect(); // Disconnect on first detection
-      mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
+    if (!hasMounted) {
+      log('Mutation detected, mutations:', mutations.map(m => m.type));
+      if (document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
+        log('Attempting mount due to DOM readiness');
+        observer.disconnect();
+        mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
+      }
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });

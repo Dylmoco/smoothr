@@ -1,4 +1,3 @@
-
 (() => {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
@@ -162,9 +161,21 @@ export async function initCheckout() {
   if (!totalEl) warn('missing [data-smoothr-total]');
   log('no polling loops active');
 
-  // Initialize payment gateway fields
+  // Initialize payment gateway fields with retry
+  let mountAttempts = 0;
+  const maxAttempts = 1; // Limit to one retry
+  while (mountAttempts < maxAttempts && !gateway.isMounted()) {
+    log(`Attempting to mount gateway, attempt ${mountAttempts + 1}`);
+    try {
+      await gateway.mountCardFields();
+    } catch (e) {
+      warn('Mount attempt failed:', e.message);
+    }
+    mountAttempts++;
+  }
   if (!gateway.isMounted()) {
-    await gateway.mountCardFields();
+    warn('Gateway failed to mount after retries');
+    return;
   }
   bindCardInputs();
 
@@ -246,7 +257,7 @@ export async function initCheckout() {
     }
     localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
-    if (!gateway.ready()) { // Only check ready, don’t re-mount
+    if (!gateway.ready()) {
       err('Payment gateway not ready');
       if ('disabled' in checkoutEl) checkoutEl.disabled = false;
       isSubmitting = false;
