@@ -2,11 +2,7 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
-let tokenizationKey;
-let cardNumberDiv;
-let expiryDiv;
-let cvcDiv;
-let isMounted = false; // Guard to prevent multiple mounts
+let isMountedFlag = false; // Renamed to avoid conflict with function
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -64,21 +60,20 @@ function syncHiddenExpiryFields(container, mon, yr) {
 }
 
 export async function mountNMIFields() {
-  if (isMounted) {
+  if (isMountedFlag) {
     log('NMI fields already mounted, skipping re-configuration');
     return Promise.resolve();
   }
 
-  // Check for existing iframes to avoid duplicate setup
   const existingIframes = document.querySelectorAll('iframe');
   if (existingIframes.length > 0) {
     log('Existing iframes detected:', existingIframes.length);
-    isMounted = true; // Assume already configured if iframes exist
+    isMountedFlag = true;
     return Promise.resolve();
   }
 
   try {
-    tokenizationKey = await resolveTokenizationKey();
+    const tokenizationKey = await resolveTokenizationKey();
     log('Raw tokenization key from Supabase:', tokenizationKey);
     if (!tokenizationKey || typeof tokenizationKey !== 'string') {
       warn('Invalid or missing NMI tokenization key from Supabase:', tokenizationKey);
@@ -89,9 +84,9 @@ export async function mountNMIFields() {
     }
     log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
 
-    cardNumberDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_NUMBER, 15000);
-    expiryDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_EXPIRY, 15000);
-    cvcDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_CVC, 15000);
+    const cardNumberDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_NUMBER, 15000);
+    const expiryDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_EXPIRY, 15000);
+    const cvcDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_CVC, 15000);
     const postalDiv = document.querySelector(CONFIG.ATTRIBUTES.POSTAL);
     if (!cardNumberDiv || !expiryDiv || !cvcDiv || !postalDiv) {
       warn('Missing required card input divs:', { cardNumberDiv, expiryDiv, cvcDiv, postalDiv });
@@ -134,7 +129,7 @@ export async function mountNMIFields() {
               log('CollectJS configured successfully');
               const iframes = document.querySelectorAll('iframe');
               log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
-              isMounted = true; // Set flag after successful mount
+              isMountedFlag = true;
               resolve();
             },
             fieldsAvailable: () => {
@@ -304,14 +299,14 @@ if (typeof window !== 'undefined') {
   window.Smoothr.mountNMIFields = mountNMIFields;
 
   const observer = new MutationObserver(() => {
-    if (!isMounted && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
+    if (!isMountedFlag && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
       mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
       observer.disconnect();
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  if (document.readyState !== 'loading' && !isMounted) {
+  if (document.readyState !== 'loading' && !isMountedFlag) {
     mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
   }
 }
