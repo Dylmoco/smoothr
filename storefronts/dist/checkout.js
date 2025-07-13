@@ -126,17 +126,17 @@ export async function initCheckout() {
     return waitForElement(sel, 5000);
   };
 
-  const submitBtn = await select('[data-smoothr-checkout]');
-  if (submitBtn) {
-    log('checkout trigger found', submitBtn);
+  const checkoutEl = await select('[data-smoothr-checkout]');
+  if (checkoutEl) {
+    log('checkout trigger found', checkoutEl);
   } else {
     warn('missing [data-smoothr-checkout]');
     return;
   }
 
-  const block = submitBtn.closest?.('[data-smoothr-product-id]') || document;
+  const block = checkoutEl.closest?.('[data-smoothr-product-id]') || document;
   const productId =
-    submitBtn.dataset?.smoothrProductId || block.dataset?.smoothrProductId;
+    checkoutEl.dataset?.smoothrProductId || block.dataset?.smoothrProductId;
   const q = sel => block.querySelector(sel) || document.querySelector(sel);
 
   const emailField = await select('[data-smoothr-email]');
@@ -151,7 +151,7 @@ export async function initCheckout() {
     ['[data-smoothr-email]', emailField?.value || ''],
     ['[data-smoothr-total]', totalEl?.textContent || ''],
     ['[data-smoothr-gateway]', paymentContainer ? 'found' : 'missing'],
-    ['[data-smoothr-checkout]', submitBtn ? 'found' : 'missing'],
+    ['[data-smoothr-checkout]', checkoutEl ? 'found' : 'missing'],
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
@@ -168,7 +168,10 @@ export async function initCheckout() {
   }
   bindCardInputs();
 
-  submitBtn?.addEventListener('click', async event => {
+  const isForm = checkoutEl.tagName?.toLowerCase() === 'form';
+  const eventName = isForm ? 'submit' : 'click';
+
+  checkoutEl?.addEventListener(eventName, async event => {
     event.preventDefault();
     event.stopPropagation();
     if (isSubmitting) {
@@ -176,8 +179,8 @@ export async function initCheckout() {
       return;
     }
     isSubmitting = true;
-    if ('disabled' in submitBtn) submitBtn.disabled = true;
-    log('[data-smoothr-checkout] clicked');
+    if ('disabled' in checkoutEl) checkoutEl.disabled = true;
+    log('[data-smoothr-checkout] triggered');
 
     const email =
       emailField?.value?.trim() ||
@@ -228,7 +231,7 @@ export async function initCheckout() {
 
     if (!email || !first_name || !last_name || !total) {
       warn('Missing required fields; aborting checkout');
-      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
       isSubmitting = false;
       return;
     }
@@ -236,7 +239,7 @@ export async function initCheckout() {
     const cartHash = await computeCartHash(cart.items, total, email);
     const lastHash = localStorage.getItem('smoothr_last_cart_hash');
     if (cartHash === lastHash) {
-      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
       isSubmitting = false;
       alert("You’ve already submitted this cart. Please wait or modify your order.");
       return;
@@ -246,7 +249,7 @@ export async function initCheckout() {
     if (!gateway.isMounted()) await gateway.mountCardFields();
     if (!gateway.ready()) {
       err('Payment gateway not ready');
-      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
       isSubmitting = false;
       return;
     }
@@ -263,13 +266,13 @@ export async function initCheckout() {
         (!token?.dataDescriptor || !token?.dataValue)
       ) {
         alert('Invalid payment details. Please try again.');
-        if ('disabled' in submitBtn) submitBtn.disabled = false;
+        if ('disabled' in checkoutEl) checkoutEl.disabled = false;
         isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err('Failed to create payment method', { error: pmError, payment_method: token });
-        if ('disabled' in submitBtn) submitBtn.disabled = false;
+        if ('disabled' in checkoutEl) checkoutEl.disabled = false;
         isSubmitting = false;
         return;
       }
@@ -339,7 +342,7 @@ export async function initCheckout() {
           log('create-order response', orderRes.status, orderData);
           if (!orderRes.ok || !orderData?.order_number) {
             err('Order creation failed');
-            if ('disabled' in submitBtn) submitBtn.disabled = false;
+            if ('disabled' in checkoutEl) checkoutEl.disabled = false;
             isSubmitting = false;
             return;
           }
@@ -388,12 +391,12 @@ export async function initCheckout() {
         hasShownCheckoutError = true;
       }
     } finally {
-      if ('disabled' in submitBtn) submitBtn.disabled = false;
+      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
       isSubmitting = false;
       log('submit handler complete');
     }
   });
-  log('submit handler attached');
+  log(`${eventName} handler attached`);
 }
 
 document.addEventListener('DOMContentLoaded', initCheckout);
