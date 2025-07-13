@@ -1,5 +1,4 @@
-import { getPublicCredential } from '../getPublicCredential.js';
-import { resolveTokenizationKey } from '../providers/nmi';
+import { resolveTokenizationKey } from '../providers/nmi.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -12,29 +11,6 @@ const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
 
 
-async function resolveTokenizationKey() {
-  if (tokenizationKey !== undefined) return tokenizationKey;
-  const storeId = window.SMOOTHR_CONFIG?.storeId;
-  if (!storeId) return null;
-
-  const gateway = window.SMOOTHR_CONFIG?.active_payment_gateway || 'nmi';
-
-  try {
-    const cred = await getPublicCredential(storeId, 'nmi', gateway);
-    tokenizationKey = cred?.settings?.tokenization_key || null;
-  } catch (e) {
-    warn('Integration fetch error:', e?.message || e);
-    tokenizationKey = null;
-  }
-
-  if (!tokenizationKey) {
-    warn('No tokenization key found for gateway', gateway);
-    return null;
-  }
-
-  log('Using tokenization key resolved');
-  return tokenizationKey;
-}
 
 function loadCollectJs(_tokenKey, wrapper) {
   if (window.CollectJS) return Promise.resolve();
@@ -63,7 +39,7 @@ function loadCollectJs(_tokenKey, wrapper) {
 }
 
 export async function mountNMIFields() {
-  const tokenizationKey = await resolveTokenizationKey();
+  tokenizationKey = await resolveTokenizationKey();
   if (!tokenizationKey) return;
   const numEl    = document.querySelector('[data-smoothr-card-number]');
   const expEl    = document.querySelector('[data-smoothr-card-expiry]');
