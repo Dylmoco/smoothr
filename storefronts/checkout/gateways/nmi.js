@@ -69,36 +69,32 @@ export async function mountNMIFields() {
     .forEach(i => i.remove());
   syncHiddenExpiryFields(expEl, '', '');
 
-  // Inject hidden cardNumber
-  if (!numEl.querySelector('input[data-collect="cardNumber"]')) {
-    const i = document.createElement('input');
-    i.type = 'hidden'; i.setAttribute('data-collect', 'cardNumber');
-    numEl.appendChild(i);
+  function ensureSingleInput(el, dataCollectType) {
+    let input = el.querySelector(`input[data-collect="${dataCollectType}"]`);
+    if (!input) {
+      input = document.createElement('input');
+      input.setAttribute('type', 'text');
+      input.setAttribute('data-collect', dataCollectType);
+      el.innerHTML = '';
+      el.appendChild(input);
+    }
+    return input;
   }
 
-  // Inject hidden cvv
-  if (!cvvEl.querySelector('input[data-collect="cvv"]')) {
-    const i = document.createElement('input');
-    i.type = 'hidden'; i.setAttribute('data-collect', 'cvv');
-    cvvEl.appendChild(i);
-  }
+  const cardNumberInput = ensureSingleInput(numEl, 'cardNumber');
+  const expiryInput = ensureSingleInput(expEl, 'expiry');
+  const cvcInput = ensureSingleInput(cvvEl, 'cvv');
 
   // Inject hidden postal
   if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
     const i = document.createElement('input');
-    i.type = 'hidden'; i.setAttribute('data-collect', 'postal');
+    i.type = 'hidden';
+    i.setAttribute('data-collect', 'postal');
     postalEl.appendChild(i);
   }
 
-  // Use existing visible expiry input if present, otherwise create one
-  let vis = expEl.querySelector('input');
-  if (!vis) {
-    vis = document.createElement('input');
-    expEl.appendChild(vis);
-  }
-
   // On keyup, sync or remove hidden expiry fields
-  vis.addEventListener('keyup', e => {
+  expiryInput.addEventListener('keyup', e => {
     const [mon, yr] = parseExpiry(e.target.value);
     if (mon && yr) {
       syncHiddenExpiryFields(expEl, mon, yr);
@@ -115,9 +111,9 @@ export async function mountNMIFields() {
       window.CollectJS.configure({
         tokenizationKey,
         fields: {
-          cardNumber: '[data-smoothr-card-number]',
-          expiry: '[data-smoothr-card-expiry]',
-          cvv: '[data-smoothr-card-cvc]'
+          cardNumber: cardNumberInput,
+          expiry: expiryInput,
+          cvv: cvcInput
         }
       });
     });
