@@ -204,10 +204,11 @@ export async function createPaymentMethod() {
   return new Promise(resolve => {
     try {
       window.CollectJS.tokenize({ expMonth, expYear }, response => {
-        log('Tokenize response', response);
+        log('Tokenize response:', response);
         if (response && response.token) {
           resolve({ error: null, payment_method: { payment_token: response.token } });
         } else {
+          log('Tokenize error:', response?.error);
           const message = response?.error || 'Tokenization failed';
           resolve({ error: { message }, payment_method: null });
         }

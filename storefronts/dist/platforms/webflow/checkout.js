@@ -8689,30 +8689,27 @@ async function mountNMIFields() {
   );
   expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]').forEach((i) => i.remove());
   syncHiddenExpiryFields(expEl, "", "");
-  if (!numEl.querySelector('input[data-collect="cardNumber"]')) {
-    const i = document.createElement("input");
-    i.type = "hidden";
-    i.setAttribute("data-collect", "cardNumber");
-    numEl.appendChild(i);
+  function ensureSingleInput(el, dataCollectType) {
+    let input = el.querySelector(`input[data-collect="${dataCollectType}"]`);
+    if (!input) {
+      input = document.createElement("input");
+      input.setAttribute("type", "text");
+      input.setAttribute("data-collect", dataCollectType);
+      el.innerHTML = "";
+      el.appendChild(input);
+    }
+    return input;
   }
-  if (!cvvEl.querySelector('input[data-collect="cvv"]')) {
-    const i = document.createElement("input");
-    i.type = "hidden";
-    i.setAttribute("data-collect", "cvv");
-    cvvEl.appendChild(i);
-  }
+  const cardNumberInput = ensureSingleInput(numEl, "cardNumber");
+  const expiryInput = ensureSingleInput(expEl, "expiry");
+  const cvcInput = ensureSingleInput(cvvEl, "cvv");
   if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
     const i = document.createElement("input");
     i.type = "hidden";
     i.setAttribute("data-collect", "postal");
     postalEl.appendChild(i);
   }
-  let vis = expEl.querySelector("input");
-  if (!vis) {
-    vis = document.createElement("input");
-    expEl.appendChild(vis);
-  }
-  vis.addEventListener("keyup", (e) => {
+  expiryInput.addEventListener("keyup", (e) => {
     const [mon, yr] = parseExpiry(e.target.value);
     if (mon && yr) {
       syncHiddenExpiryFields(expEl, mon, yr);
@@ -8723,22 +8720,13 @@ async function mountNMIFields() {
     }
   });
   const setupCollect = () => waitForCollectJsReady(() => {
-    const fields = {};
-    const cardNumber = document.querySelector('input[data-collect="cardNumber"]');
-    const cvv = document.querySelector('input[data-collect="cvv"]');
-    const expMonth = document.querySelector('input[data-collect="expMonth"]');
-    const expYear = document.querySelector('input[data-collect="expYear"]');
-    if (cardNumber)
-      fields.cardNumber = cardNumber;
-    if (cvv)
-      fields.cvv = cvv;
-    if (expMonth)
-      fields.expMonth = expMonth;
-    if (expYear)
-      fields.expYear = expYear;
     window.CollectJS.configure({
       tokenizationKey,
-      fields
+      fields: {
+        cardNumber: cardNumberInput,
+        expiry: expiryInput,
+        cvv: cvcInput
+      }
     });
   });
   if (!window.CollectJS) {
@@ -8802,10 +8790,11 @@ async function createPaymentMethod4() {
   return new Promise((resolve) => {
     try {
       window.CollectJS.tokenize({ expMonth, expYear }, (response) => {
-        log4("Tokenize response", response);
+        log4("Tokenize response:", response);
         if (response && response.token) {
           resolve({ error: null, payment_method: { payment_token: response.token } });
         } else {
+          log4("Tokenize error:", response == null ? void 0 : response.error);
           const message = (response == null ? void 0 : response.error) || "Tokenization failed";
           resolve({ error: { message }, payment_method: null });
         }
@@ -8829,6 +8818,10 @@ var init_nmi2 = __esm({
       ready: ready4,
       createPaymentMethod: createPaymentMethod4
     };
+    if (typeof window !== "undefined") {
+      window.Smoothr = window.Smoothr || {};
+      window.Smoothr.mountNMIFields = mountNMIFields;
+    }
   }
 });
 
@@ -8952,7 +8945,7 @@ async function computeCartHash(cart, total, email) {
   return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 async function initCheckout() {
-  var _a5, _b, _c, _d, _e, _f, _g;
+  var _a5, _b, _c, _d, _e, _f, _g, _h;
   if (window.__SMOOTHR_CHECKOUT_BOUND__)
     return;
   window.__SMOOTHR_CHECKOUT_BOUND__ = true;
@@ -9040,10 +9033,10 @@ async function initCheckout() {
     await gateway.mountCardFields();
   }
   bindCardInputs();
-  const isForm = checkoutEl.tagName?.toLowerCase() === "form";
+  const isForm = ((_h = checkoutEl.tagName) == null ? void 0 : _h.toLowerCase()) === "form";
   const eventName = isForm ? "submit" : "click";
   checkoutEl == null ? void 0 : checkoutEl.addEventListener(eventName, async (event) => {
-    var _a6, _b2, _c2, _d2, _e2, _f2, _g2, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
+    var _a6, _b2, _c2, _d2, _e2, _f2, _g2, _h2, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T;
     event.preventDefault();
     event.stopPropagation();
     if (isSubmitting) {
@@ -9057,7 +9050,7 @@ async function initCheckout() {
     const email = ((_a6 = emailField == null ? void 0 : emailField.value) == null ? void 0 : _a6.trim()) || ((_b2 = emailField == null ? void 0 : emailField.getAttribute("data-smoothr-email")) == null ? void 0 : _b2.trim()) || "";
     const first_name = ((_d2 = (_c2 = q("[data-smoothr-first-name]")) == null ? void 0 : _c2.value) == null ? void 0 : _d2.trim()) || "";
     const last_name = ((_f2 = (_e2 = q("[data-smoothr-last-name]")) == null ? void 0 : _e2.value) == null ? void 0 : _f2.trim()) || "";
-    const line1 = ((_h = (_g2 = q("[data-smoothr-ship-line1]")) == null ? void 0 : _g2.value) == null ? void 0 : _h.trim()) || "";
+    const line1 = ((_h2 = (_g2 = q("[data-smoothr-ship-line1]")) == null ? void 0 : _g2.value) == null ? void 0 : _h2.trim()) || "";
     const line2 = ((_j = (_i = q("[data-smoothr-ship-line2]")) == null ? void 0 : _i.value) == null ? void 0 : _j.trim()) || "";
     const city = ((_l = (_k = q("[data-smoothr-ship-city]")) == null ? void 0 : _k.value) == null ? void 0 : _l.trim()) || "";
     const state = ((_n = (_m = q("[data-smoothr-ship-state]")) == null ? void 0 : _m.value) == null ? void 0 : _n.trim()) || "";
