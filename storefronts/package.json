@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "dotenv -e .env.local -- vite build",
-    "postbuild": "dotenv -e .env.local -- node scripts/copy-checkout.js && dotenv -e .env.local -- node scripts/bundle-webflow-checkout.js && dotenv -e .env.local -- node scripts/check-sdk.js",
+    "build": "vite build",
+    "postbuild": "node scripts/copy-checkout.js && node scripts/bundle-webflow-checkout.js && node scripts/check-sdk.js",
     "dev": "vite",
     "test": "vitest run"
   },
