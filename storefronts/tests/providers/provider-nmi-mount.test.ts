@@ -36,16 +36,11 @@ describe('mountNMIFields', () => {
   it('loads tokenization key and applies it', async () => {
     await mountNMIFields();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
-    const wrapper = document.querySelector('[data-smoothr-card-number]')?.parentElement;
-    expect(wrapper?.getAttribute('data-tokenization-key')).toBe('tok_key');
-  });
-
-  it('only sets tokenization key on the common wrapper', async () => {
-    await mountNMIFields();
-    const wrappers = document.querySelectorAll('[data-tokenization-key]');
-    expect(wrappers.length).toBe(1);
-    const wrapper = document.querySelector('[data-smoothr-card-number]')?.parentElement;
-    expect(wrappers[0]).toBe(wrapper);
+    const els = document.querySelectorAll('[data-tokenization-key]');
+    expect(els.length).toBe(3);
+    els.forEach(el => {
+      expect(el.getAttribute('data-tokenization-key')).toBe('tok_key');
+    });
   });
 
   it('injects other inputs and removes expiry inputs when empty', async () => {
