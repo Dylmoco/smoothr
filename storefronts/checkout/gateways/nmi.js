@@ -145,8 +145,8 @@ export async function mountNMIFields() {
 }
 
 export function isMounted() {
-  const number = document.querySelector('[data-collect="cardNumber"]');
-  const cvc = document.querySelector('[data-collect="cvv"]');
+  const numberInput = document.querySelector('input[data-collect="cardNumber"]');
+  const cvcInput = document.querySelector('input[data-collect="cvv"]');
   const expiryVisible =
     document.querySelector(
       '[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]'
@@ -155,7 +155,19 @@ export function isMounted() {
       '[data-smoothr-card-expiry] input:not([data-collect])'
     ) ||
     document.querySelector('[data-smoothr-card-expiry] input');
-  return !!number && !!cvc && !!expiryVisible;
+
+  if (!numberInput || !cvcInput || !expiryVisible) return false;
+
+  const numberFrame = document.querySelector('[data-smoothr-card-number] iframe');
+  const expiryFrame = document.querySelector('[data-smoothr-card-expiry] iframe');
+  const cvcFrame = document.querySelector('[data-smoothr-card-cvc] iframe');
+
+  return (
+    !!window.CollectJS &&
+    !!numberFrame &&
+    !!expiryFrame &&
+    !!cvcFrame
+  );
 }
 
 export function ready() {
