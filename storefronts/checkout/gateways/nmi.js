@@ -7,6 +7,18 @@ const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
+function waitForCollectJsReady(callback, retries = 10) {
+  if (window.CollectJS) {
+    callback();
+    return;
+  }
+  if (retries <= 0) {
+    warn('Collect.js not found');
+    return;
+  }
+  setTimeout(() => waitForCollectJsReady(callback, retries - 1), 100);
+}
+
 
 
 
@@ -98,17 +110,22 @@ export async function mountNMIFields() {
   });
 
   // Load and configure Collect.js only once
-  const setupCollect = () => {
-    window.CollectJS.configure({
-      tokenizationKey,
-      fields: {
-        cardNumber: document.querySelector('input[data-collect="cardNumber"]'),
-        cvv:        document.querySelector('input[data-collect="cvv"]'),
-        expMonth:   document.querySelector('input[data-collect="expMonth"]'),
-        expYear:    document.querySelector('input[data-collect="expYear"]'),
-      }
+  const setupCollect = () =>
+    waitForCollectJsReady(() => {
+      const fields = {};
+      const cardNumber = document.querySelector('input[data-collect="cardNumber"]');
+      const cvv = document.querySelector('input[data-collect="cvv"]');
+      const expMonth = document.querySelector('input[data-collect="expMonth"]');
+      const expYear = document.querySelector('input[data-collect="expYear"]');
+      if (cardNumber) fields.cardNumber = cardNumber;
+      if (cvv) fields.cvv = cvv;
+      if (expMonth) fields.expMonth = expMonth;
+      if (expYear) fields.expYear = expYear;
+      window.CollectJS.configure({
+        tokenizationKey,
+        fields
+      });
     });
-  };
   if (!window.CollectJS) {
     let script = document.querySelector(
       'script[src*="secure.networkmerchants.com/token/Collect.js"]'
