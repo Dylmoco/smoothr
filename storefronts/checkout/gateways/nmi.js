@@ -70,10 +70,8 @@ export async function mountNMIFields() {
       warn('Invalid or missing NMI tokenization key from Supabase:', tokenizationKey);
       throw new Error('Invalid NMI tokenization key');
     }
-    // Temporarily relax TSEP_ check for debugging
     if (!tokenizationKey.startsWith('TSEP_')) {
       warn('Tokenization key does not start with TSEP_:', tokenizationKey);
-      // Proceed to test if key is valid
     }
     log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
 
@@ -97,40 +95,10 @@ export async function mountNMIFields() {
       el.setAttribute('data-tokenization-key', tokenizationKey)
     );
 
-    expiryDiv.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+    // Simplify expiry setup to rely on CollectJS iframe
+    expiryDiv.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"],input[data-collect="ccexp"]')
       .forEach(i => i.remove());
-    syncHiddenExpiryFields(expiryDiv, '', '');
-
-    let expiryInput = expiryDiv.querySelector('input[data-collect="ccexp"]');
-    if (!expiryInput) {
-      expiryInput = document.createElement('input');
-      expiryInput.setAttribute('data-collect', 'ccexp');
-      expiryInput.type = 'text';
-      expiryInput.placeholder = 'MM/YY';
-      expiryDiv.appendChild(expiryInput);
-    }
-
-    if (postalDiv && !postalDiv.querySelector('input[data-collect="postal"]')) {
-      const i = document.createElement('input');
-      i.type = 'hidden';
-      i.setAttribute('data-collect', 'postal');
-      postalDiv.appendChild(i);
-    }
-
-    let timeout;
-    expiryInput.addEventListener('keyup', e => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        const [mon, yr] = parseExpiry(e.target.value);
-        if (mon && yr) {
-          syncHiddenExpiryFields(expiryDiv, mon, yr);
-        } else {
-          expiryDiv.querySelectorAll(
-            'input[data-collect="expMonth"],input[data-collect="expYear"]'
-          ).forEach(i => i.remove());
-        }
-      }, 300);
-    });
+    // CollectJS will handle expiry via iframe; no manual input needed
 
     return new Promise((resolve, reject) => {
       const setupCollect = () => {
@@ -140,9 +108,9 @@ export async function mountNMIFields() {
             variant: 'inline', // Explicitly use Direct Post
             fields: {
               ccnumber: { selector: CONFIG.ATTRIBUTES.CARD_NUMBER },
-              ccexp: { selector: '[data-collect="ccexp"]' },
-              cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC },
-              postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL }
+              ccexp: { selector: CONFIG.ATTRIBUTES.CARD_EXPIRY }, // Use div for iframe
+              cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC }
+              // Removed postalCode to avoid mismatch
             },
             callback: () => {
               log('CollectJS configured successfully');
@@ -152,6 +120,8 @@ export async function mountNMIFields() {
             },
             fieldsAvailable: () => {
               log('CollectJS fields mounted');
+              const fields = Object.keys(window.CollectJS.getFieldDetails() || {});
+              log('Detected fields:', fields);
             },
             validationCallback: (field, status, message) => {
               if (!status) warn(`Validation error in ${field}: ${message}`);
@@ -233,7 +203,7 @@ export function ready() {
   const cvc = document.querySelector(CONFIG.ATTRIBUTES.CARD_CVC);
   const month = document.querySelector('input[data-collect="expMonth"]');
   const year = document.querySelector('input[data-collect="expYear"]');
-  const expiryInput = document.querySelector('[data-collect="ccexp"]');
+  const expiryInput = document.querySelector('input[data-collect="ccexp"]');
 
   log('ready check:', {
     collectJS: !!window.CollectJS,
@@ -265,7 +235,7 @@ export async function createPaymentMethod() {
     return { error: { message: 'Collect.js not ready' }, payment_method: null };
   }
 
-  const expiryEl = document.querySelector('[data-collect="ccexp"]');
+  const expiryEl = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_EXPIRY} iframe`)?.contentDocument?.querySelector('input[name="ccexp"]');
   const expiryRaw = expiryEl?.value || '';
   const [expMonth, expYear] = parseExpiry(expiryRaw);
 
@@ -323,3 +293,4 @@ if (typeof window !== 'undefined') {
     mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
   }
 }
+```
