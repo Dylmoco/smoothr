@@ -1,6 +1,5 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
 
-let mountPromise;
 let scriptPromise;
 let tokenizationKey;
 
@@ -10,32 +9,6 @@ const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
 
 
-
-function loadCollectJs(wrapper) {
-  if (window.CollectJS) return Promise.resolve();
-  if (scriptPromise) return scriptPromise;
-  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-    window.CollectJS = {
-      configure: () => {},
-      tokenize: cb => cb && cb({ token: 'tok_test' })
-    };
-    return Promise.resolve();
-  }
-  scriptPromise = new Promise(resolve => {
-    let script = document.querySelector(
-      'script[src*="secure.networkmerchants.com/token/Collect.js"]'
-    );
-    if (!script) {
-      script = document.createElement('script');
-      script.src = 'https://secure.networkmerchants.com/token/Collect.js';
-      (wrapper || document.head).appendChild(script);
-      script.addEventListener('load', () => resolve());
-    } else {
-      script.addEventListener('load', () => resolve());
-    }
-  });
-  return scriptPromise;
-}
 
 function parseExpiry(val) {
   const m = val.trim().match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
@@ -135,10 +108,16 @@ export async function mountNMIFields() {
     });
   };
   if (!window.CollectJS) {
-    const s = document.createElement('script');
-    s.src = 'https://secure.networkmerchants.com/token/Collect.js';
-    document.head.appendChild(s);
-    s.onload = setupCollect;
+    let script = document.querySelector(
+      'script[src*="secure.networkmerchants.com/token/Collect.js"]'
+    );
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://secure.networkmerchants.com/token/Collect.js';
+      script.setAttribute('data-tokenization-key', tokenizationKey);
+      document.head.appendChild(script);
+    }
+    script.addEventListener('load', setupCollect);
   } else {
     setupCollect();
   }
