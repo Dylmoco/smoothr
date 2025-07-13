@@ -8620,6 +8620,33 @@ __export(nmi_exports, {
   mountNMIFields: () => mountNMIFields,
   ready: () => ready4
 });
+function parseExpiry(val) {
+  const m = val.trim().match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
+  if (!m)
+    return [null, null];
+  let [, mon, yr] = m;
+  if (mon.length === 1)
+    mon = "0" + mon;
+  return [mon, "20" + yr];
+}
+function syncHiddenExpiryFields(container, mon, yr) {
+  let mm = container.querySelector('input[data-collect="expMonth"]');
+  let yy = container.querySelector('input[data-collect="expYear"]');
+  if (!mm) {
+    mm = document.createElement("input");
+    mm.type = "hidden";
+    mm.setAttribute("data-collect", "expMonth");
+    container.appendChild(mm);
+  }
+  if (!yy) {
+    yy = document.createElement("input");
+    yy.type = "hidden";
+    yy.setAttribute("data-collect", "expYear");
+    container.appendChild(yy);
+  }
+  mm.value = mon;
+  yy.value = yr;
+}
 async function mountNMIFields() {
   tokenizationKey = await resolveTokenizationKey();
   if (!tokenizationKey)
@@ -8630,7 +8657,9 @@ async function mountNMIFields() {
   const postalEl = document.querySelector("[data-smoothr-postal]");
   if (!numEl || !expEl || !cvvEl)
     return;
-  [numEl, expEl, cvvEl, postalEl].filter(Boolean).forEach((el) => el.setAttribute("data-tokenization-key", tokenizationKey));
+  [numEl, expEl, cvvEl].forEach(
+    (el) => el.setAttribute("data-tokenization-key", tokenizationKey)
+  );
   expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]').forEach((i) => i.remove());
   if (!numEl.querySelector('input[data-collect="cardNumber"]')) {
     const i = document.createElement("input");
@@ -8650,30 +8679,19 @@ async function mountNMIFields() {
     i.setAttribute("data-collect", "postal");
     postalEl.appendChild(i);
   }
-  let vis = expEl.querySelector("input[data-smoothr-expiry-visible]");
+  let vis = expEl.querySelector("input");
   if (!vis) {
     vis = document.createElement("input");
-    vis.setAttribute("data-smoothr-expiry-visible", "");
-    vis.placeholder = "MM / YY";
     expEl.appendChild(vis);
   }
-  vis.addEventListener("input", (e) => {
-    const v = e.target.value.trim();
-    const m = /^(\d{2})\s*\/\s*(\d{2})$/.exec(v);
-    if (m) {
-      const [, mm, yy] = m;
-      ["expMonth", "expYear"].forEach((name) => {
-        if (!expEl.querySelector(`input[data-collect="${name}"]`)) {
-          const h = document.createElement("input");
-          h.type = "hidden";
-          h.setAttribute("data-collect", name);
-          expEl.appendChild(h);
-        }
-      });
-      expEl.querySelector('input[data-collect="expMonth"]').value = mm;
-      expEl.querySelector('input[data-collect="expYear"]').value = "20" + yy;
+  vis.addEventListener("keyup", (e) => {
+    const [mon, yr] = parseExpiry(e.target.value);
+    if (mon && yr) {
+      syncHiddenExpiryFields(expEl, mon, yr);
     } else {
-      expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]').forEach((i) => i.remove());
+      expEl.querySelectorAll(
+        'input[data-collect="expMonth"],input[data-collect="expYear"]'
+      ).forEach((i) => i.remove());
     }
   });
   const setupCollect = () => {
@@ -8697,14 +8715,19 @@ async function mountNMIFields() {
   }
 }
 function isMounted4() {
-  const number = document.querySelector('[data-collect="cardNumber"]');
-  const cvc = document.querySelector('[data-collect="cvv"]');
+  const numberInput = document.querySelector('input[data-collect="cardNumber"]');
+  const cvcInput = document.querySelector('input[data-collect="cvv"]');
   const expiryVisible = document.querySelector(
     "[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]"
   ) || document.querySelector(
     "[data-smoothr-card-expiry] input:not([data-collect])"
   ) || document.querySelector("[data-smoothr-card-expiry] input");
-  return !!number && !!cvc && !!expiryVisible;
+  if (!numberInput || !cvcInput || !expiryVisible)
+    return false;
+  const numberFrame = document.querySelector("[data-smoothr-card-number] iframe");
+  const expiryFrame = document.querySelector("[data-smoothr-card-expiry] iframe");
+  const cvcFrame = document.querySelector("[data-smoothr-card-cvc] iframe");
+  return !!window.CollectJS && !!numberFrame && !!expiryFrame && !!cvcFrame;
 }
 function ready4() {
   const number = document.querySelector('[data-collect="cardNumber"]');
