@@ -4,6 +4,7 @@ import waitForElement from '../utils/waitForElement.js';
 
 let isMountedFlag = false; // Guard to prevent multiple mounts
 let mountCount = 0; // Debug counter
+let mountTimeout = null; // Debounce timer
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -68,118 +69,117 @@ export async function mountNMIFields() {
     return Promise.resolve();
   }
 
-  const existingIframes = document.querySelectorAll('iframe');
-  if (existingIframes.length > 0) {
-    log('Existing iframes detected:', existingIframes.length);
-    isMountedFlag = true;
-    return Promise.resolve();
+  if (mountTimeout) {
+    log('Debouncing mountNMIFields');
+    clearTimeout(mountTimeout);
   }
-
-  try {
-    const tokenizationKey = await resolveTokenizationKey();
-    log('Raw tokenization key from Supabase:', tokenizationKey);
-    if (!tokenizationKey || typeof tokenizationKey !== 'string') {
-      warn('Invalid or missing NMI tokenization key from Supabase:', tokenizationKey);
-      throw new Error('Invalid NMI tokenization key');
-    }
-    if (!tokenizationKey.startsWith('TSEP_')) {
-      warn('Tokenization key does not start with TSEP_:', tokenizationKey);
-    }
-    log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
-
-    const cardNumberDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_NUMBER, 15000);
-    const expiryDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_EXPIRY, 15000);
-    const cvcDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_CVC, 15000);
-    const postalDiv = document.querySelector(CONFIG.ATTRIBUTES.POSTAL);
-    if (!cardNumberDiv || !expiryDiv || !cvcDiv || !postalDiv) {
-      warn('Missing required card input divs:', { cardNumberDiv, expiryDiv, cvcDiv, postalDiv });
-      throw new Error('Required card input divs not found');
-    }
-
-    log('Found card input divs:', {
-      cardNumber: !!cardNumberDiv,
-      expiry: !!expiryDiv,
-      cvc: !!cvcDiv,
-      postal: !!postalDiv,
-    });
-
-    [cardNumberDiv, expiryDiv, cvcDiv, postalDiv].forEach(el =>
-      el.setAttribute('data-tokenization-key', tokenizationKey)
-    );
-
-    expiryDiv.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"],input[data-collect="ccexp"]')
-      .forEach(i => i.remove());
-
-    return new Promise((resolve, reject) => {
-      const setupCollect = () => {
-        try {
-          log('Configuring CollectJS with fields:', {
-            ccnumber: CONFIG.ATTRIBUTES.CARD_NUMBER,
-            ccexp: CONFIG.ATTRIBUTES.CARD_EXPIRY,
-            cvv: CONFIG.ATTRIBUTES.CARD_CVC,
-            postalCode: CONFIG.ATTRIBUTES.POSTAL,
-          });
-          window.CollectJS.configure({
-            tokenizationKey,
-            variant: 'inline',
-            fields: {
-              ccnumber: { selector: CONFIG.ATTRIBUTES.CARD_NUMBER },
-              ccexp: { selector: CONFIG.ATTRIBUTES.CARD_EXPIRY },
-              cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC },
-              postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL },
-            },
-            callback: () => {
-              log('CollectJS configured successfully');
-              const iframes = document.querySelectorAll('iframe');
-              log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
-              isMountedFlag = true;
-              resolve();
-            },
-            fieldsAvailable: () => {
-              log('CollectJS fields mounted');
-              const fields = Object.keys(window.CollectJS.getFieldDetails() || {});
-              log('Detected fields:', fields);
-            },
-            validationCallback: (field, status, message) => {
-              if (!status) warn(`Validation error in ${field}: ${message}`);
-            },
-          });
-        } catch (e) {
-          warn('CollectJS configuration failed:', e.message);
-          reject(e);
-        }
-      };
-
-      const scriptSrc = `${CONFIG.COLLECTJS_URL}?v=${Date.now()}`;
-      let script = document.querySelector(`script[src*="${CONFIG.COLLECTJS_URL}"]`);
-      if (!script) {
-        script = document.createElement('script');
-        script.src = scriptSrc;
-        script.setAttribute('data-tokenization-key', tokenizationKey);
-        script.async = true;
-        document.head.appendChild(script);
-        script.addEventListener('load', setupCollect);
-        script.addEventListener('error', () => {
-          warn('Failed to load Collect.js script');
-          reject(new Error('Collect.js script failed to load'));
-        });
-      } else if (window.CollectJS && typeof window.CollectJS.tokenize === 'function') {
-        log('CollectJS already loaded');
-        setupCollect();
-      } else {
-        script.src = scriptSrc;
-        document.head.appendChild(script);
-        script.addEventListener('load', setupCollect);
-        script.addEventListener('error', () => {
-          warn('Failed to load Collect.js script');
-          reject(new Error('Collect.js script failed to load'));
-        });
+  mountTimeout = setTimeout(async () => {
+    try {
+      const tokenizationKey = await resolveTokenizationKey();
+      log('Raw tokenization key from Supabase:', tokenizationKey);
+      if (!tokenizationKey || typeof tokenizationKey !== 'string') {
+        warn('Invalid or missing NMI tokenization key from Supabase:', tokenizationKey);
+        throw new Error('Invalid NMI tokenization key');
       }
-    });
-  } catch (e) {
-    warn('Failed to mount NMI fields:', e.message);
-    throw e;
-  }
+      if (!tokenizationKey.startsWith('TSEP_')) {
+        warn('Tokenization key does not start with TSEP_:', tokenizationKey);
+      }
+      log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
+
+      const cardNumberDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_NUMBER, 15000);
+      const expiryDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_EXPIRY, 15000);
+      const cvcDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_CVC, 15000);
+      const postalDiv = document.querySelector(CONFIG.ATTRIBUTES.POSTAL);
+      if (!cardNumberDiv || !expiryDiv || !cvcDiv || !postalDiv) {
+        warn('Missing required card input divs:', { cardNumberDiv, expiryDiv, cvcDiv, postalDiv });
+        throw new Error('Required card input divs not found');
+      }
+
+      log('Found card input divs:', {
+        cardNumber: !!cardNumberDiv,
+        expiry: !!expiryDiv,
+        cvc: !!cvcDiv,
+        postal: !!postalDiv,
+      });
+
+      [cardNumberDiv, expiryDiv, cvcDiv, postalDiv].forEach(el =>
+        el.setAttribute('data-tokenization-key', tokenizationKey)
+      );
+
+      expiryDiv.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"],input[data-collect="ccexp"]')
+        .forEach(i => i.remove());
+
+      return new Promise((resolve, reject) => {
+        const setupCollect = () => {
+          try {
+            log('Configuring CollectJS with fields:', {
+              ccnumber: CONFIG.ATTRIBUTES.CARD_NUMBER,
+              ccexp: CONFIG.ATTRIBUTES.CARD_EXPIRY,
+              cvv: CONFIG.ATTRIBUTES.CARD_CVC,
+              postalCode: CONFIG.ATTRIBUTES.POSTAL,
+            });
+            window.CollectJS.configure({
+              tokenizationKey,
+              variant: 'inline',
+              fields: {
+                ccnumber: { selector: CONFIG.ATTRIBUTES.CARD_NUMBER },
+                ccexp: { selector: CONFIG.ATTRIBUTES.CARD_EXPIRY },
+                cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC },
+                postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL },
+              },
+              callback: () => {
+                log('CollectJS configured successfully');
+                const iframes = document.querySelectorAll('iframe');
+                log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
+                isMountedFlag = true;
+                resolve();
+              },
+              fieldsAvailable: () => {
+                log('CollectJS fields mounted');
+                const fields = Object.keys(window.CollectJS.getFieldDetails() || {});
+                log('Detected fields:', fields);
+              },
+              validationCallback: (field, status, message) => {
+                if (!status) warn(`Validation error in ${field}: ${message}`);
+              },
+            });
+          } catch (e) {
+            warn('CollectJS configuration failed:', e.message);
+            reject(e);
+          }
+        };
+
+        const scriptSrc = `${CONFIG.COLLECTJS_URL}?v=${Date.now()}`;
+        let script = document.querySelector(`script[src*="${CONFIG.COLLECTJS_URL}"]`);
+        if (!script) {
+          script = document.createElement('script');
+          script.src = scriptSrc;
+          script.setAttribute('data-tokenization-key', tokenizationKey);
+          script.async = true;
+          document.head.appendChild(script);
+          script.addEventListener('load', setupCollect);
+          script.addEventListener('error', () => {
+            warn('Failed to load Collect.js script');
+            reject(new Error('Collect.js script failed to load'));
+          });
+        } else if (window.CollectJS && typeof window.CollectJS.tokenize === 'function') {
+          log('CollectJS already loaded');
+          setupCollect();
+        } else {
+          script.src = scriptSrc;
+          document.head.appendChild(script);
+          script.addEventListener('load', setupCollect);
+          script.addEventListener('error', () => {
+            warn('Failed to load Collect.js script');
+            reject(new Error('Collect.js script failed to load'));
+          });
+        }
+      });
+    } catch (e) {
+      warn('Failed to mount NMI fields:', e.message);
+      throw e;
+    }
+  }, 500); // 500ms debounce
 }
 
 export function isMounted() {
@@ -304,9 +304,8 @@ if (typeof window !== 'undefined') {
   const observer = new MutationObserver((mutations) => {
     if (!isMountedFlag && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
       log('Mutation detected, attempting mount');
-      mountNMIFields().then(() => {
-        observer.disconnect(); // Disconnect after first success
-      }).catch(err => warn('Failed to mount NMI fields:', err.message));
+      observer.disconnect(); // Disconnect immediately
+      mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
