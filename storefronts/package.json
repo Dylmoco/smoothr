@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "postbuild": "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY node scripts/copy-checkout.js && NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY node scripts/bundle-webflow-checkout.js && node scripts/check-sdk.js",
+    "build": "dotenv -e .env.local -- vite build",
+    "postbuild": "dotenv -e .env.local -- node scripts/copy-checkout.js && dotenv -e .env.local -- node scripts/bundle-webflow-checkout.js && dotenv -e .env.local -- node scripts/check-sdk.js",
     "dev": "vite",
     "test": "vitest run"
   },
