@@ -70,6 +70,8 @@ export async function mountNMIFields() {
 
   mountCount++;
   log(`mountNMIFields called ${mountCount} times`);
+  hasMounted = true; // Set immediately to prevent further calls
+
   if (mountTimeout) {
     log('Debouncing mountNMIFields');
     clearTimeout(mountTimeout);
@@ -131,7 +133,6 @@ export async function mountNMIFields() {
                 const iframes = document.querySelectorAll('iframe');
                 log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
                 isMountedFlag = true;
-                hasMounted = true;
                 resolve();
               },
               fieldsAvailable: () => {
@@ -304,7 +305,7 @@ if (typeof window !== 'undefined') {
   const observer = new MutationObserver((mutations) => {
     if (!hasMounted && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
       log('Mutation detected, attempting mount');
-      observer.disconnect();
+      observer.disconnect(); // Disconnect on first detection
       mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
     }
   });
