@@ -62,98 +62,91 @@ function loadCollectJs(_tokenKey, wrapper) {
 }
 
 export async function mountNMIFields() {
-  if (mountPromise) return mountPromise;
-  if (fieldsMounted) return;
+  const numEl    = document.querySelector('[data-smoothr-card-number]');
+  const expEl    = document.querySelector('[data-smoothr-card-expiry]');
+  const cvvEl    = document.querySelector('[data-smoothr-card-cvc]');
+  const postalEl = document.querySelector('[data-smoothr-postal]');
+  if (!numEl || !expEl || !cvvEl) return;
 
-  mountPromise = (async () => {
-    log('Mounting NMI fields');
+  // Tag containers with the tokenization key
+  [numEl, expEl, cvvEl, postalEl].filter(Boolean)
+    .forEach(el => el.setAttribute('data-tokenization-key', tokenizationKey));
 
-    const numEl = document.querySelector('[data-smoothr-card-number]');
-    const expEl = document.querySelector('[data-smoothr-card-expiry]');
-    const cvvEl = document.querySelector('[data-smoothr-card-cvc]');
-    if (!numEl || !expEl || !cvvEl) {
-      warn('Card fields not found');
-      return;
-    }
+  // Remove any stale hidden expiry fields
+  expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+    .forEach(i => i.remove());
 
-    const key = await resolveTokenizationKey();
-    if (!key) {
-      warn('No tokenization key available for mounting');
-      return;
-    }
+  // Inject hidden cardNumber
+  if (!numEl.querySelector('input[data-collect="cardNumber"]')) {
+    const i = document.createElement('input');
+    i.type = 'hidden'; i.setAttribute('data-collect', 'cardNumber');
+    numEl.appendChild(i);
+  }
 
-    [numEl, expEl, cvvEl].forEach(el =>
-      el.setAttribute('data-tokenization-key', key)
-    );
+  // Inject hidden cvv
+  if (!cvvEl.querySelector('input[data-collect="cvv"]')) {
+    const i = document.createElement('input');
+    i.type = 'hidden'; i.setAttribute('data-collect', 'cvv');
+    cvvEl.appendChild(i);
+  }
 
-    const ensureHidden = (parent, collect) => {
-      let el = parent.querySelector(`input[data-collect="${collect}"]`);
-      if (!el) {
-        el = document.createElement('input');
-        el.type = 'hidden';
-        el.setAttribute('data-collect', collect);
-        parent.appendChild(el);
-      }
-      return el;
-    };
+  // Inject hidden postal
+  if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
+    const i = document.createElement('input');
+    i.type = 'hidden'; i.setAttribute('data-collect', 'postal');
+    postalEl.appendChild(i);
+  }
 
-    ensureHidden(numEl, 'cardNumber');
-    ensureHidden(cvvEl, 'cvv');
+  // Ensure visible expiry input
+  let vis = expEl.querySelector('input[data-smoothr-expiry-visible]');
+  if (!vis) {
+    vis = document.createElement('input');
+    vis.setAttribute('data-smoothr-expiry-visible', '');
+    vis.placeholder = 'MM / YY';
+    expEl.appendChild(vis);
+  }
 
-    let vis = expEl.querySelector('input[data-smoothr-expiry-visible]');
-    if (!vis) {
-      vis = document.createElement('input');
-      vis.setAttribute('data-smoothr-expiry-visible', '');
-      vis.placeholder = 'MM / YY';
-      expEl.appendChild(vis);
-    }
-
-    const injectHiddenExpiry = () => {
-      ['expMonth', 'expYear'].forEach(name => {
+  // On each input, sync or remove hidden expiry fields
+  vis.addEventListener('input', e => {
+    const v = e.target.value.trim();
+    const m = /^(\d{2})\s*\/\s*(\d{2})$/.exec(v);
+    if (m) {
+      const [, mm, yy] = m;
+      ['expMonth','expYear'].forEach(name => {
         if (!expEl.querySelector(`input[data-collect="${name}"]`)) {
           const h = document.createElement('input');
-          h.type = 'hidden';
-          h.setAttribute('data-collect', name);
+          h.type = 'hidden'; h.setAttribute('data-collect', name);
           expEl.appendChild(h);
         }
       });
-    };
+      expEl.querySelector('input[data-collect="expMonth"]').value = mm;
+      expEl.querySelector('input[data-collect="expYear"]').value  = '20' + yy;
+    } else {
+      expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+        .forEach(i => i.remove());
+    }
+  });
 
-    vis.addEventListener('input', e => {
-      if (/^\s*\d{2}\s*\/\s*\d{2}\s*$/.test(e.target.value)) {
-        injectHiddenExpiry();
+  // Load and configure Collect.js only once
+  const setupCollect = () => {
+    window.CollectJS.configure({
+      tokenizationKey,
+      fields: {
+        cardNumber: document.querySelector('input[data-collect="cardNumber"]'),
+        cvv:        document.querySelector('input[data-collect="cvv"]'),
+        expMonth:   document.querySelector('input[data-collect="expMonth"]'),
+        expYear:    document.querySelector('input[data-collect="expYear"]'),
       }
     });
-
-    const configure = () => {
-      window.CollectJS.configure({
-        tokenizationKey: key,
-        fields: {
-          cardNumber: document.querySelector('input[data-collect="cardNumber"]'),
-          cvv: document.querySelector('input[data-collect="cvv"]'),
-          expMonth: document.querySelector('input[data-collect="expMonth"]'),
-          expYear: document.querySelector('input[data-collect="expYear"]')
-        }
-      });
-    };
-
-    if (!window.CollectJS) {
-      const s = document.createElement('script');
-      s.src = 'https://secure.networkmerchants.com/token/Collect.js';
-      document.head.appendChild(s);
-      s.onload = configure;
-    } else {
-      configure();
-    }
-
-    fieldsMounted = true;
-    log('NMI fields mounted');
-  })();
-
-  mountPromise = mountPromise.finally(() => {
-    mountPromise = null;
-  });
-  return mountPromise;
+  };
+  if (!window.CollectJS) {
+    const s = document.createElement('script');
+    s.src = 'https://secure.networkmerchants.com/token/Collect.js';
+    document.head.appendChild(s);
+    s.onload = setupCollect;
+  } else {
+    setupCollect();
+  }
 }
 
 export function isMounted() {
