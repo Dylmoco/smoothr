@@ -119,11 +119,11 @@ export async function mountNMIFields() {
     });
   if (!window.CollectJS) {
     let script = document.querySelector(
-      'script[src*="secure.networkmerchants.com/token/Collect.js"]'
+      'script[src*="secure.networkmerchants.com/token/Collect.js"],script[src*="secure.nmi.com/token/Collect.js"]'
     );
     if (!script) {
       script = document.createElement('script');
-      script.src = 'https://secure.networkmerchants.com/token/Collect.js';
+      script.src = 'https://secure.nmi.com/token/Collect.js';
       script.setAttribute('data-tokenization-key', tokenizationKey);
       document.head.appendChild(script);
     }
