@@ -1,3 +1,4 @@
+# ─── root .gitignore ───────────────────────────────────────────
 # Node modules
 node_modules/
 
@@ -6,15 +7,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables (ignore all real .env files, keep .env.example)
+# Env files
 .env
 .env.*
-*/.env
-*/.env.*
 !*.env.example
-!*/.env.example
-!.env.test
-!*/.env.test
 
 # Build output
 /dist
@@ -22,25 +18,20 @@ yarn-error.log*
 .next
 out/
 
+# Storefronts dist: ignore everything except the webflow adapter
 /storefronts/dist/*
 !/storefronts/dist/platforms/
 !/storefronts/dist/platforms/webflow/
 !/storefronts/dist/platforms/webflow/checkout.js
-!/storefronts/dist/gateways/
 !/storefronts/dist/gateways/nmi.js
 
 # Misc
 .DS_Store
-*.env.backup
-*.env.bak
-
 .history/
 
-# Supabase env
-supabase/functions/.env
-
-# Supabase temp directories
+# Supabase temp
 supabase/.temp/
-supabase/functions/**/.temp/
+
+# Vercel config
 .vercel
-.env*.local
+

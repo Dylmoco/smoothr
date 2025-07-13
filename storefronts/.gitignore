@@ -1,2 +1,4 @@
+# ─── storefronts/.gitignore ────────────────────────────────────
 node_modules/
 .vite/
+dist/
