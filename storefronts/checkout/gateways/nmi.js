@@ -1,4 +1,5 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
+import waitForElement from '../utils/waitForElement.js';
 
 let scriptPromise;
 let tokenizationKey;
@@ -40,9 +41,10 @@ function syncHiddenExpiryFields(container, mon, yr) {
 export async function mountNMIFields() {
   tokenizationKey = await resolveTokenizationKey();
   if (!tokenizationKey) return;
-  const numEl    = document.querySelector('[data-smoothr-card-number]');
-  const expEl    = document.querySelector('[data-smoothr-card-expiry]');
-  const cvvEl    = document.querySelector('[data-smoothr-card-cvc]');
+
+  const numEl = await waitForElement('[data-smoothr-card-number]');
+  const expEl = await waitForElement('[data-smoothr-card-expiry]');
+  const cvvEl = await waitForElement('[data-smoothr-card-cvc]');
   const postalEl = document.querySelector('[data-smoothr-postal]');
   if (!numEl || !expEl || !cvvEl) return;
 
