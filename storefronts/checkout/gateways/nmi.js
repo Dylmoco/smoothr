@@ -2,35 +2,44 @@ import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
 let tokenizationKey;
-let cardNumberInput;
-let expiryInput;
-let cvcInput;
+let cardNumberDiv;
+let expiryDiv;
+cvcDiv;
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
-const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
+const warn = (...a) => console.warn('[NMI]', ...a);
 
-function waitForCollectJsReady(callback, retries = 10) {
-  if (window.CollectJS) {
+const CONFIG = {
+  ATTRIBUTES: {
+    CARD_NUMBER: '[data-smoothr-card-number]',
+    CARD_EXPIRY: '[data-smoothr-card-expiry]',
+    CARD_CVC: '[data-smoothr-card-cvc]',
+    POSTAL: '[data-smoothr-postal]',
+  },
+  COLLECTJS_URL: 'https://secure.nmi.com/token/Collect.js',
+};
+
+function waitForCollectJsReady(callback, retries = 50, delay = 200) {
+  if (window.CollectJS && typeof window.CollectJS.tokenize === 'function') {
+    log('CollectJS loaded and tokenize available');
     callback();
     return;
   }
   if (retries <= 0) {
-    warn('Collect.js not found');
-    return;
+    warn('Collect.js failed to load after retries');
+    throw new Error('Collect.js not available');
   }
-  setTimeout(() => waitForCollectJsReady(callback, retries - 1), 100);
+  setTimeout(() => waitForCollectJsReady(callback, retries - 1, delay), delay);
 }
 
-
-
-
 function parseExpiry(val) {
-  const m = val.trim().match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
+  const m = val.trim().match(/^(\d{1,2})\s*\/?\s*(\d{2,4})$/);
   if (!m) return [null, null];
   let [, mon, yr] = m;
-  if (mon.length === 1) mon = '0' + mon;
-  return [mon, '20' + yr];
+  mon = mon.padStart(2, '0');
+  yr = yr.length === 2 ? '20' + yr : yr;
+  return [mon, yr];
 }
 
 function syncHiddenExpiryFields(container, mon, yr) {
@@ -48,163 +57,179 @@ function syncHiddenExpiryFields(container, mon, yr) {
     yy.setAttribute('data-collect', 'expYear');
     container.appendChild(yy);
   }
-  mm.value = mon;
-  yy.value = yr;
+  mm.value = mon || '';
+  yy.value = yr || '';
 }
 
 export async function mountNMIFields() {
-  tokenizationKey = await resolveTokenizationKey();
-  if (!tokenizationKey) return;
-
-  const numEl = await waitForElement('[data-smoothr-card-number]');
-  const expEl = await waitForElement('[data-smoothr-card-expiry]');
-  const cvvEl = await waitForElement('[data-smoothr-card-cvc]');
-  const postalEl = document.querySelector('[data-smoothr-postal]');
-  if (!numEl || !expEl || !cvvEl) return;
-
-  // Tag containers with the tokenization key (postal not required)
-  [numEl, expEl, cvvEl].forEach(el =>
-    el.setAttribute('data-tokenization-key', tokenizationKey)
-  );
-
-  // Remove any stale hidden expiry fields
-  expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
-    .forEach(i => i.remove());
-  syncHiddenExpiryFields(expEl, '', '');
-
-  function ensureSingleInput(el, dataCollectType) {
-    let input = el.querySelector(`input[data-collect="${dataCollectType}"]`);
-    if (!input) {
-      input = document.createElement('input');
-      input.setAttribute('type', 'text');
-      input.setAttribute('data-collect', dataCollectType);
-      el.innerHTML = '';
-      el.appendChild(input);
+  try {
+    tokenizationKey = await resolveTokenizationKey();
+    if (!tokenizationKey || typeof tokenizationKey !== 'string' || !tokenizationKey.startsWith('TSEP_')) {
+      warn('Invalid or missing NMI tokenization key from Supabase');
+      throw new Error('Invalid NMI tokenization key');
     }
-    return input;
-  }
+    log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
 
-  cardNumberInput = ensureSingleInput(numEl, 'cardNumber');
-  expiryInput = ensureSingleInput(expEl, 'expiry');
-  cvcInput = ensureSingleInput(cvvEl, 'cvv');
-
-  // Inject hidden postal
-  if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
-    const i = document.createElement('input');
-    i.type = 'hidden';
-    i.setAttribute('data-collect', 'postal');
-    postalEl.appendChild(i);
-  }
-
-  // On keyup, sync or remove hidden expiry fields
-  expiryInput.addEventListener('keyup', e => {
-    const [mon, yr] = parseExpiry(e.target.value);
-    if (mon && yr) {
-      syncHiddenExpiryFields(expEl, mon, yr);
-    } else {
-      expEl.querySelectorAll(
-        'input[data-collect="expMonth"],input[data-collect="expYear"]'
-      ).forEach(i => i.remove());
+    cardNumberDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_NUMBER, 15000);
+    expiryDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_EXPIRY, 15000);
+    cvcDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_CVC, 15000);
+    const postalDiv = document.querySelector(CONFIG.ATTRIBUTES.POSTAL);
+    if (!cardNumberDiv || !expiryDiv || !cvcDiv) {
+      warn('Missing required card input divs:', { cardNumberDiv, expiryDiv, cvcDiv });
+      throw new Error('Required card input divs not found');
     }
-  });
 
-  // Load and configure Collect.js only once
-  const setupCollect = () =>
-    waitForCollectJsReady(() => {
-      window.CollectJS.configure({
-        tokenizationKey,
-        fields: {
-          cardNumber: cardNumberInput,
-          expiry: expiryInput,
-          cvv: cvcInput
-        }
-      });
-    });
-  if (!window.CollectJS) {
-    let script = document.querySelector(
-      'script[src*="secure.networkmerchants.com/token/Collect.js"],script[src*="secure.nmi.com/token/Collect.js"]'
+    [cardNumberDiv, expiryDiv, cvcDiv].forEach(el =>
+      el.setAttribute('data-tokenization-key', tokenizationKey)
     );
-    if (!script) {
-      script = document.createElement('script');
-      script.src = 'https://secure.nmi.com/token/Collect.js';
-      script.setAttribute('data-tokenization-key', tokenizationKey);
-      document.head.appendChild(script);
+
+    expiryDiv.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+      .forEach(i => i.remove());
+    syncHiddenExpiryFields(expiryDiv, '', '');
+
+    let expiryInput = expiryDiv.querySelector('input[data-collect="ccexp"]');
+    if (!expiryInput) {
+      expiryInput = document.createElement('input');
+      expiryInput.setAttribute('data-collect', 'ccexp');
+      expiryInput.type = 'text';
+      expiryDiv.appendChild(expiryInput);
     }
-    script.addEventListener('load', setupCollect);
-  } else {
-    setupCollect();
+
+    if (postalDiv && !postalDiv.querySelector('input[data-collect="postal"]')) {
+      const i = document.createElement('input');
+      i.type = 'hidden';
+      i.setAttribute('data-collect', 'postal');
+      postalDiv.appendChild(i);
+    }
+
+    let timeout;
+    expiryInput.addEventListener('keyup', e => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const [mon, yr] = parseExpiry(e.target.value);
+        if (mon && yr) {
+          syncHiddenExpiryFields(expiryDiv, mon, yr);
+        } else {
+          expiryDiv.querySelectorAll(
+            'input[data-collect="expMonth"],input[data-collect="expYear"]'
+          ).forEach(i => i.remove());
+        }
+      }, 300);
+    });
+
+    return new Promise((resolve, reject) => {
+      const setupCollect = () => {
+        try {
+          window.CollectJS.configure({
+            tokenizationKey,
+            variant: 'inline', // Explicitly use Direct Post
+            fields: {
+              ccnumber: { selector: CONFIG.ATTRIBUTES.CARD_NUMBER },
+              ccexp: { selector: '[data-collect="ccexp"]' },
+              cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC },
+              postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL }
+            },
+            callback: () => {
+              log('CollectJS configured successfully');
+              resolve();
+            },
+            fieldsAvailable: () => {
+              log('CollectJS fields mounted');
+            },
+            validationCallback: (field, status, message) => {
+              if (!status) warn(`Validation error in ${field}: ${message}`);
+            }
+          });
+        } catch (e) {
+          warn('CollectJS configuration failed:', e.message);
+          reject(e);
+        }
+      };
+
+      const scriptSrc = `${CONFIG.COLLECTJS_URL}?v=${Date.now()}`;
+      let script = document.querySelector(`script[src*="${CONFIG.COLLECTJS_URL}"]`);
+      if (!script) {
+        script = document.createElement('script');
+        script.src = scriptSrc;
+        script.setAttribute('data-tokenization-key', tokenizationKey);
+        script.async = true;
+        document.head.appendChild(script);
+        script.addEventListener('load', () => {
+          log('Collect.js script loaded');
+          setupCollect();
+        });
+        script.addEventListener('error', () => {
+          warn('Failed to load Collect.js script');
+          reject(new Error('Collect.js script failed to load'));
+        });
+      } else if (window.CollectJS && typeof window.CollectJS.tokenize === 'function') {
+        setupCollect();
+      } else {
+        script.src = scriptSrc; // Force reload with cache-busting
+        document.head.appendChild(script);
+        script.addEventListener('load', setupCollect);
+        script.addEventListener('error', reject);
+      }
+    });
+  } catch (e) {
+    warn('Failed to mount NMI fields:', e.message);
+    throw e;
   }
 }
 
 export function isMounted() {
-  const numberInput = document.querySelector('input[data-collect="cardNumber"]');
-  const cvcInput = document.querySelector('input[data-collect="cvv"]');
+  const numberFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_NUMBER} iframe`);
+  const expiryFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_EXPIRY} iframe`);
+  const cvcFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_CVC} iframe`);
   const monthInput = document.querySelector('input[data-collect="expMonth"]');
   const yearInput = document.querySelector('input[data-collect="expYear"]');
 
-  const numberFrame = document.querySelector('[data-smoothr-card-number] iframe');
-  const expiryFrame = document.querySelector('[data-smoothr-card-expiry] iframe');
-  const cvcFrame = document.querySelector('[data-smoothr-card-cvc] iframe');
-
   return (
     !!window.CollectJS &&
-    !!numberInput &&
-    !!cvcInput &&
-    !!monthInput &&
-    !!yearInput &&
+    typeof window.CollectJS.tokenize === 'function' &&
     !!numberFrame &&
     !!expiryFrame &&
-    !!cvcFrame
+    !!cvcFrame &&
+    !!monthInput &&
+    !!yearInput
   );
 }
 
 export function ready() {
-  const number = document.querySelector('[data-collect="cardNumber"]');
-  const cvc = document.querySelector('[data-collect="cvv"]');
-  const month = document.querySelector(
-    '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
-  );
-  const year = document.querySelector(
-    '[data-smoothr-card-expiry] input[data-collect="expYear"]'
-  );
   const wrapper = document.querySelector('[data-tokenization-key]');
   const key = wrapper?.getAttribute('data-tokenization-key') || tokenizationKey;
+  const number = document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER);
+  const cvc = document.querySelector(CONFIG.ATTRIBUTES.CARD_CVC);
+  const month = document.querySelector('input[data-collect="expMonth"]');
+  const year = document.querySelector('input[data-collect="expYear"]');
+  const expiryInput = document.querySelector('[data-collect="ccexp"]');
+
   return (
     !!window.CollectJS &&
+    typeof window.CollectJS.tokenize === 'function' &&
     !!key &&
     !!number &&
     !!cvc &&
     !!month &&
-    !!year
+    !!year &&
+    !!expiryInput
   );
 }
 
 export async function createPaymentMethod() {
   if (!ready()) {
+    warn('Collect.js not ready');
     return { error: { message: 'Collect.js not ready' }, payment_method: null };
   }
 
-  const expiryEl =
-    document
-      .querySelector('[data-smoothr-card-expiry]')
-      ?.querySelector('input[data-smoothr-expiry-visible]') ||
-    document
-      .querySelector('[data-smoothr-card-expiry]')
-      ?.querySelector('input') ||
-    document.querySelector('[data-smoothr-card-expiry]');
+  const expiryEl = document.querySelector('[data-collect="ccexp"]');
   const expiryRaw = expiryEl?.value || '';
-  const match = expiryRaw.replace(/\s+/g, '').match(/^(\d{1,2})\/?(\d{2,4})$/);
+  const [expMonth, expYear] = parseExpiry(expiryRaw);
 
-  if (!match) {
+  if (!expMonth || !expYear) {
     warn('Invalid expiry format:', expiryRaw);
     return { error: { message: 'Invalid card expiry' }, payment_method: null };
   }
-
-  let [, month, year] = match;
-  if (month.length === 1) month = '0' + month;
-  if (year.length === 2) year = '20' + year;
-  const expMonth = month;
-  const expYear = year;
 
   log('Parsed expiry', { expMonth, expYear });
 
@@ -215,12 +240,15 @@ export async function createPaymentMethod() {
         if (response && response.token) {
           resolve({ error: null, payment_method: { payment_token: response.token } });
         } else {
-          log('Tokenize error:', response?.error);
-          const message = response?.error || 'Tokenization failed';
+          const message = response?.error || 'Tokenization failed. Please check your card details.';
+          warn('Tokenize error:', message);
+          alert(message);
           resolve({ error: { message }, payment_method: null });
         }
       });
     } catch (e) {
+      warn('Tokenization error:', e.message);
+      alert('Payment error: Unable to process card details.');
       resolve({ error: { message: e?.message || 'Tokenization failed' }, payment_method: null });
     }
   });
@@ -232,10 +260,22 @@ export default {
   mountCardFields: mountNMIFields,
   isMounted,
   ready,
-  createPaymentMethod
+  createPaymentMethod,
 };
 
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {};
   window.Smoothr.mountNMIFields = mountNMIFields;
+
+  const observer = new MutationObserver(() => {
+    if (document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
+      mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  if (document.readyState !== 'loading') {
+    mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
+  }
 }
