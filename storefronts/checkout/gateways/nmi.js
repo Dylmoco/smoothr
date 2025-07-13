@@ -1,3 +1,4 @@
+
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
@@ -5,6 +6,7 @@ let tokenizationKey;
 let cardNumberDiv;
 let expiryDiv;
 let cvcDiv;
+let isMounted = false; // Guard to prevent multiple mounts
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -15,7 +17,7 @@ const CONFIG = {
     CARD_NUMBER: '[data-smoothr-card-number]',
     CARD_EXPIRY: '[data-smoothr-card-expiry]',
     CARD_CVC: '[data-smoothr-card-cvc]',
-    POSTAL: '[data-smoothr-bill-postal]', // Confirmed for billing postal
+    POSTAL: '[data-smoothr-bill-postal]',
   },
   COLLECTJS_URL: 'https://secure.nmi.com/token/Collect.js',
 };
@@ -62,6 +64,19 @@ function syncHiddenExpiryFields(container, mon, yr) {
 }
 
 export async function mountNMIFields() {
+  if (isMounted) {
+    log('NMI fields already mounted, skipping re-configuration');
+    return Promise.resolve();
+  }
+
+  // Check for existing iframes to avoid duplicate setup
+  const existingIframes = document.querySelectorAll('iframe');
+  if (existingIframes.length > 0) {
+    log('Existing iframes detected:', existingIframes.length);
+    isMounted = true; // Assume already configured if iframes exist
+    return Promise.resolve();
+  }
+
   try {
     tokenizationKey = await resolveTokenizationKey();
     log('Raw tokenization key from Supabase:', tokenizationKey);
@@ -94,10 +109,8 @@ export async function mountNMIFields() {
       el.setAttribute('data-tokenization-key', tokenizationKey)
     );
 
-    // Simplify expiry setup to rely on CollectJS iframe
     expiryDiv.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"],input[data-collect="ccexp"]')
       .forEach(i => i.remove());
-    // CollectJS will handle expiry via iframe; no manual input needed
 
     return new Promise((resolve, reject) => {
       const setupCollect = () => {
@@ -121,6 +134,7 @@ export async function mountNMIFields() {
               log('CollectJS configured successfully');
               const iframes = document.querySelectorAll('iframe');
               log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
+              isMounted = true; // Set flag after successful mount
               resolve();
             },
             fieldsAvailable: () => {
@@ -146,10 +160,7 @@ export async function mountNMIFields() {
         script.setAttribute('data-tokenization-key', tokenizationKey);
         script.async = true;
         document.head.appendChild(script);
-        script.addEventListener('load', () => {
-          log('Collect.js script loaded');
-          setupCollect();
-        });
+        script.addEventListener('load', setupCollect);
         script.addEventListener('error', () => {
           warn('Failed to load Collect.js script');
           reject(new Error('Collect.js script failed to load'));
@@ -293,14 +304,14 @@ if (typeof window !== 'undefined') {
   window.Smoothr.mountNMIFields = mountNMIFields;
 
   const observer = new MutationObserver(() => {
-    if (document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
+    if (!isMounted && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
       mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
       observer.disconnect();
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  if (document.readyState !== 'loading') {
+  if (document.readyState !== 'loading' && !isMounted) {
     mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
   }
 }

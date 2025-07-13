@@ -1,3 +1,4 @@
+
 (() => {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
@@ -27,7 +28,6 @@ const gatewayLoaders = {
   nmi: () => import('./gateways/nmi.js'),
   segpay: () => import('./gateways/segpay.js')
 };
-
 
 async function getActivePaymentGateway(log, warn) {
   const cfg = window.SMOOTHR_CONFIG || {};
@@ -145,7 +145,7 @@ export async function initCheckout() {
   const cardNumberEl = q('[data-smoothr-card-number]');
   const cardExpiryEl = q('[data-smoothr-card-expiry]');
   const cardCvcEl = q('[data-smoothr-card-cvc]');
-  const postalEl = q('[data-smoothr-postal]');
+  const postalEl = q('[data-smoothr-bill-postal]'); // Updated to match nmi.js
   const themeEl = document.querySelector('#smoothr-checkout-theme');
   const fields = [
     ['[data-smoothr-email]', emailField?.value || ''],
@@ -155,7 +155,7 @@ export async function initCheckout() {
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
-    ['[data-smoothr-postal]', postalEl ? 'found' : 'missing']
+    ['[data-smoothr-bill-postal]', postalEl ? 'found' : 'missing'] // Updated log
   ];
   fields.forEach(([name, val]) => log(`${name} = ${val}`));
   if (!emailField) warn('missing [data-smoothr-email]');
@@ -246,8 +246,7 @@ export async function initCheckout() {
     }
     localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
-    if (!gateway.isMounted()) await gateway.mountCardFields();
-    if (!gateway.ready()) {
+    if (!gateway.ready()) { // Only check ready, don’t re-mount
       err('Payment gateway not ready');
       if ('disabled' in checkoutEl) checkoutEl.disabled = false;
       isSubmitting = false;
