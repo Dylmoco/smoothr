@@ -3,6 +3,7 @@ import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
 let isMountedFlag = false; // Guard to prevent multiple mounts
+let hasMounted = false; // One-time execution flag
 let mountCount = 0; // Debug counter
 let mountTimeout = null; // Debounce timer
 
@@ -62,10 +63,10 @@ function syncHiddenExpiryFields(container, mon, yr) {
 }
 
 export async function mountNMIFields() {
-  mountCount++; // Increment debug counter
+  mountCount++;
   log(`mountNMIFields called ${mountCount} times`);
-  if (isMountedFlag) {
-    log('NMI fields already mounted, skipping re-configuration');
+  if (hasMounted) {
+    log('NMI fields already mounted, skipping');
     return Promise.resolve();
   }
 
@@ -78,11 +79,8 @@ export async function mountNMIFields() {
       const tokenizationKey = await resolveTokenizationKey();
       log('Raw tokenization key from Supabase:', tokenizationKey);
       if (!tokenizationKey || typeof tokenizationKey !== 'string') {
-        warn('Invalid or missing NMI tokenization key from Supabase:', tokenizationKey);
+        warn('Invalid or missing NMI tokenization key:', tokenizationKey);
         throw new Error('Invalid NMI tokenization key');
-      }
-      if (!tokenizationKey.startsWith('TSEP_')) {
-        warn('Tokenization key does not start with TSEP_:', tokenizationKey);
       }
       log('NMI tokenization key fetched:', tokenizationKey.slice(0, 8) + '...');
 
@@ -132,6 +130,7 @@ export async function mountNMIFields() {
                 const iframes = document.querySelectorAll('iframe');
                 log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
                 isMountedFlag = true;
+                hasMounted = true;
                 resolve();
               },
               fieldsAvailable: () => {
@@ -179,7 +178,7 @@ export async function mountNMIFields() {
       warn('Failed to mount NMI fields:', e.message);
       throw e;
     }
-  }, 500); // 500ms debounce
+  }, 500);
 }
 
 export function isMounted() {
@@ -302,15 +301,15 @@ if (typeof window !== 'undefined') {
   window.Smoothr.mountNMIFields = mountNMIFields;
 
   const observer = new MutationObserver((mutations) => {
-    if (!isMountedFlag && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
+    if (!hasMounted && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
       log('Mutation detected, attempting mount');
-      observer.disconnect(); // Disconnect immediately
+      observer.disconnect();
       mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  if (document.readyState !== 'loading' && !isMountedFlag) {
+  if (document.readyState !== 'loading' && !hasMounted) {
     mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
   }
 }
