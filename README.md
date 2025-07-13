@@ -218,19 +218,19 @@ npm test
 
 ### Install workspace dependencies first
 
-Before running `npm test`, ensure development packages are installed inside both
-workspaces:
+The root `postinstall` script checks whether `storefronts/node_modules` and
+`smoothr/node_modules` exist and runs `npm --workspace <name> install` if they
+do not. This happens automatically when installing dependencies at the root or
+before running `npm test`. You can still run the installs manually if needed:
 
 ```bash
 cd storefronts && npm install
 cd smoothr && npm install
 ```
 
-The test command depends on `vitest` and other development packages. Vitest is
-declared in each workspace’s `package.json`, so **run `npm install` (or
-`npm ci`) inside each workspace – `storefronts`, `smoothr`, etc. – before
-executing `npm test`**. Missing workspace dependencies will result in
-`vitest: command not found` errors.
+The test command depends on `vitest` and other development packages. Missing
+workspace dependencies will result in `vitest: command not found` errors, so the
+postinstall script ensures everything is installed for you.
 
 All tests rely on a shared setup file that polyfills browser globals like
 `window`, `document` and `localStorage` for Node environments. The setup is
@@ -245,8 +245,9 @@ functions and build scripts. Browser logs are controlled via
 ## Contribution Guidelines
 
 - **Node.js**: use version 20 or later with ECMAScript Modules enabled.
-- **Tests**: run `npm install` (or `npm ci`) in both `storefronts` and `smoothr`
-  before running `npm test` from the repository root.
+- **Tests**: installing from the repository root triggers a `postinstall` script
+  that installs workspace dependencies when missing. Run `npm test` from the
+  root after `npm install`.
 - **Coding style**: follow the existing style—two space indentation, single
   quotes and trailing semicolons. Keep the code free of unused variables and
   prefer small, focused commits.
