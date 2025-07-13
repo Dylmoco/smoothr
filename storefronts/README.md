@@ -165,9 +165,22 @@ and place your credentials in the `settings` JSON column:
 
 Enable the gateway via `store_settings.settings.active_payment_gateway` or set
 `window.SMOOTHR_CONFIG.active_payment_gateway = 'nmi'` on the client. Include
-NMI's Collect.js library on checkout pages and call `mountNMIFields()` to mount
-the credit card fields before submitting the cart. The SDK automatically injects
-a `data-tokenization-key` attribute on each field container.
+NMI's Collect.js library on checkout pages. After the Smoothr checkout script
+loads, call `window.Smoothr.mountNMIFields()` to mount the credit card fields.
+The helper automatically injects a `data-tokenization-key` attribute on each
+field container.
+
+```html
+<script src="https://secure.networkmerchants.com/token/Collect.js"></script>
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+<script>
+  Smoothr.mountNMIFields({
+    number: '#card-number',
+    expiry: '#card-expiry',
+    cvc: '#card-cvc'
+  });
+</script>
+```
 
 A Webflow‑specific adapter lives at `./platforms/webflow/checkout.js`. It merely
 sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared

@@ -160,10 +160,22 @@ set to `nmi` and store both the API key and tokenization key under the
 Activate the gateway by setting
 `store_settings.settings.active_payment_gateway` to `nmi` (or override it on the
 client via `window.SMOOTHR_CONFIG.active_payment_gateway`). Include NMI's
-`Collect.js` script on pages displaying the checkout form and call
-`mountNMIFields()` to mount the card fields before submitting the cart. The client
-script injects a `[data-tokenization-key]` attribute on each field container
+`Collect.js` script on checkout pages. After the Smoothr checkout script loads,
+call `window.Smoothr.mountNMIFields()` to mount the card fields. The helper
+injects a `[data-tokenization-key]` attribute on each field container
 automatically.
+
+```html
+<script src="https://secure.networkmerchants.com/token/Collect.js"></script>
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+<script>
+  Smoothr.mountNMIFields({
+    number: '#card-number',
+    expiry: '#card-expiry',
+    cvc: '#card-cvc'
+  });
+</script>
+```
 
 Checkout requests post the `{ payment_token }` returned by Collect.js in place of
 a Stripe `payment_method`.
