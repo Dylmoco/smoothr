@@ -37,6 +37,33 @@ function loadCollectJs(wrapper) {
   return scriptPromise;
 }
 
+function parseExpiry(val) {
+  const m = val.trim().match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
+  if (!m) return [null, null];
+  let [, mon, yr] = m;
+  if (mon.length === 1) mon = '0' + mon;
+  return [mon, '20' + yr];
+}
+
+function syncHiddenExpiryFields(container, mon, yr) {
+  let mm = container.querySelector('input[data-collect="expMonth"]');
+  let yy = container.querySelector('input[data-collect="expYear"]');
+  if (!mm) {
+    mm = document.createElement('input');
+    mm.type = 'hidden';
+    mm.setAttribute('data-collect', 'expMonth');
+    container.appendChild(mm);
+  }
+  if (!yy) {
+    yy = document.createElement('input');
+    yy.type = 'hidden';
+    yy.setAttribute('data-collect', 'expYear');
+    container.appendChild(yy);
+  }
+  mm.value = mon;
+  yy.value = yr;
+}
+
 export async function mountNMIFields() {
   tokenizationKey = await resolveTokenizationKey();
   if (!tokenizationKey) return;
@@ -46,9 +73,10 @@ export async function mountNMIFields() {
   const postalEl = document.querySelector('[data-smoothr-postal]');
   if (!numEl || !expEl || !cvvEl) return;
 
-  // Tag containers with the tokenization key
-  [numEl, expEl, cvvEl, postalEl].filter(Boolean)
-    .forEach(el => el.setAttribute('data-tokenization-key', tokenizationKey));
+  // Tag containers with the tokenization key (postal not required)
+  [numEl, expEl, cvvEl].forEach(el =>
+    el.setAttribute('data-tokenization-key', tokenizationKey)
+  );
 
   // Remove any stale hidden expiry fields
   expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
@@ -75,33 +103,22 @@ export async function mountNMIFields() {
     postalEl.appendChild(i);
   }
 
-  // Ensure visible expiry input
-  let vis = expEl.querySelector('input[data-smoothr-expiry-visible]');
+  // Use existing visible expiry input if present, otherwise create one
+  let vis = expEl.querySelector('input');
   if (!vis) {
     vis = document.createElement('input');
-    vis.setAttribute('data-smoothr-expiry-visible', '');
-    vis.placeholder = 'MM / YY';
     expEl.appendChild(vis);
   }
 
-  // On each input, sync or remove hidden expiry fields
-  vis.addEventListener('input', e => {
-    const v = e.target.value.trim();
-    const m = /^(\d{2})\s*\/\s*(\d{2})$/.exec(v);
-    if (m) {
-      const [, mm, yy] = m;
-      ['expMonth','expYear'].forEach(name => {
-        if (!expEl.querySelector(`input[data-collect="${name}"]`)) {
-          const h = document.createElement('input');
-          h.type = 'hidden'; h.setAttribute('data-collect', name);
-          expEl.appendChild(h);
-        }
-      });
-      expEl.querySelector('input[data-collect="expMonth"]').value = mm;
-      expEl.querySelector('input[data-collect="expYear"]').value  = '20' + yy;
+  // On keyup, sync or remove hidden expiry fields
+  vis.addEventListener('keyup', e => {
+    const [mon, yr] = parseExpiry(e.target.value);
+    if (mon && yr) {
+      syncHiddenExpiryFields(expEl, mon, yr);
     } else {
-      expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
-        .forEach(i => i.remove());
+      expEl.querySelectorAll(
+        'input[data-collect="expMonth"],input[data-collect="expYear"]'
+      ).forEach(i => i.remove());
     }
   });
 
