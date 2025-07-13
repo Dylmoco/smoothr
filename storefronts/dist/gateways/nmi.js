@@ -119,11 +119,11 @@ export async function mountNMIFields() {
     });
   if (!window.CollectJS) {
     let script = document.querySelector(
-      'script[src*="secure.networkmerchants.com/token/Collect.js"]'
+      'script[src*="secure.networkmerchants.com/token/Collect.js"],script[src*="secure.nmi.com/token/Collect.js"]'
     );
     if (!script) {
       script = document.createElement('script');
-      script.src = 'https://secure.networkmerchants.com/token/Collect.js';
+      script.src = 'https://secure.nmi.com/token/Collect.js';
       script.setAttribute('data-tokenization-key', tokenizationKey);
       document.head.appendChild(script);
     }
@@ -204,10 +204,11 @@ export async function createPaymentMethod() {
   return new Promise(resolve => {
     try {
       window.CollectJS.tokenize({ expMonth, expYear }, response => {
-        log('Tokenize response', response);
+        log('Tokenize response:', response);
         if (response && response.token) {
           resolve({ error: null, payment_method: { payment_token: response.token } });
         } else {
+          log('Tokenize error:', response?.error);
           const message = response?.error || 'Tokenization failed';
           resolve({ error: { message }, payment_method: null });
         }
