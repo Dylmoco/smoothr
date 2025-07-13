@@ -39,7 +39,7 @@ beforeEach(async () => {
   vi.resetModules();
   setupDom();
   window.SMOOTHR_CONFIG = { debug: true } as any;
-  window.CollectJS = { configure: vi.fn() } as any;
+  window.CollectJS = { tokenize: vi.fn() } as any;
   const mod = await import('../../checkout/gateways/nmi.js');
   createPaymentMethod = mod.createPaymentMethod;
 });
@@ -53,9 +53,7 @@ afterEach(() => {
 describe('createPaymentMethod nmi', () => {
   it('resolves token on success', async () => {
     const payment_token = 'tok_123';
-    (window.CollectJS.configure as any).mockImplementation(opts => {
-      opts.callback({ token: payment_token });
-    });
+    (window.CollectJS.tokenize as any).mockImplementation((_d, cb) => cb({ token: payment_token }));
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await createPaymentMethod();
     expect(res).toEqual({ error: null, payment_method: { payment_token } });
@@ -64,9 +62,7 @@ describe('createPaymentMethod nmi', () => {
   });
 
   it('returns error object on failure', async () => {
-    (window.CollectJS.configure as any).mockImplementation(opts => {
-      opts.callback({ error: 'bad card' });
-    });
+    (window.CollectJS.tokenize as any).mockImplementation((_d, cb) => cb({ error: 'bad card' }));
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await createPaymentMethod();
     expect(res).toEqual({ error: { message: 'bad card' }, payment_method: null });

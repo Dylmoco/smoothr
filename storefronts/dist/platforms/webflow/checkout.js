@@ -8358,13 +8358,13 @@ async function mountCardFields2() {
     const cvcStyle = computedInputStyle(cvc);
     const numInput = num.querySelector("input");
     const expInput = exp.querySelector("input");
-    const cvcInput = cvc.querySelector("input");
+    const cvcInput2 = cvc.querySelector("input");
     if (numInput)
       Object.assign(numInput.style, numStyle.input);
     if (expInput)
       Object.assign(expInput.style, expStyle.input);
-    if (cvcInput)
-      Object.assign(cvcInput.style, cvcStyle.input);
+    if (cvcInput2)
+      Object.assign(cvcInput2.style, cvcStyle.input);
     console.log("[Authorize.Net] cardNumber style", numStyle);
     console.log("[Authorize.Net] cardExpiry style", expStyle);
     console.log("[Authorize.Net] cardCVC style", cvcStyle);
@@ -8455,15 +8455,15 @@ async function createPaymentMethod2() {
     warn2("Payment already submitting");
     return { error: { message: "Already submitting" }, payment_method: null };
   }
-  const cardNumberInput = document.querySelector("[data-smoothr-card-number] input");
-  const expiryInput = document.querySelector("[data-smoothr-card-expiry] input");
-  const cvcInput = document.querySelector("[data-smoothr-card-cvc] input");
-  let cardNumber = ((_a5 = cardNumberInput == null ? void 0 : cardNumberInput.value) == null ? void 0 : _a5.replace(/\s+/g, "")) || "";
-  let cardCode = ((_b = cvcInput == null ? void 0 : cvcInput.value) == null ? void 0 : _b.replace(/\D/g, "")) || "";
+  const cardNumberInput2 = document.querySelector("[data-smoothr-card-number] input");
+  const expiryInput2 = document.querySelector("[data-smoothr-card-expiry] input");
+  const cvcInput2 = document.querySelector("[data-smoothr-card-cvc] input");
+  let cardNumber = ((_a5 = cardNumberInput2 == null ? void 0 : cardNumberInput2.value) == null ? void 0 : _a5.replace(/\s+/g, "")) || "";
+  let cardCode = ((_b = cvcInput2 == null ? void 0 : cvcInput2.value) == null ? void 0 : _b.replace(/\D/g, "")) || "";
   let month = "";
   let year = "";
-  if (expiryInput == null ? void 0 : expiryInput.value) {
-    [month, year] = expiryInput.value.split("/").map((s) => s.trim());
+  if (expiryInput2 == null ? void 0 : expiryInput2.value) {
+    [month, year] = expiryInput2.value.split("/").map((s) => s.trim());
     if (year && year.length === 2)
       year = "20" + year;
   }
@@ -8700,9 +8700,9 @@ async function mountNMIFields() {
     }
     return input;
   }
-  const cardNumberInput = ensureSingleInput(numEl, "cardNumber");
-  const expiryInput = ensureSingleInput(expEl, "expiry");
-  const cvcInput = ensureSingleInput(cvvEl, "cvv");
+  cardNumberInput = ensureSingleInput(numEl, "cardNumber");
+  expiryInput = ensureSingleInput(expEl, "expiry");
+  cvcInput = ensureSingleInput(cvvEl, "cvv");
   if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
     const i = document.createElement("input");
     i.type = "hidden";
@@ -8731,11 +8731,11 @@ async function mountNMIFields() {
   });
   if (!window.CollectJS) {
     let script = document.querySelector(
-      'script[src*="secure.networkmerchants.com/token/Collect.js"]'
+      'script[src*="secure.networkmerchants.com/token/Collect.js"],script[src*="secure.nmi.com/token/Collect.js"]'
     );
     if (!script) {
       script = document.createElement("script");
-      script.src = "https://secure.networkmerchants.com/token/Collect.js";
+      script.src = "https://secure.nmi.com/token/Collect.js";
       script.setAttribute("data-tokenization-key", tokenizationKey);
       document.head.appendChild(script);
     }
@@ -8746,13 +8746,13 @@ async function mountNMIFields() {
 }
 function isMounted4() {
   const numberInput = document.querySelector('input[data-collect="cardNumber"]');
-  const cvcInput = document.querySelector('input[data-collect="cvv"]');
+  const cvcInput2 = document.querySelector('input[data-collect="cvv"]');
   const monthInput = document.querySelector('input[data-collect="expMonth"]');
   const yearInput = document.querySelector('input[data-collect="expYear"]');
   const numberFrame = document.querySelector("[data-smoothr-card-number] iframe");
   const expiryFrame = document.querySelector("[data-smoothr-card-expiry] iframe");
   const cvcFrame = document.querySelector("[data-smoothr-card-cvc] iframe");
-  return !!window.CollectJS && !!numberInput && !!cvcInput && !!monthInput && !!yearInput && !!numberFrame && !!expiryFrame && !!cvcFrame;
+  return !!window.CollectJS && !!numberInput && !!cvcInput2 && !!monthInput && !!yearInput && !!numberFrame && !!expiryFrame && !!cvcFrame;
 }
 function ready4() {
   const number = document.querySelector('[data-collect="cardNumber"]');
@@ -8804,7 +8804,7 @@ async function createPaymentMethod4() {
     }
   });
 }
-var tokenizationKey, _a4, DEBUG3, log4, warn4, nmi_default;
+var tokenizationKey, cardNumberInput, expiryInput, cvcInput, _a4, DEBUG3, log4, warn4, nmi_default;
 var init_nmi2 = __esm({
   "storefronts/checkout/gateways/nmi.js"() {
     init_nmi();
@@ -8866,8 +8866,8 @@ init_getPublicCredential();
 // storefronts/checkout/utils/inputFormatters.js
 function bindCardInputs() {
   const numberInput = document.querySelector("[data-smoothr-card-number] input") || document.querySelector("[data-smoothr-card-number]");
-  const expiryInput = document.querySelector("[data-smoothr-card-expiry] input") || document.querySelector("[data-smoothr-card-expiry]");
-  const cvcInput = document.querySelector("[data-smoothr-card-cvc] input") || document.querySelector("[data-smoothr-card-cvc]");
+  const expiryInput2 = document.querySelector("[data-smoothr-card-expiry] input") || document.querySelector("[data-smoothr-card-expiry]");
+  const cvcInput2 = document.querySelector("[data-smoothr-card-cvc] input") || document.querySelector("[data-smoothr-card-cvc]");
   if (numberInput && typeof numberInput.addEventListener === "function") {
     numberInput.addEventListener("input", () => {
       let val = numberInput.value.replace(/\D/g, "").slice(0, 16);
@@ -8875,17 +8875,17 @@ function bindCardInputs() {
       numberInput.value = val;
     });
   }
-  if (expiryInput && typeof expiryInput.addEventListener === "function") {
-    expiryInput.addEventListener("input", () => {
-      let val = expiryInput.value.replace(/\D/g, "").slice(0, 4);
+  if (expiryInput2 && typeof expiryInput2.addEventListener === "function") {
+    expiryInput2.addEventListener("input", () => {
+      let val = expiryInput2.value.replace(/\D/g, "").slice(0, 4);
       if (val.length > 2)
         val = val.slice(0, 2) + "/" + val.slice(2);
-      expiryInput.value = val;
+      expiryInput2.value = val;
     });
   }
-  if (cvcInput && typeof cvcInput.addEventListener === "function") {
-    cvcInput.addEventListener("input", () => {
-      cvcInput.value = cvcInput.value.replace(/\D/g, "").slice(0, 4);
+  if (cvcInput2 && typeof cvcInput2.addEventListener === "function") {
+    cvcInput2.addEventListener("input", () => {
+      cvcInput2.value = cvcInput2.value.replace(/\D/g, "").slice(0, 4);
     });
   }
 }
