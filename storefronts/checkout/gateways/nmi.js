@@ -2,6 +2,9 @@ import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
 let tokenizationKey;
+let cardNumberInput;
+let expiryInput;
+let cvcInput;
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -81,9 +84,9 @@ export async function mountNMIFields() {
     return input;
   }
 
-  const cardNumberInput = ensureSingleInput(numEl, 'cardNumber');
-  const expiryInput = ensureSingleInput(expEl, 'expiry');
-  const cvcInput = ensureSingleInput(cvvEl, 'cvv');
+  cardNumberInput = ensureSingleInput(numEl, 'cardNumber');
+  expiryInput = ensureSingleInput(expEl, 'expiry');
+  cvcInput = ensureSingleInput(cvvEl, 'cvv');
 
   // Inject hidden postal
   if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
@@ -181,41 +184,32 @@ export async function createPaymentMethod() {
     return { error: { message: 'Collect.js not ready' }, payment_method: null };
   }
 
-  const expiryEl =
-    document.querySelector('[data-smoothr-card-expiry]')?.querySelector('input[data-smoothr-expiry-visible]') ||
-    document.querySelector('[data-smoothr-card-expiry]')?.querySelector('input') ||
-    document.querySelector('[data-smoothr-card-expiry]');
-  const expiryRaw = expiryEl?.value || '';
-  const match = expiryRaw.replace(/\s+/g, '').match(/^(\d{1,2})\/?(\d{2,4})$/);
-
-  if (!match) {
-    warn('Invalid expiry format:', expiryRaw);
-    return { error: { message: 'Invalid card expiry' }, payment_method: null };
-  }
-
-  let [, month, year] = match;
-  if (month.length === 1) month = '0' + month;
-  if (year.length === 2) year = '20' + year;
-  const expMonth = month;
-  const expYear = year;
-
-  log('Parsed expiry', { expMonth, expYear });
-
   return new Promise(resolve => {
-    try {
-      window.CollectJS.tokenize({ expMonth, expYear }, response => {
-        log('Tokenize response:', response);
+    let handled = false;
+
+    window.CollectJS.configure({
+      tokenizationKey,
+      fields: {
+        cardNumber: cardNumberInput,
+        expiry: expiryInput,
+        cvv: cvcInput
+      },
+      callback(response) {
+        if (handled) return;
+        handled = true;
+
         if (response && response.token) {
+          log('Token received from CollectJS callback:', response);
           resolve({ error: null, payment_method: { payment_token: response.token } });
         } else {
-          log('Tokenize error:', response?.error);
-          const message = response?.error || 'Tokenization failed';
-          resolve({ error: { message }, payment_method: null });
+          log('Tokenization error from CollectJS:', response?.error || response);
+          resolve({ error: response?.error || 'Unknown error', payment_method: null });
         }
-      });
-    } catch (e) {
-      resolve({ error: { message: e?.message || 'Tokenization failed' }, payment_method: null });
-    }
+      }
+    });
+
+    // NOTE: Collect.js internally listens for form submission or field blur events
+    // No need to call anything — the iframe handles triggering
   });
 }
 
