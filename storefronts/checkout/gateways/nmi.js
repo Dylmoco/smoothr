@@ -2,10 +2,10 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
-let isMountedFlag = false; // Guard to prevent multiple mounts
-let hasMounted = false; // One-time execution flag
-let mountCount = 0; // Debug counter
-let mountTimeout = null; // Debounce timer
+let isMountedFlag = false;
+let hasMounted = false;
+let mountCount = 0;
+let mountTimeout = null;
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -63,13 +63,13 @@ function syncHiddenExpiryFields(container, mon, yr) {
 }
 
 export async function mountNMIFields() {
-  mountCount++;
-  log(`mountNMIFields called ${mountCount} times`);
   if (hasMounted) {
     log('NMI fields already mounted, skipping');
     return Promise.resolve();
   }
 
+  mountCount++;
+  log(`mountNMIFields called ${mountCount} times`);
   if (mountTimeout) {
     log('Debouncing mountNMIFields');
     clearTimeout(mountTimeout);
@@ -127,6 +127,7 @@ export async function mountNMIFields() {
               },
               callback: () => {
                 log('CollectJS configured successfully');
+                log('CollectJS object:', Object.keys(window.CollectJS));
                 const iframes = document.querySelectorAll('iframe');
                 log('Iframes after configuration:', iframes.length, Array.from(iframes).map(i => i.parentElement));
                 isMountedFlag = true;
