@@ -1,4 +1,3 @@
-
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
@@ -16,7 +15,7 @@ const CONFIG = {
     CARD_NUMBER: '[data-smoothr-card-number]',
     CARD_EXPIRY: '[data-smoothr-card-expiry]',
     CARD_CVC: '[data-smoothr-card-cvc]',
-    POSTAL: '[data-smoothr-bill-postal]', // Updated to match your billing postal attribute
+    POSTAL: '[data-smoothr-bill-postal]', // Confirmed for billing postal
   },
   COLLECTJS_URL: 'https://secure.nmi.com/token/Collect.js',
 };
@@ -79,8 +78,8 @@ export async function mountNMIFields() {
     expiryDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_EXPIRY, 15000);
     cvcDiv = await waitForElement(CONFIG.ATTRIBUTES.CARD_CVC, 15000);
     const postalDiv = document.querySelector(CONFIG.ATTRIBUTES.POSTAL);
-    if (!cardNumberDiv || !expiryDiv || !cvcDiv) {
-      warn('Missing required card input divs:', { cardNumberDiv, expiryDiv, cvcDiv });
+    if (!cardNumberDiv || !expiryDiv || !cvcDiv || !postalDiv) {
+      warn('Missing required card input divs:', { cardNumberDiv, expiryDiv, cvcDiv, postalDiv });
       throw new Error('Required card input divs not found');
     }
 
@@ -91,7 +90,7 @@ export async function mountNMIFields() {
       postal: !!postalDiv,
     });
 
-    [cardNumberDiv, expiryDiv, cvcDiv].forEach(el =>
+    [cardNumberDiv, expiryDiv, cvcDiv, postalDiv].forEach(el =>
       el.setAttribute('data-tokenization-key', tokenizationKey)
     );
 
@@ -103,14 +102,20 @@ export async function mountNMIFields() {
     return new Promise((resolve, reject) => {
       const setupCollect = () => {
         try {
+          log('Configuring CollectJS with fields:', {
+            ccnumber: CONFIG.ATTRIBUTES.CARD_NUMBER,
+            ccexp: CONFIG.ATTRIBUTES.CARD_EXPIRY,
+            cvv: CONFIG.ATTRIBUTES.CARD_CVC,
+            postalCode: CONFIG.ATTRIBUTES.POSTAL,
+          });
           window.CollectJS.configure({
             tokenizationKey,
-            variant: 'inline', // Explicitly use Direct Post
+            variant: 'inline',
             fields: {
               ccnumber: { selector: CONFIG.ATTRIBUTES.CARD_NUMBER },
-              ccexp: { selector: CONFIG.ATTRIBUTES.CARD_EXPIRY }, // Use div for iframe
+              ccexp: { selector: CONFIG.ATTRIBUTES.CARD_EXPIRY },
               cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC },
-              postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL } // Added to match billing postal
+              postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL },
             },
             callback: () => {
               log('CollectJS configured successfully');
@@ -125,7 +130,7 @@ export async function mountNMIFields() {
             },
             validationCallback: (field, status, message) => {
               if (!status) warn(`Validation error in ${field}: ${message}`);
-            }
+            },
           });
         } catch (e) {
           warn('CollectJS configuration failed:', e.message);
@@ -153,7 +158,7 @@ export async function mountNMIFields() {
         log('CollectJS already loaded');
         setupCollect();
       } else {
-        script.src = scriptSrc; // Force reload with cache-busting
+        script.src = scriptSrc;
         document.head.appendChild(script);
         script.addEventListener('load', setupCollect);
         script.addEventListener('error', () => {
@@ -172,6 +177,7 @@ export function isMounted() {
   const numberFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_NUMBER} iframe`);
   const expiryFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_EXPIRY} iframe`);
   const cvcFrame = document.querySelector(`${CONFIG.ATTRIBUTES.CARD_CVC} iframe`);
+  const postalFrame = document.querySelector(`${CONFIG.ATTRIBUTES.POSTAL} iframe`);
   const monthInput = document.querySelector('input[data-collect="expMonth"]');
   const yearInput = document.querySelector('input[data-collect="expYear"]');
 
@@ -181,6 +187,7 @@ export function isMounted() {
     numberFrame: !!numberFrame,
     expiryFrame: !!expiryFrame,
     cvcFrame: !!cvcFrame,
+    postalFrame: !!postalFrame,
     monthInput: !!monthInput,
     yearInput: !!yearInput,
   });
@@ -191,6 +198,7 @@ export function isMounted() {
     !!numberFrame &&
     !!expiryFrame &&
     !!cvcFrame &&
+    !!postalFrame &&
     !!monthInput &&
     !!yearInput
   );
@@ -201,6 +209,7 @@ export function ready() {
   const key = wrapper?.getAttribute('data-tokenization-key') || tokenizationKey;
   const number = document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER);
   const cvc = document.querySelector(CONFIG.ATTRIBUTES.CARD_CVC);
+  const postal = document.querySelector(CONFIG.ATTRIBUTES.POSTAL);
   const month = document.querySelector('input[data-collect="expMonth"]');
   const year = document.querySelector('input[data-collect="expYear"]');
   const expiryInput = document.querySelector('input[data-collect="ccexp"]');
@@ -211,6 +220,7 @@ export function ready() {
     key: !!key,
     number: !!number,
     cvc: !!cvc,
+    postal: !!postal,
     month: !!month,
     year: !!year,
     expiryInput: !!expiryInput,
@@ -222,6 +232,7 @@ export function ready() {
     !!key &&
     !!number &&
     !!cvc &&
+    !!postal &&
     !!month &&
     !!year &&
     !!expiryInput
