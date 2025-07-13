@@ -128,16 +128,8 @@ export async function mountNMIFields() {
 export function isMounted() {
   const numberInput = document.querySelector('input[data-collect="cardNumber"]');
   const cvcInput = document.querySelector('input[data-collect="cvv"]');
-  const expiryVisible =
-    document.querySelector(
-      '[data-smoothr-card-expiry] input[data-smoothr-expiry-visible]'
-    ) ||
-    document.querySelector(
-      '[data-smoothr-card-expiry] input:not([data-collect])'
-    ) ||
-    document.querySelector('[data-smoothr-card-expiry] input');
-
-  if (!numberInput || !cvcInput || !expiryVisible) return false;
+  const monthInput = document.querySelector('input[data-collect="expMonth"]');
+  const yearInput = document.querySelector('input[data-collect="expYear"]');
 
   const numberFrame = document.querySelector('[data-smoothr-card-number] iframe');
   const expiryFrame = document.querySelector('[data-smoothr-card-expiry] iframe');
@@ -145,6 +137,10 @@ export function isMounted() {
 
   return (
     !!window.CollectJS &&
+    !!numberInput &&
+    !!cvcInput &&
+    !!monthInput &&
+    !!yearInput &&
     !!numberFrame &&
     !!expiryFrame &&
     !!cvcFrame
