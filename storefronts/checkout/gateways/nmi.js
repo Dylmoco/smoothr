@@ -2,7 +2,8 @@
 import { resolveTokenizationKey } from '../providers/nmi.js';
 import waitForElement from '../utils/waitForElement.js';
 
-let isMountedFlag = false; // Renamed to avoid conflict with function
+let isMountedFlag = false; // Guard to prevent multiple mounts
+let mountCount = 0; // Debug counter
 
 const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
@@ -60,6 +61,8 @@ function syncHiddenExpiryFields(container, mon, yr) {
 }
 
 export async function mountNMIFields() {
+  mountCount++; // Increment debug counter
+  log(`mountNMIFields called ${mountCount} times`);
   if (isMountedFlag) {
     log('NMI fields already mounted, skipping re-configuration');
     return Promise.resolve();
@@ -298,10 +301,12 @@ if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {};
   window.Smoothr.mountNMIFields = mountNMIFields;
 
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
     if (!isMountedFlag && document.querySelector(CONFIG.ATTRIBUTES.CARD_NUMBER)) {
-      mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
-      observer.disconnect();
+      log('Mutation detected, attempting mount');
+      mountNMIFields().then(() => {
+        observer.disconnect(); // Disconnect after first success
+      }).catch(err => warn('Failed to mount NMI fields:', err.message));
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
