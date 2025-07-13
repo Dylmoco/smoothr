@@ -16,7 +16,7 @@ const CONFIG = {
     CARD_NUMBER: '[data-smoothr-card-number]',
     CARD_EXPIRY: '[data-smoothr-card-expiry]',
     CARD_CVC: '[data-smoothr-card-cvc]',
-    POSTAL: '[data-smoothr-postal]',
+    POSTAL: '[data-smoothr-bill-postal]', // Updated to match your billing postal attribute
   },
   COLLECTJS_URL: 'https://secure.nmi.com/token/Collect.js',
 };
@@ -109,8 +109,8 @@ export async function mountNMIFields() {
             fields: {
               ccnumber: { selector: CONFIG.ATTRIBUTES.CARD_NUMBER },
               ccexp: { selector: CONFIG.ATTRIBUTES.CARD_EXPIRY }, // Use div for iframe
-              cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC }
-              // Removed postalCode to avoid mismatch
+              cvv: { selector: CONFIG.ATTRIBUTES.CARD_CVC },
+              postalCode: { selector: CONFIG.ATTRIBUTES.POSTAL } // Added to match billing postal
             },
             callback: () => {
               log('CollectJS configured successfully');
@@ -293,4 +293,3 @@ if (typeof window !== 'undefined') {
     mountNMIFields().catch(err => warn('Failed to mount NMI fields:', err.message));
   }
 }
-```
