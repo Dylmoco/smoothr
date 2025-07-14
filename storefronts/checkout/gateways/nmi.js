@@ -96,7 +96,7 @@ function configureCollectJS() {
             return;
           }
 
-          const orderNumber = 'ORD-' + Date.now().toString().slice(-4); // Client-side order_number like authorizeNet
+          const orderNumber = 'ORD-' + Date.now().toString().slice(-4); // Client-side order_number
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
@@ -134,10 +134,14 @@ function configureCollectJS() {
               total: amount,
               currency: currency,
               description: orderDescription,
-              order_number: orderNumber // Send order_number
+              order_number: orderNumber
             })
-          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
-          .catch(error => console.error('[NMI] POST error:', error));
+          }).then(res => res.json()).then(data => {
+            console.log('[NMI] Backend response:', data);
+            if (data.success) {
+              window.location.href = '/thank-you'; // Redirect on success
+            }
+          }).catch(error => console.error('[NMI] POST error:', error));
         } else {
           console.log('[NMI] Failed:', response.reason);
         }
