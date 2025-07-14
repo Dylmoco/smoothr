@@ -99,9 +99,7 @@ if (typeof window !== 'undefined') {
       }
     })
     .catch(() => {});
-  if (cfg.platform === 'webflow-ecom') {
-    setSelectedCurrency = setEcomCurrency;
-  } else if (cfg.platform === 'cms') {
+  if (cfg.platform === 'cms') {
     setSelectedCurrency = setCmsCurrency;
   }
   window.Smoothr = Smoothr;
@@ -128,7 +126,6 @@ if (typeof window !== 'undefined') {
 export default Smoothr;
 
 import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow-dom.js';
-import { setSelectedCurrency as setEcomCurrency } from '../platforms/webflow-ecom-currency.js';
 import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
 // Always expose helper on the global object for browser embeds
 globalThis.setSelectedCurrency =
