@@ -58,6 +58,7 @@ function configureCollectJS() {
           console.log('[NMI] Sending POST with store_id:', window.SMOOTHR_CONFIG.storeId);
           // Get values from data attributes
           const email = document.querySelector('[data-smoothr-email]')?.value || '';
+          const phone = document.querySelector('[data-smoothr-phone]')?.value || '';
           const billFirst = document.querySelector('[data-smoothr-bill-first-name]')?.value || '';
           const billLast = document.querySelector('[data-smoothr-bill-last-name]')?.value || '';
           const billingName = `${billFirst} ${billLast}`.trim();
@@ -79,6 +80,8 @@ function configureCollectJS() {
           const amountElement = document.querySelector('[data-smoothr-total]');
           const amount = amountElement ? parseFloat(amountElement.textContent.replace(/[^0-9.]/g, '')) : 0;
           const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
+          const orderId = 'smoothr-' + Date.now();
+          const orderDescription = 'Smoothr Checkout Order';
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
@@ -89,6 +92,7 @@ function configureCollectJS() {
               amount: amount,
               currency: currency,
               email: email,
+              phone: phone,
               billing_firstname: billFirst,
               billing_lastname: billLast,
               billing_address1: billingAddress1,
@@ -104,8 +108,9 @@ function configureCollectJS() {
               shipping_city: shippingCity,
               shipping_state: shippingState,
               shipping_zip: shippingZip,
-              shipping_country: shippingCountry
-              // Add phone if you have data-smoothr-phone
+              shipping_country: shippingCountry,
+              orderid: orderId,
+              order_description: orderDescription
             })
           }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
           .catch(error => console.error('[NMI] POST error:', error));
