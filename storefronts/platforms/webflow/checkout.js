@@ -13,13 +13,25 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
-  // Set data-tokenization-key attribute on the checkout trigger div
-  const checkoutDiv = document.querySelector('[data-smoothr-checkout]');
-  if (checkoutDiv) {
-    checkoutDiv.setAttribute('data-tokenization-key', tokenizationKey);
-    console.log('[NMI] Set data-tokenization-key on data-smoothr-checkout:', tokenizationKey.substring(0, 8) + '...');
+  // Find the parent of payment fields (e.g., nearest common ancestor of data-smoothr-card-number divs)
+  const fieldElements = [
+    document.querySelector('[data-smoothr-card-number]'),
+    document.querySelector('[data-smoothr-card-expiry]'),
+    document.querySelector('[data-smoothr-card-cvc]')
+  ];
+  let parentDiv = null;
+  if (fieldElements.every(el => el)) {
+    parentDiv = fieldElements[0].parentElement;
+    while (parentDiv && !fieldElements.every(el => parentDiv.contains(el))) {
+      parentDiv = parentDiv.parentElement;
+    }
+  }
+
+  if (parentDiv) {
+    parentDiv.setAttribute('data-tokenization-key', tokenizationKey);
+    console.log('[NMI] Set data-tokenization-key on parent div:', tokenizationKey.substring(0, 8) + '...');
   } else {
-    console.warn('[NMI] data-smoothr-checkout element not found');
+    console.warn('[NMI] No suitable parent div found for payment fields');
     return;
   }
 
