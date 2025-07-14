@@ -107,7 +107,7 @@ async function initCheckout() {
 async function fetchTokenizationKey(storeId) {
   const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
   const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU'; // Your anon key
-  const supabase = Supabase.createClient(supabaseUrl, anonKey);
+  const supabase = supabase.createClient(supabaseUrl, anonKey);
   const { data, error } = await supabase
     .from('store_integrations')
     .select('tokenization_key')
