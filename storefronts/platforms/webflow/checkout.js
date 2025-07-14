@@ -13,9 +13,21 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
+  // Set data-tokenization-key attribute on Smoothr fields
+  const fields = ['data-smoothr-card-number', 'data-smoothr-card-expiry', 'data-smoothr-card-cvc'];
+  fields.forEach(selector => {
+    const element = document.querySelector(`[${selector}]`);
+    if (element) {
+      element.setAttribute('data-tokenization-key', tokenizationKey);
+      console.log(`[NMI] Set data-tokenization-key on ${selector}: ${tokenizationKey.substring(0, 8)}...`);
+    } else {
+      console.warn(`[NMI] Element with ${selector} not found`);
+    }
+  });
+
   if (document.getElementById('collectjs-script')) {
     console.log('[NMI] CollectJS already loaded, configuring now.');
-    configureCollectJS(tokenizationKey);
+    configureCollectJS();
     return;
   }
 
@@ -27,7 +39,7 @@ function mountNMIFields(tokenizationKey) {
 
   script.onload = () => {
     console.log('[NMI] CollectJS script loaded.');
-    configureCollectJS(tokenizationKey);
+    configureCollectJS();
   };
 
   script.onerror = () => {
@@ -35,7 +47,7 @@ function mountNMIFields(tokenizationKey) {
   };
 }
 
-function configureCollectJS(tokenizationKey) {
+function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
     console.error('[NMI] CollectJS not ready or locked, delaying configuration.');
     if (!isLocked) isLocked = true; // Set lock if not already set
@@ -45,7 +57,6 @@ function configureCollectJS(tokenizationKey) {
 
   try {
     CollectJS.configure({
-      tokenizationKey: tokenizationKey, // Use the fetched key directly
       variant: 'inline',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
@@ -71,7 +82,7 @@ function configureCollectJS(tokenizationKey) {
         isLocked = false;
       }
     });
-    console.log('[NMI] CollectJS configured successfully with token:', tokenizationKey.substring(0, 8) + '...');
+    console.log('[NMI] CollectJS configured successfully');
   } catch (error) {
     console.error('[NMI] Error configuring CollectJS:', error);
     isLocked = false;
