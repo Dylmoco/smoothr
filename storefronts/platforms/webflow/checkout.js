@@ -2,7 +2,7 @@
 
 import { initNMI } from '../../checkout/gateways/nmi.js';
 
-// (keep the rest of the code as is, but ensure the async wrapper is there to fix await issues)
+// (keep the async wrapper and rest as is)
 (async function () {
   async function initCheckout() {
     if (!window.SMOOTHR_CONFIG) {
