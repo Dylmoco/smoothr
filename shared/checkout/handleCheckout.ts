@@ -73,7 +73,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
-    console.log('[handleCheckout] No origin, setting CORS');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -87,7 +86,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
 
   if (!storeMatch || storeMatch.length === 0) {
-    console.log('[handleCheckout] No store match, setting CORS and 403');
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -95,13 +93,11 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  console.log('[handleCheckout] Setting CORS for origin:', origin);
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    console.log('[handleCheckout] OPTIONS request, returning 200');
     res.status(200).end();
     return;
   }
@@ -389,7 +385,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         ...(existingOrder.raw_data || {}),
         transaction_id: transactionId,
         transactionResponse: providerResult?.data?.transactionResponse
-      }
+      },
+      items: cart // Add cart to items column
     };
 
     if (provider === 'authorizeNet') {
@@ -504,7 +501,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       platform: platform || 'webflow',
       customer_id: customerId,
       customer_email: email,
-      payment_intent_id: paymentIntentId
+      payment_intent_id: paymentIntentId,
+      items: cart // Add cart to items column
     };
     console.log('[handleCheckout] orderPayload before upsert:', orderPayload);
   } catch (err) {
