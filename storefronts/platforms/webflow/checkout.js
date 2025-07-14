@@ -59,7 +59,6 @@ function configureCollectJS() {
       callback: function(response) {
         console.log('[NMI] Tokenization response:', response);
         if (response.token) {
-          isConfigured = true;
           console.log('[NMI] Success, token:', response.token);
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
@@ -72,6 +71,7 @@ function configureCollectJS() {
         isLocked = false;
       }
     });
+    isConfigured = true;
     console.log('[NMI] CollectJS configured successfully');
   } catch (error) {
     console.error('[NMI] Error configuring CollectJS:', error);
@@ -135,7 +135,7 @@ function handlePaymentSubmit(event) {
   event.preventDefault();
   console.log('[Smoothr Checkout] Pay div clicked, starting tokenization check');
 
-  if (typeof CollectJS.startTokenization !== 'function') {
+  if (!isConfigured || typeof CollectJS.startTokenization !== 'function') {
     console.log('[Smoothr Checkout] Tokenize not available, config failed');
     return;
   }
