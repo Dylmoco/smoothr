@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       .from('store_integrations')
       .select('settings')
       .eq('store_id', storeId)
-      .eq('integration_id', provider) // Use integration_id instead of provider
+      .eq('provider', provider)
       .single();
 
     if (error) {
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       }
     }
 
-    console.error('[API] No key found for store:', storeId, 'integration_id:', provider, 'data:', data);
+    console.error('[API] No key found for store:', storeId, 'provider:', provider, 'data:', data);
     return res.status(404).json({ error: 'No key found', data: data });
   } catch (error) {
     console.error('[API] Unexpected error:', error.message, error.stack);
