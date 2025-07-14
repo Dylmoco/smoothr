@@ -61,13 +61,12 @@
         // Send token and store_id to backend
         fetch('/api/checkout/nmi', {
           method: 'POST',
-          headers: JSON {
+          headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             token: response.token,
-            store_id: {}, // add other fields if needed
-            store_id: storeId // This is the missing store_id
+            store_id: storeId // Add other fields if needed
           })
         }).then(res => {
           if (!res.ok) {
