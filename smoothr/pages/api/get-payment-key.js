@@ -9,8 +9,7 @@ export default async function handler(req, res) {
   }
 
   const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
-  // Use your service role key here (from Supabase dashboard, NOT the anon key)
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY; // Set in Vercel env vars
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Updated to match Vercel env var
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const { data, error } = await supabase
