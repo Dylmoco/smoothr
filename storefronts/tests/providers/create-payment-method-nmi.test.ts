@@ -39,7 +39,7 @@ beforeEach(async () => {
   vi.resetModules();
   setupDom();
   window.SMOOTHR_CONFIG = { debug: true } as any;
-  window.CollectJS = { tokenize: vi.fn() } as any;
+  window.CollectJS = { tokenize: vi.fn(), startTokenization: vi.fn() } as any;
   const mod = await import('../../checkout/gateways/nmi.js');
   createPaymentMethod = mod.createPaymentMethod;
 });
@@ -58,6 +58,7 @@ describe('createPaymentMethod nmi', () => {
     const res = await createPaymentMethod();
     expect(res).toEqual({ error: null, payment_method: { payment_token } });
     expect(logSpy).toHaveBeenCalled();
+    expect((window.CollectJS.startTokenization as any)).toHaveBeenCalled();
     logSpy.mockRestore();
   });
 
@@ -67,6 +68,13 @@ describe('createPaymentMethod nmi', () => {
     const res = await createPaymentMethod();
     expect(res).toEqual({ error: { message: 'bad card' }, payment_method: null });
     expect(logSpy).toHaveBeenCalled();
+    expect((window.CollectJS.startTokenization as any)).toHaveBeenCalled();
     logSpy.mockRestore();
+  });
+
+  it('handles missing startTokenization function', async () => {
+    delete (window.CollectJS as any).startTokenization;
+    const res = await createPaymentMethod();
+    expect(res.error?.message).toBe('Tokenize not available');
   });
 });
