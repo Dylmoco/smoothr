@@ -80,7 +80,6 @@ function configureCollectJS() {
           const amountElement = document.querySelector('[data-smoothr-total]');
           const amount = amountElement ? parseFloat(amountElement.textContent.replace(/[^0-9.]/g, '')) : 0;
           const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
-          const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
           console.log('[NMI] SDK cart:', window.Smoothr.cart); // Log to debug
           const cartData = window.Smoothr.cart.getCart() || {};
@@ -96,6 +95,8 @@ function configureCollectJS() {
             console.error('[NMI] Cart is empty');
             return;
           }
+
+          const orderNumber = 'ORD-' + Date.now().toString().slice(-4); // Client-side order_number like authorizeNet
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
@@ -132,7 +133,8 @@ function configureCollectJS() {
               cart: cart,
               total: amount,
               currency: currency,
-              description: orderDescription
+              description: orderDescription,
+              order_number: orderNumber // Send order_number
             })
           }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
           .catch(error => console.error('[NMI] POST error:', error));
