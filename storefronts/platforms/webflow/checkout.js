@@ -13,18 +13,21 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
-  // Find the parent of payment fields (e.g., nearest common ancestor of data-smoothr-card-number divs)
+  // Check if all payment field elements exist
   const fieldElements = [
     document.querySelector('[data-smoothr-card-number]'),
     document.querySelector('[data-smoothr-card-expiry]'),
     document.querySelector('[data-smoothr-card-cvc]')
   ];
-  let parentDiv = null;
-  if (fieldElements.every(el => el)) {
-    parentDiv = fieldElements[0].parentElement;
-    while (parentDiv && !fieldElements.every(el => parentDiv.contains(el))) {
-      parentDiv = parentDiv.parentElement;
-    }
+  if (!fieldElements.every(el => el)) {
+    console.error('[NMI] One or more payment fields not found');
+    return;
+  }
+
+  // Find the nearest common parent div of the payment fields
+  let parentDiv = fieldElements[0].parentElement;
+  while (parentDiv && !fieldElements.every(el => parentDiv.contains(el))) {
+    parentDiv = parentDiv.parentElement;
   }
 
   if (parentDiv) {
