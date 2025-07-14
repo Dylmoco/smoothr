@@ -82,8 +82,12 @@ function configureCollectJS() {
           const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
           const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
-          const ipAddress = '0.0.0.0'; // Placeholder
-          const cart = []; // Placeholder for cart items
+          const cart = window.smoothr.cart.items.map(item => ({
+            product_id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })) || []; // Pull real cart from SDK
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
