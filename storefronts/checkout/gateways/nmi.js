@@ -271,6 +271,18 @@ export async function createPaymentMethod() {
   log('Parsed expiry', { expMonth, expYear });
 
   return new Promise(resolve => {
+    if (typeof window.CollectJS?.startTokenization !== 'function') {
+      console.log('Tokenize not available, config failed');
+      resolve({ error: { message: 'Tokenize not available' }, payment_method: null });
+      return;
+    }
+    try {
+      window.CollectJS.startTokenization();
+    } catch (error) {
+      console.log('Tokenization error:', error);
+      resolve({ error: { message: error?.message || 'Tokenization failed' }, payment_method: null });
+      return;
+    }
     try {
       window.CollectJS.tokenize({ expMonth, expYear }, response => {
         log('Tokenize response:', response);
