@@ -2,6 +2,16 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', 'https://smoothr-cms.webflow.io');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).json({});
+  }
+
   const { storeId, provider } = req.query;
 
   if (!storeId || !provider) {
@@ -9,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Updated to match Vercel env var
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const { data, error } = await supabase
