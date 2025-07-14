@@ -41,6 +41,7 @@ function configureCollectJS() {
 
   try {
     CollectJS.configure({
+      paymentSelector: '[data-smoothr-pay]',
       variant: 'inline',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
@@ -96,9 +97,14 @@ async function initCheckout() {
     }
   }
 
-  const payButton = document.querySelector('[data-smoothr-checkout]');
+  const payButton = document.querySelector('[data-smoothr-pay]');
   if (payButton) {
-    payButton.addEventListener('click', handlePaymentSubmit);
+    payButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!isConfigured) {
+        console.log('[Smoothr Checkout] Config not ready, delaying.');
+      }
+    });
     console.log('[Smoothr Checkout] Pay div found and bound');
   } else {
     console.warn('[Smoothr Checkout] Pay div not found');
@@ -121,23 +127,6 @@ async function fetchTokenizationKey(storeId) {
     return data.tokenization_key;
   } else {
     throw new Error('No NMI key found');
-  }
-}
-
-// Payment submit handler
-function handlePaymentSubmit(event) {
-  event.preventDefault();
-  console.log('[Smoothr Checkout] Pay div clicked, starting tokenization check');
-
-  if (!isConfigured || typeof CollectJS.startTokenization !== 'function') {
-    console.log('[Smoothr Checkout] Tokenize not available, config failed');
-    return;
-  }
-
-  try {
-    CollectJS.startTokenization();
-  } catch (error) {
-    console.log('[Smoothr Checkout] Tokenization error:', error);
   }
 }
 
