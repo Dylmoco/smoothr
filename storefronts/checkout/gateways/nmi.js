@@ -86,7 +86,7 @@ function configureCollectJS() {
           const cartData = window.Smoothr.cart.getCart() || {};
           const cartItems = Array.isArray(cartData.items) ? cartData.items : [];
           const cart = cartItems.map(item => ({
-            product_id: item.id,
+            product_id: item.id || 'unknown',
             name: item.name,
             quantity: item.quantity,
             price: item.price
