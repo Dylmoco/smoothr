@@ -103,23 +103,23 @@ async function initCheckout() {
   }
 }
 
-// Fetch key from Supabase
+// Fetch key from Supabase using client
 async function fetchTokenizationKey(storeId) {
   const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
   const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU'; // Your anon key
-  const response = await fetch(`${supabaseUrl}/rest/v1/store_integrations?select=tokenization_key&store_id=eq.${storeId}&provider=eq.nmi`, {
-    headers: {
-      'apikey': anonKey,
-      'Authorization': `Bearer ${anonKey}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  if (!response.ok) {
-    throw new Error(`Supabase fetch error: ${response.status}`);
+  const supabase = Supabase.createClient(supabaseUrl, anonKey);
+  const { data, error } = await supabase
+    .from('store_integrations')
+    .select('tokenization_key')
+    .eq('store_id', storeId)
+    .eq('provider', 'nmi')
+    .single();
+
+  if (error) {
+    throw new Error(`Supabase query error: ${error.message}`);
   }
-  const data = await response.json();
-  if (data && data[0]) {
-    return data[0].tokenization_key;
+  if (data && data.tokenization_key) {
+    return data.tokenization_key;
   } else {
     throw new Error('No NMI key found');
   }
