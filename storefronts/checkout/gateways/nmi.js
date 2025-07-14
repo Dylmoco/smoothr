@@ -83,7 +83,8 @@ function configureCollectJS() {
           const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
           console.log('[NMI] SDK cart:', window.Smoothr.cart); // Log to debug
-          const cartItems = window.Smoothr.cart.getCart() || []; // Call getCart to fetch items
+          const cartData = window.Smoothr.cart.getCart() || {};
+          const cartItems = Array.isArray(cartData.items) ? cartData.items : [];
           const cart = cartItems.map(item => ({
             product_id: item.id,
             name: item.name,
