@@ -13,46 +13,23 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
-  // Check if all payment field elements exist
-  const fieldElements = [
-    document.querySelector('[data-smoothr-card-number]'),
-    document.querySelector('[data-smoothr-card-expiry]'),
-    document.querySelector('[data-smoothr-card-cvc]')
-  ];
-  if (!fieldElements.every(el => el)) {
-    console.error('[NMI] One or more payment fields not found:', fieldElements.filter(el => !el).map(el => el && el.getAttribute('data-smoothr-*')));
-    return;
-  }
-
-  // Set data-tokenization-key on the nearest common parent
-  let parentDiv = fieldElements[0].parentElement;
-  while (parentDiv && !fieldElements.every(el => parentDiv.contains(el))) {
-    parentDiv = parentDiv.parentElement;
-  }
-
-  if (parentDiv) {
-    parentDiv.setAttribute('data-tokenization-key', tokenizationKey);
-    console.log('[NMI] Set data-tokenization-key on parent div:', tokenizationKey.substring(0, 8) + '...');
-  } else {
-    console.warn('[NMI] No suitable parent div found for payment fields');
-    return;
-  }
-
   if (document.getElementById('collectjs-script')) {
     console.log('[NMI] CollectJS already loaded, configuring now.');
-    initializeCollectJS();
+    configureCollectJS();
     return;
   }
 
   const script = document.createElement('script');
   script.id = 'collectjs-script';
   script.src = 'https://secure.nmi.com/token/Collect.js';
+  script.setAttribute('data-tokenization-key', tokenizationKey);
+  console.log('[NMI] Set data-tokenization-key on script tag:', tokenizationKey.substring(0, 8) + '...');
   script.async = true;
   document.head.appendChild(script);
 
   script.onload = () => {
     console.log('[NMI] CollectJS script loaded.');
-    initializeCollectJS();
+    configureCollectJS();
   };
 
   script.onerror = () => {
@@ -60,21 +37,24 @@ function mountNMIFields(tokenizationKey) {
   };
 }
 
-function initializeCollectJS() {
+function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
-    console.error('[NMI] CollectJS not ready or locked, delaying initialization.');
-    if (!isLocked) isLocked = true; // Set lock if not already set
+    console.error('[NMI] CollectJS not ready or locked, delaying configuration.');
+    if (!isLocked) isLocked = true;
     return;
   }
   isLocked = true;
 
   try {
-    // Attempt to initialize CollectJS with the configured fields
-    CollectJS.load({
+    CollectJS.configure({
+      variant: 'inline',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
         ccexp: { selector: '[data-smoothr-card-expiry]' },
         cvv: { selector: '[data-smoothr-card-cvc]' }
+      },
+      fieldsAvailableCallback: function() {
+        console.log('[NMI] Fields available, setting handlers');
       },
       callback: function(response) {
         console.log('[NMI] Tokenization response:', response);
@@ -92,9 +72,9 @@ function initializeCollectJS() {
         isLocked = false;
       }
     });
-    console.log('[NMI] CollectJS initialized successfully');
+    console.log('[NMI] CollectJS configured successfully');
   } catch (error) {
-    console.error('[NMI] Error initializing CollectJS:', error);
+    console.error('[NMI] Error configuring CollectJS:', error);
     isLocked = false;
   }
 }
