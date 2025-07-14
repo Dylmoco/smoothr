@@ -58,6 +58,11 @@ function configureCollectJS(tokenizationKey) {
             isConfigured = true;
             console.log('[NMI] Success, token:', response.token);
             // Send token to backend
+            fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ payment_token: response.token })
+            }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data));
           } else {
             console.log('[NMI] Failed:', response.reason);
           }
@@ -103,21 +108,18 @@ async function initCheckout() {
   }
 }
 
-// Fetch key from Supabase using client
+// Fetch key via Next.js API to bypass RLS
 async function fetchTokenizationKey(storeId) {
-  const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
-  const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU'; // Your anon key
-  const supabaseClient = new SupabaseClient(supabaseUrl, anonKey);
-  const { data, error } = await supabaseClient
-    .from('store_integrations')
-    .select('tokenization_key')
-    .eq('store_id', storeId)
-    .eq('provider', 'nmi')
-    .single();
-
-  if (error) {
-    throw new Error(`Supabase query error: ${error.message}`);
+  const apiBase = window.SMOOTHR_CONFIG.apiBase;
+  const response = await fetch(`${apiBase}/api/get-payment-key?storeId=${storeId}&provider=nmi`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`API fetch error: ${response.status}`);
   }
+  const data = await response.json();
   if (data && data.tokenization_key) {
     return data.tokenization_key;
   } else {
