@@ -1,7 +1,8 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
 
-import { initNMI } from './gateways/nmi.js';
+import { initNMI } from '../../checkout/gateways/nmi.js';
 
+// (keep the rest of the code as is, but ensure the async wrapper is there to fix await issues)
 (async function () {
   async function initCheckout() {
     if (!window.SMOOTHR_CONFIG) {
@@ -53,6 +54,6 @@ import { initNMI } from './gateways/nmi.js';
     }
   }
 
-  // Run init on loadd
+  // Run init on load
   document.addEventListener('DOMContentLoaded', initCheckout);
 })();
