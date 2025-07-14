@@ -28,7 +28,7 @@ interface CheckoutPayload {
   };
   billing?: {
     name?: string;
-    address?: {
+    address: {
       line1?: string;
       line2?: string;
       city?: string;
@@ -244,7 +244,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
           .digest('hex');
       }
     } catch (err) {
-      err('[error] Failed to compute cart_meta_hash:', err);
+      err('[error] Failed to compute cart_meta_hash:', err.message);
       return res.status(500).json({ error: 'cart_meta_hash failed' });
     }
 
@@ -415,7 +415,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       }
       updated = data;
     } catch (e: any) {
-      err('Supabase update threw:', e);
+      err('Supabase update threw:', e.message || e);
       err('Update payload:', updatePayload);
       console.error(e);
       return res.status(500).json({ error: 'Order update failed' });
@@ -464,7 +464,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   try {
     orderNumber = await generateOrderNumber?.(store_id);
   } catch (e) {
-    err('[generateOrderNumber] Failed to generate order number:', e);
+    err('[generateOrderNumber] Failed to generate order number:', e.message || e);
   }
   orderNumber =
     orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
@@ -504,7 +504,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     };
     console.log('[handleCheckout] orderPayload before upsert:', orderPayload);
   } catch (err) {
-    err('[error] Failed to build orderPayload:', err);
+    err('[error] Failed to build orderPayload:', err.message || err);
     return res.status(500).json({ error: 'Failed to build orderPayload' });
   }
 
@@ -523,7 +523,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
     orderData = data;
   } catch (e) {
-    console.error('[handleCheckout] Supabase upsert threw:', e);
+    console.error('[handleCheckout] Supabase upsert threw:', e.message || e);
     return res.status(500).json({ error: 'Order insert failed' });
   }
 
@@ -560,7 +560,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     payment_intent_id: paymentIntentId
   });
   } catch (e: any) {
-    err(e);
+    err(e.message || e);
     return res.status(400).json({ error: e.message });
   }
 }
