@@ -13,30 +13,24 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
-  // Check if all payment field elements exist
-  const fieldElements = [
-    document.querySelector('[data-smoothr-card-number]'),
-    document.querySelector('[data-smoothr-card-expiry]'),
-    document.querySelector('[data-smoothr-card-cvc]')
+  // Set data-tokenization-key attribute on each payment field div
+  const fieldSelectors = [
+    '[data-smoothr-card-number]',
+    '[data-smoothr-card-expiry]',
+    '[data-smoothr-card-cvc]'
   ];
+  const fieldElements = fieldSelectors.map(selector => document.querySelector(selector));
   if (!fieldElements.every(el => el)) {
-    console.error('[NMI] One or more payment fields not found');
+    console.error('[NMI] One or more payment fields not found:', fieldElements.filter(el => !el).map(el => el && el.getAttribute('data-smoothr-*')));
     return;
   }
 
-  // Find the nearest common parent div of the payment fields
-  let parentDiv = fieldElements[0].parentElement;
-  while (parentDiv && !fieldElements.every(el => parentDiv.contains(el))) {
-    parentDiv = parentDiv.parentElement;
-  }
-
-  if (parentDiv) {
-    parentDiv.setAttribute('data-tokenization-key', tokenizationKey);
-    console.log('[NMI] Set data-tokenization-key on parent div:', tokenizationKey.substring(0, 8) + '...');
-  } else {
-    console.warn('[NMI] No suitable parent div found for payment fields');
-    return;
-  }
+  fieldElements.forEach((element, index) => {
+    if (element) {
+      element.setAttribute('data-tokenization-key', tokenizationKey);
+      console.log(`[NMI] Set data-tokenization-key on ${fieldSelectors[index]}: ${tokenizationKey.substring(0, 8)}...`);
+    }
+  });
 
   if (document.getElementById('collectjs-script')) {
     console.log('[NMI] CollectJS already loaded, configuring now.');
