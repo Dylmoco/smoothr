@@ -83,7 +83,7 @@ function configureCollectJS() {
           const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
           console.log('[NMI] SDK cart:', window.Smoothr.cart); // Log to debug
-          const cartItems = window.Smoothr?.cart?.items || [];
+          const cartItems = window.Smoothr.cart.getCart() || []; // Call getCart to fetch items
           const cart = cartItems.map(item => ({
             product_id: item.id,
             name: item.name,
@@ -93,13 +93,7 @@ function configureCollectJS() {
 
           if (cart.length === 0) {
             console.error('[NMI] Cart is empty');
-            // Send dummy for testing
-            cart.push({
-              product_id: 'test_id',
-              name: 'Test Product',
-              quantity: 1,
-              price: amount
-            });
+            return;
           }
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {

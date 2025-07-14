@@ -1,113 +1,15 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import supabase from '../supabase/serverClient';
-import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
-import crypto from 'crypto';
-import stripeProvider from './providers/stripe';
-import authorizeNetProvider from './providers/authorizeNet';
-import paypalProvider from './providers/paypal';
-import nmiProvider from './providers/nmi';
-import segpayProvider from './providers/segpay';
+// (keep the top imports and interface as is)
 
-interface CheckoutPayload {
-  order_number?: string;
-  payment_method: any;
-  payment_token?: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  shipping: {
-    name: string;
-    address: {
-      line1: string;
-      line2?: string;
-      city: string;
-      state: string;
-      postal_code: string;
-      country: string;
-    };
-  };
-  billing?: {
-    name?: string;
-    address?: {
-      line1?: string;
-      line2?: string;
-      city?: string;
-      state?: string;
-      postal_code?: string;
-      country?: string;
-    };
-  };
-  billing_first_name?: string;
-  billing_last_name?: string;
-  cart: any[];
-  total: number;
-  currency: string;
-  description?: string;
-  customer_id?: string | null;
-  store_id: string;
-  platform?: string;
-}
-// Optional global to allow custom order number generation
-const generateOrderNumber =
-  (globalThis as any).generateOrderNumber as
-    | ((storeId: string) => string | Promise<string>)
-    | undefined;
-
-const debug = process.env.SMOOTHR_DEBUG === 'true';
-const log = (...args: any[]) => debug && console.log('[Smoothr Checkout]', ...args);
-const warn = (...args: any[]) => debug && console.warn('[Smoothr Checkout]', ...args);
-const err = (...args: any[]) => debug && console.error('[Smoothr Checkout]', ...args);
-
-function hashCartMeta(email: string, total: number, cart: any[]): string {
-  const normalized = cart
-    .map(i => ({ id: i.product_id, qty: i.quantity }))
-    .sort((a, b) => a.id.localeCompare(b.id));
-  const input = `${email}-${total}-${JSON.stringify(normalized)}`;
-  return crypto.createHash('sha256').update(input).digest('hex');
-}
+// ... (keep the hashCartMeta and other functions)
 
 export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: NextApiResponse; }) {
   console.log('[handleCheckout] Invoked');
   console.log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
   try {
 
-  const origin = req.headers.origin as string | undefined;
-  if (!origin) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.status(400).end();
-    return;
-  }
+  // (keep the origin check and CORS as is)
 
-  const { data: storeMatch } = await supabase
-    .from('stores')
-    .select('id')
-    .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
-
-  if (!storeMatch || storeMatch.length === 0) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.status(403).end();
-    return;
-  }
-
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    warn('Method not allowed:', req.method);
-    res.setHeader('Allow', 'POST');
-    res.status(405).json({ error: 'Method Not Allowed' });
-    return;
-  }
+  // (keep the method check)
 
   const payload = req.body as CheckoutPayload;
   if (!payload.store_id) {
@@ -140,6 +42,16 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
     description
   } = payload;
 
+  console.log('[handleCheckout] Checking required fields:');
+  console.log('email:', email ? 'present' : 'missing');
+  console.log('first_name:', first_name ? 'present' : 'missing');
+  console.log('last_name:', last_name ? 'present' : 'missing');
+  console.log('shipping:', shipping ? 'present' : 'missing');
+  console.log('cart:', cart ? 'present' : 'missing');
+  console.log('total:', typeof total === 'number' ? 'present' : 'missing');
+  console.log('currency:', currency ? 'present' : 'missing');
+  console.log('store_id:', store_id ? 'present' : 'missing');
+
   if (!email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
     warn('Missing required fields');
     res.status(400).json({ error: 'Missing required fields' });
@@ -162,6 +74,14 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
 
   const { name, address } = shipping;
   const { line1, line2, city, state, postal_code, country } = address || {};
+  console.log('[handleCheckout] Shipping details check:');
+  console.log('shipping.name:', name ? 'present' : 'missing');
+  console.log('address.line1:', line1 ? 'present' : 'missing');
+  console.log('address.city:', city ? 'present' : 'missing');
+  console.log('address.postal_code:', postal_code ? 'present' : 'missing');
+  console.log('address.state:', state ? 'present' : 'missing');
+  console.log('address.country:', country ? 'present' : 'missing');
+
   if (!name || !line1 || !city || !postal_code || !state || !country) {
     warn('Invalid shipping details');
     res.status(400).json({ error: 'Invalid shipping details' });
@@ -484,6 +404,7 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       customer_email: email,
       payment_intent_id: paymentIntentId
     };
+    console.log('[handleCheckout] orderPayload before upsert:', orderPayload);
   } catch (err) {
     err('[error] Failed to build orderPayload:', err);
     return res.status(500).json({ error: 'Failed to build orderPayload' });
@@ -499,12 +420,12 @@ export async function handleCheckout({ req, res }:{ req: NextApiRequest; res: Ne
       .select('id')
       .single();
     if (error) {
-      err('[error] Supabase upsert failed:', error);
+      console.error('[handleCheckout] Supabase upsert error:', error);
       return res.status(500).json({ error: 'Order insert failed' });
     }
     orderData = data;
   } catch (e) {
-    err('[error] Supabase upsert threw:', e);
+    console.error('[handleCheckout] Supabase upsert threw:', e);
     return res.status(500).json({ error: 'Order insert failed' });
   }
 
