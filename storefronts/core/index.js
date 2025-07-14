@@ -125,7 +125,7 @@ if (typeof window !== 'undefined') {
 
 export default Smoothr;
 
-import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow-dom.js';
+import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow/webflow-dom.js';
 import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
 // Always expose helper on the global object for browser embeds
 globalThis.setSelectedCurrency =
