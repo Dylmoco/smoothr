@@ -90,6 +90,11 @@ function configureCollectJS() {
             price: item.price
           }));
 
+          if (cart.length === 0) {
+            console.error('[NMI] Cart is empty');
+            return;
+          }
+
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
