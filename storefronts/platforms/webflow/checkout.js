@@ -56,10 +56,57 @@ function configureCollectJS() {
         if (response.token) {
           console.log('[NMI] Success, token:', response.token);
           console.log('[NMI] Sending POST with store_id:', window.SMOOTHR_CONFIG.storeId);
+          // Get values from data attributes
+          const email = document.querySelector('[data-smoothr-email]')?.value || '';
+          const billFirst = document.querySelector('[data-smoothr-bill-first-name]')?.value || '';
+          const billLast = document.querySelector('[data-smoothr-bill-last-name]')?.value || '';
+          const billingName = `${billFirst} ${billLast}`.trim();
+          const billingAddress1 = document.querySelector('[data-smoothr-bill-line1]')?.value || '';
+          const billingAddress2 = document.querySelector('[data-smoothr-bill-line2]')?.value || '';
+          const billingCity = document.querySelector('[data-smoothr-bill-city]')?.value || '';
+          const billingState = document.querySelector('[data-smoothr-bill-state]')?.value || '';
+          const billingZip = document.querySelector('[data-smoothr-bill-postal]')?.value || '';
+          const billingCountry = document.querySelector('[data-smoothr-bill-country]')?.value || '';
+          const shipFirst = document.querySelector('[data-smoothr-first-name]')?.value || '';
+          const shipLast = document.querySelector('[data-smoothr-last-name]')?.value || '';
+          const shippingName = `${shipFirst} ${shipLast}`.trim();
+          const shippingAddress1 = document.querySelector('[data-smoothr-ship-line1]')?.value || '';
+          const shippingAddress2 = document.querySelector('[data-smoothr-ship-line2]')?.value || '';
+          const shippingCity = document.querySelector('[data-smoothr-ship-city]')?.value || '';
+          const shippingState = document.querySelector('[data-smoothr-ship-state]')?.value || '';
+          const shippingZip = document.querySelector('[data-smoothr-ship-postal]')?.value || '';
+          const shippingCountry = document.querySelector('[data-smoothr-ship-country]')?.value || '';
+          const amountElement = document.querySelector('[data-smoothr-total]');
+          const amount = amountElement ? parseFloat(amountElement.textContent.replace(/[^0-9.]/g, '')) : 0;
+          const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
+
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId })
+            body: JSON.stringify({
+              payment_token: response.token,
+              store_id: window.SMOOTHR_CONFIG.storeId,
+              amount: amount,
+              currency: currency,
+              email: email,
+              billing_firstname: billFirst,
+              billing_lastname: billLast,
+              billing_address1: billingAddress1,
+              billing_address2: billingAddress2,
+              billing_city: billingCity,
+              billing_state: billingState,
+              billing_zip: billingZip,
+              billing_country: billingCountry,
+              shipping_firstname: shipFirst,
+              shipping_lastname: shipLast,
+              shipping_address1: shippingAddress1,
+              shipping_address2: shippingAddress2,
+              shipping_city: shippingCity,
+              shipping_state: shippingState,
+              shipping_zip: shippingZip,
+              shipping_country: shippingCountry
+              // Add phone if you have data-smoothr-phone
+            })
           }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
           .catch(error => console.error('[NMI] POST error:', error));
         } else {
