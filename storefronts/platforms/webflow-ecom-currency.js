@@ -1,147 +1,134 @@
-import { convertPrice, formatPrice, baseCurrency } from '../core/currency/index.js';
+// Smoothr Checkout Script for Webflow with integrated NMI
 
-const PRICE_ATTR_SELECTOR =
-  '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]';
+// Integrated NMI logic
+let hasMounted = false;
+let isConfigured = false;
+let isLocked = false;
 
-const PRICE_SELECTORS = [
-  '.w-commerce-commerceproductprice',
-  '.w-commerce-commercecartitemprice',
-  '.product-price'
-];
-
-function parsePriceText(text) {
-  return parseFloat(
-    text
-      .replace(/[£$€]/g, '')
-      .replace(/[,\s]/g, '')
-  );
-}
-
-function getBaseAmount(el, attr) {
-  let base = parseFloat(el.dataset.smoothrBase);
-  if (isNaN(base)) {
-    base =
-      parseFloat(el.getAttribute(attr)) ||
-      parsePriceText(el.textContent || '');
-    if (!isNaN(base)) el.dataset.smoothrBase = base;
+function mountNMIFields(tokenizationKey) {
+  console.log('[NMI] Attempting to mount NMI fields...');
+  if (hasMounted) {
+    console.log('[NMI] NMI fields already mounted, skipping.');
+    return;
   }
-  return base;
+  hasMounted = true;
+
+  const script = document.createElement('script');
+  script.id = 'collectjs-script';
+  script.src = 'https://secure.nmi.com/token/Collect.js';
+  script.setAttribute('data-tokenization-key', tokenizationKey);
+  console.log('[NMI] Set data-tokenization-key on script tag:', tokenizationKey.substring(0, 8) + '...');
+  script.async = true;
+  document.head.appendChild(script);
+
+  script.onload = () => {
+    console.log('[NMI] CollectJS script loaded.');
+    configureCollectJS();
+  };
+
+  script.onerror = () => {
+    console.error('[NMI] Failed to load CollectJS script.');
+  };
 }
 
-function getSelectedCurrency() {
-  if (typeof window === 'undefined') return baseCurrency;
-  return localStorage.getItem('smoothr:currency') || baseCurrency;
-}
-
-export function setSelectedCurrency(currency) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('smoothr:currency', currency);
-  document.dispatchEvent(
-    new CustomEvent('smoothr:currencychange', { detail: { currency } })
-  );
-}
-
-function formatElement(el) {
-  const attr = el.hasAttribute('data-smoothr-total')
-    ? 'data-smoothr-total'
-    : 'data-smoothr-price';
-  const base = getBaseAmount(el, attr);
-  if (isNaN(base)) return;
-  const currency = getSelectedCurrency();
-  const converted = convertPrice(base, currency, baseCurrency);
-  el.textContent = formatPrice(converted, currency);
-  el.setAttribute(attr, converted);
-}
-
-function bindPriceElements(root = document) {
-  const els = [];
-  if (root.matches) {
-    if (PRICE_SELECTORS.some(sel => root.matches(sel)) || root.matches(PRICE_ATTR_SELECTOR)) {
-      els.push(root);
-    }
+function configureCollectJS() {
+  if (isLocked || typeof CollectJS === 'undefined') {
+    console.error('[NMI] CollectJS not ready or locked, delaying configuration.');
+    setTimeout(configureCollectJS, 500);
+    return;
   }
-  if (root.querySelectorAll) {
-    root
-      .querySelectorAll([...PRICE_SELECTORS, PRICE_ATTR_SELECTOR].join(','))
-      .forEach(el => els.push(el));
-  }
-  els.forEach(el => {
-    const attr = el.hasAttribute('data-smoothr-total')
-      ? 'data-smoothr-total'
-      : 'data-smoothr-price';
-    if (!el.hasAttribute(attr)) {
-      const amt = parsePriceText(el.textContent || '');
-      if (!isNaN(amt)) {
-        el.dataset.smoothrBase = amt;
-        if (window.SMOOTHR_CONFIG?.debug) {
-          console.log('smoothr:bind-price', el, amt);
+  isLocked = true;
+
+  try {
+    CollectJS.configure({
+      paymentSelector: '[data-smoothr-pay]',
+      variant: 'inline',
+      fields: {
+        ccnumber: { selector: '[data-smoothr-card-number]' },
+        ccexp: { selector: '[data-smoothr-card-expiry]' },
+        cvv: { selector: '[data-smoothr-card-cvc]' }
+      },
+      fieldsAvailableCallback: function() {
+        console.log('[NMI] Fields available, setting handlers');
+      },
+      callback: function(response) {
+        console.log('[NMI] Tokenization response:', response);
+        if (response.token) {
+          console.log('[NMI] Success, token:', response.token);
+          fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_token: response.token })
+          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data));
+        } else {
+          console.log('[NMI] Failed:', response.reason);
         }
+        isLocked = false;
       }
-    }
-    formatElement(el);
-  });
+    });
+    isConfigured = true;
+    console.log('[NMI] CollectJS configured successfully');
+  } catch (error) {
+    console.error('[NMI] Error configuring CollectJS:', error);
+    isLocked = false;
+  }
 }
 
-function replacePrices(root = document) {
-  bindPriceElements(root);
-  root.querySelectorAll(PRICE_ATTR_SELECTOR).forEach(formatElement);
-}
+async function initCheckout() {
+  if (!window.SMOOTHR_CONFIG) {
+    console.error('[Smoothr Checkout] Config not found');
+    return;
+  }
+  console.log('[Smoothr Checkout] SDK initialized');
+  console.log('[Smoothr Checkout] SMOOTHR_CONFIG', window.SMOOTHR_CONFIG);
 
-function bindCurrencyButtons(root = document) {
-  if (root.id && root.id.startsWith('currency-')) {
-    const code = root.id.slice('currency-'.length).toUpperCase();
-    if (!root.__smoothrCurrencyBound) {
-      root.addEventListener('click', () => setSelectedCurrency(code));
-      root.__smoothrCurrencyBound = true;
+  const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
+  console.log('[Smoothr Checkout] Using gateway:', gateway);
+
+  console.log('[Smoothr Checkout] checkout trigger found', document.querySelector('[data-smoothr-checkout]'));
+
+  if (gateway === 'nmi') {
+    try {
+      const tokenizationKey = await fetchTokenizationKey(window.SMOOTHR_CONFIG.storeId);
+      console.log('[NMI] NMI tokenization key fetched:', tokenizationKey.substring(0, 8) + '...');
+      mountNMIFields(tokenizationKey);
+    } catch (error) {
+      console.error('[Smoothr Checkout] Failed to mount gateway', error);
     }
   }
-  root.querySelectorAll('[id^="currency-"]').forEach(el => {
-    const code = el.id.slice('currency-'.length).toUpperCase();
-    if (el.__smoothrCurrencyBound) return;
-    el.addEventListener('click', () => setSelectedCurrency(code));
-    el.__smoothrCurrencyBound = true;
+
+  const payButton = document.querySelector('[data-smoothr-pay]');
+  if (payButton) {
+    payButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!isConfigured) {
+        console.log('[Smoothr Checkout] Config not ready, delaying.');
+      }
+    });
+    console.log('[Smoothr Checkout] Pay div found and bound');
+  } else {
+    console.warn('[Smoothr Checkout] Pay div not found');
+  }
+}
+
+// Fetch key via Next.js API to bypass RLS
+async function fetchTokenizationKey(storeId) {
+  const apiBase = window.SMOOTHR_CONFIG.apiBase;
+  const response = await fetch(`${apiBase}/api/get-payment-key?storeId=${storeId}&provider=nmi`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
+  if (!response.ok) {
+    throw new Error(`API fetch error: ${response.status}`);
+  }
+  const data = await response.json();
+  if (data && data.tokenization_key) {
+    return data.tokenization_key;
+  } else {
+    throw new Error('No NMI key found');
+  }
 }
 
-export function initWebflowEcomCurrency() {
-  if (typeof document === 'undefined') return;
-
-  const observer =
-    typeof MutationObserver !== 'undefined'
-      ? new MutationObserver(muts => {
-          muts.forEach(m => {
-            m.addedNodes.forEach(node => {
-              if (node.nodeType !== 1) return;
-              bindPriceElements(node);
-              if (node.matches && node.matches(PRICE_ATTR_SELECTOR)) {
-                formatElement(node);
-              }
-              if (node.matches && node.id?.startsWith('currency-')) {
-                bindCurrencyButtons(node);
-              }
-              if (node.querySelectorAll) {
-                node
-                  .querySelectorAll(PRICE_ATTR_SELECTOR)
-                  .forEach(formatElement);
-                node
-                  .querySelectorAll('[id^="currency-"]')
-                  .forEach(el => bindCurrencyButtons(el));
-              }
-            });
-          });
-        })
-      : null;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    bindPriceElements();
-    replacePrices();
-    bindCurrencyButtons();
-    observer?.observe(document.body, { childList: true, subtree: true });
-  });
-
-  document.addEventListener('smoothr:currencychange', () => replacePrices());
-}
-
-if (typeof window !== 'undefined') {
-  initWebflowEcomCurrency();
-}
+// Run init on load
+document.addEventListener('DOMContentLoaded', initCheckout);
