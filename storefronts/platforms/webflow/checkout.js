@@ -42,6 +42,7 @@ function configureCollectJS() {
   try {
     CollectJS.configure({
       variant: 'inline',
+      paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
         ccexp: { selector: '[data-smoothr-card-expiry]' },
@@ -49,6 +50,21 @@ function configureCollectJS() {
       },
       fieldsAvailableCallback: function() {
         console.log('[NMI] Fields available, setting handlers');
+      },
+      callback: function(response) {
+        console.log('[NMI] Tokenization response:', response);
+        if (response.token) {
+          console.log('[NMI] Success, token:', response.token);
+          console.log('[NMI] Sending POST with store_id:', window.SMOOTHR_CONFIG.storeId);
+          fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId })
+          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
+          .catch(error => console.error('[NMI] POST error:', error));
+        } else {
+          console.log('[NMI] Failed:', response.reason);
+        }
       }
     });
     isConfigured = true;
@@ -84,28 +100,6 @@ async function initCheckout() {
 
   const payButton = document.querySelector('[data-smoothr-pay]');
   if (payButton) {
-    payButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (!isConfigured) {
-        console.log('[Smoothr Checkout] Config not ready, delaying.');
-        return;
-      }
-      console.log('[Smoothr Checkout] Starting tokenization on click');
-      CollectJS.createToken(function(response) {
-        console.log('[NMI] Tokenization response:', response);
-        if (response.token) {
-          console.log('[NMI] Success, token:', response.token);
-          console.log('[NMI] Sending POST with store_id:', window.SMOOTHR_CONFIG.storeId);
-          fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId })
-          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data));
-        } else {
-          console.log('[NMI] Failed:', response.reason);
-        }
-      });
-    });
     console.log('[Smoothr Checkout] Pay div found and bound');
   } else {
     console.warn('[Smoothr Checkout] Pay div not found');
