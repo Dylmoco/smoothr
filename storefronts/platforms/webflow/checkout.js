@@ -41,7 +41,6 @@ function configureCollectJS() {
 
   try {
     CollectJS.configure({
-      paymentSelector: '[data-smoothr-pay]',
       variant: 'inline',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
@@ -58,7 +57,7 @@ function configureCollectJS() {
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payment_token: response.token })
+            body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId })
           }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data));
         } else {
           console.log('[NMI] Failed:', response.reason);
