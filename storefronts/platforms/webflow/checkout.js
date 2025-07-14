@@ -13,12 +13,6 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
-  if (document.getElementById('collectjs-script')) {
-    console.log('[NMI] CollectJS already loaded, configuring now.');
-    configureCollectJS();
-    return;
-  }
-
   const script = document.createElement('script');
   script.id = 'collectjs-script';
   script.src = 'https://secure.nmi.com/token/Collect.js';
@@ -40,7 +34,7 @@ function mountNMIFields(tokenizationKey) {
 function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
     console.error('[NMI] CollectJS not ready or locked, delaying configuration.');
-    if (!isLocked) isLocked = true;
+    setTimeout(configureCollectJS, 500);
     return;
   }
   isLocked = true;
