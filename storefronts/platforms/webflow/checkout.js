@@ -53,6 +53,6 @@ import { initNMI } from './gateways/nmi.js';
     }
   }
 
-  // Run init on load
+  // Run init on loadd
   document.addEventListener('DOMContentLoaded', initCheckout);
 })();
