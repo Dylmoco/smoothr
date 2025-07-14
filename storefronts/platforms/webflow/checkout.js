@@ -61,7 +61,6 @@ function configureCollectJS() {
           const phone = document.querySelector('[data-smoothr-phone]')?.value || '';
           const billFirst = document.querySelector('[data-smoothr-bill-first-name]')?.value || '';
           const billLast = document.querySelector('[data-smoothr-bill-last-name]')?.value || '';
-          const billingName = `${billFirst} ${billLast}`.trim();
           const billingAddress1 = document.querySelector('[data-smoothr-bill-line1]')?.value || '';
           const billingAddress2 = document.querySelector('[data-smoothr-bill-line2]')?.value || '';
           const billingCity = document.querySelector('[data-smoothr-bill-city]')?.value || '';
@@ -70,7 +69,6 @@ function configureCollectJS() {
           const billingCountry = document.querySelector('[data-smoothr-bill-country]')?.value || '';
           const shipFirst = document.querySelector('[data-smoothr-first-name]')?.value || '';
           const shipLast = document.querySelector('[data-smoothr-last-name]')?.value || '';
-          const shippingName = `${shipFirst} ${shipLast}`.trim();
           const shippingAddress1 = document.querySelector('[data-smoothr-ship-line1]')?.value || '';
           const shippingAddress2 = document.querySelector('[data-smoothr-ship-line2]')?.value || '';
           const shippingCity = document.querySelector('[data-smoothr-ship-city]')?.value || '';
@@ -82,6 +80,7 @@ function configureCollectJS() {
           const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
           const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
+          const ipAddress = '0.0.0.0'; // Placeholder, backend can get real IP
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
@@ -110,7 +109,8 @@ function configureCollectJS() {
               shipping_zip: shippingZip,
               shipping_country: shippingCountry,
               orderid: orderId,
-              order_description: orderDescription
+              order_description: orderDescription,
+              ip_address: ipAddress
             })
           }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
           .catch(error => console.error('[NMI] POST error:', error));
