@@ -28,27 +28,32 @@ export default async function handler(req, res) {
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
+    console.log('[API] Querying store_integrations for store:', storeId, 'provider:', provider);
     const { data, error } = await supabase
       .from('store_integrations')
-      .select('tokenization_key')
+      .select('settings')
       .eq('store_id', storeId)
-      .eq('provider', provider)
+      .eq('integration_id', provider) // Use integration_id instead of provider
       .single();
 
     if (error) {
-      console.error('[API] Supabase error:', error.message);
+      console.error('[API] Supabase error:', error.message, error.code, error.details, error.hint);
       return res.status(500).json({ error: 'Failed to fetch key', details: error.message });
     }
 
-    if (data && data.tokenization_key) {
-      console.log('[API] Key fetched successfully for store:', storeId);
-      return res.status(200).json({ tokenization_key: data.tokenization_key });
-    } else {
-      console.error('[API] No key found for store:', storeId, 'provider:', provider);
-      return res.status(404).json({ error: 'No key found' });
+    if (data && data.settings) {
+      const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : data.settings;
+      const tokenizationKey = settings.tokenization_key || settings.api_key; // Fallback to api_key if tokenization_key missing
+      if (tokenizationKey) {
+        console.log('[API] Key fetched successfully for store:', storeId, 'key:', tokenizationKey);
+        return res.status(200).json({ tokenization_key: tokenizationKey });
+      }
     }
+
+    console.error('[API] No key found for store:', storeId, 'integration_id:', provider, 'data:', data);
+    return res.status(404).json({ error: 'No key found', data: data });
   } catch (error) {
-    console.error('[API] Unexpected error:', error.message);
+    console.error('[API] Unexpected error:', error.message, error.stack);
     return res.status(500).json({ error: 'Unexpected server error', details: error.message });
   }
 }
