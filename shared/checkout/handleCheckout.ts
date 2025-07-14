@@ -47,7 +47,7 @@ interface CheckoutPayload {
   store_id: string;
   platform?: string;
 }
-// Optional global to allow custom order number generation
+// Optional global to allow custom order number generationn
 const generateOrderNumber =
   (globalThis as any).generateOrderNumber as
     | ((storeId: string) => string | Promise<string>)
