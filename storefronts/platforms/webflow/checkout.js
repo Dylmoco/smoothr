@@ -13,17 +13,15 @@ function mountNMIFields(tokenizationKey) {
   }
   hasMounted = true;
 
-  // Set data-tokenization-key attribute on Smoothr fields
-  const fields = ['data-smoothr-card-number', 'data-smoothr-card-expiry', 'data-smoothr-card-cvc'];
-  fields.forEach(selector => {
-    const element = document.querySelector(`[${selector}]`);
-    if (element) {
-      element.setAttribute('data-tokenization-key', tokenizationKey);
-      console.log(`[NMI] Set data-tokenization-key on ${selector}: ${tokenizationKey.substring(0, 8)}...`);
-    } else {
-      console.warn(`[NMI] Element with ${selector} not found`);
-    }
-  });
+  // Set data-tokenization-key attribute on the checkout trigger div
+  const checkoutDiv = document.querySelector('[data-smoothr-checkout]');
+  if (checkoutDiv) {
+    checkoutDiv.setAttribute('data-tokenization-key', tokenizationKey);
+    console.log('[NMI] Set data-tokenization-key on data-smoothr-checkout:', tokenizationKey.substring(0, 8) + '...');
+  } else {
+    console.warn('[NMI] data-smoothr-checkout element not found');
+    return;
+  }
 
   if (document.getElementById('collectjs-script')) {
     console.log('[NMI] CollectJS already loaded, configuring now.');
