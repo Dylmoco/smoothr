@@ -31,6 +31,10 @@ The attribute value (`data-smoothr-price` or `data-smoothr-total`) is also
 updated when the currency changes so you can access the converted amount via
 JavaScript.
 
+All elements with price attributes, including `[data-product-price]`, are
+formatted automatically when `initCurrencyDom()` runs on page load and whenever
+the currency changes.
+
 ### Automatic price detection
 
 `webflow-ecom-currency.js` searches for common Webflow price classes

@@ -8,6 +8,10 @@ function parsePriceText(text) {
 }
 
 function getBaseAmount(el, attr) {
+  if (el.hasAttribute('data-product-price')) {
+    return parseFloat(el.getAttribute('data-product-price'));
+  }
+
   let base = parseFloat(el.dataset.smoothrBase);
   if (isNaN(base)) {
     base =

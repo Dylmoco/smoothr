@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { setSelectedCurrency, initCurrencyDom } from "../../platforms/webflow-dom.js";
+import { setSelectedCurrency, initCurrencyDom } from "../../core/currency/webflow-dom.js";
 import { setBaseCurrency, updateRates } from "../../core/currency/index.js";
 
 class CustomEvt {
@@ -56,6 +56,20 @@ describe("webflow adapter price replacement", () => {
         textContent: "",
         dataset: {},
       },
+      {
+        attributes: { "data-product-price": "5" },
+        getAttribute: vi.fn(function (attr) {
+          return this.attributes[attr];
+        }),
+        setAttribute: vi.fn(function (attr, val) {
+          this.attributes[attr] = String(val);
+        }),
+        hasAttribute: vi.fn(function (attr) {
+          return attr in this.attributes;
+        }),
+        textContent: "",
+        dataset: {},
+      },
     ];
 
     global.document = {
@@ -80,12 +94,14 @@ describe("webflow adapter price replacement", () => {
   it("replaces prices immediately", () => {
     expect(els[0].textContent).toBe("$10.00");
     expect(els[1].textContent).toBe("$20.50");
+    expect(els[2].textContent).toBe("$5.00");
   });
 
   it("updates prices when currency changes", () => {
     setSelectedCurrency("EUR");
     expect(els[0].textContent).toBe("€5.00");
     expect(els[1].textContent).toBe("€10.25");
+    expect(els[2].textContent).toBe("€2.50");
   });
 
   it("does not compound on repeated currency changes", () => {
@@ -93,5 +109,6 @@ describe("webflow adapter price replacement", () => {
     setSelectedCurrency("USD");
     expect(els[0].textContent).toBe("$10.00");
     expect(els[1].textContent).toBe("$20.50");
+    expect(els[2].textContent).toBe("$5.00");
   });
 });

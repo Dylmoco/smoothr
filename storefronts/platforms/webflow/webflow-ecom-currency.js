@@ -1,18 +1,10 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
-import { convertPrice, formatPrice } from '../../core/currency/index.js';
+import { initCurrencyDom } from '../../core/currency/webflow-dom.js';
 
 // Integrated NMI logic
 let hasMounted = false;
 let isConfigured = false;
 let isLocked = false;
-
-function updateProductPrices() {
-  document.querySelectorAll("[data-product-price]").forEach(el => {
-    const raw = parseFloat(el.getAttribute("data-product-price"));
-    const converted = convertPrice(raw);
-    el.textContent = formatPrice(converted);
-  });
-}
 
 function mountNMIFields(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...');
@@ -26,7 +18,10 @@ function mountNMIFields(tokenizationKey) {
   script.id = 'collectjs-script';
   script.src = 'https://secure.nmi.com/token/Collect.js';
   script.setAttribute('data-tokenization-key', tokenizationKey);
-  console.log('[NMI] Set data-tokenization-key on script tag:', tokenizationKey.substring(0, 8) + '...');
+  console.log(
+    '[NMI] Set data-tokenization-key on script tag:',
+    tokenizationKey.substring(0, 8) + '...'
+  );
   script.async = true;
   document.head.appendChild(script);
 
@@ -42,7 +37,9 @@ function mountNMIFields(tokenizationKey) {
 
 function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
-    console.error('[NMI] CollectJS not ready or locked, delaying configuration.');
+    console.error(
+      '[NMI] CollectJS not ready or locked, delaying configuration.'
+    );
     setTimeout(configureCollectJS, 500);
     return;
   }
@@ -68,7 +65,13 @@ function configureCollectJS() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payment_token: response.token })
-          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data));
+          })
+            .then(res =>
+              res.json().then(data => {
+                console.log('[NMI] Backend response:', data);
+              })
+            )
+            .catch(error => console.error('[NMI] POST error:', error));
         } else {
           console.log('[NMI] Failed:', response.reason);
         }
@@ -94,12 +97,20 @@ async function initCheckout() {
   const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
   console.log('[Smoothr Checkout] Using gateway:', gateway);
 
-  console.log('[Smoothr Checkout] checkout trigger found', document.querySelector('[data-smoothr-pay]'));
+  console.log(
+    '[Smoothr Checkout] checkout trigger found',
+    document.querySelector('[data-smoothr-pay]')
+  );
 
   if (gateway === 'nmi') {
     try {
-      const tokenizationKey = await fetchTokenizationKey(window.SMOOTHR_CONFIG.storeId);
-      console.log('[NMI] NMI tokenization key fetched:', tokenizationKey.substring(0, 8) + '...');
+      const tokenizationKey = await fetchTokenizationKey(
+        window.SMOOTHR_CONFIG.storeId
+      );
+      console.log(
+        '[NMI] NMI tokenization key fetched:',
+        tokenizationKey.substring(0, 8) + '...'
+      );
       mountNMIFields(tokenizationKey);
     } catch (error) {
       console.error('[Smoothr Checkout] Failed to mount gateway', error);
@@ -108,7 +119,7 @@ async function initCheckout() {
 
   const payButton = document.querySelector('[data-smoothr-pay]');
   if (payButton) {
-    payButton.addEventListener('click', (event) => {
+    payButton.addEventListener('click', event => {
       event.preventDefault();
       if (!isConfigured) {
         console.log('[Smoothr Checkout] Config not ready, delaying.');
@@ -119,17 +130,21 @@ async function initCheckout() {
     console.warn('[Smoothr Checkout] Pay div not found');
   }
 
-  updateProductPrices();
+  // Initialize shared DOM price formatter
+  initCurrencyDom();
 }
 
 // Fetch key via Next.js API to bypass RLS
 async function fetchTokenizationKey(storeId) {
   const apiBase = window.SMOOTHR_CONFIG.apiBase;
-  const response = await fetch(`${apiBase}/api/get-payment-key?storeId=${storeId}&provider=nmi`, {
-    headers: {
-      'Content-Type': 'application/json'
+  const response = await fetch(
+    `${apiBase}/api/get-payment-key?storeId=${storeId}&provider=nmi`,
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
-  });
+  );
   if (!response.ok) {
     throw new Error(`API fetch error: ${response.status}`);
   }
@@ -143,4 +158,4 @@ async function fetchTokenizationKey(storeId) {
 
 // Run init on load
 document.addEventListener('DOMContentLoaded', initCheckout);
-document.addEventListener('smoothr:currencychange', updateProductPrices);
+
