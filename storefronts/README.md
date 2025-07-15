@@ -87,7 +87,7 @@ a dropdown and mark prices using `data-smoothr-price`:
   <option value="GBP">GBP</option>
 </select>
 <script type="module">
-  import { setSelectedCurrency } from './platforms/webflow-dom.js';
+  import { setSelectedCurrency } from './core/currency/webflow-dom.js';
   document
     .getElementById('currency-picker')
     .addEventListener('change', e => setSelectedCurrency(e.target.value));

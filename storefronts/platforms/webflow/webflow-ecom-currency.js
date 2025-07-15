@@ -1,4 +1,5 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
+import { initCurrencyDom } from '../../core/currency/webflow-dom.js';
 
 // Integrated NMI logic
 let hasMounted = false;
@@ -109,6 +110,8 @@ async function initCheckout() {
   } else {
     console.warn('[Smoothr Checkout] Pay div not found');
   }
+
+  initCurrencyDom();
 }
 
 // Fetch key via Next.js API to bypass RLS
