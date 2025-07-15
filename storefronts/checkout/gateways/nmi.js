@@ -136,7 +136,7 @@ function configureCollectJS() {
             })
           }).then(res => res.json()).then(data => {
             console.log('[NMI] Backend response:', data);
-            if (data.response_code === 100) {
+            if (data.response === 1 && data.response_code === 100) {
               window.Smoothr.cart.clearCart();
               window.location.href = window.location.origin + '/checkout-success';
             } else {
