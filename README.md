@@ -180,6 +180,10 @@ automatically.
 Checkout requests post the `{ payment_token }` returned by Collect.js in place of
 a Stripe `payment_method`.
 
+## Checkout flow
+
+All gateways now delegate post-success behavior to `handleSuccessRedirect()` in utils.
+
 
 ### Deployment Log
 

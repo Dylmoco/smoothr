@@ -1,5 +1,6 @@
 import { getPublicCredential } from '../getPublicCredential.js';
 import computedInputStyle from '../utils/computedInputStyle.js';
+import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 
 let fieldsMounted = false;
 let mountPromise;
