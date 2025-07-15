@@ -18,6 +18,11 @@ function loadScript(src) {
   });
 }
 
+export function initPayPal(opts) {
+  console.log('[Smoothr][PayPal] initPayPal called with', opts);
+  return mountCardFields(opts);
+}
+
 export async function mountCardFields() {
   if (mounted) return;
   const container = document.querySelector('[data-smoothr-pay]');
@@ -194,6 +199,7 @@ export async function createPaymentMethod() {
 }
 
 export default {
+  initPayPal,
   mountCardFields,
   isMounted,
   ready,
