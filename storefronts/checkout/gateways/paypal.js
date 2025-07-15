@@ -39,9 +39,9 @@ export async function mountCardFields() {
 
   const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
 
-  window.paypal.Buttons({
-    createOrder: async () => {
-      const q = s => document.querySelector(s);
+  const paypalButtons = window.paypal.Buttons({
+      createOrder: async () => {
+        const q = s => document.querySelector(s);
       const totalEl = q('[data-smoothr-total]');
       const total =
         window.Smoothr?.cart?.getTotal?.() ||
@@ -117,8 +117,12 @@ export async function mountCardFields() {
       const result = await res.clone().json().catch(() => ({}));
       handleSuccessRedirect(res, result);
     },
-    onError: err => console.error('[Smoothr PayPal]', err)
-  }).render(container);
+      onError: err => console.error('[Smoothr PayPal]', err)
+    });
+
+  document.querySelectorAll('[data-smoothr-pay]').forEach(el => {
+    paypalButtons.render(el);
+  });
 }
 
 export function isMounted() {

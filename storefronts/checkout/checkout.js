@@ -133,6 +133,7 @@ export async function initCheckout() {
     warn('missing [data-smoothr-pay]');
     return;
   }
+  const payButtons = document.querySelectorAll('[data-smoothr-pay]'); // attribute presence only
 
   const block = checkoutEl.closest?.('[data-smoothr-product-id]') || document;
   const productId =
@@ -151,7 +152,7 @@ export async function initCheckout() {
     ['[data-smoothr-email]', emailField?.value || ''],
     ['[data-smoothr-total]', totalEl?.textContent || ''],
     ['[data-smoothr-gateway]', paymentContainer ? 'found' : 'missing'],
-    ['[data-smoothr-pay]', checkoutEl ? 'found' : 'missing'],
+    ['[data-smoothr-pay]', payButtons.length ? 'found' : 'missing'],
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
@@ -183,16 +184,17 @@ export async function initCheckout() {
   const isForm = checkoutEl.tagName?.toLowerCase() === 'form';
   const eventName = isForm ? 'submit' : 'click';
 
-  checkoutEl?.addEventListener(eventName, async event => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (isSubmitting) {
-      warn('Checkout already in progress');
-      return;
-    }
-    isSubmitting = true;
-    if ('disabled' in checkoutEl) checkoutEl.disabled = true;
-    log('[data-smoothr-pay] triggered');
+  payButtons.forEach(btn => {
+    btn.addEventListener(eventName, async event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isSubmitting) {
+        warn('Checkout already in progress');
+        return;
+      }
+      isSubmitting = true;
+    if ('disabled' in btn) btn.disabled = true;
+      log('[data-smoothr-pay] triggered');
 
     const email =
       emailField?.value?.trim() ||
@@ -243,7 +245,7 @@ export async function initCheckout() {
 
     if (!email || !first_name || !last_name || !total) {
       warn('Missing required fields; aborting checkout');
-      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+      if ('disabled' in btn) btn.disabled = false;
       isSubmitting = false;
       return;
     }
@@ -251,7 +253,7 @@ export async function initCheckout() {
     const cartHash = await computeCartHash(cart.items, total, email);
     const lastHash = localStorage.getItem('smoothr_last_cart_hash');
     if (cartHash === lastHash) {
-      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+      if ('disabled' in btn) btn.disabled = false;
       isSubmitting = false;
       alert("You’ve already submitted this cart. Please wait or modify your order.");
       return;
@@ -260,7 +262,7 @@ export async function initCheckout() {
 
     if (!gateway.ready()) {
       err('Payment gateway not ready');
-      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+      if ('disabled' in btn) btn.disabled = false;
       isSubmitting = false;
       return;
     }
@@ -277,13 +279,13 @@ export async function initCheckout() {
         (!token?.dataDescriptor || !token?.dataValue)
       ) {
         alert('Invalid payment details. Please try again.');
-        if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+        if ('disabled' in btn) btn.disabled = false;
         isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err('Failed to create payment method', { error: pmError, payment_method: token });
-        if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+        if ('disabled' in btn) btn.disabled = false;
         isSubmitting = false;
         return;
       }
@@ -353,7 +355,7 @@ export async function initCheckout() {
           log('create-order response', orderRes.status, orderData);
           if (!orderRes.ok || !orderData?.order_number) {
             err('Order creation failed');
-            if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+            if ('disabled' in btn) btn.disabled = false;
             isSubmitting = false;
             return;
           }
@@ -400,10 +402,11 @@ export async function initCheckout() {
         hasShownCheckoutError = true;
       }
     } finally {
-      if ('disabled' in checkoutEl) checkoutEl.disabled = false;
+      if ('disabled' in btn) btn.disabled = false;
       isSubmitting = false;
       log('submit handler complete');
     }
+    });
   });
   log(`${eventName} handler attached`);
 }
