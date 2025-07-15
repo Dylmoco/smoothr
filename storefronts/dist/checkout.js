@@ -28,7 +28,6 @@ const gatewayLoaders = {
   segpay: () => import('./gateways/segpay.js')
 };
 
-
 async function getActivePaymentGateway(log, warn) {
   const cfg = window.SMOOTHR_CONFIG || {};
   if (cfg.active_payment_gateway) return cfg.active_payment_gateway;
@@ -126,11 +125,14 @@ export async function initCheckout() {
     return waitForElement(sel, 5000);
   };
 
-  const checkoutEl = await select('[data-smoothr-checkout]');
+  const checkoutEl = await select('[data-smoothr-pay], [data-smoothr-checkout]');
   if (checkoutEl) {
-    log('checkout trigger found', checkoutEl);
+    const attr = checkoutEl.hasAttribute('data-smoothr-pay')
+      ? '[data-smoothr-pay]'
+      : '[data-smoothr-checkout]';
+    log(`checkout trigger found ${attr}`, checkoutEl);
   } else {
-    warn('missing [data-smoothr-checkout]');
+    warn('missing [data-smoothr-pay] or [data-smoothr-checkout]');
     return;
   }
 
@@ -145,26 +147,38 @@ export async function initCheckout() {
   const cardNumberEl = q('[data-smoothr-card-number]');
   const cardExpiryEl = q('[data-smoothr-card-expiry]');
   const cardCvcEl = q('[data-smoothr-card-cvc]');
-  const postalEl = q('[data-smoothr-postal]');
+  const postalEl = q('[data-smoothr-bill-postal]'); // Updated to match nmi.js
   const themeEl = document.querySelector('#smoothr-checkout-theme');
   const fields = [
     ['[data-smoothr-email]', emailField?.value || ''],
     ['[data-smoothr-total]', totalEl?.textContent || ''],
     ['[data-smoothr-gateway]', paymentContainer ? 'found' : 'missing'],
-    ['[data-smoothr-checkout]', checkoutEl ? 'found' : 'missing'],
+    ['[data-smoothr-pay]', checkoutEl ? 'found' : 'missing'],
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
-    ['[data-smoothr-postal]', postalEl ? 'found' : 'missing']
+    ['[data-smoothr-bill-postal]', postalEl ? 'found' : 'missing'] // Updated log
   ];
   fields.forEach(([name, val]) => log(`${name} = ${val}`));
   if (!emailField) warn('missing [data-smoothr-email]');
   if (!totalEl) warn('missing [data-smoothr-total]');
   log('no polling loops active');
 
-  // Initialize payment gateway fields
+  // Initialize payment gateway fields with retry
+  let mountAttempts = 0;
+  const maxAttempts = 1; // Limit to one retry
+  while (mountAttempts < maxAttempts && !gateway.isMounted()) {
+    log(`Attempting to mount gateway, attempt ${mountAttempts + 1}`);
+    try {
+      await gateway.mountCardFields();
+    } catch (e) {
+      warn('Mount attempt failed:', e.message);
+    }
+    mountAttempts++;
+  }
   if (!gateway.isMounted()) {
-    await gateway.mountCardFields();
+    warn('Gateway failed to mount after retries');
+    return;
   }
   bindCardInputs();
 
@@ -180,7 +194,10 @@ export async function initCheckout() {
     }
     isSubmitting = true;
     if ('disabled' in checkoutEl) checkoutEl.disabled = true;
-    log('[data-smoothr-checkout] triggered');
+    const triggerAttr = checkoutEl.hasAttribute('data-smoothr-pay')
+      ? '[data-smoothr-pay]'
+      : '[data-smoothr-checkout]';
+    log(`${triggerAttr} triggered`);
 
     const email =
       emailField?.value?.trim() ||
@@ -246,7 +263,6 @@ export async function initCheckout() {
     }
     localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
-    if (!gateway.isMounted()) await gateway.mountCardFields();
     if (!gateway.ready()) {
       err('Payment gateway not ready');
       if ('disabled' in checkoutEl) checkoutEl.disabled = false;
