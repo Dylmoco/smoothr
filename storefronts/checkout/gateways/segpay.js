@@ -1,3 +1,5 @@
+import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+
 let fieldsMounted = false;
 
 export function mountCardFields() {

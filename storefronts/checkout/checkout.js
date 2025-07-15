@@ -19,6 +19,7 @@ import supabase from '../../supabase/supabaseClient.js';
 import { getPublicCredential } from './getPublicCredential.js';
 import bindCardInputs from './utils/inputFormatters.js';
 import waitForElement from './utils/waitForElement.js';
+import { handleSuccessRedirect } from './utils/handleSuccessRedirect.js';
 
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
@@ -383,10 +384,8 @@ export async function initCheckout() {
       if (res.status === 403) {
         console.warn('[Smoothr Auth] Supabase session missing or expired');
       }
-      if (res.ok && data.success) {
-        Smoothr?.cart?.clearCart?.();
-        window.location.href = '/checkout-success';
-      } else {
+      handleSuccessRedirect(res, data);
+      if (!res.ok || !data.success) {
         err('Checkout failed');
         if (!hasShownCheckoutError) {
           alert('Failed to start checkout');
