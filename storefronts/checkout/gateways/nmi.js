@@ -78,8 +78,9 @@ function configureCollectJS() {
           const shippingZip = document.querySelector('[data-smoothr-ship-postal]')?.value || '';
           const shippingCountry = document.querySelector('[data-smoothr-ship-country]')?.value || '';
           const amountElement = document.querySelector('[data-smoothr-total]');
-          const amount = amountElement ? parseFloat(amountElement.textContent.replace(/[^0-9.]/g, '')) : 0;
+          const amount = amountElement ? parseFloat(amountElement.textContent.replace(/[^0-9.]/g, '')) * 100 : 0; // Multiply by 100 for cents
           const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
+          const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
           console.log('[NMI] SDK cart:', window.Smoothr.cart); // Log to debug
           const cartData = window.Smoothr.cart.getCart() || {};
@@ -88,15 +89,13 @@ function configureCollectJS() {
             product_id: item.id || 'unknown',
             name: item.name,
             quantity: item.quantity,
-            price: item.price
+            price: item.price * 100 // Multiply item prices too
           }));
 
           if (cart.length === 0) {
             console.error('[NMI] Cart is empty');
             return;
           }
-
-          const orderNumber = 'ORD-' + Date.now().toString().slice(-4); // Client-side order_number
 
           fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
             method: 'POST',
@@ -133,15 +132,10 @@ function configureCollectJS() {
               cart: cart,
               total: amount,
               currency: currency,
-              description: orderDescription,
-              order_number: orderNumber
+              description: orderDescription
             })
-          }).then(res => res.json()).then(data => {
-            console.log('[NMI] Backend response:', data);
-            if (data.success) {
-              window.location.href = '/thank-you'; // Redirect on success
-            }
-          }).catch(error => console.error('[NMI] POST error:', error));
+          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
+          .catch(error => console.error('[NMI] POST error:', error));
         } else {
           console.log('[NMI] Failed:', response.reason);
         }
