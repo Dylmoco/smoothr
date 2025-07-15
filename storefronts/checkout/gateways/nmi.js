@@ -89,7 +89,7 @@ function configureCollectJS() {
             product_id: item.id || 'unknown',
             name: item.name,
             quantity: item.quantity,
-            price: item.price * 100 // Multiplyy item prices too
+            price: item.price * 100 // Multiply item prices too
           }));
 
           if (cart.length === 0) {
@@ -134,10 +134,21 @@ function configureCollectJS() {
               currency: currency,
               description: orderDescription
             })
-          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
-          .catch(error => console.error('[NMI] POST error:', error));
+          }).then(res => res.json()).then(data => {
+            console.log('[NMI] Backend response:', data);
+            if (data.response_code === 100) {
+              window.Smoothr.cart.clearCart();
+              window.location.href = window.location.origin + '/checkout-success';
+            } else {
+              alert('Payment failed: ' + (data.responsetext || 'Unknown error'));
+            }
+          }).catch(error => {
+            console.error('[NMI] POST error:', error);
+            alert('Payment failed due to network error');
+          });
         } else {
           console.log('[NMI] Failed:', response.reason);
+          alert('Tokenization failed: ' + (response.reason || 'Unknown error'));
         }
       }
     });
