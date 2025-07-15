@@ -75,15 +75,15 @@ function configureCollectJS() {
         );
 
         // Gather required form values
-        const firstName = document.querySelector('[data-smoothr-first-name]')?.value || '';
-        const lastName  = document.querySelector('[data-smoothr-last-name]')?.value  || '';
-        const email     = document.querySelector('[data-smoothr-email]')?.value      || '';
-        const shipLine1 = document.querySelector('[data-smoothr-ship-line1]')?.value || '';
-        const shipLine2 = document.querySelector('[data-smoothr-ship-line2]')?.value || '';
-        const shipCity  = document.querySelector('[data-smoothr-ship-city]')?.value  || '';
-        const shipState = document.querySelector('[data-smoothr-ship-state]')?.value || '';
-        const shipPostal= document.querySelector('[data-smoothr-ship-postal]')?.value|| '';
-        const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value || '';
+        const firstName  = document.querySelector('[data-smoothr-first-name]')?.value || '';
+        const lastName   = document.querySelector('[data-smoothr-last-name]')?.value  || '';
+        const email      = document.querySelector('[data-smoothr-email]')?.value      || '';
+        const shipLine1  = document.querySelector('[data-smoothr-ship-line1]')?.value || '';
+        const shipLine2  = document.querySelector('[data-smoothr-ship-line2]')?.value || '';
+        const shipCity   = document.querySelector('[data-smoothr-ship-city]')?.value  || '';
+        const shipState  = document.querySelector('[data-smoothr-ship-state]')?.value || '';
+        const shipPostal = document.querySelector('[data-smoothr-ship-postal]')?.value|| '';
+        const shipCountry= document.querySelector('[data-smoothr-ship-country]')?.value || '';
 
         const amountEl = document.querySelector('[data-smoothr-total]');
         const amount   = amountEl
@@ -112,7 +112,7 @@ function configureCollectJS() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             payment_token: response.token,
-            store_id:      window.SMOOTHR_COFIG.storeId,
+            store_id:      window.SMOOTHR_CONFIG.storeId,
             first_name:    firstName,
             last_name:     lastName,
             email:         email,
