@@ -134,20 +134,10 @@ function configureCollectJS() {
               currency: currency,
               description: orderDescription
             })
-          }).then(res => res.json()).then(data => {
-            console.log('[NMI] Backend response:', data);
-            if (data.success || data.result === 1) {
-              window.location.href = window.location.origin + '/checkout-success';
-            } else {
-              alert('Payment failed: ' + (data.error || data.reason || 'Unknown error'));
-            }
-          }).catch(error => {
-            console.error('[NMI] POST error:', error);
-            alert('Payment failed due to network error');
-          });
+          }).then(res => res.json()).then(data => console.log('[NMI] Backend response:', data))
+          .catch(error => console.error('[NMI] POST error:', error));
         } else {
           console.log('[NMI] Failed:', response.reason);
-          alert('Tokenization failed: ' + (response.reason || 'Unknown error'));
         }
       }
     });
