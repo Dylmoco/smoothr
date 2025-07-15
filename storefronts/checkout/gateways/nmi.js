@@ -54,8 +54,8 @@ function configureCollectJS() {
       paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
-        ccexp: { selector: '[data-smoothr-card-expiry]' },
-        cvv:    { selector: '[data-smoothr-card-cvc]' }
+        ccexp:    { selector: '[data-smoothr-card-expiry]' },
+        cvv:      { selector: '[data-smoothr-card-cvc]' }
       },
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, setting handlers');
@@ -112,11 +112,12 @@ function configureCollectJS() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             payment_token: response.token,
-            store_id:      window.SMOOTHR_CONFIG.storeId,
+            store_id:      window.SMOOTHR_COFIG.storeId,
             first_name:    firstName,
             last_name:     lastName,
             email:         email,
             shipping: {
+              name: `${firstName} ${lastName}`.trim(),
               address: {
                 line1:       shipLine1,
                 line2:       shipLine2,
