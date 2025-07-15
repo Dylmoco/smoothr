@@ -30,7 +30,7 @@ beforeEach(() => {
   document.body.appendChild(totalEl);
 
   const btn = document.createElement('button');
-  btn.setAttribute('data-smoothr-checkout', '');
+  btn.setAttribute('data-smoothr-pay', '');
   document.body.appendChild(btn);
 
   const createInput = (attr, val = '') => {
