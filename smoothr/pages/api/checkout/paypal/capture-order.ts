@@ -1,20 +1,8 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PayPal from '@paypal/checkout-server-sdk';
-// Use the tsconfig path alias and point at the actual file
 import { handleCheckout } from 'shared/checkout/handleCheckout';
-
-const env =
-  process.env.PAYPAL_ENV === 'production'
-    ? new PayPal.core.LiveEnvironment(
-        process.env.PAYPAL_CLIENT_ID!,
-        process.env.PAYPAL_SECRET!
-      )
-    : new PayPal.core.SandboxEnvironment(
-        process.env.PAYPAL_CLIENT_ID!,
-        process.env.PAYPAL_SECRET!
-      );
-const client = new PayPal.core.PayPalHttpClient(env);
+import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,7 +13,32 @@ export default async function handler(
     return res.status(405).end();
   }
 
-  const { orderID } = req.body;
+  const { orderID, store_id } = req.body as any;
+  if (!store_id) {
+    return res.status(400).json({ error: 'store_id required' });
+  }
+
+  let clientId = process.env.PAYPAL_CLIENT_ID || '';
+  let secret = process.env.PAYPAL_SECRET || process.env.PAYPAL_CLIENT_SECRET || '';
+  try {
+    const integration = await getStoreIntegration(store_id, 'paypal');
+    if (integration) {
+      clientId = integration.settings?.client_id || integration.api_key || clientId;
+      secret = integration.settings?.secret || secret;
+    }
+  } catch (e) {
+    console.error('[PayPal] credential lookup failed', e);
+  }
+
+  if (!clientId || !secret) {
+    return res.status(400).json({ error: 'Missing PayPal credentials' });
+  }
+
+  const env = process.env.PAYPAL_ENV === 'production'
+    ? new PayPal.core.LiveEnvironment(clientId, secret)
+    : new PayPal.core.SandboxEnvironment(clientId, secret);
+  const client = new PayPal.core.PayPalHttpClient(env);
+
   const request = new PayPal.orders.OrdersAuthorizeRequest(orderID);
 
   try {
@@ -44,6 +57,6 @@ export default async function handler(
     console.error('[PayPal Capture Error]', err);
     return res
       .status(500)
-      .json({ success: false, error: 'PayPal capture failed' });
+      .json({ success: false, error: err instanceof Error ? err.message : 'PayPal capture failed' });
   }
 }

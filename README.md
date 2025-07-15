@@ -180,6 +180,26 @@ automatically.
 Checkout requests post the `{ payment_token }` returned by Collect.js in place of
 a Stripe `payment_method`.
 
+### PayPal Integration
+
+To enable PayPal create a row in the `store_integrations` table with `provider`
+set to `paypal` and store your REST credentials under the `settings` column:
+
+```json
+{
+  "client_id": "<PAYPAL_CLIENT_ID>",
+  "secret": "<PAYPAL_SECRET>"
+}
+```
+
+`settings.client_id` is exposed to the storefront to load the PayPal JS SDK.
+The server reads both `client_id` and `secret` – falling back to `api_key` for
+the client ID – when creating and capturing orders.
+
+Activate the gateway by setting
+`store_settings.settings.active_payment_gateway` to `paypal` (or override it on
+the client via `window.SMOOTHR_CONFIG.active_payment_gateway`).
+
 ## Checkout flow
 
 All gateways now delegate post-success behavior to `handleSuccessRedirect()` in utils.
