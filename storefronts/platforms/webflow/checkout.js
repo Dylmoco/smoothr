@@ -1,9 +1,12 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
 
+import { initCheckout as sharedInitCheckout } from '../../checkout/checkout.js';
 import { mountNMIFields } from '../../checkout/gateways/nmi.js';
 
 // (keep the async wrapper and rest as is)
 export async function initCheckout() {
+    await sharedInitCheckout();
+
     if (!window.SMOOTHR_CONFIG) {
       console.error('[Smoothr Checkout] Config not found');
       return;
