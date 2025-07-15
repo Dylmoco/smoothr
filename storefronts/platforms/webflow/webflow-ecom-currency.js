@@ -1,9 +1,18 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
+import { convertPrice, formatPrice } from '../../core/currency/index.js';
 
 // Integrated NMI logic
 let hasMounted = false;
 let isConfigured = false;
 let isLocked = false;
+
+function updateProductPrices() {
+  document.querySelectorAll("[data-product-price]").forEach(el => {
+    const raw = parseFloat(el.getAttribute("data-product-price"));
+    const converted = convertPrice(raw);
+    el.textContent = formatPrice(converted);
+  });
+}
 
 function mountNMIFields(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...');
@@ -109,6 +118,8 @@ async function initCheckout() {
   } else {
     console.warn('[Smoothr Checkout] Pay div not found');
   }
+
+  updateProductPrices();
 }
 
 // Fetch key via Next.js API to bypass RLS
@@ -132,3 +143,4 @@ async function fetchTokenizationKey(storeId) {
 
 // Run init on load
 document.addEventListener('DOMContentLoaded', initCheckout);
+document.addEventListener('smoothr:currencychange', updateProductPrices);
