@@ -43,7 +43,8 @@ beforeEach(() => {
     disabled: false,
     addEventListener: vi.fn((ev, cb) => {
       if (ev === 'click') clickHandler = cb;
-    })
+    }),
+    hasAttribute: vi.fn(attr => attr === 'data-smoothr-pay')
   };
   const block = {
     dataset: { smoothrProductId: 'prod1' },
@@ -54,7 +55,7 @@ beforeEach(() => {
         '[data-smoothr-last-name]': lastNameInput,
         '[data-smoothr-total]': totalEl,
         '[data-smoothr-gateway]': {},
-        '[data-smoothr-checkout]': submitBtn,
+        '[data-smoothr-pay]': submitBtn,
         '[data-smoothr-card-number]': cardNumberEl,
         '[data-smoothr-card-expiry]': cardExpiryEl,
         '[data-smoothr-card-cvc]': cardCvcEl,
@@ -82,7 +83,8 @@ beforeEach(() => {
   global.document = {
     querySelector: vi.fn(sel => {
       const map = {
-        '[data-smoothr-checkout]': submitBtn,
+        '[data-smoothr-pay], [data-smoothr-checkout]': submitBtn,
+        '[data-smoothr-pay]': submitBtn,
         '[data-smoothr-card-number]': cardNumberEl,
         '[data-smoothr-card-expiry]': cardExpiryEl,
         '[data-smoothr-card-cvc]': cardCvcEl,
