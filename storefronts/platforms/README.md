@@ -33,7 +33,7 @@ JavaScript.
 
 ### Automatic price detection
 
-`webflow-ecom-currency.js` searches for common Webflow price classes
+`webflow-dom.js` searches for common Webflow price classes
 (`.w-commerce-commerceproductprice`, `.w-commerce-commercecartitemprice`,
 `.product-price`) and automatically assigns the `data-smoothr-price` attribute
 based on the text content. Elements marked with `data-smoothr="price"` are also
