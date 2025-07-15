@@ -71,7 +71,10 @@ export async function computeCartHash(cart, total, email) {
     .join('');
 }
 
-export async function initCheckout() {
+export async function initCheckout(config) {
+  console.log('[Smoothr] initCheckout', config);
+  const payButtons = document.querySelectorAll('[data-smoothr-pay]');
+  console.log('[Smoothr] Found pay buttons:', payButtons.length);
   if (window.__SMOOTHR_CHECKOUT_BOUND__) return;
   window.__SMOOTHR_CHECKOUT_BOUND__ = true;
   let isSubmitting = false;
