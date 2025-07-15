@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { initCurrencyDom, setSelectedCurrency } from '../../platforms/webflow-dom.js';
+import { initCurrencyDom, setSelectedCurrency } from '../../platforms/webflow/webflow-dom.js';
 import { setBaseCurrency, updateRates } from '../../core/currency/index.js';
 
 class CustomEvt {
