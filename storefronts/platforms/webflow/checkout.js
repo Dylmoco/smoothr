@@ -15,7 +15,7 @@ import { initNMI } from '../../checkout/gateways/nmi.js';
     const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
     console.log('[Smoothr Checkout] Using gateway:', gateway);
 
-    console.log('[Smoothr Checkout] checkout trigger found', document.querySelector('[data-smoothr-checkout]'));
+    console.log('[Smoothr Checkout] checkout trigger found', document.querySelector('[data-smoothr-pay]'));
 
     if (gateway === 'nmi') {
       try {

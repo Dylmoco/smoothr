@@ -125,11 +125,11 @@ export async function initCheckout() {
     return waitForElement(sel, 5000);
   };
 
-  const checkoutEl = await select('[data-smoothr-checkout]');
+  const checkoutEl = await select('[data-smoothr-pay]');
   if (checkoutEl) {
     log('checkout trigger found', checkoutEl);
   } else {
-    warn('missing [data-smoothr-checkout]');
+    warn('missing [data-smoothr-pay]');
     return;
   }
 
@@ -150,7 +150,7 @@ export async function initCheckout() {
     ['[data-smoothr-email]', emailField?.value || ''],
     ['[data-smoothr-total]', totalEl?.textContent || ''],
     ['[data-smoothr-gateway]', paymentContainer ? 'found' : 'missing'],
-    ['[data-smoothr-checkout]', checkoutEl ? 'found' : 'missing'],
+    ['[data-smoothr-pay]', checkoutEl ? 'found' : 'missing'],
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
@@ -191,7 +191,7 @@ export async function initCheckout() {
     }
     isSubmitting = true;
     if ('disabled' in checkoutEl) checkoutEl.disabled = true;
-    log('[data-smoothr-checkout] triggered');
+    log('[data-smoothr-pay] triggered');
 
     const email =
       emailField?.value?.trim() ||
