@@ -123,6 +123,62 @@ export async function mountCardFields() {
   document.querySelectorAll('[data-smoothr-pay]').forEach(el => {
     paypalButtons.render(el);
   });
+
+  // --- Hosted Fields Integration ---
+  // After the Buttons render, check if the HostedFields API is available.
+  if (window.paypal?.HostedFields) {
+    // Reuse the same createOrder logic used for the Buttons
+    const createOrder = paypalButtons?.fundingSource
+      ? paypalButtons.createOrder
+      : async () => {
+          const q = s => document.querySelector(s);
+          const totalEl = q('[data-smoothr-total]');
+          const total =
+            window.Smoothr?.cart?.getTotal?.() ||
+            parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
+            0;
+          const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
+          const res = await fetch(`${apiBase}/api/checkout/paypal/create-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: total, currency, store_id: storeId })
+          });
+          const data = await res.json();
+          return data.id;
+        };
+
+    // Mount Hosted Fields into the generic Smoothr selectors
+    window.paypal.HostedFields.render({
+      createOrder,
+      styles: { input: { 'font-size': '16px' } },
+      fields: {
+        number: { selector: '[data-smoothr-card-number]' },
+        expirationDate: { selector: '[data-smoothr-card-expiry]' },
+        cvv: { selector: '[data-smoothr-card-cvc]' }
+      }
+    })
+      .then(hostedFields => {
+        // Attach click handlers to any element with [data-smoothr-pay]
+        document.querySelectorAll('[data-smoothr-pay]').forEach(btn => {
+          btn.addEventListener('click', async ev => {
+            ev.preventDefault();
+            try {
+              const payload = await hostedFields.submit({ contingency: '3D_SECURE' });
+              const res = await fetch(`${apiBase}/api/checkout/paypal/capture-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ store_id: storeId, orderID: payload.orderId })
+              });
+              const json = await res.json();
+              handleSuccessRedirect(null, json);
+            } catch (err) {
+              console.error('[Smoothr PayPal]', err);
+            }
+          });
+        });
+      })
+      .catch(err => console.error('[Smoothr PayPal]', err));
+  }
 }
 
 export function isMounted() {
