@@ -83,7 +83,6 @@ beforeEach(() => {
   global.document = {
     querySelector: vi.fn(sel => {
       const map = {
-        '[data-smoothr-pay], [data-smoothr-checkout]': submitBtn,
         '[data-smoothr-pay]': submitBtn,
         '[data-smoothr-card-number]': cardNumberEl,
         '[data-smoothr-card-expiry]': cardExpiryEl,

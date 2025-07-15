@@ -19,9 +19,6 @@ function waitForCollectJsReady(callback, retries = 10) {
   setTimeout(() => waitForCollectJsReady(callback, retries - 1), 100);
 }
 
-
-
-
 function parseExpiry(val) {
   const m = val.trim().match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
   if (!m) return [null, null];
@@ -59,13 +56,12 @@ export async function mountNMIFields() {
   const postalEl = document.querySelector('[data-smoothr-postal]');
   if (!numEl || !expEl || !cvvEl) return;
 
-  // Tag containers with the tokenization key (postal not required)
   [numEl, expEl, cvvEl].forEach(el =>
     el.setAttribute('data-tokenization-key', tokenizationKey)
   );
 
-  // Remove any stale hidden expiry fields
-  expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+  expEl
+    .querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
     .forEach(i => i.remove());
   syncHiddenExpiryFields(expEl, '', '');
 
@@ -85,7 +81,6 @@ export async function mountNMIFields() {
   const expiryInput = ensureSingleInput(expEl, 'expiry');
   const cvcInput = ensureSingleInput(cvvEl, 'cvv');
 
-  // Inject hidden postal
   if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
     const i = document.createElement('input');
     i.type = 'hidden';
@@ -93,19 +88,17 @@ export async function mountNMIFields() {
     postalEl.appendChild(i);
   }
 
-  // On keyup, sync or remove hidden expiry fields
   expiryInput.addEventListener('keyup', e => {
     const [mon, yr] = parseExpiry(e.target.value);
     if (mon && yr) {
       syncHiddenExpiryFields(expEl, mon, yr);
     } else {
-      expEl.querySelectorAll(
-        'input[data-collect="expMonth"],input[data-collect="expYear"]'
-      ).forEach(i => i.remove());
+      expEl
+        .querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+        .forEach(i => i.remove());
     }
   });
 
-  // Load and configure Collect.js only once
   const setupCollect = () =>
     waitForCollectJsReady(() => {
       window.CollectJS.configure({
@@ -117,6 +110,7 @@ export async function mountNMIFields() {
         }
       });
     });
+
   if (!window.CollectJS) {
     let script = document.querySelector(
       'script[src*="secure.networkmerchants.com/token/Collect.js"],script[src*="secure.nmi.com/token/Collect.js"]'
@@ -156,8 +150,8 @@ export function isMounted() {
 }
 
 export function ready() {
-  const number = document.querySelector('[data-collect="cardNumber"]');
-  const cvc = document.querySelector('[data-collect="cvv"]');
+  const number = document.querySelector('input[data-collect="cardNumber"]');
+  const cvc = document.querySelector('input[data-collect="cvv"]');
   const month = document.querySelector(
     '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
   );
