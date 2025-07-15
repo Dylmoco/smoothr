@@ -1,8 +1,7 @@
-// smoothr/pages/api/checkout/paypal/capture-order.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PayPal from '@paypal/checkout-server-sdk';
-// 📥 Corrected import to use the tsconfig alias and point at the actual file
+// Use the tsconfig path alias and point at the actual file
 import { handleCheckout } from 'shared/checkout/handleCheckout';
 
 const env =
@@ -22,6 +21,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).end();
   }
 
@@ -30,14 +30,19 @@ export default async function handler(
 
   try {
     const { result } = await client.execute(request);
-    const data = await handleCheckout({
-      provider: 'paypal',
+
+    // Inject the raw PayPal result into the body so handleCheckout sees it
+    // alongside your existing payload (store_id, cart, shipping, etc.)
+    req.body = {
+      ...req.body,
       paymentData: result,
-    });
-    res.status(200).json({ success: data.success, order_id: data.order_id });
+    };
+
+    // Delegate to your shared checkout handler
+    return handleCheckout({ req, res });
   } catch (err) {
-    console.error(err);
-    res
+    console.error('[PayPal Capture Error]', err);
+    return res
       .status(500)
       .json({ success: false, error: 'PayPal capture failed' });
   }
