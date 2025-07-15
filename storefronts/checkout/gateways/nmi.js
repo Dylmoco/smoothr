@@ -89,7 +89,7 @@ function configureCollectJS() {
             product_id: item.id || 'unknown',
             name: item.name,
             quantity: item.quantity,
-            price: item.price * 100 // Multiply item prices too
+            price: item.price * 100 // Multiplyy item prices too
           }));
 
           if (cart.length === 0) {
