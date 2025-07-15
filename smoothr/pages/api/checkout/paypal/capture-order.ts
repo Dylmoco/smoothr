@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PayPal from '@paypal/checkout-server-sdk';
-import { handleCheckout } from '../../../shared/checkout';
+import { handleCheckout } from '../../../../../shared/checkout';
 
 const env = process.env.PAYPAL_ENV === 'production'
   ? new PayPal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_SECRET)
