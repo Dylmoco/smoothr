@@ -3,14 +3,18 @@ let hasMounted = false;
 let isConfigured = false;
 let isLocked = false;
 
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...a) => debug && console.log('[NMI]', ...a);
+const err = (...a) => debug && console.error('[NMI]', ...a);
+
 export function initNMI(tokenizationKey) {
   mountNMIFields(tokenizationKey);
 }
 
 function mountNMIFields(tokenizationKey) {
-  console.log('[NMI] Attempting to mount NMI fields...');
+  log('Attempting to mount NMI fields...');
   if (hasMounted) {
-    console.log('[NMI] NMI fields already mounted, skipping.');
+    log('NMI fields already mounted, skipping.');
     return;
   }
   hasMounted = true;
@@ -19,23 +23,23 @@ function mountNMIFields(tokenizationKey) {
   script.id = 'collectjs-script';
   script.src = 'https://secure.nmi.com/token/Collect.js';
   script.setAttribute('data-tokenization-key', tokenizationKey);
-  console.log('[NMI] Set data-tokenization-key on script tag:', tokenizationKey.substring(0, 8) + '...');
+  log('Set data-tokenization-key on script tag:', tokenizationKey.substring(0, 8) + '...');
   script.async = true;
   document.head.appendChild(script);
 
   script.onload = () => {
-    console.log('[NMI] CollectJS script loaded.');
+    log('CollectJS script loaded.');
     configureCollectJS();
   };
 
   script.onerror = () => {
-    console.error('[NMI] Failed to load CollectJS script.');
+    err('Failed to load CollectJS script.');
   };
 }
 
 function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
-    console.error('[NMI] CollectJS not ready or locked, delaying configuration.');
+    err('CollectJS not ready or locked, delaying configuration.');
     setTimeout(configureCollectJS, 500);
     return;
   }
@@ -51,13 +55,13 @@ function configureCollectJS() {
         cvv: { selector: '[data-smoothr-card-cvc]' }
       },
       fieldsAvailableCallback: function() {
-        console.log('[NMI] Fields available, setting handlers');
+        log('Fields available, setting handlers');
       },
       callback: function(response) {
-        console.log('[NMI] Tokenization response:', response);
+        log('Tokenization response:', response);
         if (response.token) {
-          console.log('[NMI] Success, token:', response.token);
-          console.log('[NMI] Sending POST with store_id:', window.SMOOTHR_CONFIG.storeId);
+          log('Success, token:', response.token);
+          log('Sending POST with store_id:', window.SMOOTHR_CONFIG.storeId);
           // Get values from data attributes
           const email = document.querySelector('[data-smoothr-email]')?.value || '';
           const phone = document.querySelector('[data-smoothr-phone]')?.value || '';
@@ -82,7 +86,7 @@ function configureCollectJS() {
           const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
           const orderId = 'smoothr-' + Date.now();
           const orderDescription = 'Smoothr Checkout Order';
-          console.log('[NMI] SDK cart:', window.Smoothr.cart); // Log to debug
+          log('SDK cart:', window.Smoothr.cart);
           const cartData = window.Smoothr.cart.getCart() || {};
           const cartItems = Array.isArray(cartData.items) ? cartData.items : [];
           const cart = cartItems.map(item => ({
@@ -93,7 +97,7 @@ function configureCollectJS() {
           }));
 
           if (cart.length === 0) {
-            console.error('[NMI] Cart is empty');
+            err('Cart is empty');
             return;
           }
 
@@ -135,27 +139,27 @@ function configureCollectJS() {
               description: orderDescription
             })
           }).then(res => res.json()).then(data => {
-            console.log('[NMI] Backend response:', data);
-            if (data.response === 1 && data.response_code === 100) {
+            log('Backend response:', data);
+            if (data.success && data.order_id) {
               window.Smoothr.cart.clearCart();
               window.location.href = window.location.origin + '/checkout-success';
             } else {
-              alert('Payment failed: ' + (data.responsetext || 'Unknown error'));
+              alert('Payment failed: ' + (data.error || data.responsetext || 'Unknown error'));
             }
           }).catch(error => {
-            console.error('[NMI] POST error:', error);
+            err('POST error:', error);
             alert('Payment failed due to network error');
           });
         } else {
-          console.log('[NMI] Failed:', response.reason);
+          log('Failed:', response.reason);
           alert('Tokenization failed: ' + (response.reason || 'Unknown error'));
         }
       }
     });
     isConfigured = true;
-    console.log('[NMI] CollectJS configured successfully');
+    log('CollectJS configured successfully');
   } catch (error) {
-    console.error('[NMI] Error configuring CollectJS:', error);
+    err('Error configuring CollectJS:', error);
     isLocked = false;
   }
 }
