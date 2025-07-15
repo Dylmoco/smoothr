@@ -3,9 +3,10 @@ let hasMounted = false;
 let isConfigured = false;
 let isLocked = false;
 
-// Import the shared redirect helper
+// Shared post-success behavior
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 
+// Entry point: call this with your tokenization key
 export function initNMI(tokenizationKey) {
   mountNMIFields(tokenizationKey);
 }
@@ -33,7 +34,6 @@ function mountNMIFields(tokenizationKey) {
     console.log('[NMI] CollectJS script loaded.');
     configureCollectJS();
   };
-
   script.onerror = () => {
     console.error('[NMI] Failed to load CollectJS script.');
   };
@@ -44,8 +44,7 @@ function configureCollectJS() {
     console.error(
       '[NMI] CollectJS not ready or locked, delaying configuration.'
     );
-    setTimeout(configureCollectJS, 500);
-    return;
+    return setTimeout(configureCollectJS, 500);
   }
   isLocked = true;
 
@@ -56,74 +55,97 @@ function configureCollectJS() {
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
         ccexp: { selector: '[data-smoothr-card-expiry]' },
-        cvv: { selector: '[data-smoothr-card-cvc]' },
+        cvv:    { selector: '[data-smoothr-card-cvc]' }
       },
-      fieldsAvailableCallback: function () {
+      fieldsAvailableCallback() {
         console.log('[NMI] Fields available, setting handlers');
       },
-      callback: function (response) {
+      callback(response) {
         console.log('[NMI] Tokenization response:', response);
-        if (response.token) {
-          console.log('[NMI] Success, token:', response.token);
-          console.log(
-            '[NMI] Sending POST with store_id:',
-            window.SMOOTHR_CONFIG.storeId
-          );
-          // Gather form values…
-          const email =
-            document.querySelector('[data-smoothr-email]')?.value || '';
-          /* … all your other selectors … */
-          const amountElement = document.querySelector('[data-smoothr-total]');
-          const amount = amountElement
-            ? parseFloat(
-                amountElement.textContent.replace(/[^0-9.]/g, '')
-              ) * 100
-            : 0;
-          const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
-          const cartData = window.Smoothr.cart.getCart() || {};
-          const cartItems = Array.isArray(cartData.items)
-            ? cartData.items
-            : [];
-          const cart = cartItems.map((item) => ({
-            product_id: item.id || 'unknown',
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price * 100,
-          }));
-
-          if (cart.length === 0) {
-            console.error('[NMI] Cart is empty');
-            return;
-          }
-
-          // Post to your API, then invoke shared redirect on success
-          fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              payment_token: response.token,
-              store_id: window.SMOOTHR_CONFIG.storeId,
-              /* … rest of payload … */
-              cart,
-              total: amount,
-              currency,
-            }),
-          })
-            .then((res) =>
-              res.json().then((data) => {
-                console.log('[NMI] Backend response:', data);
-                // Shared cart-clear + redirect logic
-                handleSuccessRedirect(res, data);
-              })
-            )
-            .catch((error) =>
-              console.error('[NMI] POST error:', error)
-            );
-        } else {
+        if (!response.token) {
           console.log('[NMI] Failed:', response.reason);
+          isLocked = false;
+          return;
         }
-      },
+
+        console.log('[NMI] Success, token:', response.token);
+        console.log(
+          '[NMI] Sending POST with store_id:',
+          window.SMOOTHR_CONFIG.storeId
+        );
+
+        // Gather required form values
+        const firstName = document.querySelector('[data-smoothr-first-name]')?.value || '';
+        const lastName  = document.querySelector('[data-smoothr-last-name]')?.value  || '';
+        const email     = document.querySelector('[data-smoothr-email]')?.value      || '';
+        const shipLine1 = document.querySelector('[data-smoothr-ship-line1]')?.value || '';
+        const shipLine2 = document.querySelector('[data-smoothr-ship-line2]')?.value || '';
+        const shipCity  = document.querySelector('[data-smoothr-ship-city]')?.value  || '';
+        const shipState = document.querySelector('[data-smoothr-ship-state]')?.value || '';
+        const shipPostal= document.querySelector('[data-smoothr-ship-postal]')?.value|| '';
+        const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value || '';
+
+        const amountEl = document.querySelector('[data-smoothr-total]');
+        const amount   = amountEl
+          ? Math.round(parseFloat(amountEl.textContent.replace(/[^0-9.]/g, '')) * 100)
+          : 0;
+        const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
+
+        // Build cart payload
+        const cartData  = window.Smoothr.cart.getCart() || {};
+        const cartItems = Array.isArray(cartData.items) ? cartData.items : [];
+        const cart = cartItems.map(item => ({
+          product_id: item.id   || 'unknown',
+          name:       item.name,
+          quantity:   item.quantity,
+          price:      Math.round((item.price ?? 0) * 100)
+        }));
+        if (cart.length === 0) {
+          console.error('[NMI] Cart is empty');
+          isLocked = false;
+          return;
+        }
+
+        // Send to backend
+        fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payment_token: response.token,
+            store_id:      window.SMOOTHR_CONFIG.storeId,
+            first_name:    firstName,
+            last_name:     lastName,
+            email:         email,
+            shipping: {
+              address: {
+                line1:       shipLine1,
+                line2:       shipLine2,
+                city:        shipCity,
+                state:       shipState,
+                postal_code: shipPostal,
+                country:     shipCountry
+              }
+            },
+            cart,
+            total:    amount,
+            currency: currency
+          })
+        })
+          .then(res =>
+            res.json().then(data => {
+              console.log('[NMI] Backend response:', data);
+              // Clear cart & redirect on success
+              handleSuccessRedirect(res, data);
+              isLocked = false;
+            })
+          )
+          .catch(error => {
+            console.error('[NMI] POST error:', error);
+            isLocked = false;
+          });
+      }
     });
+
     isConfigured = true;
     console.log('[NMI] CollectJS configured successfully');
   } catch (error) {
