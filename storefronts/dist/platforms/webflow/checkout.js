@@ -97,7 +97,7 @@ async function initCheckout() {
   console.log("[Smoothr Checkout] SMOOTHR_CONFIG", window.SMOOTHR_CONFIG);
   const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
   console.log("[Smoothr Checkout] Using gateway:", gateway);
-  console.log("[Smoothr Checkout] checkout trigger found", document.querySelector("[data-smoothr-checkout]"));
+  console.log("[Smoothr Checkout] checkout trigger found", document.querySelector("[data-smoothr-pay]"));
   if (gateway === "nmi") {
     try {
       const tokenizationKey = await fetchTokenizationKey(window.SMOOTHR_CONFIG.storeId);
@@ -107,7 +107,7 @@ async function initCheckout() {
       console.error("[Smoothr Checkout] Failed to mount gateway", error);
     }
   }
-  const payButton = document.querySelector("[data-smoothr-checkout]");
+  const payButton = document.querySelector("[data-smoothr-pay]");
   if (payButton) {
     payButton.addEventListener("click", handlePaymentSubmit);
     console.log("[Smoothr Checkout] Pay div found and bound");

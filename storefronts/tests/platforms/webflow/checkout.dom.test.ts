@@ -7,7 +7,7 @@ beforeEach(() => {
       <div data-smoothr-card-number></div>
       <div data-smoothr-card-expiry></div>
       <div data-smoothr-card-cvc></div>
-      <button data-smoothr-checkout></button>
+      <button data-smoothr-pay></button>
     </div>
   `;
   delete (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__;

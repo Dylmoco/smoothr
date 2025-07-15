@@ -31,7 +31,7 @@ beforeEach(() => {
   global.document = {
     querySelector: vi.fn(sel => {
       const map = {
-        '[data-smoothr-checkout]': block,
+        '[data-smoothr-pay]': block,
         '[data-smoothr-card-number]': {},
         '[data-smoothr-card-expiry]': {},
         '[data-smoothr-card-cvc]': {},
