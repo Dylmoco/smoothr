@@ -5,9 +5,7 @@ import { validateDiscount } from '../../core/discounts.ts';
 import * as cart from '../../core/cart.js';
 import { showError, showSuccess } from '../../../supabase/authHelpers.js';
 
-// (keep the async wrapper and rest as is)
-(async function () {
-  async function initCheckout() {
+export async function initCheckout() {
     if (!window.SMOOTHR_CONFIG) {
       console.error('[Smoothr Checkout] Config not found');
       return;
@@ -52,8 +50,7 @@ import { showError, showSuccess } from '../../../supabase/authHelpers.js';
         }
       });
     }
-  }
+}
 
-  // Run init on load
-  document.addEventListener('DOMContentLoaded', initCheckout);
-})();
+// Run init on load
+document.addEventListener('DOMContentLoaded', initCheckout);
