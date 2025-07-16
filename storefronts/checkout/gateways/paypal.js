@@ -152,14 +152,28 @@ export async function mountCardFields() {
           return data.id;
         };
 
+    // Hosted Fields selectors - support both cvc and cvv naming
+    const selectors = {
+      number: '[data-smoothr-card-number]',
+      expiry: '[data-smoothr-card-expiry]',
+      cvv: '[data-smoothr-card-cvc], [data-smoothr-card-cvv]'
+    };
+    // Diagnostic: log counts of each selector
+    console.log(
+      '[Smoothr][PayPal] HostedFields selectors counts:',
+      'number=', document.querySelectorAll(selectors.number).length,
+      'expiry=', document.querySelectorAll(selectors.expiry).length,
+      'cvv=', document.querySelectorAll(selectors.cvv).length
+    );
+
     // Mount Hosted Fields into the generic Smoothr selectors
     window.paypal.HostedFields.render({
       createOrder,
       styles: { input: { 'font-size': '16px' } },
       fields: {
-        number: { selector: '[data-smoothr-card-number]' },
-        expirationDate: { selector: '[data-smoothr-card-expiry]' },
-        cvv: { selector: '[data-smoothr-card-cvc]' }
+        number: { selector: selectors.number },
+        expirationDate: { selector: selectors.expiry },
+        cvv: { selector: selectors.cvv }
       }
     })
       .then(hostedFields => {
