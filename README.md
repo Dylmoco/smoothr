@@ -105,6 +105,24 @@ from the store's `store_settings` table in Supabase using the configured
 `storeId`. The `[provider]` segment in the route should match this value and
 defaults to `stripe` when no configuration is found.
 
+Payment gateway resolution is handled by `core/utils/resolveGateway()`. This
+function **throws an error** when no gateway is configured or when an
+unsupported value is supplied. Ensure `active_payment_gateway` is set on either
+`SMOOTHR_CONFIG` or in the store settings.
+
+```js
+import resolveGateway from './core/utils/resolveGateway.js';
+
+resolveGateway({ active_payment_gateway: 'stripe' });
+// => 'stripe'
+
+resolveGateway();
+// throws 'active_payment_gateway not configured'
+
+resolveGateway({ active_payment_gateway: 'bogus' });
+// throws 'Unknown payment gateway: bogus'
+```
+
 To enable Authorize.net create a row in the `store_integrations` table with
 `provider` set to `authorizeNet` and store your API credentials under the
 `settings` column:
