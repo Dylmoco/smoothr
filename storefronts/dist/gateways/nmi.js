@@ -49,7 +49,7 @@ function syncHiddenExpiryFields(container, mon, yr) {
   yy.value = yr;
 }
 
-export async function mountNMIFields() {
+export async function mountNMI() {
   tokenizationKey = await resolveTokenizationKey();
   if (!tokenizationKey) return;
 
@@ -131,6 +131,10 @@ export async function mountNMIFields() {
   } else {
     setupCollect();
   }
+}
+
+export async function mountNMIFields() {
+  return mountNMI();
 }
 
 export function isMounted() {
@@ -219,10 +223,10 @@ export async function createPaymentMethod() {
   });
 }
 
-export { mountNMIFields as mountCardFields };
+export { mountNMI as mountCardFields };
 
 export default {
-  mountCardFields: mountNMIFields,
+  mountCardFields: mountNMI,
   isMounted,
   ready,
   createPaymentMethod
@@ -230,5 +234,5 @@ export default {
 
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {};
-  window.Smoothr.mountNMIFields = mountNMIFields;
+  window.Smoothr.mountNMIFields = mountNMI;
 }

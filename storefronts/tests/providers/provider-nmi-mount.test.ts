@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-let mountNMIFields: any;
+let mountNMI: any;
 let ready: any;
 let getCredMock: any;
 let appendChildSpy: any;
@@ -38,7 +38,7 @@ beforeEach(async () => {
   window.SMOOTHR_CONFIG = { storeId: 'store-1', active_payment_gateway: 'nmi' } as any;
 
   const mod = await import('../../checkout/gateways/nmi.js');
-  mountNMIFields = mod.mountNMIFields;
+  mountNMI = mod.mountNMI;
   ready = mod.ready;
 });
 
@@ -47,9 +47,9 @@ afterEach(() => {
   window.CollectJS = undefined as any;
 });
 
-describe('mountNMIFields', () => {
+describe('mountNMI', () => {
   it('loads tokenization key and applies it', async () => {
-    await mountNMIFields();
+    await mountNMI();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
     const els = document.querySelectorAll('div[data-tokenization-key]');
     expect(els.length).toBe(3);
@@ -59,7 +59,7 @@ describe('mountNMIFields', () => {
   });
 
   it('injects other inputs and removes expiry inputs when empty', async () => {
-    await mountNMIFields();
+    await mountNMI();
     const num = document.querySelector('[data-smoothr-card-number]');
     const cvc = document.querySelector('[data-smoothr-card-cvc]');
     const postal = document.querySelector('[data-smoothr-postal]');
@@ -72,7 +72,7 @@ describe('mountNMIFields', () => {
   });
 
   it('does not inject hidden expiry inputs until value is valid', async () => {
-    await mountNMIFields();
+    await mountNMI();
     const expiry = document.querySelector('[data-smoothr-card-expiry] input');
     const input = expiry;
     if (input) {
@@ -84,7 +84,7 @@ describe('mountNMIFields', () => {
   });
 
   it('re-injects expiry inputs when corrected', async () => {
-    await mountNMIFields();
+    await mountNMI();
     const input = document.querySelector('[data-smoothr-card-expiry] input');
     if (input) {
       input.value = '1';
@@ -103,7 +103,7 @@ describe('mountNMIFields', () => {
   });
 
   it('syncs hidden expiry inputs when value changes', async () => {
-    await mountNMIFields();
+    await mountNMI();
     const expiry = document.querySelector('[data-smoothr-card-expiry] input');
     expect(expiry).not.toBeNull();
     if (expiry) {
@@ -121,7 +121,7 @@ describe('mountNMIFields', () => {
   });
 
   it('reports ready when all fields and tokenization key are present', async () => {
-    await mountNMIFields();
+    await mountNMI();
     const expiry = document.querySelector('[data-smoothr-card-expiry] input');
     if (expiry) {
       expiry.value = '11/30';

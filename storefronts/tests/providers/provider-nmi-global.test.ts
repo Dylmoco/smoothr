@@ -10,8 +10,9 @@ afterEach(() => {
 });
 
 describe('nmi gateway global', () => {
-  it('exposes mountNMIFields on window', async () => {
-    await import('../../checkout/gateways/nmi.js');
-    expect(typeof window.Smoothr.mountNMIFields).toBe('function');
+  it('exposes mountNMI on window as mountNMIFields', async () => {
+    const mod = await import('../../checkout/gateways/nmi.js');
+    expect(typeof mod.mountNMI).toBe('function');
+    expect(window.Smoothr.mountNMIFields).toBe(mod.mountNMI);
   });
 });
