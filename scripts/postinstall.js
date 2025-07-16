@@ -19,7 +19,15 @@ if (cwd !== root) {
 const workspaces = ['storefronts', 'smoothr'];
 
 for (const ws of workspaces) {
-  const modulesDir = path.join(root, ws, 'node_modules');
+  const wsPath = path.join(root, ws);
+  const modulesDir = path.join(wsPath, 'node_modules');
+
+  // 🛑 Prevent infinite loop if already inside this workspace
+  if (cwd.startsWith(wsPath)) {
+    console.log(`[Smoothr] Skipping install for ${ws} (already inside workspace)`);
+    continue;
+  }
+
   if (!fs.existsSync(modulesDir)) {
     console.log(`[Smoothr] Installing dependencies for ${ws}...`);
     execSync(`npm --workspace ${ws} install`, { stdio: 'inherit' });
