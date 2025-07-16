@@ -5,10 +5,18 @@ let isLocked = false;
 
 // Shared post-success behavior
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+import { resolveTokenizationKey } from '../providers/nmi.js';
 
 // Entry point: call this with your tokenization key
 export function initNMI(tokenizationKey) {
   mountNMIFields(tokenizationKey);
+}
+
+export async function mountNMI() {
+  const tokenizationKey = await resolveTokenizationKey();
+  if (tokenizationKey) {
+    mountNMIFields(tokenizationKey);
+  }
 }
 
 function mountNMIFields(tokenizationKey) {

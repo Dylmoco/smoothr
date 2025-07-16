@@ -1,6 +1,6 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
 
-import { initNMI } from '../../checkout/gateways/nmi.js';
+import { mountNMI } from '../../checkout/gateways/nmi.js';
 import { validateDiscount } from '../../core/discounts.ts';
 import * as cart from '../../core/cart.js';
 import { showError, showSuccess } from '../../../supabase/authHelpers.js';
@@ -22,9 +22,7 @@ import { showError, showSuccess } from '../../../supabase/authHelpers.js';
 
     if (gateway === 'nmi') {
       try {
-        const tokenizationKey = await fetchTokenizationKey(window.SMOOTHR_CONFIG.storeId);
-        console.log('[NMI] NMI tokenization key fetched:', tokenizationKey.substring(0, 8) + '...');
-        initNMI(tokenizationKey);
+        await mountNMI();
       } catch (error) {
         console.error('[Smoothr Checkout] Failed to mount gateway', error);
       }
@@ -53,25 +51,6 @@ import { showError, showSuccess } from '../../../supabase/authHelpers.js';
           showError(form, 'Invalid discount code', discountInput);
         }
       });
-    }
-  }
-
-  // Fetch key via Next.js API to bypass RLS
-  async function fetchTokenizationKey(storeId) {
-    const apiBase = window.SMOOTHR_CONFIG.apiBase;
-    const response = await fetch(`${apiBase}/api/get-payment-key?storeId=${storeId}&provider=nmi`, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    if (!response.ok) {
-      throw new Error(`API fetch error: ${response.status}`);
-    }
-    const data = await response.json();
-    if (data && data.tokenization_key) {
-      return data.tokenization_key;
-    } else {
-      throw new Error('No NMI key found');
     }
   }
 
