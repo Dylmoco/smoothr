@@ -211,6 +211,12 @@ The adapter simply sets `SMOOTHR_CONFIG.platform = 'webflow'` and loads the
 shared checkout module. `initCheckout` runs automatically once the DOM is ready,
 so no polling logic is required.
 
+## Development
+
+Run `npm run build` after modifying files in `checkout/gateways`. The build
+copies updated sources into `dist/gateways` so the published SDK includes the
+latest gateway logic. Commit both the source and corresponding `dist` files in
+the same change.
 
 ## CI/CD
 
