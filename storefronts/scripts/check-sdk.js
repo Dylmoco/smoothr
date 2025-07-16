@@ -20,15 +20,23 @@ const webflowCheckoutPath = join(
   'webflow',
   'checkout.js'
 );
+const waitForElementPath = join(
+  __dirname,
+  '..',
+  'dist',
+  'utils',
+  'waitForElement.js'
+);
 
 try {
   await access(sdkPath, constants.F_OK);
   await access(checkoutPath, constants.F_OK);
   await access(stripePath, constants.F_OK);
   await access(webflowCheckoutPath, constants.F_OK);
+  await access(waitForElementPath, constants.F_OK);
 } catch {
   err(
-    `File not found: ${sdkPath} or ${checkoutPath} or ${stripePath} or ${webflowCheckoutPath}`
+    `File not found: ${sdkPath} or ${checkoutPath} or ${stripePath} or ${webflowCheckoutPath} or ${waitForElementPath}`
   );
   process.exit(1);
 }

@@ -22,6 +22,20 @@ const webflowDest = join(
   'webflow',
   'checkout.js'
 );
+const waitForElementSrc = join(
+  __dirname,
+  '..',
+  'checkout',
+  'utils',
+  'waitForElement.js'
+);
+const waitForElementDest = join(
+  __dirname,
+  '..',
+  'dist',
+  'utils',
+  'waitForElement.js'
+);
 
 try {
   await copyFile(src, dest);
@@ -37,6 +51,15 @@ try {
   log(`Copied ${webflowSrc} to ${webflowDest}`);
 } catch (err) {
   err(`Failed to copy Webflow checkout.js: ${err.message}`);
+  process.exit(1);
+}
+
+try {
+  await mkdir(dirname(waitForElementDest), { recursive: true });
+  await copyFile(waitForElementSrc, waitForElementDest);
+  log(`Copied ${waitForElementSrc} to ${waitForElementDest}`);
+} catch (error) {
+  err(`Failed to copy waitForElement.js: ${error.message}`);
   process.exit(1);
 }
 
