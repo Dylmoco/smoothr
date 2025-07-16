@@ -23,6 +23,9 @@ if (typeof globalThis.document === "undefined") {
     dispatchEvent: vi.fn(),
   };
 }
+if (typeof globalThis.window.Smoothr === "undefined") {
+  globalThis.window.Smoothr = {};
+}
 if (typeof globalThis.localStorage === "undefined") {
   let store = {};
   globalThis.localStorage = {
