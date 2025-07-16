@@ -7758,49 +7758,50 @@ function showSuccess(form, msg, trigger) {
 }
 
 // storefronts/platforms/webflow/checkout.js
-(async function() {
-  async function initCheckout() {
-    if (!window.SMOOTHR_CONFIG) {
-      console.error("[Smoothr Checkout] Config not found");
-      return;
-    }
-    console.log("[Smoothr Checkout] SDK initialized");
-    console.log("[Smoothr Checkout] SMOOTHR_CONFIG", window.SMOOTHR_CONFIG);
-    const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
-    console.log("[Smoothr Checkout] Using gateway:", gateway);
-    console.log("[Smoothr Checkout] checkout trigger found", document.querySelector("[data-smoothr-pay]"));
-    if (gateway === "nmi") {
-      try {
-        await mountNMI();
-      } catch (error) {
-        console.error("[Smoothr Checkout] Failed to mount gateway", error);
-      }
-    }
-    const payButton = document.querySelector("[data-smoothr-pay]");
-    if (payButton) {
-      console.log("[Smoothr Checkout] Pay div found and bound");
-    } else {
-      console.warn("[Smoothr Checkout] Pay div not found");
-    }
-    const discountInput = document.querySelector("[data-smoothr-discount]");
-    if (discountInput) {
-      discountInput.addEventListener("change", async (e) => {
-        const code = e.target.value.trim();
-        const form = discountInput.closest("form") || document;
-        const discount = await validateDiscount(code);
-        if (discount) {
-          showSuccess(form, "Discount applied");
-          applyDiscount({ code, type: discount.type, amount: discount.amount });
-          if (setMetaField)
-            setMetaField("discount_code", code);
-          if (typeof window.renderCart === "function")
-            window.renderCart();
-        } else {
-          applyDiscount(null);
-          showError(form, "Invalid discount code", discountInput);
-        }
-      });
+async function initCheckout() {
+  if (!window.SMOOTHR_CONFIG) {
+    console.error("[Smoothr Checkout] Config not found");
+    return;
+  }
+  console.log("[Smoothr Checkout] SDK initialized");
+  console.log("[Smoothr Checkout] SMOOTHR_CONFIG", window.SMOOTHR_CONFIG);
+  const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
+  console.log("[Smoothr Checkout] Using gateway:", gateway);
+  console.log("[Smoothr Checkout] checkout trigger found", document.querySelector("[data-smoothr-pay]"));
+  if (gateway === "nmi") {
+    try {
+      await mountNMI();
+    } catch (error) {
+      console.error("[Smoothr Checkout] Failed to mount gateway", error);
     }
   }
-  document.addEventListener("DOMContentLoaded", initCheckout);
-})();
+  const payButton = document.querySelector("[data-smoothr-pay]");
+  if (payButton) {
+    console.log("[Smoothr Checkout] Pay div found and bound");
+  } else {
+    console.warn("[Smoothr Checkout] Pay div not found");
+  }
+  const discountInput = document.querySelector("[data-smoothr-discount]");
+  if (discountInput) {
+    discountInput.addEventListener("change", async (e) => {
+      const code = e.target.value.trim();
+      const form = discountInput.closest("form") || document;
+      const discount = await validateDiscount(code);
+      if (discount) {
+        showSuccess(form, "Discount applied");
+        applyDiscount({ code, type: discount.type, amount: discount.amount });
+        if (setMetaField)
+          setMetaField("discount_code", code);
+        if (typeof window.renderCart === "function")
+          window.renderCart();
+      } else {
+        applyDiscount(null);
+        showError(form, "Invalid discount code", discountInput);
+      }
+    });
+  }
+}
+document.addEventListener("DOMContentLoaded", initCheckout);
+export {
+  initCheckout
+};
