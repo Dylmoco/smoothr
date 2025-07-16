@@ -14,3 +14,14 @@ if (cwd !== root) {
   console.log(`[Smoothr] Skipping postinstall — running from ${cwd}, not monorepo root`);
   process.exit(0);
 }
+
+// ✅ Verify workspace installs so vitest and other dev tools are available
+const workspaces = ['storefronts', 'smoothr'];
+
+for (const ws of workspaces) {
+  const modulesDir = path.join(root, ws, 'node_modules');
+  if (!fs.existsSync(modulesDir)) {
+    console.log(`[Smoothr] Installing dependencies for ${ws}...`);
+    execSync(`npm --workspace ${ws} install`, { stdio: 'inherit' });
+  }
+}
