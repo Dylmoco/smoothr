@@ -162,3 +162,8 @@ function configureCollectJS() {
     isLocked = false;
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.mountNMIFields = mountNMI;
+}
