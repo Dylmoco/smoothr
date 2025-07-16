@@ -15,11 +15,12 @@ if (
   document.head.appendChild(style);
 }
 
-import supabase from '../../supabase/supabaseClient.js';
 import { getPublicCredential } from './getPublicCredential.js';
 import bindCardInputs from './utils/inputFormatters.js';
 import waitForElement from './utils/waitForElement.js';
 import { handleSuccessRedirect } from './utils/handleSuccessRedirect.js';
+import resolveGateway from '../../core/utils/resolveGateway.js';
+import { getStoreSettings } from './gateways/stripe.js';
 
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
@@ -31,31 +32,21 @@ const gatewayLoaders = {
 
 async function getActivePaymentGateway(log, warn) {
   const cfg = window.SMOOTHR_CONFIG || {};
-  if (cfg.active_payment_gateway) return cfg.active_payment_gateway;
+  if (cfg.active_payment_gateway) {
+    return resolveGateway(cfg, {});
+  }
+
   const storeId = cfg.storeId;
   if (!storeId) {
-    warn('Store ID missing; defaulting to stripe');
-    return 'stripe';
+    throw new Error('Store ID missing');
   }
+
+  const settings = await getStoreSettings(storeId);
   try {
-    const { data, error } = await supabase
-      .from('store_settings')
-      .select('settings')
-      .eq('store_id', storeId)
-      .maybeSingle();
-    if (error) {
-      warn('Store settings lookup failed:', error.message || error);
-      return 'stripe';
-    }
-    const gateway = data?.settings?.active_payment_gateway;
-    if (!gateway) {
-      warn('active_payment_gateway missing; defaulting to stripe');
-      return 'stripe';
-    }
-    return gateway;
+    return resolveGateway(cfg, settings || {});
   } catch (e) {
-    warn('Gateway lookup failed:', e?.message || e);
-    return 'stripe';
+    warn('Gateway resolution failed:', e?.message || e);
+    throw e;
   }
 }
 
@@ -87,10 +78,9 @@ export async function initCheckout(config) {
   log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
 
   const provider = await getActivePaymentGateway(log, warn);
-  let loader = gatewayLoaders[provider];
+  const loader = gatewayLoaders[provider];
   if (!loader) {
-    warn(`Unknown payment gateway: ${provider}; falling back to stripe`);
-    loader = gatewayLoaders.stripe;
+    throw new Error(`Unknown payment gateway: ${provider}`);
   }
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
