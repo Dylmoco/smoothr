@@ -43,6 +43,8 @@ interface CheckoutPayload {
   total: number;
   currency: string;
   description?: string;
+  discount_code?: string;
+  discount_id?: string;
   customer_id?: string | null;
   store_id: string;
   platform?: string;
@@ -133,12 +135,14 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     billing_last_name,
     shipping,
     cart,
-    total,
     currency,
     store_id,
     platform,
-    description
+    description,
+    discount_code,
+    discount_id
   } = payload;
+  let total = payload.total;
 
   console.log('[handleCheckout] Checking required fields:');
   console.log('email:', email ? 'present' : 'missing');
@@ -170,6 +174,16 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
+  let customerId: string | null = null;
+  try {
+    customerId = await findOrCreateCustomer(supabase, store_id, email);
+  } catch (error: any) {
+    err('findOrCreateCustomer failed:', error?.message || error);
+    res.status(500).json({ error: 'Failed to record customer' });
+    return;
+  }
+
+
   const { name, address } = shipping;
   const { line1, line2, city, state, postal_code, country } = address || {};
   console.log('[handleCheckout] Shipping details check:');
@@ -184,6 +198,61 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     warn('Invalid shipping details');
     res.status(400).json({ error: 'Invalid shipping details' });
     return;
+  }
+
+  let discountRecord: any = null;
+  if (discount_id || discount_code) {
+    const { data: disc, error: discErr } = await supabase
+      .from('discounts')
+      .select('*')
+      .eq(discount_id ? 'id' : 'code', discount_id || discount_code)
+      .maybeSingle();
+    if (discErr || !disc) {
+      warn('Discount lookup failed:', discErr?.message);
+    } else {
+      const now = Date.now();
+      const active = disc.active !== false;
+      const startsOk = !disc.starts_at || new Date(disc.starts_at).getTime() <= now;
+      const endsOk = !disc.expires_at || new Date(disc.expires_at).getTime() >= now;
+      if (active && startsOk && endsOk) {
+        const { count: totalUses } = await supabase
+          .from('discount_usages')
+          .select('id', { head: true, count: 'exact' })
+          .eq('discount_id', disc.id);
+        if (
+          disc.max_redemptions &&
+          typeof totalUses === 'number' &&
+          totalUses >= disc.max_redemptions
+        ) {
+          warn('Discount max redemptions reached');
+        } else {
+          let perCustomerOk = true;
+          if (customerId && disc.limit_per_customer) {
+            const { count: custCount } = await supabase
+              .from('discount_usages')
+              .select('id', { head: true, count: 'exact' })
+              .eq('discount_id', disc.id)
+              .eq('customer_id', customerId);
+            if (
+              typeof custCount === 'number' &&
+              custCount >= disc.limit_per_customer
+            ) {
+              perCustomerOk = false;
+            }
+          }
+          if (perCustomerOk) discountRecord = disc;
+        }
+      }
+    }
+  }
+
+  if (discountRecord) {
+    const amt =
+      discountRecord.type === 'percent'
+        ? Math.round(total * (discountRecord.amount / 100))
+        : discountRecord.amount;
+    log('Applying discount', discountRecord, amt);
+    total = Math.max(0, total - amt);
   }
 
   const { data: storeSettings, error: settingsError } = await supabase
@@ -345,14 +414,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     paymentIntentId = transactionId;
   }
 
-  let customerId: string | null = null;
-  try {
-    customerId = await findOrCreateCustomer(supabase, store_id, email);
-  } catch (error: any) {
-    err('findOrCreateCustomer failed:', error?.message || error);
-    res.status(500).json({ error: 'Failed to record customer' });
-    return;
-  }
 
   if (provider === 'authorizeNet') {
     const orderNumber = payload.order_number!;
@@ -501,6 +562,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       platform: platform || 'webflow',
       customer_id: customerId,
       customer_email: email,
+      ...(discountRecord ? { discount_id: discountRecord.id } : {}),
       payment_intent_id: paymentIntentId,
       items: cart // Add cart to items column
     };
@@ -547,6 +609,20 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       if (itemsError) {
         err('Failed to insert order items:', itemsError.message);
         return res.status(500).json({ error: 'Failed to insert order items' });
+      }
+    }
+
+    if (discountRecord) {
+      const { error: usageErr } = await supabase
+        .from('discount_usages')
+        .insert({
+          order_id: orderData.id,
+          customer_id: customerId,
+          discount_id: discountRecord.id,
+          used_at: new Date().toISOString()
+        });
+      if (usageErr) {
+        warn('Failed to log discount usage:', usageErr.message);
       }
     }
   }

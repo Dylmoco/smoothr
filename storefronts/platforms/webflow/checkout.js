@@ -1,6 +1,9 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
 
 import { initNMI } from '../../checkout/gateways/nmi.js';
+import { validateDiscount } from '../../core/discounts.ts';
+import * as cart from '../../core/cart.js';
+import { showError, showSuccess } from '../../../supabase/authHelpers.js';
 
 // (keep the async wrapper and rest as is)
 (async function () {
@@ -32,6 +35,24 @@ import { initNMI } from '../../checkout/gateways/nmi.js';
       console.log('[Smoothr Checkout] Pay div found and bound');
     } else {
       console.warn('[Smoothr Checkout] Pay div not found');
+    }
+
+    const discountInput = document.querySelector('[data-smoothr-discount]');
+    if (discountInput) {
+      discountInput.addEventListener('change', async e => {
+        const code = e.target.value.trim();
+        const form = discountInput.closest('form') || document;
+        const discount = await validateDiscount(code);
+        if (discount) {
+          showSuccess(form, 'Discount applied');
+          cart.applyDiscount({ code, type: discount.type, amount: discount.amount });
+          if (cart.setMetaField) cart.setMetaField('discount_code', code);
+          if (typeof window.renderCart === 'function') window.renderCart();
+        } else {
+          cart.applyDiscount(null);
+          showError(form, 'Invalid discount code', discountInput);
+        }
+      });
     }
   }
 
