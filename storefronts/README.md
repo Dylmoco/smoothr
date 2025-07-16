@@ -129,6 +129,21 @@ active payment gateway. This single endpoint handles all providers. `initCheckou
 `store_settings.settings.active_payment_gateway` in Supabase using the provided
 `storeId`. The default provider is `stripe`.
 
+Gateway detection relies on `core/utils/resolveGateway()`. It will **throw an
+error** when `active_payment_gateway` is missing or set to an unsupported
+provider. Always configure a valid gateway on `SMOOTHR_CONFIG` or in the store
+settings before initializing checkout.
+
+```js
+import resolveGateway from '../core/utils/resolveGateway.js';
+
+resolveGateway({ active_payment_gateway: 'nmi' });
+// => 'nmi'
+
+resolveGateway({});
+// throws 'active_payment_gateway not configured'
+```
+
 To integrate Authorize.net create a record in the `store_integrations` table
 with `provider` set to `authorizeNet` and save your credentials in the
 `settings` JSON column:
