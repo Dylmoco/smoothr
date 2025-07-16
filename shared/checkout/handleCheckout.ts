@@ -135,7 +135,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     billing_last_name,
     shipping,
     cart,
-    total,
     currency,
     store_id,
     platform,
@@ -143,6 +142,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     discount_code,
     discount_id
   } = payload;
+  let total = payload.total;
 
   console.log('[handleCheckout] Checking required fields:');
   console.log('email:', email ? 'present' : 'missing');
