@@ -73,10 +73,17 @@ function configureCollectJS() {
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]');
     const divStyle = getComputedStyle(cardNumberDiv);
 
-    // Get placeholder elements
+    // Get placeholder info from Webflow elements with custom attributes
     const cardNumberPlaceholderEl = cardNumberDiv.querySelector('[data-smoothr-card-placeholder]');
     const expiryPlaceholderEl = document.querySelector('[data-smoothr-card-expiry] [data-smoothr-expiry-placeholder]');
     const cvcPlaceholderEl = document.querySelector('[data-smoothr-card-cvc] [data-smoothr-cvv-placeholder]');
+
+    const cardNumberPlaceholderText = cardNumberPlaceholderEl ? cardNumberPlaceholderEl.textContent.trim() : 'Card Number';
+    const expiryPlaceholderText = expiryPlaceholderEl ? expiryPlaceholderEl.textContent.trim() : 'MM/YY';
+    const cvcPlaceholderText = cvcPlaceholderEl ? cvcPlaceholderEl.textContent.trim() : 'CVC';
+
+    // Use card number placeholder styles for all (global)
+    const placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle;
 
     const customCss = {
       'background-color': 'transparent',
@@ -105,52 +112,43 @@ function configureCollectJS() {
       'align-items': 'center',
       'justify-content': 'flex-start',
       'outline': 'none',
-      'vertical-align': 'middle'
-    };
-
-    // Map fields to placeholders
-    const fieldToPlaceholder = {
-      'ccnumber': cardNumberPlaceholderEl,
-      'ccexp': expiryPlaceholderEl,
-      'cvv': cvcPlaceholderEl
+      'vertical-align': 'middle',
+      '::placeholder': {
+        'color': placeholderStyle.color,
+        'font-family': placeholderStyle.fontFamily,
+        'font-size': placeholderStyle.fontSize,
+        'font-style': placeholderStyle.fontStyle,
+        'font-weight': placeholderStyle.fontWeight,
+        'letter-spacing': placeholderStyle.letterSpacing,
+        'line-height': placeholderStyle.lineHeight,
+        'text-align': placeholderStyle.textAlign,
+        'text-shadow': placeholderStyle.textShadow,
+        'opacity': placeholderStyle.opacity || 0.7,
+        'position': 'absolute',
+        'top': '50%',
+        'transform': 'translateY(-50%)'
+      }
     };
 
     CollectJS.configure({
       variant: 'inline',
       styleSniffer: true,
-      invalidFormatTrigger: 'change',  // Trigger validation on every change
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: { selector: '[data-smoothr-card-number]' },
-        ccexp:    { selector: '[data-smoothr-card-expiry]' },
-        cvv:      { selector: '[data-smoothr-card-cvc]' }
-      },
-      customCss: customCss,
-      validationCallback: function(field, status, message) {
-        console.log('[NMI] Validation:', field, status, message);
-        const el = fieldToPlaceholder[field];
-        if (el) {
-          if (status) {
-            el.style.display = 'none';
-          } else {
-            const lowerMessage = message.toLowerCase();
-            if (lowerMessage.includes('required') || lowerMessage.includes('empty') || lowerMessage.includes('fill')) {
-              el.style.display = ''; // Revert to Webflow style
-            } else {
-              el.style.display = 'none';
-            }
-          }
+        ccnumber: { 
+          selector: '[data-smoothr-card-number]',
+          placeholder: cardNumberPlaceholderText
+        },
+        ccexp: { 
+          selector: '[data-smoothr-card-expiry]',
+          placeholder: expiryPlaceholderText
+        },
+        cvv: { 
+          selector: '[data-smoothr-card-cvc]',
+          placeholder: cvcPlaceholderText
         }
       },
-      focusCallback: function(field) {
-        console.log('[NMI] Focus on:', field);
-        const el = fieldToPlaceholder[field];
-        if (el) el.style.display = 'none';
-      },
-      blurCallback: function(field) {
-        console.log('[NMI] Blur on:', field);
-        CollectJS.validateField(field); // Trigger validation on blur
-      },
+      customCss: customCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize');
         // Style the iframes directly and force height
@@ -163,6 +161,10 @@ function configureCollectJS() {
           iframe.style.height = cardNumberDiv.offsetHeight + 'px';
           iframe.style.border = 'none';
           iframe.style.background = 'transparent';
+        });
+        // Hide Webflow placeholder elements
+        [cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(el => {
+          if (el) el.style.display = 'none';
         });
       },
       callback(response) {
