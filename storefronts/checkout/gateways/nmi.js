@@ -134,7 +134,7 @@ function configureCollectJS() {
           } else {
             const lowerMessage = message.toLowerCase();
             if (lowerMessage.includes('required') || lowerMessage.includes('empty') || lowerMessage.includes('fill')) {
-              el.style.display = 'block';
+              el.style.display = ''; // Revert to Webflow style
             } else {
               el.style.display = 'none';
             }
