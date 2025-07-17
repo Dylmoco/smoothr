@@ -72,6 +72,13 @@ export async function mountCardFields() {
   numInput.setAttribute('data-collect', 'cardNumber')
   if (!numInput.isConnected) numEl.appendChild(numInput)
 
+  // Visible expiry input (NEW!)
+  const expiryInput =
+    expEl.querySelector('input') || document.createElement('input')
+  expiryInput.setAttribute('data-collect', 'ccexp')
+  expiryInput.setAttribute('placeholder', 'MM/YY')
+  if (!expiryInput.isConnected) expEl.appendChild(expiryInput)
+
   // Visible CVC input
   const cvvInput = cvvEl.querySelector('input') || document.createElement('input')
   cvvInput.setAttribute('data-collect', 'cvv')
@@ -84,7 +91,6 @@ export async function mountCardFields() {
   if (!postalInput.isConnected) postalEl.appendChild(postalInput)
 
   // Expiry listener: only inject hidden month/year when valid
-  const expiryInput = expEl.querySelector('input')
   expiryInput.addEventListener('keyup', e => {
     const [mon, yr] = parseExpiry(e.target.value)
     if (mon && yr) {
@@ -113,8 +119,8 @@ export async function mountCardFields() {
     variant: 'inline',
     fields: {
       ccnumber: { selector: '[data-smoothr-card-number] input' },
-      ccexp: { selector: '[data-smoothr-card-expiry] input' },
-      cvv: { selector: '[data-smoothr-card-cvc] input' }
+      ccexp:   { selector: '[data-smoothr-card-expiry] input' },
+      cvv:     { selector: '[data-smoothr-card-cvc] input' }
     }
   })
 }
