@@ -73,6 +73,18 @@ function configureCollectJS() {
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]');
     const divStyle = getComputedStyle(cardNumberDiv);
 
+    // Get placeholder info from Webflow elements with custom attributes
+    const cardNumberPlaceholderEl = cardNumberDiv.querySelector('[data-smoothr-card-placeholder]');
+    const expiryPlaceholderEl = document.querySelector('[data-smoothr-card-expiry] [data-smoothr-expiry-placeholder]');
+    const cvcPlaceholderEl = document.querySelector('[data-smoothr-card-cvc] [data-smoothr-cvv-placeholder]');
+
+    const cardNumberPlaceholderText = cardNumberPlaceholderEl ? cardNumberPlaceholderEl.textContent.trim() : 'Card Number';
+    const expiryPlaceholderText = expiryPlaceholderEl ? expiryPlaceholderEl.textContent.trim() : 'MM/YY';
+    const cvcPlaceholderText = cvcPlaceholderEl ? cvcPlaceholderEl.textContent.trim() : 'CVC';
+
+    // Use card number placeholder styles for all (global)
+    const placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle;
+
     const customCss = {
       'background-color': 'transparent',
       'border': 'none',
@@ -88,7 +100,7 @@ function configureCollectJS() {
       'text-align': divStyle.textAlign,
       'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': divStyle.height,  // Force exact height
+      'height': divStyle.height,
       'min-height': divStyle.minHeight,
       'max-height': divStyle.maxHeight,
       'box-sizing': 'border-box',
@@ -100,16 +112,36 @@ function configureCollectJS() {
       'align-items': 'center',
       'justify-content': 'flex-start',
       'outline': 'none',
-      'vertical-align': 'middle'
+      'vertical-align': 'middle',
+      '::placeholder': {
+        'color': placeholderStyle.color,
+        'font-family': placeholderStyle.fontFamily,
+        'font-size': placeholderStyle.fontSize,
+        'font-style': placeholderStyle.fontStyle,
+        'font-weight': placeholderStyle.fontWeight,
+        'letter-spacing': placeholderStyle.letterSpacing,
+        'line-height': placeholderStyle.lineHeight,
+        'text-align': placeholderStyle.textAlign,
+        'opacity': 0.7 // Adjust if needed for faint look
+      }
     };
 
     CollectJS.configure({
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: { selector: '[data-smoothr-card-number]' },
-        ccexp:    { selector: '[data-smoothr-card-expiry]' },
-        cvv:      { selector: '[data-smoothr-card-cvc]' }
+        ccnumber: { 
+          selector: '[data-smoothr-card-number]',
+          placeholder: cardNumberPlaceholderText
+        },
+        ccexp: { 
+          selector: '[data-smoothr-card-expiry]',
+          placeholder: expiryPlaceholderText
+        },
+        cvv: { 
+          selector: '[data-smoothr-card-cvc]',
+          placeholder: cvcPlaceholderText
+        }
       },
       customCss: customCss,
       fieldsAvailableCallback() {
@@ -121,9 +153,13 @@ function configureCollectJS() {
           iframe.style.top = '0';
           iframe.style.left = '0';
           iframe.style.width = '100%';
-          iframe.style.height = cardNumberDiv.offsetHeight + 'px';  // Explicit force
+          iframe.style.height = cardNumberDiv.offsetHeight + 'px';
           iframe.style.border = 'none';
           iframe.style.background = 'transparent';
+        });
+        // Hide Webflow placeholder elements
+        [cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(el => {
+          if (el) el.style.display = 'none';
         });
       },
       callback(response) {
