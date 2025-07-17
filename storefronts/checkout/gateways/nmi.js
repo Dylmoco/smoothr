@@ -46,8 +46,7 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  // original async behavior
-  script.async = true
+  script.async = false // Sync load for faster mount
   document.head.appendChild(script)
 
   script.onload = () => {
