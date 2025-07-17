@@ -108,6 +108,13 @@ function configureCollectJS() {
       'vertical-align': 'middle'
     };
 
+    // Map fields to placeholders
+    const fieldToPlaceholder = {
+      'ccnumber': cardNumberPlaceholderEl,
+      'ccexp': expiryPlaceholderEl,
+      'cvv': cvcPlaceholderEl
+    };
+
     CollectJS.configure({
       variant: 'inline',
       styleSniffer: true,
@@ -120,11 +127,7 @@ function configureCollectJS() {
       customCss: customCss,
       validationCallback: function(field, status, message) {
         console.log('[NMI] Validation:', field, status, message);
-        let el;
-        if (field === 'ccnumber') el = cardNumberPlaceholderEl;
-        else if (field === 'ccexp') el = expiryPlaceholderEl;
-        else if (field === 'cvv') el = cvcPlaceholderEl;
-
+        const el = fieldToPlaceholder[field];
         if (el) {
           if (status) {
             el.style.display = 'none';
@@ -137,6 +140,15 @@ function configureCollectJS() {
             }
           }
         }
+      },
+      focusCallback: function(field) {
+        console.log('[NMI] Focus on:', field);
+        const el = fieldToPlaceholder[field];
+        if (el) el.style.display = 'none';
+      },
+      blurCallback: function(field) {
+        console.log('[NMI] Blur on:', field);
+        CollectJS.validateField(field); // Trigger validation on blur
       },
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize');
