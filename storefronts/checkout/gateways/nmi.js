@@ -1,5 +1,3 @@
-// storefronts/checkout/gateways/nmi.js
-
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import waitForElement from '../utils/waitForElement.js'
 
@@ -16,7 +14,7 @@ function parseExpiry(val) {
   return [mon, yr]
 }
 
-// Ensure hidden month/year inputs exist under the expiry container
+// Inject or update the hidden expiry fields
 function syncHiddenExpiryFields(container, mon, yr) {
   let mm = container.querySelector('input[data-collect="expMonth"]')
   let yy = container.querySelector('input[data-collect="expYear"]')
@@ -41,39 +39,61 @@ function syncHiddenExpiryFields(container, mon, yr) {
  */
 export async function mountCardFields() {
   if (hasMounted) return
-  tokenizationKey = await resolveTokenizationKey()
+  // pass in your store ID so resolveTokenizationKey can lookup correctly
+  const storeId =
+    typeof window !== 'undefined' && window.Smoothr
+      ? window.Smoothr.store_id
+      : undefined
+
+  tokenizationKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
   if (!tokenizationKey) {
     console.warn('[NMI] Tokenization key missing')
     return
   }
   hasMounted = true
 
-  // Wait for your placeholder elements to exist
-  const numEl = await waitForElement('[data-smoothr-card-number]').catch(()=>null)
-  const expEl = await waitForElement('[data-smoothr-card-expiry]').catch(()=>null)
-  const cvvEl = await waitForElement('[data-smoothr-card-cvc]').catch(()=>null)
-
-  if (!numEl || !expEl || !cvvEl) {
-    console.warn('[NMI] Missing card placeholder elements')
+  // Wait for placeholders
+  const numEl = await waitForElement('[data-smoothr-card-number]')
+  const expEl = await waitForElement('[data-smoothr-card-expiry]')
+  const cvvEl = await waitForElement('[data-smoothr-card-cvc]')
+  const postalEl = await waitForElement('[data-smoothr-bill-postal]')
+  if (!numEl || !expEl || !cvvEl || !postalEl) {
+    console.warn('[NMI] Missing card or billing placeholder elements')
     return
   }
 
   // Attach the key so Collect.js can bootstrap iframes
-  ;[numEl, expEl, cvvEl].forEach(el => {
-    if (el && el.setAttribute) {
-      el.setAttribute('data-tokenization-key', tokenizationKey)
-    }
-  })
+  ;[numEl, expEl, cvvEl].forEach(el =>
+    el.setAttribute('data-tokenization-key', tokenizationKey)
+  )
 
-  // Set up hidden expiry inputs & listener
-  syncHiddenExpiryFields(expEl, '', '')
-  expEl.addEventListener('keyup', e => {
-    const [mon, yr] = parseExpiry(e.target.value || '')
+  // Visible card-number input
+  const numInput = numEl.querySelector('input') || document.createElement('input')
+  numInput.setAttribute('data-collect', 'cardNumber')
+  if (!numInput.isConnected) numEl.appendChild(numInput)
+
+  // Visible CVC input
+  const cvvInput = cvvEl.querySelector('input') || document.createElement('input')
+  cvvInput.setAttribute('data-collect', 'cvv')
+  if (!cvvInput.isConnected) cvvEl.appendChild(cvvInput)
+
+  // Visible billing-postal input
+  const postalInput =
+    postalEl.querySelector('input') || document.createElement('input')
+  postalInput.setAttribute('data-collect', 'postal')
+  if (!postalInput.isConnected) postalEl.appendChild(postalInput)
+
+  // Expiry listener: only inject hidden month/year when valid
+  const expiryInput = expEl.querySelector('input')
+  expiryInput.addEventListener('keyup', e => {
+    const [mon, yr] = parseExpiry(e.target.value)
     if (mon && yr) {
       syncHiddenExpiryFields(expEl, mon, yr)
     } else {
       expEl
-        .querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]')
+        .querySelectorAll(
+          'input[data-collect="expMonth"],input[data-collect="expYear"]'
+        )
         .forEach(i => i.remove())
     }
   })
@@ -88,54 +108,55 @@ export async function mountCardFields() {
     await new Promise(resolve => script.addEventListener('load', resolve))
   }
 
-  // Configure Collect.js for inline fields
+  // Configure inline fields
   window.CollectJS.configure({
     variant: 'inline',
     fields: {
-      ccnumber: { selector: '[data-smoothr-card-number]' },
-      ccexp:    { selector: '[data-smoothr-card-expiry]' },
-      cvv:      { selector: '[data-smoothr-card-cvc]' }
+      ccnumber: { selector: '[data-smoothr-card-number] input' },
+      ccexp: { selector: '[data-smoothr-card-expiry] input' },
+      cvv: { selector: '[data-smoothr-card-cvc] input' }
     }
   })
 }
 
-/** Returns true once the Collect.js fields & iframes are in place */
+// Legacy alias
+export const mountNMI = mountCardFields
+
+/** Returns true once the hidden expiry & visible inputs are in place */
 export function isMounted() {
   return (
-    !!window.CollectJS &&
     !!document.querySelector('input[data-collect="cardNumber"]') &&
     !!document.querySelector('input[data-collect="cvv"]') &&
     !!document.querySelector('input[data-collect="expMonth"]') &&
-    !!document.querySelector('input[data-collect="expYear"]') &&
-    !!document.querySelector('[data-smoothr-card-number] iframe') &&
-    !!document.querySelector('[data-smoothr-card-expiry] iframe') &&
-    !!document.querySelector('[data-smoothr-card-cvc] iframe')
+    !!document.querySelector('input[data-collect="expYear"]')
   )
 }
 
-/** Signals readiness of the fields for tokenization */
+/** Signals readiness for tokenization */
 export function ready() {
   return isMounted()
 }
 
 /**
- * Tokenizes the card. Called by the shared checkout click-handler.
+ * Tokenizes the card.
  * Returns { payment_method: { payment_token } } or { error, payment_method: null }.
  */
 export async function createPaymentMethod() {
-  if (!ready()) {
-    console.log('[NMI] createPaymentMethod called before ready')
+  console.log('[NMI] createPaymentMethod started')
+  // guard if Collect.js hasn't loaded or hasn't exposed tokenize()
+  if (!window.CollectJS || typeof window.CollectJS.tokenize !== 'function') {
+    console.log('[NMI] Collect.js not ready')
     return { error: { message: 'Collect.js not ready' }, payment_method: null }
   }
 
-  const mon = document.querySelector('input[data-collect="expMonth"]')?.value || ''
-  const yr  = document.querySelector('input[data-collect="expYear"]')?.value || ''
+  // grab month/year from the hidden inputs
+  const mon = document.querySelector('input[data-collect="expMonth"]')?.value
+  const yr = document.querySelector('input[data-collect="expYear"]')?.value
 
   return new Promise(resolve => {
-    console.log('[NMI] tokenize →', { expMonth: mon, expYear: yr })
     window.CollectJS.tokenize({ expMonth: mon, expYear: yr }, response => {
-      console.log('[NMI] tokenize callback', response)
-      if (response?.token) {
+      console.log('[NMI] tokenize response', response)
+      if (response && response.token) {
         resolve({ error: null, payment_method: { payment_token: response.token } })
       } else {
         resolve({
@@ -147,15 +168,16 @@ export async function createPaymentMethod() {
   })
 }
 
-// Default export for the gatewayDispatcher
+// Default export for your gateway dispatcher
 export default {
   mountCardFields,
+  mountNMI,
   isMounted,
   ready,
   createPaymentMethod
 }
 
-// Expose legacy hook if any adapter expects it
+// Expose legacy hook
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   window.Smoothr.mountNMIFields = mountCardFields
