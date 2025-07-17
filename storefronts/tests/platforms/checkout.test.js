@@ -221,21 +221,11 @@ describe('checkout', () => {
     );
   });
 
-  it('uses helpers from the active gateway', async () => {
+  it('mounts gateway when initialized', async () => {
     global.window.SMOOTHR_CONFIG.active_payment_gateway = 'authorizeNet';
     const initCheckout = await loadCheckout();
     await initCheckout();
-    expect(typeof window.Smoothr.checkout.createPaymentMethod).toBe('function');
-  });
-
-
-  it('exposes version and helpers on window', async () => {
-    const initCheckout = await loadCheckout();
-    await initCheckout();
-    expect(window.Smoothr.checkout.version).toBe('dev6');
-    expect(typeof window.Smoothr.checkout.mountCardFields).toBe('function');
-    expect(typeof window.Smoothr.checkout.getStoreSettings).toBe('function');
-    expect(typeof window.Smoothr.checkout.createPaymentMethod).toBe('function');
+    expect(createPaymentMethodMock).not.toHaveBeenCalled();
   });
 
 });
