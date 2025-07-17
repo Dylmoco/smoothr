@@ -32,7 +32,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// node_modules/@supabase/node-fetch/browser.js
+// ../node_modules/@supabase/node-fetch/browser.js
 var browser_exports = {};
 __export(browser_exports, {
   Headers: () => Headers2,
@@ -43,7 +43,7 @@ __export(browser_exports, {
 });
 var getGlobal, globalObject, fetch2, browser_default, Headers2, Request, Response2;
 var init_browser = __esm({
-  "node_modules/@supabase/node-fetch/browser.js"() {
+  "../node_modules/@supabase/node-fetch/browser.js"() {
     "use strict";
     getGlobal = function() {
       if (typeof self !== "undefined") {
@@ -66,9 +66,9 @@ var init_browser = __esm({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js
 var require_PostgrestError = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestError.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var PostgrestError2 = class extends Error {
@@ -84,9 +84,9 @@ var require_PostgrestError = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js
 var require_PostgrestBuilder = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -148,7 +148,7 @@ var require_PostgrestBuilder = __commonJS({
           body: JSON.stringify(this.body),
           signal: this.signal
         }).then(async (res2) => {
-          var _a5, _b, _c;
+          var _a6, _b, _c;
           let error = null;
           let data = null;
           let count = null;
@@ -166,7 +166,7 @@ var require_PostgrestBuilder = __commonJS({
                 data = JSON.parse(body);
               }
             }
-            const countHeader = (_a5 = this.headers["Prefer"]) === null || _a5 === void 0 ? void 0 : _a5.match(/count=(exact|planned|estimated)/);
+            const countHeader = (_a6 = this.headers["Prefer"]) === null || _a6 === void 0 ? void 0 : _a6.match(/count=(exact|planned|estimated)/);
             const contentRange = (_b = res2.headers.get("content-range")) === null || _b === void 0 ? void 0 : _b.split("/");
             if (countHeader && contentRange && contentRange.length > 1) {
               count = parseInt(contentRange[1]);
@@ -230,10 +230,10 @@ var require_PostgrestBuilder = __commonJS({
         });
         if (!this.shouldThrowOnError) {
           res = res.catch((fetchError) => {
-            var _a5, _b, _c;
+            var _a6, _b, _c;
             return {
               error: {
-                message: `${(_a5 = fetchError === null || fetchError === void 0 ? void 0 : fetchError.name) !== null && _a5 !== void 0 ? _a5 : "FetchError"}: ${fetchError === null || fetchError === void 0 ? void 0 : fetchError.message}`,
+                message: `${(_a6 = fetchError === null || fetchError === void 0 ? void 0 : fetchError.name) !== null && _a6 !== void 0 ? _a6 : "FetchError"}: ${fetchError === null || fetchError === void 0 ? void 0 : fetchError.message}`,
                 details: `${(_b = fetchError === null || fetchError === void 0 ? void 0 : fetchError.stack) !== null && _b !== void 0 ? _b : ""}`,
                 hint: "",
                 code: `${(_c = fetchError === null || fetchError === void 0 ? void 0 : fetchError.code) !== null && _c !== void 0 ? _c : ""}`
@@ -286,9 +286,9 @@ var require_PostgrestBuilder = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js
 var require_PostgrestTransformBuilder = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestTransformBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -458,7 +458,7 @@ var require_PostgrestTransformBuilder = __commonJS({
        * or `"json"`
        */
       explain({ analyze = false, verbose = false, settings = false, buffers = false, wal = false, format = "text" } = {}) {
-        var _a5;
+        var _a6;
         const options = [
           analyze ? "analyze" : null,
           verbose ? "verbose" : null,
@@ -466,7 +466,7 @@ var require_PostgrestTransformBuilder = __commonJS({
           buffers ? "buffers" : null,
           wal ? "wal" : null
         ].filter(Boolean).join("|");
-        const forMediatype = (_a5 = this.headers["Accept"]) !== null && _a5 !== void 0 ? _a5 : "application/json";
+        const forMediatype = (_a6 = this.headers["Accept"]) !== null && _a6 !== void 0 ? _a6 : "application/json";
         this.headers["Accept"] = `application/vnd.pgrst.plan+${format}; for="${forMediatype}"; options=${options};`;
         if (format === "json")
           return this;
@@ -479,8 +479,8 @@ var require_PostgrestTransformBuilder = __commonJS({
        * `data` will still be returned, but the query is not committed.
        */
       rollback() {
-        var _a5;
-        if (((_a5 = this.headers["Prefer"]) !== null && _a5 !== void 0 ? _a5 : "").trim().length > 0) {
+        var _a6;
+        if (((_a6 = this.headers["Prefer"]) !== null && _a6 !== void 0 ? _a6 : "").trim().length > 0) {
           this.headers["Prefer"] += ",tx=rollback";
         } else {
           this.headers["Prefer"] = "tx=rollback";
@@ -501,9 +501,9 @@ var require_PostgrestTransformBuilder = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js
 var require_PostgrestFilterBuilder = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestFilterBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -867,9 +867,9 @@ var require_PostgrestFilterBuilder = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js
 var require_PostgrestQueryBuilder = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestQueryBuilder.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1139,9 +1139,9 @@ var require_PostgrestQueryBuilder = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/version.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/version.js
 var require_version = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/version.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/version.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.version = void 0;
@@ -1149,9 +1149,9 @@ var require_version = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/constants.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/constants.js
 var require_constants = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/constants.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DEFAULT_HEADERS = void 0;
@@ -1160,9 +1160,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js
 var require_PostgrestClient = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/PostgrestClient.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1270,9 +1270,9 @@ var require_PostgrestClient = __commonJS({
   }
 });
 
-// node_modules/@supabase/postgrest-js/dist/cjs/index.js
+// ../node_modules/@supabase/postgrest-js/dist/cjs/index.js
 var require_cjs = __commonJS({
-  "node_modules/@supabase/postgrest-js/dist/cjs/index.js"(exports) {
+  "../node_modules/@supabase/postgrest-js/dist/cjs/index.js"(exports) {
     "use strict";
     var __importDefault = exports && exports.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
@@ -1302,9 +1302,9 @@ var require_cjs = __commonJS({
   }
 });
 
-// node_modules/ws/browser.js
+// ../node_modules/ws/browser.js
 var require_browser = __commonJS({
-  "node_modules/ws/browser.js"(exports, module) {
+  "../node_modules/ws/browser.js"(exports, module) {
     "use strict";
     module.exports = function() {
       throw new Error(
@@ -1314,16 +1314,7 @@ var require_browser = __commonJS({
   }
 });
 
-// storefronts/checkout/utils/handleSuccessRedirect.js
-function handleSuccessRedirect(res, data) {
-  var _a5, _b;
-  if (res.ok && data.success) {
-    (_b = (_a5 = Smoothr == null ? void 0 : Smoothr.cart) == null ? void 0 : _a5.clearCart) == null ? void 0 : _b.call(_a5);
-    window.location.href = "/checkout-success";
-  }
-}
-
-// node_modules/@supabase/functions-js/dist/module/helper.js
+// ../node_modules/@supabase/functions-js/dist/module/helper.js
 var resolveFetch = (customFetch) => {
   let _fetch;
   if (customFetch) {
@@ -1336,7 +1327,7 @@ var resolveFetch = (customFetch) => {
   return (...args) => _fetch(...args);
 };
 
-// node_modules/@supabase/functions-js/dist/module/types.js
+// ../node_modules/@supabase/functions-js/dist/module/types.js
 var FunctionsError = class extends Error {
   constructor(message, name = "FunctionsError", context) {
     super(message);
@@ -1378,7 +1369,7 @@ var FunctionRegion;
   FunctionRegion2["UsWest2"] = "us-west-2";
 })(FunctionRegion || (FunctionRegion = {}));
 
-// node_modules/@supabase/functions-js/dist/module/FunctionsClient.js
+// ../node_modules/@supabase/functions-js/dist/module/FunctionsClient.js
 var __awaiter = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -1426,7 +1417,7 @@ var FunctionsClient = class {
    * @param options - Options for invoking the Function.
    */
   invoke(functionName, options = {}) {
-    var _a5;
+    var _a6;
     return __awaiter(this, void 0, void 0, function* () {
       try {
         const { headers, method, body: functionArgs } = options;
@@ -1471,7 +1462,7 @@ var FunctionsClient = class {
         if (!response.ok) {
           throw new FunctionsHttpError(response);
         }
-        let responseType = ((_a5 = response.headers.get("Content-Type")) !== null && _a5 !== void 0 ? _a5 : "text/plain").split(";")[0].trim();
+        let responseType = ((_a6 = response.headers.get("Content-Type")) !== null && _a6 !== void 0 ? _a6 : "text/plain").split(";")[0].trim();
         let data;
         if (responseType === "application/json") {
           data = yield response.json();
@@ -1492,7 +1483,7 @@ var FunctionsClient = class {
   }
 };
 
-// node_modules/@supabase/postgrest-js/dist/esm/wrapper.mjs
+// ../node_modules/@supabase/postgrest-js/dist/esm/wrapper.mjs
 var import_cjs = __toESM(require_cjs(), 1);
 var {
   PostgrestClient,
@@ -1503,7 +1494,7 @@ var {
   PostgrestError
 } = import_cjs.default;
 
-// node_modules/@supabase/realtime-js/dist/module/WebSocket.js
+// ../node_modules/@supabase/realtime-js/dist/module/WebSocket.js
 var WebSocketImpl;
 if (typeof window === "undefined") {
   WebSocketImpl = require_browser();
@@ -1512,10 +1503,10 @@ if (typeof window === "undefined") {
 }
 var WebSocket_default = WebSocketImpl;
 
-// node_modules/@supabase/realtime-js/dist/module/lib/version.js
+// ../node_modules/@supabase/realtime-js/dist/module/lib/version.js
 var version = "2.11.10";
 
-// node_modules/@supabase/realtime-js/dist/module/lib/constants.js
+// ../node_modules/@supabase/realtime-js/dist/module/lib/constants.js
 var DEFAULT_HEADERS = { "X-Client-Info": `realtime-js/${version}` };
 var VSN = "1.0.0";
 var DEFAULT_TIMEOUT = 1e4;
@@ -1556,7 +1547,7 @@ var CONNECTION_STATE;
   CONNECTION_STATE2["Closed"] = "closed";
 })(CONNECTION_STATE || (CONNECTION_STATE = {}));
 
-// node_modules/@supabase/realtime-js/dist/module/lib/serializer.js
+// ../node_modules/@supabase/realtime-js/dist/module/lib/serializer.js
 var Serializer = class {
   constructor() {
     this.HEADER_LENGTH = 1;
@@ -1588,7 +1579,7 @@ var Serializer = class {
   }
 };
 
-// node_modules/@supabase/realtime-js/dist/module/lib/timer.js
+// ../node_modules/@supabase/realtime-js/dist/module/lib/timer.js
 var Timer = class {
   constructor(callback, timerCalc) {
     this.callback = callback;
@@ -1612,7 +1603,7 @@ var Timer = class {
   }
 };
 
-// node_modules/@supabase/realtime-js/dist/module/lib/transformers.js
+// ../node_modules/@supabase/realtime-js/dist/module/lib/transformers.js
 var PostgresTypes;
 (function(PostgresTypes2) {
   PostgresTypes2["abstime"] = "abstime";
@@ -1641,8 +1632,8 @@ var PostgresTypes;
   PostgresTypes2["tstzrange"] = "tstzrange";
 })(PostgresTypes || (PostgresTypes = {}));
 var convertChangeData = (columns, record, options = {}) => {
-  var _a5;
-  const skipTypes = (_a5 = options.skipTypes) !== null && _a5 !== void 0 ? _a5 : [];
+  var _a6;
+  const skipTypes = (_a6 = options.skipTypes) !== null && _a6 !== void 0 ? _a6 : [];
   return Object.keys(record).reduce((acc, rec_key) => {
     acc[rec_key] = convertColumn(rec_key, columns, record, skipTypes);
     return acc;
@@ -1761,7 +1752,7 @@ var httpEndpointURL = (socketUrl) => {
   return url.replace(/\/+$/, "");
 };
 
-// node_modules/@supabase/realtime-js/dist/module/lib/push.js
+// ../node_modules/@supabase/realtime-js/dist/module/lib/push.js
 var Push = class {
   /**
    * Initializes the Push
@@ -1810,9 +1801,9 @@ var Push = class {
     this.payload = Object.assign(Object.assign({}, this.payload), payload);
   }
   receive(status, callback) {
-    var _a5;
+    var _a6;
     if (this._hasReceived(status)) {
-      callback((_a5 = this.receivedResp) === null || _a5 === void 0 ? void 0 : _a5.response);
+      callback((_a6 = this.receivedResp) === null || _a6 === void 0 ? void 0 : _a6.response);
     }
     this.recHooks.push({ status, callback });
     return this;
@@ -1860,7 +1851,7 @@ var Push = class {
   }
 };
 
-// node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js
+// ../node_modules/@supabase/realtime-js/dist/module/RealtimePresence.js
 var REALTIME_PRESENCE_LISTEN_EVENTS;
 (function(REALTIME_PRESENCE_LISTEN_EVENTS2) {
   REALTIME_PRESENCE_LISTEN_EVENTS2["SYNC"] = "sync";
@@ -1994,8 +1985,8 @@ var RealtimePresence = class _RealtimePresence {
       };
     }
     this.map(joins, (key, newPresences) => {
-      var _a5;
-      const currentPresences = (_a5 = state[key]) !== null && _a5 !== void 0 ? _a5 : [];
+      var _a6;
+      const currentPresences = (_a6 = state[key]) !== null && _a6 !== void 0 ? _a6 : [];
       state[key] = this.cloneDeep(newPresences);
       if (currentPresences.length > 0) {
         const joinedPresenceRefs = state[key].map((m) => m.presence_ref);
@@ -2083,7 +2074,7 @@ var RealtimePresence = class _RealtimePresence {
   }
 };
 
-// node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js
+// ../node_modules/@supabase/realtime-js/dist/module/RealtimeChannel.js
 var REALTIME_POSTGRES_CHANGES_LISTEN_EVENT;
 (function(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2) {
   REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["ALL"] = "*";
@@ -2160,7 +2151,7 @@ var RealtimeChannel = class _RealtimeChannel {
   }
   /** Subscribe registers your client with the server */
   subscribe(callback, timeout = this.timeout) {
-    var _a5, _b;
+    var _a6, _b;
     if (!this.socket.isConnected()) {
       this.socket.connect();
     }
@@ -2174,7 +2165,7 @@ var RealtimeChannel = class _RealtimeChannel {
       const config = {
         broadcast,
         presence,
-        postgres_changes: (_b = (_a5 = this.bindings.postgres_changes) === null || _a5 === void 0 ? void 0 : _a5.map((r) => r.filter)) !== null && _b !== void 0 ? _b : [],
+        postgres_changes: (_b = (_a6 = this.bindings.postgres_changes) === null || _a6 === void 0 ? void 0 : _a6.map((r) => r.filter)) !== null && _b !== void 0 ? _b : [],
         private: isPrivate
       };
       if (this.socket.accessTokenValue) {
@@ -2184,14 +2175,14 @@ var RealtimeChannel = class _RealtimeChannel {
       this.joinedOnce = true;
       this._rejoin(timeout);
       this.joinPush.receive("ok", async ({ postgres_changes }) => {
-        var _a6;
+        var _a7;
         this.socket.setAuth();
         if (postgres_changes === void 0) {
           callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
           return;
         } else {
           const clientPostgresBindings = this.bindings.postgres_changes;
-          const bindingsLen = (_a6 = clientPostgresBindings === null || clientPostgresBindings === void 0 ? void 0 : clientPostgresBindings.length) !== null && _a6 !== void 0 ? _a6 : 0;
+          const bindingsLen = (_a7 = clientPostgresBindings === null || clientPostgresBindings === void 0 ? void 0 : clientPostgresBindings.length) !== null && _a7 !== void 0 ? _a7 : 0;
           const newPostgresBindings = [];
           for (let i = 0; i < bindingsLen; i++) {
             const clientPostgresBinding = clientPostgresBindings[i];
@@ -2250,7 +2241,7 @@ var RealtimeChannel = class _RealtimeChannel {
    * @param opts Options to be used during the send process
    */
   async send(args, opts = {}) {
-    var _a5, _b;
+    var _a6, _b;
     if (!this._canPush() && args.type === "broadcast") {
       const { event, payload: endpoint_payload } = args;
       const authorization = this.socket.accessTokenValue ? `Bearer ${this.socket.accessTokenValue}` : "";
@@ -2273,7 +2264,7 @@ var RealtimeChannel = class _RealtimeChannel {
         })
       };
       try {
-        const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a5 = opts.timeout) !== null && _a5 !== void 0 ? _a5 : this.timeout);
+        const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a6 = opts.timeout) !== null && _a6 !== void 0 ? _a6 : this.timeout);
         await ((_b = response.body) === null || _b === void 0 ? void 0 : _b.cancel());
         return response.ok ? "ok" : "error";
       } catch (error) {
@@ -2285,9 +2276,9 @@ var RealtimeChannel = class _RealtimeChannel {
       }
     } else {
       return new Promise((resolve) => {
-        var _a6, _b2, _c;
+        var _a7, _b2, _c;
         const push = this._push(args.type, args, opts.timeout || this.timeout);
-        if (args.type === "broadcast" && !((_c = (_b2 = (_a6 = this.params) === null || _a6 === void 0 ? void 0 : _a6.config) === null || _b2 === void 0 ? void 0 : _b2.broadcast) === null || _c === void 0 ? void 0 : _c.ack)) {
+        if (args.type === "broadcast" && !((_c = (_b2 = (_a7 = this.params) === null || _a7 === void 0 ? void 0 : _a7.config) === null || _b2 === void 0 ? void 0 : _b2.broadcast) === null || _c === void 0 ? void 0 : _c.ack)) {
           resolve("ok");
         }
         push.receive("ok", () => resolve("ok"));
@@ -2385,7 +2376,7 @@ var RealtimeChannel = class _RealtimeChannel {
   }
   /** @internal */
   _trigger(type, payload, ref) {
-    var _a5, _b;
+    var _a6, _b;
     const typeLower = type.toLocaleLowerCase();
     const { close, error, leave, join } = CHANNEL_EVENTS;
     const events = [close, error, leave, join];
@@ -2397,17 +2388,17 @@ var RealtimeChannel = class _RealtimeChannel {
       throw "channel onMessage callbacks must return the payload, modified or unmodified";
     }
     if (["insert", "update", "delete"].includes(typeLower)) {
-      (_a5 = this.bindings.postgres_changes) === null || _a5 === void 0 ? void 0 : _a5.filter((bind) => {
-        var _a6, _b2, _c;
-        return ((_a6 = bind.filter) === null || _a6 === void 0 ? void 0 : _a6.event) === "*" || ((_c = (_b2 = bind.filter) === null || _b2 === void 0 ? void 0 : _b2.event) === null || _c === void 0 ? void 0 : _c.toLocaleLowerCase()) === typeLower;
+      (_a6 = this.bindings.postgres_changes) === null || _a6 === void 0 ? void 0 : _a6.filter((bind) => {
+        var _a7, _b2, _c;
+        return ((_a7 = bind.filter) === null || _a7 === void 0 ? void 0 : _a7.event) === "*" || ((_c = (_b2 = bind.filter) === null || _b2 === void 0 ? void 0 : _b2.event) === null || _c === void 0 ? void 0 : _c.toLocaleLowerCase()) === typeLower;
       }).map((bind) => bind.callback(handledPayload, ref));
     } else {
       (_b = this.bindings[typeLower]) === null || _b === void 0 ? void 0 : _b.filter((bind) => {
-        var _a6, _b2, _c, _d, _e, _f;
+        var _a7, _b2, _c, _d, _e, _f;
         if (["broadcast", "presence", "postgres_changes"].includes(typeLower)) {
           if ("id" in bind) {
             const bindId = bind.id;
-            const bindEvent = (_a6 = bind.filter) === null || _a6 === void 0 ? void 0 : _a6.event;
+            const bindEvent = (_a7 = bind.filter) === null || _a7 === void 0 ? void 0 : _a7.event;
             return bindId && ((_b2 = payload.ids) === null || _b2 === void 0 ? void 0 : _b2.includes(bindId)) && (bindEvent === "*" || (bindEvent === null || bindEvent === void 0 ? void 0 : bindEvent.toLocaleLowerCase()) === ((_c = payload.data) === null || _c === void 0 ? void 0 : _c.type.toLocaleLowerCase()));
           } else {
             const bindEvent = (_e = (_d = bind === null || bind === void 0 ? void 0 : bind.filter) === null || _d === void 0 ? void 0 : _d.event) === null || _e === void 0 ? void 0 : _e.toLocaleLowerCase();
@@ -2474,8 +2465,8 @@ var RealtimeChannel = class _RealtimeChannel {
   _off(type, filter) {
     const typeLower = type.toLocaleLowerCase();
     this.bindings[typeLower] = this.bindings[typeLower].filter((bind) => {
-      var _a5;
-      return !(((_a5 = bind.type) === null || _a5 === void 0 ? void 0 : _a5.toLocaleLowerCase()) === typeLower && _RealtimeChannel.isEqual(bind.filter, filter));
+      var _a6;
+      return !(((_a6 = bind.type) === null || _a6 === void 0 ? void 0 : _a6.toLocaleLowerCase()) === typeLower && _RealtimeChannel.isEqual(bind.filter, filter));
     });
     return this;
   }
@@ -2547,7 +2538,7 @@ var RealtimeChannel = class _RealtimeChannel {
   }
 };
 
-// node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js
+// ../node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js
 var noop2 = () => {
 };
 var WORKER_SCRIPT = `
@@ -2576,7 +2567,7 @@ var RealtimeClient = class {
    * @param options.workerUrl The URL of the worker script. Defaults to https://realtime.supabase.com/worker.js that includes a heartbeat event call to keep the connection alive.
    */
   constructor(endPoint, options) {
-    var _a5;
+    var _a6;
     this.accessTokenValue = null;
     this.apiKey = null;
     this.channels = new Array();
@@ -2633,7 +2624,7 @@ var RealtimeClient = class {
     }
     if (options === null || options === void 0 ? void 0 : options.heartbeatIntervalMs)
       this.heartbeatIntervalMs = options.heartbeatIntervalMs;
-    const accessTokenValue = (_a5 = options === null || options === void 0 ? void 0 : options.params) === null || _a5 === void 0 ? void 0 : _a5.apikey;
+    const accessTokenValue = (_a6 = options === null || options === void 0 ? void 0 : options.params) === null || _a6 === void 0 ? void 0 : _a6.apikey;
     if (accessTokenValue) {
       this.accessTokenValue = accessTokenValue;
       this.apiKey = accessTokenValue;
@@ -2791,8 +2782,8 @@ var RealtimeClient = class {
     const { topic, event, payload, ref } = data;
     const callback = () => {
       this.encode(data, (result) => {
-        var _a5;
-        (_a5 = this.conn) === null || _a5 === void 0 ? void 0 : _a5.send(result);
+        var _a6;
+        (_a6 = this.conn) === null || _a6 === void 0 ? void 0 : _a6.send(result);
       });
     };
     this.log("push", `${topic} ${event} (${ref})`, payload);
@@ -2832,7 +2823,7 @@ var RealtimeClient = class {
    * Sends a heartbeat message if the socket is connected.
    */
   async sendHeartbeat() {
-    var _a5;
+    var _a6;
     if (!this.isConnected()) {
       this.heartbeatCallback("disconnected");
       return;
@@ -2841,7 +2832,7 @@ var RealtimeClient = class {
       this.pendingHeartbeatRef = null;
       this.log("transport", "heartbeat timeout. Attempting to re-establish connection");
       this.heartbeatCallback("timeout");
-      (_a5 = this.conn) === null || _a5 === void 0 ? void 0 : _a5.close(WS_CLOSE_NORMAL, "hearbeat timeout");
+      (_a6 = this.conn) === null || _a6 === void 0 ? void 0 : _a6.close(WS_CLOSE_NORMAL, "hearbeat timeout");
       return;
     }
     this.pendingHeartbeatRef = this._makeRef();
@@ -3021,7 +3012,7 @@ var WSWebSocketDummy = class {
   }
 };
 
-// node_modules/@supabase/storage-js/dist/module/lib/errors.js
+// ../node_modules/@supabase/storage-js/dist/module/lib/errors.js
 var StorageError = class extends Error {
   constructor(message) {
     super(message);
@@ -3054,7 +3045,7 @@ var StorageUnknownError = class extends StorageError {
   }
 };
 
-// node_modules/@supabase/storage-js/dist/module/lib/helpers.js
+// ../node_modules/@supabase/storage-js/dist/module/lib/helpers.js
 var __awaiter2 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3113,7 +3104,7 @@ var recursiveToCamel = (item) => {
   return result;
 };
 
-// node_modules/@supabase/storage-js/dist/module/lib/fetch.js
+// ../node_modules/@supabase/storage-js/dist/module/lib/fetch.js
 var __awaiter3 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3204,7 +3195,7 @@ function remove(fetcher, url, body, options, parameters) {
   });
 }
 
-// node_modules/@supabase/storage-js/dist/module/packages/StorageFileApi.js
+// ../node_modules/@supabase/storage-js/dist/module/packages/StorageFileApi.js
 var __awaiter4 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3744,13 +3735,13 @@ var StorageFileApi = class {
   }
 };
 
-// node_modules/@supabase/storage-js/dist/module/lib/version.js
+// ../node_modules/@supabase/storage-js/dist/module/lib/version.js
 var version2 = "2.7.1";
 
-// node_modules/@supabase/storage-js/dist/module/lib/constants.js
+// ../node_modules/@supabase/storage-js/dist/module/lib/constants.js
 var DEFAULT_HEADERS2 = { "X-Client-Info": `storage-js/${version2}` };
 
-// node_modules/@supabase/storage-js/dist/module/packages/StorageBucketApi.js
+// ../node_modules/@supabase/storage-js/dist/module/packages/StorageBucketApi.js
 var __awaiter5 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -3922,7 +3913,7 @@ var StorageBucketApi = class {
   }
 };
 
-// node_modules/@supabase/storage-js/dist/module/StorageClient.js
+// ../node_modules/@supabase/storage-js/dist/module/StorageClient.js
 var StorageClient = class extends StorageBucketApi {
   constructor(url, headers = {}, fetch3) {
     super(url, headers, fetch3);
@@ -3937,10 +3928,10 @@ var StorageClient = class extends StorageBucketApi {
   }
 };
 
-// node_modules/@supabase/supabase-js/dist/module/lib/version.js
+// ../node_modules/@supabase/supabase-js/dist/module/lib/version.js
 var version3 = "2.50.0";
 
-// node_modules/@supabase/supabase-js/dist/module/lib/constants.js
+// ../node_modules/@supabase/supabase-js/dist/module/lib/constants.js
 var JS_ENV = "";
 if (typeof Deno !== "undefined") {
   JS_ENV = "deno";
@@ -3966,7 +3957,7 @@ var DEFAULT_AUTH_OPTIONS = {
 };
 var DEFAULT_REALTIME_OPTIONS = {};
 
-// node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
+// ../node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
 init_browser();
 var __awaiter6 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
@@ -4016,8 +4007,8 @@ var fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
   const fetch3 = resolveFetch3(customFetch);
   const HeadersConstructor = resolveHeadersConstructor();
   return (input, init) => __awaiter6(void 0, void 0, void 0, function* () {
-    var _a5;
-    const accessToken = (_a5 = yield getAccessToken()) !== null && _a5 !== void 0 ? _a5 : supabaseKey;
+    var _a6;
+    const accessToken = (_a6 = yield getAccessToken()) !== null && _a6 !== void 0 ? _a6 : supabaseKey;
     let headers = new HeadersConstructor(init === null || init === void 0 ? void 0 : init.headers);
     if (!headers.has("apikey")) {
       headers.set("apikey", supabaseKey);
@@ -4029,7 +4020,7 @@ var fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
   });
 };
 
-// node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
+// ../node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
 var __awaiter7 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -4061,14 +4052,14 @@ function ensureTrailingSlash(url) {
   return url.endsWith("/") ? url : url + "/";
 }
 function applySettingDefaults(options, defaults) {
-  var _a5, _b;
+  var _a6, _b;
   const { db: dbOptions, auth: authOptions, realtime: realtimeOptions, global: globalOptions } = options;
   const { db: DEFAULT_DB_OPTIONS2, auth: DEFAULT_AUTH_OPTIONS2, realtime: DEFAULT_REALTIME_OPTIONS2, global: DEFAULT_GLOBAL_OPTIONS2 } = defaults;
   const result = {
     db: Object.assign(Object.assign({}, DEFAULT_DB_OPTIONS2), dbOptions),
     auth: Object.assign(Object.assign({}, DEFAULT_AUTH_OPTIONS2), authOptions),
     realtime: Object.assign(Object.assign({}, DEFAULT_REALTIME_OPTIONS2), realtimeOptions),
-    global: Object.assign(Object.assign(Object.assign({}, DEFAULT_GLOBAL_OPTIONS2), globalOptions), { headers: Object.assign(Object.assign({}, (_a5 = DEFAULT_GLOBAL_OPTIONS2 === null || DEFAULT_GLOBAL_OPTIONS2 === void 0 ? void 0 : DEFAULT_GLOBAL_OPTIONS2.headers) !== null && _a5 !== void 0 ? _a5 : {}), (_b = globalOptions === null || globalOptions === void 0 ? void 0 : globalOptions.headers) !== null && _b !== void 0 ? _b : {}) }),
+    global: Object.assign(Object.assign(Object.assign({}, DEFAULT_GLOBAL_OPTIONS2), globalOptions), { headers: Object.assign(Object.assign({}, (_a6 = DEFAULT_GLOBAL_OPTIONS2 === null || DEFAULT_GLOBAL_OPTIONS2 === void 0 ? void 0 : DEFAULT_GLOBAL_OPTIONS2.headers) !== null && _a6 !== void 0 ? _a6 : {}), (_b = globalOptions === null || globalOptions === void 0 ? void 0 : globalOptions.headers) !== null && _b !== void 0 ? _b : {}) }),
     accessToken: () => __awaiter7(this, void 0, void 0, function* () {
       return "";
     })
@@ -4081,10 +4072,10 @@ function applySettingDefaults(options, defaults) {
   return result;
 }
 
-// node_modules/@supabase/auth-js/dist/module/lib/version.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/version.js
 var version4 = "2.70.0";
 
-// node_modules/@supabase/auth-js/dist/module/lib/constants.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/constants.js
 var AUTO_REFRESH_TICK_DURATION_MS = 30 * 1e3;
 var AUTO_REFRESH_TICK_THRESHOLD = 3;
 var EXPIRY_MARGIN_MS = AUTO_REFRESH_TICK_THRESHOLD * AUTO_REFRESH_TICK_DURATION_MS;
@@ -4101,7 +4092,7 @@ var API_VERSIONS = {
 var BASE64URL_REGEX = /^([a-z0-9_-]{4})*($|[a-z0-9_-]{3}$|[a-z0-9_-]{2}$)$/i;
 var JWKS_TTL = 6e5;
 
-// node_modules/@supabase/auth-js/dist/module/lib/errors.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/errors.js
 var AuthError = class extends Error {
   constructor(message, status, code) {
     super(message);
@@ -4210,7 +4201,7 @@ var AuthInvalidJwtError = class extends CustomAuthError {
   }
 };
 
-// node_modules/@supabase/auth-js/dist/module/lib/base64url.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/base64url.js
 var TO_BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".split("");
 var IGNORE_BASE64URL = " 	\n\r=".split("");
 var FROM_BASE64URL = (() => {
@@ -4372,7 +4363,7 @@ function bytesToBase64URL(bytes) {
   return result.join("");
 }
 
-// node_modules/@supabase/auth-js/dist/module/lib/helpers.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/helpers.js
 function expiresAt(expiresIn) {
   const timeNow = Math.round(Date.now() / 1e3);
   return timeNow + expiresIn;
@@ -4455,7 +4446,7 @@ var getItemAsync = async (storage, key) => {
   }
   try {
     return JSON.parse(value);
-  } catch (_a5) {
+  } catch (_a6) {
     return value;
   }
 };
@@ -4616,7 +4607,7 @@ function validateUUID(str) {
   }
 }
 
-// node_modules/@supabase/auth-js/dist/module/lib/fetch.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/fetch.js
 var __rest = function(s, e) {
   var t = {};
   for (var p in s)
@@ -4632,7 +4623,7 @@ var __rest = function(s, e) {
 var _getErrorMessage2 = (err2) => err2.msg || err2.message || err2.error_description || err2.error || JSON.stringify(err2);
 var NETWORK_ERROR_CODES = [502, 503, 504];
 async function handleError2(error) {
-  var _a5;
+  var _a6;
   if (!looksLikeFetchResponse(error)) {
     throw new AuthRetryableFetchError(_getErrorMessage2(error), 0);
   }
@@ -4657,7 +4648,7 @@ async function handleError2(error) {
       throw new AuthWeakPasswordError(_getErrorMessage2(data), error.status, data.weak_password.reasons);
     }
   } else if (errorCode === "weak_password") {
-    throw new AuthWeakPasswordError(_getErrorMessage2(data), error.status, ((_a5 = data.weak_password) === null || _a5 === void 0 ? void 0 : _a5.reasons) || []);
+    throw new AuthWeakPasswordError(_getErrorMessage2(data), error.status, ((_a6 = data.weak_password) === null || _a6 === void 0 ? void 0 : _a6.reasons) || []);
   } else if (errorCode === "session_not_found") {
     throw new AuthSessionMissingError();
   }
@@ -4673,7 +4664,7 @@ var _getRequestParams2 = (method, options, parameters, body) => {
   return Object.assign(Object.assign({}, params), parameters);
 };
 async function _request(fetcher, method, url, options) {
-  var _a5;
+  var _a6;
   const headers = Object.assign({}, options === null || options === void 0 ? void 0 : options.headers);
   if (!headers[API_VERSION_HEADER_NAME]) {
     headers[API_VERSION_HEADER_NAME] = API_VERSIONS["2024-01-01"].name;
@@ -4681,7 +4672,7 @@ async function _request(fetcher, method, url, options) {
   if (options === null || options === void 0 ? void 0 : options.jwt) {
     headers["Authorization"] = `Bearer ${options.jwt}`;
   }
-  const qs = (_a5 = options === null || options === void 0 ? void 0 : options.query) !== null && _a5 !== void 0 ? _a5 : {};
+  const qs = (_a6 = options === null || options === void 0 ? void 0 : options.query) !== null && _a6 !== void 0 ? _a6 : {};
   if (options === null || options === void 0 ? void 0 : options.redirectTo) {
     qs["redirect_to"] = options.redirectTo;
   }
@@ -4714,7 +4705,7 @@ async function _handleRequest2(fetcher, method, url, options, parameters, body) 
   }
 }
 function _sessionResponse(data) {
-  var _a5;
+  var _a6;
   let session = null;
   if (hasSession(data)) {
     session = Object.assign({}, data);
@@ -4722,7 +4713,7 @@ function _sessionResponse(data) {
       session.expires_at = expiresAt(data.expires_in);
     }
   }
-  const user = (_a5 = data.user) !== null && _a5 !== void 0 ? _a5 : data;
+  const user = (_a6 = data.user) !== null && _a6 !== void 0 ? _a6 : data;
   return { data: { session, user }, error: null };
 }
 function _sessionResponsePassword(data) {
@@ -4733,8 +4724,8 @@ function _sessionResponsePassword(data) {
   return response;
 }
 function _userResponse(data) {
-  var _a5;
-  const user = (_a5 = data.user) !== null && _a5 !== void 0 ? _a5 : data;
+  var _a6;
+  const user = (_a6 = data.user) !== null && _a6 !== void 0 ? _a6 : data;
   return { data: { user }, error: null };
 }
 function _ssoResponse(data) {
@@ -4765,10 +4756,10 @@ function hasSession(data) {
   return data.access_token && data.refresh_token && data.expires_in;
 }
 
-// node_modules/@supabase/auth-js/dist/module/lib/types.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/types.js
 var SIGN_OUT_SCOPES = ["global", "local", "others"];
 
-// node_modules/@supabase/auth-js/dist/module/GoTrueAdminApi.js
+// ../node_modules/@supabase/auth-js/dist/module/GoTrueAdminApi.js
 var __rest2 = function(s, e) {
   var t = {};
   for (var p in s)
@@ -4894,14 +4885,14 @@ var GoTrueAdminApi = class {
    * @param params An object which supports `page` and `perPage` as numbers, to alter the paginated results.
    */
   async listUsers(params) {
-    var _a5, _b, _c, _d, _e, _f, _g;
+    var _a6, _b, _c, _d, _e, _f, _g;
     try {
       const pagination = { nextPage: null, lastPage: 0, total: 0 };
       const response = await _request(this.fetch, "GET", `${this.url}/admin/users`, {
         headers: this.headers,
         noResolveJson: true,
         query: {
-          page: (_b = (_a5 = params === null || params === void 0 ? void 0 : params.page) === null || _a5 === void 0 ? void 0 : _a5.toString()) !== null && _b !== void 0 ? _b : "",
+          page: (_b = (_a6 = params === null || params === void 0 ? void 0 : params.page) === null || _a6 === void 0 ? void 0 : _a6.toString()) !== null && _b !== void 0 ? _b : "",
           per_page: (_d = (_c = params === null || params === void 0 ? void 0 : params.perPage) === null || _c === void 0 ? void 0 : _c.toString()) !== null && _d !== void 0 ? _d : ""
         },
         xform: _noResolveJsonResponse
@@ -5030,7 +5021,7 @@ var GoTrueAdminApi = class {
   }
 };
 
-// node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
 var localStorageAdapter = {
   getItem: (key) => {
     if (!supportsLocalStorage()) {
@@ -5065,7 +5056,7 @@ function memoryLocalStorageAdapter(store = {}) {
   };
 }
 
-// node_modules/@supabase/auth-js/dist/module/lib/polyfills.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/polyfills.js
 function polyfillGlobalThis() {
   if (typeof globalThis === "object")
     return;
@@ -5085,7 +5076,7 @@ function polyfillGlobalThis() {
   }
 }
 
-// node_modules/@supabase/auth-js/dist/module/lib/locks.js
+// ../node_modules/@supabase/auth-js/dist/module/lib/locks.js
 var internals = {
   /**
    * @experimental
@@ -5153,7 +5144,7 @@ async function navigatorLock(name, acquireTimeout, fn) {
   }));
 }
 
-// node_modules/@supabase/auth-js/dist/module/GoTrueClient.js
+// ../node_modules/@supabase/auth-js/dist/module/GoTrueClient.js
 polyfillGlobalThis();
 var DEFAULT_OPTIONS = {
   url: GOTRUE_URL,
@@ -5174,7 +5165,7 @@ var GoTrueClient = class _GoTrueClient {
    * Create a new client for use in the browser.
    */
   constructor(options) {
-    var _a5, _b;
+    var _a6, _b;
     this.memoryStorage = null;
     this.stateChangeEmitters = /* @__PURE__ */ new Map();
     this.autoRefreshTicker = null;
@@ -5215,7 +5206,7 @@ var GoTrueClient = class _GoTrueClient {
     this.hasCustomAuthorizationHeader = settings.hasCustomAuthorizationHeader;
     if (settings.lock) {
       this.lock = settings.lock;
-    } else if (isBrowser() && ((_a5 = globalThis === null || globalThis === void 0 ? void 0 : globalThis.navigator) === null || _a5 === void 0 ? void 0 : _a5.locks)) {
+    } else if (isBrowser() && ((_a6 = globalThis === null || globalThis === void 0 ? void 0 : globalThis.navigator) === null || _a6 === void 0 ? void 0 : _a6.locks)) {
       this.lock = navigatorLock;
     } else {
       this.lock = lockNoOp;
@@ -5288,7 +5279,7 @@ var GoTrueClient = class _GoTrueClient {
    *    the whole lifetime of the client
    */
   async _initialize() {
-    var _a5;
+    var _a6;
     try {
       const params = parseParametersFromURL(window.location.href);
       let callbackUrlType = "none";
@@ -5302,7 +5293,7 @@ var GoTrueClient = class _GoTrueClient {
         if (error) {
           this._debug("#_initialize()", "error detecting session from URL", error);
           if (isAuthImplicitGrantRedirectError(error)) {
-            const errorCode = (_a5 = error.details) === null || _a5 === void 0 ? void 0 : _a5.code;
+            const errorCode = (_a6 = error.details) === null || _a6 === void 0 ? void 0 : _a6.code;
             if (errorCode === "identity_already_exists" || errorCode === "identity_not_found" || errorCode === "single_identity_not_deletable") {
               return { error };
             }
@@ -5342,12 +5333,12 @@ var GoTrueClient = class _GoTrueClient {
    * @returns A session where the is_anonymous claim in the access token JWT set to true
    */
   async signInAnonymously(credentials) {
-    var _a5, _b, _c;
+    var _a6, _b, _c;
     try {
       const res = await _request(this.fetch, "POST", `${this.url}/signup`, {
         headers: this.headers,
         body: {
-          data: (_b = (_a5 = credentials === null || credentials === void 0 ? void 0 : credentials.options) === null || _a5 === void 0 ? void 0 : _a5.data) !== null && _b !== void 0 ? _b : {},
+          data: (_b = (_a6 = credentials === null || credentials === void 0 ? void 0 : credentials.options) === null || _a6 === void 0 ? void 0 : _a6.data) !== null && _b !== void 0 ? _b : {},
           gotrue_meta_security: { captcha_token: (_c = credentials === null || credentials === void 0 ? void 0 : credentials.options) === null || _c === void 0 ? void 0 : _c.captchaToken }
         },
         xform: _sessionResponse
@@ -5381,7 +5372,7 @@ var GoTrueClient = class _GoTrueClient {
    * @returns A user if the server has "autoconfirm" OFF
    */
   async signUp(credentials) {
-    var _a5, _b, _c;
+    var _a6, _b, _c;
     try {
       let res;
       if ("email" in credentials) {
@@ -5398,7 +5389,7 @@ var GoTrueClient = class _GoTrueClient {
           body: {
             email,
             password,
-            data: (_a5 = options === null || options === void 0 ? void 0 : options.data) !== null && _a5 !== void 0 ? _a5 : {},
+            data: (_a6 = options === null || options === void 0 ? void 0 : options.data) !== null && _a6 !== void 0 ? _a6 : {},
             gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
             code_challenge: codeChallenge,
             code_challenge_method: codeChallengeMethod
@@ -5501,9 +5492,9 @@ var GoTrueClient = class _GoTrueClient {
    * This method supports the PKCE flow.
    */
   async signInWithOAuth(credentials) {
-    var _a5, _b, _c, _d;
+    var _a6, _b, _c, _d;
     return await this._handleProviderSignIn(credentials.provider, {
-      redirectTo: (_a5 = credentials.options) === null || _a5 === void 0 ? void 0 : _a5.redirectTo,
+      redirectTo: (_a6 = credentials.options) === null || _a6 === void 0 ? void 0 : _a6.redirectTo,
       scopes: (_b = credentials.options) === null || _b === void 0 ? void 0 : _b.scopes,
       queryParams: (_c = credentials.options) === null || _c === void 0 ? void 0 : _c.queryParams,
       skipBrowserRedirect: (_d = credentials.options) === null || _d === void 0 ? void 0 : _d.skipBrowserRedirect
@@ -5530,7 +5521,7 @@ var GoTrueClient = class _GoTrueClient {
     throw new Error(`@supabase/auth-js: Unsupported chain "${chain}"`);
   }
   async signInWithSolana(credentials) {
-    var _a5, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    var _a6, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     let message;
     let signature;
     if ("message" in credentials) {
@@ -5554,7 +5545,7 @@ var GoTrueClient = class _GoTrueClient {
           throw new Error(`@supabase/auth-js: No compatible Solana wallet interface on the window object (window.solana) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'solana', wallet: resolvedUserWallet }) instead.`);
         }
       }
-      const url = new URL((_a5 = options === null || options === void 0 ? void 0 : options.url) !== null && _a5 !== void 0 ? _a5 : window.location.href);
+      const url = new URL((_a6 = options === null || options === void 0 ? void 0 : options.url) !== null && _a6 !== void 0 ? _a6 : window.location.href);
       if ("signIn" in resolvedWallet && resolvedWallet.signIn) {
         const output = await resolvedWallet.signIn(Object.assign(Object.assign(Object.assign({ issuedAt: (/* @__PURE__ */ new Date()).toISOString() }, options === null || options === void 0 ? void 0 : options.signInWithSolana), {
           // non-overridable properties
@@ -5722,7 +5713,7 @@ var GoTrueClient = class _GoTrueClient {
    * This method supports PKCE when an email is passed.
    */
   async signInWithOtp(credentials) {
-    var _a5, _b, _c, _d, _e;
+    var _a6, _b, _c, _d, _e;
     try {
       if ("email" in credentials) {
         const { email, options } = credentials;
@@ -5736,7 +5727,7 @@ var GoTrueClient = class _GoTrueClient {
           headers: this.headers,
           body: {
             email,
-            data: (_a5 = options === null || options === void 0 ? void 0 : options.data) !== null && _a5 !== void 0 ? _a5 : {},
+            data: (_a6 = options === null || options === void 0 ? void 0 : options.data) !== null && _a6 !== void 0 ? _a6 : {},
             create_user: (_b = options === null || options === void 0 ? void 0 : options.shouldCreateUser) !== null && _b !== void 0 ? _b : true,
             gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
             code_challenge: codeChallenge,
@@ -5772,12 +5763,12 @@ var GoTrueClient = class _GoTrueClient {
    * Log in a user given a User supplied OTP or TokenHash received through mobile or email.
    */
   async verifyOtp(params) {
-    var _a5, _b;
+    var _a6, _b;
     try {
       let redirectTo = void 0;
       let captchaToken = void 0;
       if ("options" in params) {
-        redirectTo = (_a5 = params.options) === null || _a5 === void 0 ? void 0 : _a5.redirectTo;
+        redirectTo = (_a6 = params.options) === null || _a6 === void 0 ? void 0 : _a6.redirectTo;
         captchaToken = (_b = params.options) === null || _b === void 0 ? void 0 : _b.captchaToken;
       }
       const { data, error } = await _request(this.fetch, "POST", `${this.url}/verify`, {
@@ -5821,7 +5812,7 @@ var GoTrueClient = class _GoTrueClient {
    * organization's SSO Identity Provider UUID directly instead.
    */
   async signInWithSSO(params) {
-    var _a5, _b, _c;
+    var _a6, _b, _c;
     try {
       let codeChallenge = null;
       let codeChallengeMethod = null;
@@ -5830,7 +5821,7 @@ var GoTrueClient = class _GoTrueClient {
         [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
       }
       return await _request(this.fetch, "POST", `${this.url}/sso`, {
-        body: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, "providerId" in params ? { provider_id: params.providerId } : null), "domain" in params ? { domain: params.domain } : null), { redirect_to: (_b = (_a5 = params.options) === null || _a5 === void 0 ? void 0 : _a5.redirectTo) !== null && _b !== void 0 ? _b : void 0 }), ((_c = params === null || params === void 0 ? void 0 : params.options) === null || _c === void 0 ? void 0 : _c.captchaToken) ? { gotrue_meta_security: { captcha_token: params.options.captchaToken } } : null), { skip_http_redirect: true, code_challenge: codeChallenge, code_challenge_method: codeChallengeMethod }),
+        body: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, "providerId" in params ? { provider_id: params.providerId } : null), "domain" in params ? { domain: params.domain } : null), { redirect_to: (_b = (_a6 = params.options) === null || _a6 === void 0 ? void 0 : _a6.redirectTo) !== null && _b !== void 0 ? _b : void 0 }), ((_c = params === null || params === void 0 ? void 0 : params.options) === null || _c === void 0 ? void 0 : _c.captchaToken) ? { gotrue_meta_security: { captcha_token: params.options.captchaToken } } : null), { skip_http_redirect: true, code_challenge: codeChallenge, code_challenge_method: codeChallengeMethod }),
         headers: this.headers,
         xform: _ssoResponse
       });
@@ -6072,12 +6063,12 @@ var GoTrueClient = class _GoTrueClient {
         });
       }
       return await this._useSession(async (result) => {
-        var _a5, _b, _c;
+        var _a6, _b, _c;
         const { data, error } = result;
         if (error) {
           throw error;
         }
-        if (!((_a5 = data.session) === null || _a5 === void 0 ? void 0 : _a5.access_token) && !this.hasCustomAuthorizationHeader) {
+        if (!((_a6 = data.session) === null || _a6 === void 0 ? void 0 : _a6.access_token) && !this.hasCustomAuthorizationHeader) {
           return { data: { user: null }, error: new AuthSessionMissingError() };
         }
         return await _request(this.fetch, "GET", `${this.url}/user`, {
@@ -6217,13 +6208,13 @@ var GoTrueClient = class _GoTrueClient {
   async _refreshSession(currentSession) {
     try {
       return await this._useSession(async (result) => {
-        var _a5;
+        var _a6;
         if (!currentSession) {
           const { data, error: error2 } = result;
           if (error2) {
             throw error2;
           }
-          currentSession = (_a5 = data.session) !== null && _a5 !== void 0 ? _a5 : void 0;
+          currentSession = (_a6 = data.session) !== null && _a6 !== void 0 ? _a6 : void 0;
         }
         if (!(currentSession === null || currentSession === void 0 ? void 0 : currentSession.refresh_token)) {
           throw new AuthSessionMissingError();
@@ -6354,12 +6345,12 @@ var GoTrueClient = class _GoTrueClient {
   }
   async _signOut({ scope } = { scope: "global" }) {
     return await this._useSession(async (result) => {
-      var _a5;
+      var _a6;
       const { data, error: sessionError } = result;
       if (sessionError) {
         return { error: sessionError };
       }
-      const accessToken = (_a5 = data.session) === null || _a5 === void 0 ? void 0 : _a5.access_token;
+      const accessToken = (_a6 = data.session) === null || _a6 === void 0 ? void 0 : _a6.access_token;
       if (accessToken) {
         const { error } = await this.admin.signOut(accessToken, scope);
         if (error) {
@@ -6401,12 +6392,12 @@ var GoTrueClient = class _GoTrueClient {
   }
   async _emitInitialSession(id) {
     return await this._useSession(async (result) => {
-      var _a5, _b;
+      var _a6, _b;
       try {
         const { data: { session }, error } = result;
         if (error)
           throw error;
-        await ((_a5 = this.stateChangeEmitters.get(id)) === null || _a5 === void 0 ? void 0 : _a5.callback("INITIAL_SESSION", session));
+        await ((_a6 = this.stateChangeEmitters.get(id)) === null || _a6 === void 0 ? void 0 : _a6.callback("INITIAL_SESSION", session));
         this._debug("INITIAL_SESSION", "callback id", id, "session", session);
       } catch (err2) {
         await ((_b = this.stateChangeEmitters.get(id)) === null || _b === void 0 ? void 0 : _b.callback("INITIAL_SESSION", null));
@@ -6456,12 +6447,12 @@ var GoTrueClient = class _GoTrueClient {
    * Gets all the identities linked to a user.
    */
   async getUserIdentities() {
-    var _a5;
+    var _a6;
     try {
       const { data, error } = await this.getUser();
       if (error)
         throw error;
-      return { data: { identities: (_a5 = data.user.identities) !== null && _a5 !== void 0 ? _a5 : [] }, error: null };
+      return { data: { identities: (_a6 = data.user.identities) !== null && _a6 !== void 0 ? _a6 : [] }, error: null };
     } catch (error) {
       if (isAuthError(error)) {
         return { data: null, error };
@@ -6474,15 +6465,15 @@ var GoTrueClient = class _GoTrueClient {
    * This method supports the PKCE flow.
    */
   async linkIdentity(credentials) {
-    var _a5;
+    var _a6;
     try {
       const { data, error } = await this._useSession(async (result) => {
-        var _a6, _b, _c, _d, _e;
+        var _a7, _b, _c, _d, _e;
         const { data: data2, error: error2 } = result;
         if (error2)
           throw error2;
         const url = await this._getUrlForProvider(`${this.url}/user/identities/authorize`, credentials.provider, {
-          redirectTo: (_a6 = credentials.options) === null || _a6 === void 0 ? void 0 : _a6.redirectTo,
+          redirectTo: (_a7 = credentials.options) === null || _a7 === void 0 ? void 0 : _a7.redirectTo,
           scopes: (_b = credentials.options) === null || _b === void 0 ? void 0 : _b.scopes,
           queryParams: (_c = credentials.options) === null || _c === void 0 ? void 0 : _c.queryParams,
           skipBrowserRedirect: true
@@ -6494,7 +6485,7 @@ var GoTrueClient = class _GoTrueClient {
       });
       if (error)
         throw error;
-      if (isBrowser() && !((_a5 = credentials.options) === null || _a5 === void 0 ? void 0 : _a5.skipBrowserRedirect)) {
+      if (isBrowser() && !((_a6 = credentials.options) === null || _a6 === void 0 ? void 0 : _a6.skipBrowserRedirect)) {
         window.location.assign(data === null || data === void 0 ? void 0 : data.url);
       }
       return { data: { provider: credentials.provider, url: data === null || data === void 0 ? void 0 : data.url }, error: null };
@@ -6511,14 +6502,14 @@ var GoTrueClient = class _GoTrueClient {
   async unlinkIdentity(identity) {
     try {
       return await this._useSession(async (result) => {
-        var _a5, _b;
+        var _a6, _b;
         const { data, error } = result;
         if (error) {
           throw error;
         }
         return await _request(this.fetch, "DELETE", `${this.url}/user/identities/${identity.identity_id}`, {
           headers: this.headers,
-          jwt: (_b = (_a5 = data.session) === null || _a5 === void 0 ? void 0 : _a5.access_token) !== null && _b !== void 0 ? _b : void 0
+          jwt: (_b = (_a6 = data.session) === null || _a6 === void 0 ? void 0 : _a6.access_token) !== null && _b !== void 0 ? _b : void 0
         });
       });
     } catch (error) {
@@ -6583,7 +6574,7 @@ var GoTrueClient = class _GoTrueClient {
    * Note: this method is async to accommodate for AsyncStorage e.g. in React native.
    */
   async _recoverAndRefresh() {
-    var _a5;
+    var _a6;
     const debugName = "#_recoverAndRefresh()";
     this._debug(debugName, "begin");
     try {
@@ -6596,7 +6587,7 @@ var GoTrueClient = class _GoTrueClient {
         }
         return;
       }
-      const expiresWithMargin = ((_a5 = currentSession.expires_at) !== null && _a5 !== void 0 ? _a5 : Infinity) * 1e3 - Date.now() < EXPIRY_MARGIN_MS;
+      const expiresWithMargin = ((_a6 = currentSession.expires_at) !== null && _a6 !== void 0 ? _a6 : Infinity) * 1e3 - Date.now() < EXPIRY_MARGIN_MS;
       this._debug(debugName, `session has${expiresWithMargin ? "" : " not"} expired with margin of ${EXPIRY_MARGIN_MS}s`);
       if (expiresWithMargin) {
         if (this.autoRefreshToken && currentSession.refresh_token) {
@@ -6621,7 +6612,7 @@ var GoTrueClient = class _GoTrueClient {
     }
   }
   async _callRefreshToken(refreshToken) {
-    var _a5, _b;
+    var _a6, _b;
     if (!refreshToken) {
       throw new AuthSessionMissingError();
     }
@@ -6649,7 +6640,7 @@ var GoTrueClient = class _GoTrueClient {
         if (!isAuthRetryableFetchError(error)) {
           await this._removeSession();
         }
-        (_a5 = this.refreshingDeferred) === null || _a5 === void 0 ? void 0 : _a5.resolve(result);
+        (_a6 = this.refreshingDeferred) === null || _a6 === void 0 ? void 0 : _a6.resolve(result);
         return result;
       }
       (_b = this.refreshingDeferred) === null || _b === void 0 ? void 0 : _b.reject(error);
@@ -6904,14 +6895,14 @@ var GoTrueClient = class _GoTrueClient {
   async _unenroll(params) {
     try {
       return await this._useSession(async (result) => {
-        var _a5;
+        var _a6;
         const { data: sessionData, error: sessionError } = result;
         if (sessionError) {
           return { data: null, error: sessionError };
         }
         return await _request(this.fetch, "DELETE", `${this.url}/factors/${params.factorId}`, {
           headers: this.headers,
-          jwt: (_a5 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a5 === void 0 ? void 0 : _a5.access_token
+          jwt: (_a6 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a6 === void 0 ? void 0 : _a6.access_token
         });
       });
     } catch (error) {
@@ -6924,7 +6915,7 @@ var GoTrueClient = class _GoTrueClient {
   async _enroll(params) {
     try {
       return await this._useSession(async (result) => {
-        var _a5, _b;
+        var _a6, _b;
         const { data: sessionData, error: sessionError } = result;
         if (sessionError) {
           return { data: null, error: sessionError };
@@ -6933,7 +6924,7 @@ var GoTrueClient = class _GoTrueClient {
         const { data, error } = await _request(this.fetch, "POST", `${this.url}/factors`, {
           body,
           headers: this.headers,
-          jwt: (_a5 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a5 === void 0 ? void 0 : _a5.access_token
+          jwt: (_a6 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a6 === void 0 ? void 0 : _a6.access_token
         });
         if (error) {
           return { data: null, error };
@@ -6957,7 +6948,7 @@ var GoTrueClient = class _GoTrueClient {
     return this._acquireLock(-1, async () => {
       try {
         return await this._useSession(async (result) => {
-          var _a5;
+          var _a6;
           const { data: sessionData, error: sessionError } = result;
           if (sessionError) {
             return { data: null, error: sessionError };
@@ -6965,7 +6956,7 @@ var GoTrueClient = class _GoTrueClient {
           const { data, error } = await _request(this.fetch, "POST", `${this.url}/factors/${params.factorId}/verify`, {
             body: { code: params.code, challenge_id: params.challengeId },
             headers: this.headers,
-            jwt: (_a5 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a5 === void 0 ? void 0 : _a5.access_token
+            jwt: (_a6 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a6 === void 0 ? void 0 : _a6.access_token
           });
           if (error) {
             return { data: null, error };
@@ -6989,7 +6980,7 @@ var GoTrueClient = class _GoTrueClient {
     return this._acquireLock(-1, async () => {
       try {
         return await this._useSession(async (result) => {
-          var _a5;
+          var _a6;
           const { data: sessionData, error: sessionError } = result;
           if (sessionError) {
             return { data: null, error: sessionError };
@@ -6997,7 +6988,7 @@ var GoTrueClient = class _GoTrueClient {
           return await _request(this.fetch, "POST", `${this.url}/factors/${params.factorId}/challenge`, {
             body: { channel: params.channel },
             headers: this.headers,
-            jwt: (_a5 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a5 === void 0 ? void 0 : _a5.access_token
+            jwt: (_a6 = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a6 === void 0 ? void 0 : _a6.access_token
           });
         });
       } catch (error) {
@@ -7050,7 +7041,7 @@ var GoTrueClient = class _GoTrueClient {
   async _getAuthenticatorAssuranceLevel() {
     return this._acquireLock(-1, async () => {
       return await this._useSession(async (result) => {
-        var _a5, _b;
+        var _a6, _b;
         const { data: { session }, error: sessionError } = result;
         if (sessionError) {
           return { data: null, error: sessionError };
@@ -7067,7 +7058,7 @@ var GoTrueClient = class _GoTrueClient {
           currentLevel = payload.aal;
         }
         let nextLevel = currentLevel;
-        const verifiedFactors = (_b = (_a5 = session.user.factors) === null || _a5 === void 0 ? void 0 : _a5.filter((factor) => factor.status === "verified")) !== null && _b !== void 0 ? _b : [];
+        const verifiedFactors = (_b = (_a6 = session.user.factors) === null || _a6 === void 0 ? void 0 : _a6.filter((factor) => factor.status === "verified")) !== null && _b !== void 0 ? _b : [];
         if (verifiedFactors.length > 0) {
           nextLevel = "aal2";
         }
@@ -7159,18 +7150,18 @@ var GoTrueClient = class _GoTrueClient {
 };
 GoTrueClient.nextInstanceID = 0;
 
-// node_modules/@supabase/auth-js/dist/module/AuthClient.js
+// ../node_modules/@supabase/auth-js/dist/module/AuthClient.js
 var AuthClient = GoTrueClient;
 var AuthClient_default = AuthClient;
 
-// node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js
+// ../node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js
 var SupabaseAuthClient = class extends AuthClient_default {
   constructor(options) {
     super(options);
   }
 };
 
-// node_modules/@supabase/supabase-js/dist/module/SupabaseClient.js
+// ../node_modules/@supabase/supabase-js/dist/module/SupabaseClient.js
 var __awaiter8 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve) {
@@ -7212,7 +7203,7 @@ var SupabaseClient = class {
    * @param options.global.headers Any additional headers to send with each network request.
    */
   constructor(supabaseUrl, supabaseKey, options) {
-    var _a5, _b, _c;
+    var _a6, _b, _c;
     this.supabaseUrl = supabaseUrl;
     this.supabaseKey = supabaseKey;
     if (!supabaseUrl)
@@ -7234,7 +7225,7 @@ var SupabaseClient = class {
       global: DEFAULT_GLOBAL_OPTIONS
     };
     const settings = applySettingDefaults(options !== null && options !== void 0 ? options : {}, DEFAULTS);
-    this.storageKey = (_a5 = settings.auth.storageKey) !== null && _a5 !== void 0 ? _a5 : "";
+    this.storageKey = (_a6 = settings.auth.storageKey) !== null && _a6 !== void 0 ? _a6 : "";
     this.headers = (_b = settings.global.headers) !== null && _b !== void 0 ? _b : {};
     if (!settings.accessToken) {
       this.auth = this._initSupabaseAuthClient((_c = settings.auth) !== null && _c !== void 0 ? _c : {}, this.headers, settings.global.fetch);
@@ -7350,13 +7341,13 @@ var SupabaseClient = class {
     return this.realtime.removeAllChannels();
   }
   _getAccessToken() {
-    var _a5, _b;
+    var _a6, _b;
     return __awaiter8(this, void 0, void 0, function* () {
       if (this.accessToken) {
         return yield this.accessToken();
       }
       const { data } = yield this.auth.getSession();
-      return (_b = (_a5 = data.session) === null || _a5 === void 0 ? void 0 : _a5.access_token) !== null && _b !== void 0 ? _b : null;
+      return (_b = (_a6 = data.session) === null || _a6 === void 0 ? void 0 : _a6.access_token) !== null && _b !== void 0 ? _b : null;
     });
   }
   _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, storageKey, flowType, lock, debug: debug4 }, headers, fetch3) {
@@ -7402,12 +7393,12 @@ var SupabaseClient = class {
   }
 };
 
-// node_modules/@supabase/supabase-js/dist/module/index.js
+// ../node_modules/@supabase/supabase-js/dist/module/index.js
 var createClient = (supabaseUrl, supabaseKey, options) => {
   return new SupabaseClient(supabaseUrl, supabaseKey, options);
 };
 
-// supabase/supabaseClient.js
+// ../supabase/supabaseClient.js
 var DEFAULT_SUPABASE_URL = "https://lpuqrzvokroazwlricgn.supabase.co";
 var DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
 var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
@@ -7425,7 +7416,7 @@ var supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {
 });
 var supabaseClient_default = supabase;
 
-// storefronts/checkout/getPublicCredential.js
+// checkout/getPublicCredential.js
 async function getPublicCredential(storeId, integrationId, gateway) {
   if (!storeId || !integrationId)
     return null;
@@ -7450,17 +7441,17 @@ async function getPublicCredential(storeId, integrationId, gateway) {
   }
 }
 
-// storefronts/checkout/providers/nmi.js
+// checkout/providers/nmi.js
 var cachedKey;
 var _a;
 var DEBUG = !!((_a = window.SMOOTHR_CONFIG) == null ? void 0 : _a.debug);
 var log = (...a) => DEBUG && console.log("[NMI]", ...a);
 var warn = (...a) => DEBUG && console.warn("[NMI]", ...a);
 async function resolveTokenizationKey() {
-  var _a5, _b, _c;
+  var _a6, _b, _c;
   if (cachedKey !== void 0)
     return cachedKey;
-  const storeId = (_a5 = window.SMOOTHR_CONFIG) == null ? void 0 : _a5.storeId;
+  const storeId = (_a6 = window.SMOOTHR_CONFIG) == null ? void 0 : _a6.storeId;
   if (!storeId)
     return null;
   const gateway = ((_b = window.SMOOTHR_CONFIG) == null ? void 0 : _b.active_payment_gateway) || "nmi";
@@ -7479,158 +7470,146 @@ async function resolveTokenizationKey() {
   return cachedKey;
 }
 
-// storefronts/checkout/gateways/nmi.js
-var hasMounted = false;
-var isConfigured = false;
-var isLocked = false;
-async function mountNMI() {
-  const tokenizationKey = await resolveTokenizationKey();
-  if (tokenizationKey) {
-    mountNMIFields(tokenizationKey);
+// checkout/utils/waitForElement.js
+async function waitForElement(selector, timeout = 5e3) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const el = document.querySelector(selector);
+    if (el)
+      return el;
+    await new Promise((r) => setTimeout(r, 100));
   }
-}
-function mountNMIFields(tokenizationKey) {
-  console.log("[NMI] Attempting to mount NMI fields...");
-  if (hasMounted) {
-    console.log("[NMI] NMI fields already mounted, skipping.");
-    return;
-  }
-  hasMounted = true;
-  const script = document.createElement("script");
-  script.id = "collectjs-script";
-  script.src = "https://secure.nmi.com/token/Collect.js";
-  script.setAttribute("data-tokenization-key", tokenizationKey);
-  console.log(
-    "[NMI] Set data-tokenization-key on script tag:",
-    tokenizationKey.substring(0, 8) + "\u2026"
-  );
-  script.async = true;
-  document.head.appendChild(script);
-  script.onload = () => {
-    console.log("[NMI] CollectJS script loaded.");
-    configureCollectJS();
-  };
-  script.onerror = () => {
-    console.error("[NMI] Failed to load CollectJS script.");
-  };
-}
-function configureCollectJS() {
-  if (isLocked || typeof CollectJS === "undefined") {
-    console.error(
-      "[NMI] CollectJS not ready or locked, delaying configuration."
-    );
-    return setTimeout(configureCollectJS, 500);
-  }
-  isLocked = true;
-  try {
-    CollectJS.configure({
-      variant: "inline",
-      paymentSelector: "[data-smoothr-pay]",
-      fields: {
-        ccnumber: { selector: "[data-smoothr-card-number]" },
-        ccexp: { selector: "[data-smoothr-card-expiry]" },
-        cvv: { selector: "[data-smoothr-card-cvc]" }
-      },
-      fieldsAvailableCallback() {
-        console.log("[NMI] Fields available, setting handlers");
-      },
-      callback(response) {
-        var _a5, _b, _c, _d, _e, _f, _g, _h, _i;
-        console.log("[NMI] Tokenization response:", response);
-        if (!response.token) {
-          console.log("[NMI] Failed:", response.reason);
-          isLocked = false;
-          return;
-        }
-        console.log("[NMI] Success, token:", response.token);
-        console.log(
-          "[NMI] Sending POST with store_id:",
-          window.SMOOTHR_CONFIG.storeId
-        );
-        const firstName = ((_a5 = document.querySelector("[data-smoothr-first-name]")) == null ? void 0 : _a5.value) || "";
-        const lastName = ((_b = document.querySelector("[data-smoothr-last-name]")) == null ? void 0 : _b.value) || "";
-        const email = ((_c = document.querySelector("[data-smoothr-email]")) == null ? void 0 : _c.value) || "";
-        const shipLine1 = ((_d = document.querySelector("[data-smoothr-ship-line1]")) == null ? void 0 : _d.value) || "";
-        const shipLine2 = ((_e = document.querySelector("[data-smoothr-ship-line2]")) == null ? void 0 : _e.value) || "";
-        const shipCity = ((_f = document.querySelector("[data-smoothr-ship-city]")) == null ? void 0 : _f.value) || "";
-        const shipState = ((_g = document.querySelector("[data-smoothr-ship-state]")) == null ? void 0 : _g.value) || "";
-        const shipPostal = ((_h = document.querySelector("[data-smoothr-ship-postal]")) == null ? void 0 : _h.value) || "";
-        const shipCountry = ((_i = document.querySelector("[data-smoothr-ship-country]")) == null ? void 0 : _i.value) || "";
-        const amountEl = document.querySelector("[data-smoothr-total]");
-        const amount = amountEl ? Math.round(parseFloat(amountEl.textContent.replace(/[^0-9.]/g, "")) * 100) : 0;
-        const currency = window.SMOOTHR_CONFIG.baseCurrency || "GBP";
-        const cartData = window.Smoothr.cart.getCart() || {};
-        const cartItems = Array.isArray(cartData.items) ? cartData.items : [];
-        const cart = cartItems.map((item) => {
-          var _a6;
-          return {
-            product_id: item.id || "unknown",
-            name: item.name,
-            quantity: item.quantity,
-            price: Math.round(((_a6 = item.price) != null ? _a6 : 0) * 100)
-          };
-        });
-        if (cart.length === 0) {
-          console.error("[NMI] Cart is empty");
-          isLocked = false;
-          return;
-        }
-        fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            payment_token: response.token,
-            store_id: window.SMOOTHR_CONFIG.storeId,
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            shipping: {
-              name: `${firstName} ${lastName}`.trim(),
-              address: {
-                line1: shipLine1,
-                line2: shipLine2,
-                city: shipCity,
-                state: shipState,
-                postal_code: shipPostal,
-                country: shipCountry
-              }
-            },
-            cart,
-            total: amount,
-            currency
-          })
-        }).then(
-          (res) => res.json().then((data) => {
-            console.log("[NMI] Backend response:", data);
-            handleSuccessRedirect(res, data);
-            isLocked = false;
-          })
-        ).catch((error) => {
-          console.error("[NMI] POST error:", error);
-          isLocked = false;
-        });
-      }
-    });
-    isConfigured = true;
-    console.log("[NMI] CollectJS configured successfully");
-  } catch (error) {
-    console.error("[NMI] Error configuring CollectJS:", error);
-    isLocked = false;
-  }
+  return null;
 }
 
-// storefronts/core/discounts.ts
+// checkout/gateways/nmi.js
+var tokenizationKey;
 var _a2;
-var debug = typeof window !== "undefined" && ((_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.debug);
+var DEBUG2 = !!((_a2 = window.SMOOTHR_CONFIG) == null ? void 0 : _a2.debug);
+var warn2 = (...a) => DEBUG2 && console.warn("[NMI]", ...a);
+function waitForCollectJsReady(callback, retries = 10) {
+  if (window.CollectJS) {
+    callback();
+    return;
+  }
+  if (retries <= 0) {
+    warn2("Collect.js not found");
+    return;
+  }
+  setTimeout(() => waitForCollectJsReady(callback, retries - 1), 100);
+}
+function parseExpiry(val) {
+  const m = val.trim().match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
+  if (!m)
+    return [null, null];
+  let [, mon, yr] = m;
+  if (mon.length === 1)
+    mon = "0" + mon;
+  return [mon, "20" + yr];
+}
+function syncHiddenExpiryFields(container, mon, yr) {
+  let mm = container.querySelector('input[data-collect="expMonth"]');
+  let yy = container.querySelector('input[data-collect="expYear"]');
+  if (!mm) {
+    mm = document.createElement("input");
+    mm.type = "hidden";
+    mm.setAttribute("data-collect", "expMonth");
+    container.appendChild(mm);
+  }
+  if (!yy) {
+    yy = document.createElement("input");
+    yy.type = "hidden";
+    yy.setAttribute("data-collect", "expYear");
+    container.appendChild(yy);
+  }
+  mm.value = mon;
+  yy.value = yr;
+}
+async function mountNMI() {
+  tokenizationKey = await resolveTokenizationKey();
+  if (!tokenizationKey)
+    return;
+  const numEl = await waitForElement("[data-smoothr-card-number]");
+  const expEl = await waitForElement("[data-smoothr-card-expiry]");
+  const cvvEl = await waitForElement("[data-smoothr-card-cvc]");
+  const postalEl = document.querySelector("[data-smoothr-postal]");
+  if (!numEl || !expEl || !cvvEl)
+    return;
+  [numEl, expEl, cvvEl].forEach(
+    (el) => el.setAttribute("data-tokenization-key", tokenizationKey)
+  );
+  expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]').forEach((i) => i.remove());
+  syncHiddenExpiryFields(expEl, "", "");
+  function ensureSingleInput(el, dataCollectType) {
+    let input = el.querySelector(`input[data-collect="${dataCollectType}"]`);
+    if (!input) {
+      input = document.createElement("input");
+      input.setAttribute("type", "text");
+      input.setAttribute("data-collect", dataCollectType);
+      el.innerHTML = "";
+      el.appendChild(input);
+    }
+    return input;
+  }
+  const cardNumberInput = ensureSingleInput(numEl, "cardNumber");
+  const expiryInput = ensureSingleInput(expEl, "expiry");
+  const cvcInput = ensureSingleInput(cvvEl, "cvv");
+  if (postalEl && !postalEl.querySelector('input[data-collect="postal"]')) {
+    const i = document.createElement("input");
+    i.type = "hidden";
+    i.setAttribute("data-collect", "postal");
+    postalEl.appendChild(i);
+  }
+  expiryInput.addEventListener("keyup", (e) => {
+    const [mon, yr] = parseExpiry(e.target.value);
+    if (mon && yr) {
+      syncHiddenExpiryFields(expEl, mon, yr);
+    } else {
+      expEl.querySelectorAll('input[data-collect="expMonth"],input[data-collect="expYear"]').forEach((i) => i.remove());
+    }
+  });
+  const setupCollect = () => waitForCollectJsReady(() => {
+    window.CollectJS.configure({
+      tokenizationKey,
+      fields: {
+        cardNumber: cardNumberInput,
+        expiry: expiryInput,
+        cvv: cvcInput
+      }
+    });
+  });
+  if (!window.CollectJS) {
+    let script = document.querySelector(
+      'script[src*="secure.networkmerchants.com/token/Collect.js"],script[src*="secure.nmi.com/token/Collect.js"]'
+    );
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://secure.nmi.com/token/Collect.js";
+      script.setAttribute("data-tokenization-key", tokenizationKey);
+      document.head.appendChild(script);
+    }
+    script.addEventListener("load", setupCollect);
+  } else {
+    setupCollect();
+  }
+}
+if (typeof window !== "undefined") {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.mountNMIFields = mountNMI;
+}
+
+// core/discounts.ts
+var _a3;
+var debug = typeof window !== "undefined" && ((_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug);
 var log2 = (...args) => debug && console.log("[Smoothr Discounts]", ...args);
-var warn2 = (...args) => debug && console.warn("[Smoothr Discounts]", ...args);
+var warn3 = (...args) => debug && console.warn("[Smoothr Discounts]", ...args);
 async function validateDiscount(code) {
   if (!code)
     return null;
   try {
     const { data, error } = await supabaseClient_default.from("discounts").select("*").ilike("code", code).maybeSingle();
     if (error) {
-      warn2("lookup failed", error.message);
+      warn3("lookup failed", error.message);
       return null;
     }
     if (!data)
@@ -7647,16 +7626,16 @@ async function validateDiscount(code) {
     log2("discount valid", data);
     return data;
   } catch (err2) {
-    warn2("validation failed", (err2 == null ? void 0 : err2.message) || err2);
+    warn3("validation failed", (err2 == null ? void 0 : err2.message) || err2);
     return null;
   }
 }
 
-// storefronts/core/cart.js
+// core/cart.js
 var STORAGE_KEY2 = "smoothr_cart";
-var _a3;
-var debug2 = (_a3 = window.SMOOTHR_CONFIG) == null ? void 0 : _a3.debug;
-var warn3 = (...args) => debug2 && console.warn("[Smoothr Cart]", ...args);
+var _a4;
+var debug2 = (_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.debug;
+var warn4 = (...args) => debug2 && console.warn("[Smoothr Cart]", ...args);
 function getStorage() {
   if (typeof window !== "undefined" && window.localStorage)
     return window.localStorage;
@@ -7674,7 +7653,7 @@ function readCart() {
     if (raw)
       return JSON.parse(raw);
   } catch (err2) {
-    warn3("invalid data", err2);
+    warn4("invalid data", err2);
   }
   return { items: [], meta: { lastModified: Date.now() } };
 }
@@ -7711,9 +7690,9 @@ function applyDiscount(discount) {
   dispatchUpdate(cart);
 }
 
-// supabase/authHelpers.js
-var _a4;
-var debug3 = typeof window !== "undefined" && ((_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.debug);
+// ../supabase/authHelpers.js
+var _a5;
+var debug3 = typeof window !== "undefined" && ((_a5 = window.SMOOTHR_CONFIG) == null ? void 0 : _a5.debug);
 var log3 = (...args) => debug3 && console.log("[Smoothr Auth]", ...args);
 var err = (...args) => debug3 && console.error("[Smoothr Auth]", ...args);
 function findMessageContainer(start, selector) {
@@ -7757,7 +7736,7 @@ function showSuccess(form, msg, trigger) {
   }
 }
 
-// storefronts/platforms/webflow/checkout.js
+// platforms/webflow/checkout.js
 async function initCheckout() {
   if (!window.SMOOTHR_CONFIG) {
     console.error("[Smoothr Checkout] Config not found");
