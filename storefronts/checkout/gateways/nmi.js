@@ -1,3 +1,4 @@
+// src/checkout/gateways/nmi.js
 
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
@@ -127,15 +128,15 @@ function configureCollectJS() {
       'vertical-align': 'middle',
       // apply Webflow placeholder styles inside the iframe inputs
       'input::placeholder': {
-        'color':         placeholderStyle.color,
-        'font-family':   placeholderStyle.fontFamily,
-        'font-size':     placeholderStyle.fontSize,
-        'font-style':    placeholderStyle.fontStyle,
-        'font-weight':   placeholderStyle.fontWeight,
-        'letter-spacing':placeholderStyle.letterSpacing,
-        'line-height':   placeholderStyle.lineHeight,
-        'text-align':    placeholderStyle.textAlign,
-        'opacity':       placeholderStyle.opacity
+        'color':          placeholderStyle.color,
+        'font-family':    placeholderStyle.fontFamily,
+        'font-size':      placeholderStyle.fontSize,
+        'font-style':     placeholderStyle.fontStyle,
+        'font-weight':    placeholderStyle.fontWeight,
+        'letter-spacing': placeholderStyle.letterSpacing,
+        'line-height':    placeholderStyle.lineHeight,
+        'text-align':     placeholderStyle.textAlign,
+        'opacity':        placeholderStyle.opacity
       }
     }
 
@@ -143,15 +144,15 @@ function configureCollectJS() {
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: {
+        ccnumber: { 
           selector:    '[data-smoothr-card-number]',
           placeholder: cardNumberPlaceholderText
         },
-        ccexp: {
+        ccexp: { 
           selector:    '[data-smoothr-card-expiry]',
           placeholder: expiryPlaceholderText
         },
-        cvv: {
+        cvv: { 
           selector:    '[data-smoothr-card-cvc]',
           placeholder: cvcPlaceholderText
         }
@@ -159,6 +160,7 @@ function configureCollectJS() {
       customCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize')
+        // Style the iframes directly and force height
         const iframes = document.querySelectorAll('iframe[id^="CollectJS"]')
         iframes.forEach(iframe => {
           iframe.style.position   = 'absolute'
@@ -169,6 +171,7 @@ function configureCollectJS() {
           iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
+        // Hide Webflow placeholder elements
         ;[cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(
           el => el && (el.style.display = 'none')
         )
@@ -187,6 +190,7 @@ function configureCollectJS() {
           window.SMOOTHR_CONFIG.storeId
         )
 
+        // Gather form + cart data
         const firstName   = document.querySelector('[data-smoothr-first-name]')?.value   || ''
         const lastName    = document.querySelector('[data-smoothr-last-name]')?.value    || ''
         const email       = document.querySelector('[data-smoothr-email]')?.value        || ''
@@ -218,10 +222,11 @@ function configureCollectJS() {
           return
         }
 
+        // Send to your backend
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-          method:  'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({
+          body: JSON.stringify({
             payment_token: response.token,
             store_id:      window.SMOOTHR_CONFIG.storeId,
             first_name:    firstName,
