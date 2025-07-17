@@ -1,5 +1,4 @@
 // ─── Dynamic Asset Loader for Country & Phone Fields ────────────────────────────
-// Dynamically inject CSS files
 function loadCSS(href) {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
@@ -7,7 +6,6 @@ function loadCSS(href) {
   document.head.appendChild(link);
 }
 
-// Dynamically inject JS files with callback
 function loadScript(src, cb) {
   const s = document.createElement('script');
   s.src = src;
@@ -15,20 +13,21 @@ function loadScript(src, cb) {
   document.head.appendChild(s);
 }
 
-// Inject Choices.js & intl-tel-input CSS
+// inject CSS
 loadCSS('https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css');
 loadCSS('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css');
 
-// Load Choices.js → intl-tel-input → intl-tel-input utils → initialize
+// load JS in sequence, then bootstrap on DOMContentLoaded
 loadScript('https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js', () => {
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js', () => {
-    loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js', initializePickers);
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js', () => {
+      document.addEventListener('DOMContentLoaded', initializePickers);
+    });
   });
 });
 
 
 // ─── Utilities ───────────────────────────────────────────────────────────────────
-// Try to read default country from the page’s <html lang="xx-YY">
 function detectCountryFromLang() {
   const htmlLang = document.documentElement.lang;
   if (htmlLang && htmlLang.includes('-')) {
@@ -37,7 +36,6 @@ function detectCountryFromLang() {
   return null;
 }
 
-// Geo-IP fallback: fetch visitor country code via ipapi.co
 function geoLookup(callback) {
   fetch('https://ipapi.co/json/')
     .then(res => res.json())
@@ -48,13 +46,12 @@ function geoLookup(callback) {
 
 // ─── Bootstrap & Initialize all pickers & auto-select ───────────────────────────
 function bootstrap(iso) {
-  // Grab the three selects only after the ISO is known
   const shippingSelect = document.querySelector('select[name="shipping[country]"]');
   const billingSelect  = document.querySelector('select[name="billing[country]"]');
   const phoneSelect    = document.querySelector('select[name="phone[country]"]');
   const selects = [shippingSelect, billingSelect, phoneSelect].filter(Boolean);
 
-  // Apply the detected ISO to each select
+  // set each <select> to the detected ISO
   selects.forEach(sel => {
     if (sel.name === 'phone[country]') {
       const match = Array.from(sel.options).find(o => o.value.split('|')[0] === iso);
@@ -64,7 +61,7 @@ function bootstrap(iso) {
     }
   });
 
-  // Turn each into a searchable dropdown
+  // initialize Choices.js
   selects.forEach(sel => {
     new window.Choices(sel, {
       searchEnabled: true,
@@ -73,7 +70,7 @@ function bootstrap(iso) {
     });
   });
 
-  // Enhance the phone input itself
+  // intl-tel-input on the phone input
   const phoneInput = document.querySelector('input[name="shipping[phone]"]');
   if (phoneInput) {
     window.intlTelInput(phoneInput, {
@@ -85,6 +82,6 @@ function bootstrap(iso) {
 }
 
 function initializePickers() {
-  // Always force Geo-IP lookup for country detection
+  // always force Geo-IP
   geoLookup(bootstrap);
 }
