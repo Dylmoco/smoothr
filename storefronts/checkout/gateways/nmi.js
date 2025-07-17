@@ -138,6 +138,9 @@ function configureCollectJS() {
       'cvv': cvcPlaceholderEl
     };
 
+    // Track if placeholder has been hidden
+    const hiddenPlaceholders = new Set();
+
     CollectJS.configure({
       variant: 'inline',
       styleSniffer: true,
@@ -160,7 +163,10 @@ function configureCollectJS() {
       focusCallback: function(field) {
         console.log('[NMI] Focus on:', field);
         const el = fieldToPlaceholder[field];
-        if (el) el.style.display = 'none';
+        if (el && !hiddenPlaceholders.has(field)) {
+          el.style.display = 'none';
+          hiddenPlaceholders.add(field); // Mark as hidden permanently
+        }
       },
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize');
