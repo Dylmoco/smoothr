@@ -29,7 +29,7 @@ export async function mountCardFields() {
 }
 
 /**
- * Load NMI’s Collect.js and configure
+ * Load NMI’s Collect.js and configure.
  */
 export function initNMI(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...')
@@ -69,6 +69,27 @@ function configureCollectJS() {
   isLocked = true
 
   try {
+    // Get styles from the placeholder div
+    const cardNumberDiv = document.querySelector('[data-smoothr-card-number]');
+    const divStyle = getComputedStyle(cardNumberDiv);
+
+    const customCss = {
+      'background-color': 'transparent',
+      'border': 'none',
+      'box-shadow': 'none',
+      'padding': '0',
+      'margin': '0',
+      'color': divStyle.color,
+      'font-family': divStyle.fontFamily,
+      'font-size': divStyle.fontSize,
+      'font-style': divStyle.fontStyle,
+      'font-weight': divStyle.fontWeight,
+      'letter-spacing': divStyle.letterSpacing,
+      'line-height': divStyle.lineHeight,
+      'text-align': divStyle.textAlign,
+      'text-shadow': divStyle.textShadow
+    };
+
     CollectJS.configure({
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
@@ -77,6 +98,7 @@ function configureCollectJS() {
         ccexp:    { selector: '[data-smoothr-card-expiry]' },
         cvv:      { selector: '[data-smoothr-card-cvc]' }
       },
+      customCss: customCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize')
       },
