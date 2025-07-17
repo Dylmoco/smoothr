@@ -46,6 +46,7 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
+  // original async behavior
   script.async = true
   document.head.appendChild(script)
 
@@ -93,9 +94,9 @@ function configureCollectJS() {
       ? cvcPlaceholderEl.textContent.trim()
       : 'CVC'
 
-    // Use the placeholder pseudo-styles from your Webflow div
+    // Grab the computed styles from your Webflow placeholder divs
     const placeholderStyle = cardNumberPlaceholderEl
-      ? getComputedStyle(cardNumberPlaceholderEl, '::placeholder')
+      ? getComputedStyle(cardNumberPlaceholderEl)
       : divStyle
 
     const customCss = {
@@ -126,7 +127,7 @@ function configureCollectJS() {
       'justify-content': 'flex-start',
       'outline': 'none',
       'vertical-align': 'middle',
-      // apply Webflow placeholder styles inside the iframe inputs
+      // inject your Webflow div’s styles into the iframe placeholder
       'input::placeholder': {
         'color':          placeholderStyle.color,
         'font-family':    placeholderStyle.fontFamily,
@@ -144,15 +145,15 @@ function configureCollectJS() {
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: { 
+        ccnumber: {
           selector:    '[data-smoothr-card-number]',
           placeholder: cardNumberPlaceholderText
         },
-        ccexp: { 
+        ccexp: {
           selector:    '[data-smoothr-card-expiry]',
           placeholder: expiryPlaceholderText
         },
-        cvv: { 
+        cvv: {
           selector:    '[data-smoothr-card-cvc]',
           placeholder: cvcPlaceholderText
         }
@@ -171,7 +172,7 @@ function configureCollectJS() {
           iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
-        // Hide Webflow placeholder elements
+        // Hide your Webflow placeholder divs
         ;[cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(
           el => el && (el.style.display = 'none')
         )
@@ -224,9 +225,9 @@ function configureCollectJS() {
 
         // Send to your backend
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-          method: 'POST',
+          method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body:    JSON.stringify({
             payment_token: response.token,
             store_id:      window.SMOOTHR_CONFIG.storeId,
             first_name:    firstName,
