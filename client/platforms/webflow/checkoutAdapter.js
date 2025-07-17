@@ -47,39 +47,24 @@ function geoLookup(callback) {
 
 
 // ─── Initialize all three pickers & auto-select ─────────────────────────────────
-function initializePickers() {
-  const defaultCountry = detectCountryFromLang();
-
-  // Grab the three selects by name
+function bootstrap(iso) {
+  // Grab the three selects only after the ISO is known
   const shippingSelect = document.querySelector('select[name="shipping[country]"]');
   const billingSelect  = document.querySelector('select[name="billing[country]"]');
   const phoneSelect    = document.querySelector('select[name="phone[country]"]');
   const selects = [shippingSelect, billingSelect, phoneSelect].filter(Boolean);
 
-  // 1) Pre-select the underlying <select> values
-  function applyDefault(iso) {
-    selects.forEach(sel => {
-      if (sel.name === 'phone[country]') {
-        // phone select option values are "ISO|+DialCode"
-        const match = Array.from(sel.options)
-          .find(o => o.value.split('|')[0] === iso);
-        if (match) sel.value = match.value;
-      } else {
-        // shipping/billing just use plain ISO codes
-        if (sel.querySelector(`option[value="${iso}"]`)) {
-          sel.value = iso;
-        }
-      }
-    });
-  }
+  // Apply the detected ISO to each select
+  selects.forEach(sel => {
+    if (sel.name === 'phone[country]') {
+      const match = Array.from(sel.options).find(o => o.value.split('|')[0] === iso);
+      if (match) sel.value = match.value;
+    } else if (sel.querySelector(`option[value="${iso}"]`)) {
+      sel.value = iso;
+    }
+  });
 
-  if (defaultCountry) {
-    applyDefault(defaultCountry);
-  } else {
-    geoLookup(applyDefault);
-  }
-
-  // 2) Now instantiate Choices.js so it picks up the pre-selected value
+  // Turn each into a searchable dropdown
   selects.forEach(sel => {
     new window.Choices(sel, {
       searchEnabled: true,
@@ -88,14 +73,22 @@ function initializePickers() {
     });
   });
 
-  // 3) Finally, enhance the phone *input* itself with intl-tel-input
+  // Enhance the phone input itself
   const phoneInput = document.querySelector('input[name="shipping[phone]"]');
   if (phoneInput) {
     window.intlTelInput(phoneInput, {
       separateDialCode: true,
-      initialCountry: 'auto',
-      geoIpLookup: geoLookup,
+      initialCountry: iso.toLowerCase(),
       utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js'
     });
+  }
+}
+
+function initializePickers() {
+  const detected = detectCountryFromLang();
+  if (detected) {
+    bootstrap(detected);
+  } else {
+    geoLookup(bootstrap);
   }
 }
