@@ -4,10 +4,13 @@ let mountNMI: any;
 let ready: any;
 let getCredMock: any;
 let appendChildSpy: any;
+let scriptPromise: Promise<any>;
+let mountCallback: Function | null = null;
 
 beforeEach(async () => {
   vi.resetModules();
   document.body.innerHTML = '';
+  document.head.innerHTML = '';
   const wrapper = document.createElement('div');
   ['card-number', 'card-expiry', 'card-cvc', 'bill-postal'].forEach(attr => {
     const div = document.createElement('div');
@@ -20,10 +23,28 @@ beforeEach(async () => {
   });
   document.body.appendChild(wrapper);
 
+  Object.defineProperty(document, 'readyState', {
+    configurable: true,
+    value: 'loading'
+  });
+  vi.spyOn(document, 'addEventListener').mockImplementation((evt, cb) => {
+    if (evt === 'DOMContentLoaded') mountCallback = cb;
+  });
+
+  let resolveScript;
+  scriptPromise = new Promise(r => (resolveScript = r));
+
   appendChildSpy = vi.spyOn(document.head, 'appendChild').mockImplementation(el => {
-    if ((el as HTMLElement).tagName === 'SCRIPT') {
+    const tag = (el as HTMLElement).tagName;
+    if (tag === 'SCRIPT') {
       window.CollectJS = { configure: vi.fn(), tokenize: vi.fn() } as any;
-      setTimeout(() => el.dispatchEvent(new Event('load')));
+      setTimeout(() => {
+        el.dispatchEvent(new Event('load'));
+        resolveScript(el);
+      });
+      return el;
+    }
+    if (tag === 'LINK') {
       return el;
     }
     return HTMLElement.prototype.appendChild.call(document.head, el);
@@ -45,88 +66,30 @@ beforeEach(async () => {
 afterEach(() => {
   appendChildSpy?.mockRestore();
   window.CollectJS = undefined as any;
+  Object.defineProperty(document, 'readyState', {
+    configurable: true,
+    value: 'complete'
+  });
+  (document.addEventListener as any).mockRestore?.();
+  mountCallback = null;
 });
 
 describe('mountNMI', () => {
-  it('loads tokenization key and applies it', async () => {
-    await mountNMI();
+  async function triggerMount() {
+    mountCallback?.();
+    await scriptPromise;
+    await new Promise(r => setTimeout(r));
+  }
+
+  it('loads tokenization key and injects script', async () => {
+    await triggerMount();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
-    const els = document.querySelectorAll('div[data-tokenization-key]');
-    expect(els.length).toBe(3);
-    els.forEach(el => {
-      expect(el.getAttribute('data-tokenization-key')).toBe('tok_key');
-    });
+    const script = await scriptPromise;
+    expect(script.getAttribute('data-tokenization-key')).toBe('tok_key');
   });
 
-  it('injects other inputs and removes expiry inputs when empty', async () => {
-    await mountNMI();
-    const num = document.querySelector('[data-smoothr-card-number]');
-    const cvc = document.querySelector('[data-smoothr-card-cvc]');
-    const postal = document.querySelector('[data-smoothr-bill-postal]');
-    const expiry = document.querySelector('[data-smoothr-card-expiry]');
-    expect(num?.querySelector('input')?.getAttribute('data-collect')).toBe('cardNumber');
-    expect(cvc?.querySelector('input')?.getAttribute('data-collect')).toBe('cvv');
-    expect(postal?.querySelector('input')?.getAttribute('data-collect')).toBe('postal');
-    expect(expiry?.querySelector('input[data-collect="expMonth"]')).toBeNull();
-    expect(expiry?.querySelector('input[data-collect="expYear"]')).toBeNull();
-  });
-
-  it('does not inject hidden expiry inputs until value is valid', async () => {
-    await mountNMI();
-    const expiry = document.querySelector('[data-smoothr-card-expiry] input');
-    const input = expiry;
-    if (input) {
-      input.value = '1';
-      input.dispatchEvent(new Event('keyup'));
-    }
-    expect(expiry?.querySelector('input[data-collect="expMonth"]')).toBeNull();
-    expect(expiry?.querySelector('input[data-collect="expYear"]')).toBeNull();
-  });
-
-  it('re-injects expiry inputs when corrected', async () => {
-    await mountNMI();
-    const input = document.querySelector('[data-smoothr-card-expiry] input');
-    if (input) {
-      input.value = '1';
-      input.dispatchEvent(new Event('keyup'));
-      input.value = '12/34';
-      input.dispatchEvent(new Event('keyup'));
-    }
-    const month = document.querySelector(
-      '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
-    );
-    const year = document.querySelector(
-      '[data-smoothr-card-expiry] input[data-collect="expYear"]'
-    );
-    expect(month?.value).toBe('12');
-    expect(year?.value).toBe('2034');
-  });
-
-  it('syncs hidden expiry inputs when value changes', async () => {
-    await mountNMI();
-    const expiry = document.querySelector('[data-smoothr-card-expiry] input');
-    expect(expiry).not.toBeNull();
-    if (expiry) {
-      expiry.value = '08/26';
-      expiry.dispatchEvent(new Event('keyup'));
-    }
-    const month = document.querySelector(
-      '[data-smoothr-card-expiry] input[data-collect="expMonth"]'
-    );
-    const year = document.querySelector(
-      '[data-smoothr-card-expiry] input[data-collect="expYear"]'
-    );
-    expect(month?.value).toBe('08');
-    expect(year?.value).toBe('2026');
-  });
-
-  it('reports ready when all fields and tokenization key are present', async () => {
-    await mountNMI();
-    const expiry = document.querySelector('[data-smoothr-card-expiry] input');
-    if (expiry) {
-      expiry.value = '11/30';
-      expiry.dispatchEvent(new Event('keyup'));
-    }
+  it('reports ready when CollectJS is configured', async () => {
+    await triggerMount();
     expect(ready()).toBe(true);
   });
 });

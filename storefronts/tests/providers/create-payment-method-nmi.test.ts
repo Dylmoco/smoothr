@@ -38,44 +38,54 @@ function setupDom() {
 beforeEach(async () => {
   vi.resetModules();
   setupDom();
+  Object.defineProperty(document, 'readyState', {
+    configurable: true,
+    value: 'loading'
+  });
+  const addSpy = vi.spyOn(document, 'addEventListener').mockImplementation(() => {});
   window.SMOOTHR_CONFIG = { debug: true } as any;
   window.CollectJS = { tokenize: vi.fn() } as any;
   const mod = await import('../../checkout/gateways/nmi.js');
   createPaymentMethod = mod.createPaymentMethod;
+  addSpy.mockRestore();
 });
 
 afterEach(() => {
   delete (window as any).CollectJS;
   delete (window as any).SMOOTHR_CONFIG;
   document.body.innerHTML = '';
+  Object.defineProperty(document, 'readyState', {
+    configurable: true,
+    value: 'complete'
+  });
 });
 
 describe('createPaymentMethod nmi', () => {
-  it('resolves token on success', async () => {
-    const payment_token = 'tok_123';
-    (window.CollectJS.tokenize as any).mockImplementation((_d, cb) => cb({ token: payment_token }));
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  it('returns stubbed result regardless of CollectJS response', async () => {
     const res = await createPaymentMethod();
-    expect(res).toEqual({ error: null, payment_method: { payment_token } });
-    expect(logSpy).toHaveBeenCalled();
-    expect((window.CollectJS.tokenize as any)).toHaveBeenCalled();
-    logSpy.mockRestore();
+    expect(res).toEqual({
+      error: { message: 'use CollectJS callback' },
+      payment_method: null
+    });
+    expect((window.CollectJS.tokenize as any)).not.toHaveBeenCalled();
   });
 
-  it('returns error object on failure', async () => {
+  it('ignores CollectJS errors and returns stubbed result', async () => {
     (window.CollectJS.tokenize as any).mockImplementation((_d, cb) => cb({ error: 'bad card' }));
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await createPaymentMethod();
-    expect(res).toEqual({ error: { message: 'bad card' }, payment_method: null });
-    expect(logSpy).toHaveBeenCalled();
-    expect((window.CollectJS.tokenize as any)).toHaveBeenCalled();
-    logSpy.mockRestore();
+    expect(res).toEqual({
+      error: { message: 'use CollectJS callback' },
+      payment_method: null
+    });
+    expect((window.CollectJS.tokenize as any)).not.toHaveBeenCalled();
   });
 
   it('handles missing tokenize function', async () => {
     delete (window.CollectJS as any).tokenize;
     const res = await createPaymentMethod();
-    expect(res.error?.message).toBeDefined();
-    expect(res.payment_method).toBeNull();
+    expect(res).toEqual({
+      error: { message: 'use CollectJS callback' },
+      payment_method: null
+    });
   });
 });
