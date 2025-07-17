@@ -25,6 +25,10 @@ export async function mountCardFields() {
     return
   }
 
+  // Hide divs until ready
+  const fields = document.querySelectorAll('[data-smoothr-card-number], [data-smoothr-card-expiry], [data-smoothr-card-cvc]');
+  fields.forEach(field => field.style.visibility = 'hidden');
+
   initNMI(tokenizationKey)
 }
 
@@ -100,7 +104,7 @@ function configureCollectJS() {
       'text-align': divStyle.textAlign,
       'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': divStyle.height,
+      'height': '100%',
       'min-height': divStyle.minHeight,
       'max-height': divStyle.maxHeight,
       'box-sizing': 'border-box',
@@ -126,7 +130,8 @@ function configureCollectJS() {
         'opacity': placeholderStyle.opacity || 0.7,
         'position': 'absolute',
         'top': '50%',
-        'transform': 'translateY(-50%)'
+        'transform': 'translateY(-50%)',
+        'left': divStyle.paddingLeft
       }
     };
 
@@ -166,6 +171,9 @@ function configureCollectJS() {
         [cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(el => {
           if (el) el.style.display = 'none';
         });
+        // Show fields now that ready
+        const fields = document.querySelectorAll('[data-smoothr-card-number], [data-smoothr-card-expiry], [data-smoothr-card-cvc]');
+        fields.forEach(field => field.style.visibility = 'visible');
       },
       callback(response) {
         console.log('[NMI] Tokenization response:', response)
