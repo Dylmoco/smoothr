@@ -74,8 +74,9 @@ function configureCollectJS() {
     const divStyle = getComputedStyle(cardNumberDiv);
 
     const customCss = {
-      'background-color': 'transparent',
-      'border': 'none',
+      'background-color': divStyle.backgroundColor,
+      'border': divStyle.border,
+      'border-radius': divStyle.borderRadius,
       'box-shadow': 'none',
       'margin': '0',
       'color': divStyle.color,
@@ -89,6 +90,8 @@ function configureCollectJS() {
       'text-shadow': divStyle.textShadow,
       'width': '100%',
       'height': '100%',
+      'min-height': divStyle.minHeight,
+      'max-height': divStyle.maxHeight,
       'box-sizing': 'border-box',
       'padding-top': divStyle.paddingTop,
       'padding-right': divStyle.paddingRight,
@@ -96,7 +99,9 @@ function configureCollectJS() {
       'padding-left': divStyle.paddingLeft,
       'display': 'flex',
       'align-items': 'center',
-      'justify-content': 'flex-start'
+      'justify-content': 'flex-start',
+      'outline': 'none',
+      'vertical-align': 'middle'
     };
 
     CollectJS.configure({
