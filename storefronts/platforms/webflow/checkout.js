@@ -1,8 +1,4 @@
-
-
-import { initCheckout } from '../../checkout/checkout.js';
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  initCheckout();
-});
+export async function initCheckout(...args) {
+  const mod = await import('../../checkout/checkout.js');
+  return mod.initCheckout(...args);
+}
