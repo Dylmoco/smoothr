@@ -1,7 +1,3 @@
-(() => {
-  if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
-  window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
-})();
 
 if (
   typeof document !== 'undefined' &&
@@ -45,6 +41,8 @@ export async function computeCartHash(cart, total, email) {
 }
 
 export async function initCheckout(config) {
+  if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
+  window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
   console.log('[Smoothr] initCheckout', config);
   const payButtons = document.querySelectorAll('[data-smoothr-pay]');
   console.log('[Smoothr] Found pay buttons:', payButtons.length);
