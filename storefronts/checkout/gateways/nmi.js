@@ -94,7 +94,7 @@ function configureCollectJS() {
       ? cvcPlaceholderEl.textContent.trim()
       : 'CVC'
 
-    // Grab the computed styles from your Webflow placeholder divs
+    // Grab the computed style from your Webflow placeholder DIV
     const placeholderStyle = cardNumberPlaceholderEl
       ? getComputedStyle(cardNumberPlaceholderEl)
       : divStyle
@@ -127,8 +127,8 @@ function configureCollectJS() {
       'justify-content': 'flex-start',
       'outline': 'none',
       'vertical-align': 'middle',
-      // inject your Webflow div’s styles into the iframe placeholder
-      'input::placeholder': {
+      // apply your Webflow DIV’s style to the iframe input placeholder
+      '::placeholder': {
         'color':          placeholderStyle.color,
         'font-family':    placeholderStyle.fontFamily,
         'font-size':      placeholderStyle.fontSize,
@@ -145,15 +145,15 @@ function configureCollectJS() {
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: {
+        ccnumber: { 
           selector:    '[data-smoothr-card-number]',
           placeholder: cardNumberPlaceholderText
         },
-        ccexp: {
+        ccexp: { 
           selector:    '[data-smoothr-card-expiry]',
           placeholder: expiryPlaceholderText
         },
-        cvv: {
+        cvv: { 
           selector:    '[data-smoothr-card-cvc]',
           placeholder: cvcPlaceholderText
         }
@@ -172,7 +172,7 @@ function configureCollectJS() {
           iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
-        // Hide your Webflow placeholder divs
+        // Hide your Webflow placeholder DIVs
         ;[cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(
           el => el && (el.style.display = 'none')
         )
@@ -225,9 +225,9 @@ function configureCollectJS() {
 
         // Send to your backend
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-          method:  'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({
+          body: JSON.stringify({
             payment_token: response.token,
             store_id:      window.SMOOTHR_CONFIG.storeId,
             first_name:    firstName,
