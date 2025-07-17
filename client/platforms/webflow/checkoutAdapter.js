@@ -26,18 +26,77 @@ loadScript('https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choice
   });
 });
 
-// Initialize both plugins on Webflow’s checkout fields
+
+// ─── Utilities ───────────────────────────────────────────────────────────────────
+// Try to read default country from the page’s <html lang="xx-YY">
+function detectCountryFromLang() {
+  const htmlLang = document.documentElement.lang;
+  if (htmlLang && htmlLang.includes('-')) {
+    return htmlLang.split('-')[1].toUpperCase();
+  }
+  return null;
+}
+
+// Geo-IP fallback: fetch visitor country code via ipapi.co
+function geoLookup(callback) {
+  fetch('https://ipapi.co/json/')
+    .then(res => res.json())
+    .then(data => callback(data.country_code || 'GB'))
+    .catch(() => callback('GB'));
+}
+
+
+// ─── Initialize all three pickers & auto-select ─────────────────────────────────
 function initializePickers() {
-  const countryEl = document.querySelector('select[name="shipping[country]"]');
-  if (countryEl) {
-    new window.Choices(countryEl, { searchEnabled: true, shouldSort: false });
+  const defaultCountry = detectCountryFromLang();
+
+  // gather our three selects
+  const selects = [
+    document.querySelector('select[name="shipping[country]"]'),
+    document.querySelector('select[name="billing[country]"]'),
+    document.querySelector('select[name="phone[country]"]')
+  ].filter(Boolean);
+
+  // turn them into searchable dropdowns
+  selects.forEach(sel => {
+    new window.Choices(sel, {
+      searchEnabled: true,
+      shouldSort: false,
+      placeholderValue: 'Search…'
+    });
+  });
+
+  // helper to apply default by ISO code
+  function applyDefault(iso) {
+    selects.forEach(sel => {
+      if (sel.name === 'phone[country]') {
+        // phone select has values like "GB|+44"
+        const match = Array.from(sel.options)
+          .find(o => o.value.split('|')[0] === iso);
+        if (match) sel.value = match.value;
+      } else {
+        // billing/shipping country have plain ISO values
+        if (sel.querySelector(`option[value="${iso}"]`)) {
+          sel.value = iso;
+        }
+      }
+    });
   }
 
-  const phoneEl = document.querySelector('input[name="shipping[phone]"]');
-  if (phoneEl) {
-    window.intlTelInput(phoneEl, {
+  // run immediately or via Geo-IP
+  if (defaultCountry) {
+    applyDefault(defaultCountry);
+  } else {
+    geoLookup(applyDefault);
+  }
+
+  // finally, init intl-tel-input on your phone **input**
+  const phoneInput = document.querySelector('input[name="shipping[phone]"]');
+  if (phoneInput) {
+    window.intlTelInput(phoneInput, {
       separateDialCode: true,
-      initialCountry: 'gb',
+      initialCountry: 'auto',
+      geoIpLookup: geoLookup,
       utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js'
     });
   }
