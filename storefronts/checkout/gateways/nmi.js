@@ -1,5 +1,3 @@
-// src/checkout/gateways/nmi.js
-
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
 
@@ -46,7 +44,6 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  // original async behavior
   script.async = true
   document.head.appendChild(script)
 
@@ -70,20 +67,34 @@ function configureCollectJS() {
 
   try {
     // Get styles from the placeholder div
-    const cardNumberDiv = document.querySelector('[data-smoothr-card-number]');
-    const divStyle = getComputedStyle(cardNumberDiv);
+    const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
+    const divStyle = getComputedStyle(cardNumberDiv)
 
     // Get placeholder info from Webflow elements with custom attributes
-    const cardNumberPlaceholderEl = cardNumberDiv.querySelector('[data-smoothr-card-placeholder]');
-    const expiryPlaceholderEl = document.querySelector('[data-smoothr-card-expiry] [data-smoothr-expiry-placeholder]');
-    const cvcPlaceholderEl = document.querySelector('[data-smoothr-card-cvc] [data-smoothr-cvv-placeholder]');
+    const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
+      '[data-smoothr-card-placeholder]'
+    )
+    const expiryPlaceholderEl = document.querySelector(
+      '[data-smoothr-card-expiry] [data-smoothr-expiry-placeholder]'
+    )
+    const cvcPlaceholderEl = document.querySelector(
+      '[data-smoothr-card-cvc] [data-smoothr-cvv-placeholder]'
+    )
 
-    const cardNumberPlaceholderText = cardNumberPlaceholderEl ? cardNumberPlaceholderEl.textContent.trim() : 'Card Number';
-    const expiryPlaceholderText = expiryPlaceholderEl ? expiryPlaceholderEl.textContent.trim() : 'MM/YY';
-    const cvcPlaceholderText = cvcPlaceholderEl ? cvcPlaceholderEl.textContent.trim() : 'CVC';
+    const cardNumberPlaceholderText = cardNumberPlaceholderEl
+      ? cardNumberPlaceholderEl.textContent.trim()
+      : 'Card Number'
+    const expiryPlaceholderText = expiryPlaceholderEl
+      ? expiryPlaceholderEl.textContent.trim()
+      : 'MM/YY'
+    const cvcPlaceholderText = cvcPlaceholderEl
+      ? cvcPlaceholderEl.textContent.trim()
+      : 'CVC'
 
     // Use card number placeholder styles for all (global)
-    const placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle;
+    const placeholderStyle = cardNumberPlaceholderEl
+      ? getComputedStyle(cardNumberPlaceholderEl)
+      : divStyle
 
     const customCss = {
       'background-color': 'transparent',
@@ -113,54 +124,53 @@ function configureCollectJS() {
       'justify-content': 'flex-start',
       'outline': 'none',
       'vertical-align': 'middle',
-      '::placeholder': {
-        'color': placeholderStyle.color,
-        'font-family': placeholderStyle.fontFamily,
-        'font-size': placeholderStyle.fontSize,
-        'font-style': placeholderStyle.fontStyle,
-        'font-weight': placeholderStyle.fontWeight,
-        'letter-spacing': placeholderStyle.letterSpacing,
-        'line-height': placeholderStyle.lineHeight,
-        'text-align': placeholderStyle.textAlign,
-        'opacity': 0.7 // Adjust if needed for faint look
+      // apply Webflow div placeholder styles inside the iframe
+      'input::placeholder': {
+        'color':         placeholderStyle.color,
+        'font-family':   placeholderStyle.fontFamily,
+        'font-size':     placeholderStyle.fontSize,
+        'font-style':    placeholderStyle.fontStyle,
+        'font-weight':   placeholderStyle.fontWeight,
+        'letter-spacing':placeholderStyle.letterSpacing,
+        'line-height':   placeholderStyle.lineHeight,
+        'text-align':    placeholderStyle.textAlign,
+        'opacity':       placeholderStyle.opacity
       }
-    };
+    }
 
     CollectJS.configure({
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: { 
-          selector: '[data-smoothr-card-number]',
+        ccnumber: {
+          selector:   '[data-smoothr-card-number]',
           placeholder: cardNumberPlaceholderText
         },
-        ccexp: { 
-          selector: '[data-smoothr-card-expiry]',
+        ccexp: {
+          selector:   '[data-smoothr-card-expiry]',
           placeholder: expiryPlaceholderText
         },
-        cvv: { 
-          selector: '[data-smoothr-card-cvc]',
+        cvv: {
+          selector:   '[data-smoothr-card-cvc]',
           placeholder: cvcPlaceholderText
         }
       },
-      customCss: customCss,
+      customCss,
       fieldsAvailableCallback() {
-        console.log('[NMI] Fields available, ready to tokenize');
-        // Style the iframes directly and force height
-        const iframes = document.querySelectorAll('iframe[id^="CollectJS"]');
+        console.log('[NMI] Fields available, ready to tokenize')
+        const iframes = document.querySelectorAll('iframe[id^="CollectJS"]')
         iframes.forEach(iframe => {
-          iframe.style.position = 'absolute';
-          iframe.style.top = '0';
-          iframe.style.left = '0';
-          iframe.style.width = '100%';
-          iframe.style.height = cardNumberDiv.offsetHeight + 'px';
-          iframe.style.border = 'none';
-          iframe.style.background = 'transparent';
-        });
-        // Hide Webflow placeholder elements
-        [cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(el => {
-          if (el) el.style.display = 'none';
-        });
+          iframe.style.position = 'absolute'
+          iframe.style.top      = '0'
+          iframe.style.left     = '0'
+          iframe.style.width    = '100%'
+          iframe.style.height   = cardNumberDiv.offsetHeight + 'px'
+          iframe.style.border   = 'none'
+          iframe.style.background = 'transparent'
+        })
+        ;[cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(
+          el => el && (el.style.display = 'none')
+        )
       },
       callback(response) {
         console.log('[NMI] Tokenization response:', response)
@@ -176,16 +186,15 @@ function configureCollectJS() {
           window.SMOOTHR_CONFIG.storeId
         )
 
-        // Gather form + cart data
-        const firstName   = document.querySelector('[data-smoothr-first-name]')?.value  || ''
-        const lastName    = document.querySelector('[data-smoothr-last-name]')?.value   || ''
-        const email       = document.querySelector('[data-smoothr-email]')?.value       || ''
-        const shipLine1   = document.querySelector('[data-smoothr-ship-line1]')?.value  || ''
-        const shipLine2   = document.querySelector('[data-smoothr-ship-line2]')?.value  || ''
-        const shipCity    = document.querySelector('[data-smoothr-ship-city]')?.value   || ''
-        const shipState   = document.querySelector('[data-smoothr-ship-state]')?.value  || ''
-        const shipPostal  = document.querySelector('[data-smoothr-ship-postal]')?.value || ''
-        const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value|| ''
+        const firstName   = document.querySelector('[data-smoothr-first-name]')?.value   || ''
+        const lastName    = document.querySelector('[data-smoothr-last-name]')?.value    || ''
+        const email       = document.querySelector('[data-smoothr-email]')?.value        || ''
+        const shipLine1   = document.querySelector('[data-smoothr-ship-line1]')?.value   || ''
+        const shipLine2   = document.querySelector('[data-smoothr-ship-line2]')?.value   || ''
+        const shipCity    = document.querySelector('[data-smoothr-ship-city]')?.value    || ''
+        const shipState   = document.querySelector('[data-smoothr-ship-state]')?.value   || ''
+        const shipPostal  = document.querySelector('[data-smoothr-ship-postal]')?.value  || ''
+        const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value || ''
 
         const amountEl = document.querySelector('[data-smoothr-total]')
         const amount   = amountEl
@@ -208,11 +217,10 @@ function configureCollectJS() {
           return
         }
 
-        // Send to your backend
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-          method: 'POST',
+          method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body:    JSON.stringify({
             payment_token: response.token,
             store_id:      window.SMOOTHR_CONFIG.storeId,
             first_name:    firstName,
@@ -271,7 +279,6 @@ export async function createPaymentMethod() {
   return { error: { message: 'use CollectJS callback' }, payment_method: null }
 }
 
-// Default export
 export default {
   mountCardFields,
   mountNMI,
@@ -280,7 +287,6 @@ export default {
   createPaymentMethod
 }
 
-// Expose global hook & auto-mount
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   window.Smoothr.mountNMIFields = mountCardFields
