@@ -1,7 +1,4 @@
-# Codex Command
-# Replace the entire contents of src/checkout/gateways/nmi.js with the following:
 
-cat > src/checkout/gateways/nmi.js << 'EOF'
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
 
@@ -303,4 +300,3 @@ if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', mountCardFields)
   }
 }
-EOF
