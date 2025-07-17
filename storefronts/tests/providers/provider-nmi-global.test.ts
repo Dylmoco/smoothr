@@ -3,10 +3,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 beforeEach(() => {
   vi.resetModules();
   delete (window as any).Smoothr;
+  Object.defineProperty(document, 'readyState', { configurable: true, value: 'loading' });
+  vi.spyOn(document, 'addEventListener').mockImplementation(() => {});
 });
 
 afterEach(() => {
   delete (window as any).Smoothr;
+  Object.defineProperty(document, 'readyState', { configurable: true, value: 'complete' });
+  (document.addEventListener as any).mockRestore?.();
 });
 
 describe('nmi gateway global', () => {
