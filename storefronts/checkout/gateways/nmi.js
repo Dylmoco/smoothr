@@ -8,13 +8,13 @@ let isConfigured = false
 let isLocked     = false
 
 /**
- * Public entry: fetch your tokenization key then kick off the old init logic.
+ * Public entry: fetch your tokenization key then kick off the init logic.
  */
 export async function mountCardFields() {
   if (hasMounted) return
   hasMounted = true
 
-  // PERF: warm & preload our proxied Collect.js
+  // PERF: prefetch + preconnect + preload Collect.js
   addPerformanceLinks()
 
   const storeId =
@@ -33,32 +33,33 @@ export async function mountCardFields() {
 
 function addPerformanceLinks() {
   // only once
-  if (document.querySelector('link[href="https://sdk.smoothr.io/collect.js"]')) return
+  if (document.querySelector('link[href="https://secure.nmi.com/token/Collect.js"]')) return
 
-  // DNS-prefetch & preconnect to our own edge domain
+  // DNS-prefetch for NMI
   const dns = document.createElement('link')
   dns.rel  = 'dns-prefetch'
-  dns.href = 'https://sdk.smoothr.io'
+  dns.href = 'https://secure.nmi.com'
   document.head.appendChild(dns)
 
+  // preconnect to NMI
   const pc = document.createElement('link')
-  pc.rel        = 'preconnect'
-  pc.href       = 'https://sdk.smoothr.io'
+  pc.rel         = 'preconnect'
+  pc.href        = 'https://secure.nmi.com'
   pc.crossOrigin = ''
   document.head.appendChild(pc)
 
-  // preload the proxied Collect.js
+  // preload the Collect.js script
   const pl = document.createElement('link')
   pl.rel  = 'preload'
   pl.as   = 'script'
-  pl.href = 'https://sdk.smoothr.io/collect.js'
+  pl.href = 'https://secure.nmi.com/token/Collect.js'
   document.head.appendChild(pl)
 
   console.log('[NMI] Added performance links for faster load')
 }
 
 /**
- * Exactly your old working code, except now loading from our proxy.
+ * Load NMI’s Collect.js and configure.
  */
 export function initNMI(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...')
@@ -69,14 +70,13 @@ export function initNMI(tokenizationKey) {
 
   const script = document.createElement('script')
   script.id = 'collectjs-script'
-  // 🚀 load from our Cloudflare Worker proxy
-  script.src = 'https://sdk.smoothr.io/collect.js'
+  script.src = 'https://secure.nmi.com/token/Collect.js'
   script.setAttribute('data-tokenization-key', tokenizationKey)
   console.log(
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  // ensure immediate, in-order execution
+  // ensure immediate, in-order execution once loaded
   script.async = false
   document.head.appendChild(script)
 
@@ -125,15 +125,15 @@ function configureCollectJS() {
         )
 
         // Gather form + cart data
-        const firstName  = document.querySelector('[data-smoothr-first-name]')?.value  || ''
-        const lastName   = document.querySelector('[data-smoothr-last-name]')?.value   || ''
-        const email      = document.querySelector('[data-smoothr-email]')?.value       || ''
-        const shipLine1  = document.querySelector('[data-smoothr-ship-line1]')?.value  || ''
-        const shipLine2  = document.querySelector('[data-smoothr-ship-line2]')?.value  || ''
-        const shipCity   = document.querySelector('[data-smoothr-ship-city]')?.value   || ''
-        const shipState  = document.querySelector('[data-smoothr-ship-state]')?.value  || ''
-        const shipPostal = document.querySelector('[data-smoothr-ship-postal]')?.value || ''
-        const shipCountry= document.querySelector('[data-smoothr-ship-country]')?.value|| ''
+        const firstName   = document.querySelector('[data-smoothr-first-name]')?.value  || ''
+        const lastName    = document.querySelector('[data-smoothr-last-name]')?.value   || ''
+        const email       = document.querySelector('[data-smoothr-email]')?.value       || ''
+        const shipLine1   = document.querySelector('[data-smoothr-ship-line1]')?.value  || ''
+        const shipLine2   = document.querySelector('[data-smoothr-ship-line2]')?.value  || ''
+        const shipCity    = document.querySelector('[data-smoothr-ship-city]')?.value   || ''
+        const shipState   = document.querySelector('[data-smoothr-ship-state]')?.value  || ''
+        const shipPostal  = document.querySelector('[data-smoothr-ship-postal]')?.value || ''
+        const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value|| ''
 
         const amountEl = document.querySelector('[data-smoothr-total]')
         const amount   = amountEl
