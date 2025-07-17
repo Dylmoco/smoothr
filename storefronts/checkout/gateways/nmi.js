@@ -25,10 +25,6 @@ export async function mountCardFields() {
     return
   }
 
-  // Hide divs until ready
-  const fields = document.querySelectorAll('[data-smoothr-card-number], [data-smoothr-card-expiry], [data-smoothr-card-cvc]');
-  fields.forEach(field => field.style.visibility = 'hidden');
-
   initNMI(tokenizationKey)
 }
 
@@ -117,6 +113,8 @@ function configureCollectJS() {
       'justify-content': 'flex-start',
       'outline': 'none',
       'vertical-align': 'middle',
+      'transition': 'all 0.3s ease', // Smooth fade-in
+      'opacity': 0, // Start invisible
       '::placeholder': {
         'color': placeholderStyle.color,
         'font-family': placeholderStyle.fontFamily,
@@ -131,7 +129,8 @@ function configureCollectJS() {
         'position': 'absolute',
         'top': '50%',
         'transform': 'translateY(-50%)',
-        'left': divStyle.paddingLeft
+        'left': divStyle.paddingLeft,
+        'transition': 'all 0.3s ease' // Smooth shift
       }
     };
 
@@ -166,14 +165,12 @@ function configureCollectJS() {
           iframe.style.height = cardNumberDiv.offsetHeight + 'px';
           iframe.style.border = 'none';
           iframe.style.background = 'transparent';
+          iframe.style.opacity = '1'; // Fade in
         });
         // Hide Webflow placeholder elements
         [cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(el => {
           if (el) el.style.display = 'none';
         });
-        // Show fields now that ready
-        const fields = document.querySelectorAll('[data-smoothr-card-number], [data-smoothr-card-expiry], [data-smoothr-card-cvc]');
-        fields.forEach(field => field.style.visibility = 'visible');
       },
       callback(response) {
         console.log('[NMI] Tokenization response:', response)
