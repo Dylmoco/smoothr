@@ -7532,7 +7532,7 @@ async function mountNMI() {
   const numEl = await waitForElement("[data-smoothr-card-number]");
   const expEl = await waitForElement("[data-smoothr-card-expiry]");
   const cvvEl = await waitForElement("[data-smoothr-card-cvc]");
-  const postalEl = document.querySelector("[data-smoothr-postal]");
+  const postalEl = document.querySelector("[data-smoothr-bill-postal]");
   if (!numEl || !expEl || !cvvEl)
     return;
   [numEl, expEl, cvvEl].forEach(
