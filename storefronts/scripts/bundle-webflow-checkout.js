@@ -44,6 +44,9 @@ try {
       __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(supabaseAnonKey)
     }
   });
+  // Always output a short confirmation that bundling completed.
+  console.log('[bundle-webflow-checkout] Bundled Webflow checkout');
+  // Detailed output still respects the SMOOTHR_DEBUG flag.
   log(`Bundled ${entry} to ${outFile}`);
 } catch (e) {
   err(`Failed to bundle Webflow checkout: ${e.message}`);
