@@ -77,7 +77,6 @@ function configureCollectJS() {
       'background-color': 'transparent',
       'border': 'none',
       'box-shadow': 'none',
-      'padding': '0',
       'margin': '0',
       'color': divStyle.color,
       'font-family': divStyle.fontFamily,
@@ -90,7 +89,14 @@ function configureCollectJS() {
       'text-shadow': divStyle.textShadow,
       'width': '100%',
       'height': '100%',
-      'box-sizing': 'border-box'
+      'box-sizing': 'border-box',
+      'padding-top': divStyle.paddingTop,
+      'padding-right': divStyle.paddingRight,
+      'padding-bottom': divStyle.paddingBottom,
+      'padding-left': divStyle.paddingLeft,
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'flex-start'
     };
 
     CollectJS.configure({
