@@ -98,7 +98,7 @@ export async function initCheckout(config) {
     warn('missing [data-smoothr-pay]');
     return;
   }
-  const payButtons = document.querySelectorAll('[data-smoothr-pay]'); // attribute presence only
+
 
   const block = checkoutEl.closest?.('[data-smoothr-product-id]') || document;
   const productId =
