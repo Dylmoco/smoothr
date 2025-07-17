@@ -46,7 +46,7 @@ function geoLookup(callback) {
 }
 
 
-// ─── Initialize all three pickers & auto-select ─────────────────────────────────
+// ─── Bootstrap & Initialize all pickers & auto-select ───────────────────────────
 function bootstrap(iso) {
   // Grab the three selects only after the ISO is known
   const shippingSelect = document.querySelector('select[name="shipping[country]"]');
@@ -85,10 +85,6 @@ function bootstrap(iso) {
 }
 
 function initializePickers() {
-  const detected = detectCountryFromLang();
-  if (detected) {
-    bootstrap(detected);
-  } else {
-    geoLookup(bootstrap);
-  }
+  // Always force Geo-IP lookup for country detection
+  geoLookup(bootstrap);
 }
