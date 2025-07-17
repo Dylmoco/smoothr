@@ -89,7 +89,8 @@ function configureCollectJS() {
       'text-align': divStyle.textAlign,
       'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': '100%'
+      'height': '100%',
+      'box-sizing': 'border-box'
     };
 
     CollectJS.configure({
@@ -102,7 +103,18 @@ function configureCollectJS() {
       },
       customCss: customCss,
       fieldsAvailableCallback() {
-        console.log('[NMI] Fields available, ready to tokenize')
+        console.log('[NMI] Fields available, ready to tokenize');
+        // Style the iframes directly
+        const iframes = document.querySelectorAll('iframe[id^="CollectJS"]');
+        iframes.forEach(iframe => {
+          iframe.style.position = 'absolute';
+          iframe.style.top = '0';
+          iframe.style.left = '0';
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+          iframe.style.border = 'none';
+          iframe.style.background = 'transparent';
+        });
       },
       callback(response) {
         console.log('[NMI] Tokenization response:', response)
