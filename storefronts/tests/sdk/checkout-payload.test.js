@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let domReadyCb;
-let clickHandler;
+let submitBtn;
 let originalDocument;
 let originalFetch;
 
 beforeEach(() => {
   vi.resetModules();
   domReadyCb = null;
-  clickHandler = null;
 
   delete global.window?.__SMOOTHR_CHECKOUT_INITIALIZED__;
   delete global.window?.__SMOOTHR_CHECKOUT_BOUND__;
@@ -39,11 +38,9 @@ beforeEach(() => {
   const cardNumberEl = {};
   const cardExpiryEl = {};
   const cardCvcEl = {};
-  const submitBtn = {
+  submitBtn = {
     disabled: false,
-    addEventListener: vi.fn((ev, cb) => {
-      if (ev === 'click') clickHandler = cb;
-    })
+    addEventListener: vi.fn()
   };
   const block = {
     dataset: { smoothrProductId: 'prod1' },
@@ -128,12 +125,15 @@ afterEach(() => {
 
 describe('checkout payload', () => {
   it('sends expected data to fetch', async () => {
-    await import('../../checkout/checkout.js');
+    const mod = await import('../../checkout/checkout.js');
     if (domReadyCb) {
       await domReadyCb();
     }
+    if (mod.initCheckout) await mod.initCheckout();
 
-    await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    const handler = submitBtn.addEventListener.mock.calls.find(c => c[0] === 'click')?.[1];
+    expect(typeof handler).toBe('function');
+    await handler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
     expect(global.fetch).toHaveBeenCalled();
     const args = global.fetch.mock.calls[0];

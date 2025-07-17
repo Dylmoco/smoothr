@@ -20,9 +20,9 @@ afterEach(() => {
 
 describe('webflow checkout adapter dom', () => {
 
-  it('does not reinitialize when flag is set', async () => {
+  it('loads without modifying global flag', async () => {
     await import('../../../platforms/webflow/checkout.js');
-    expect((window as any).__SMOOTHR_CHECKOUT_INITIALIZED__).toBe(true);
+    expect((window as any).__SMOOTHR_CHECKOUT_INITIALIZED__).toBeUndefined();
 
     vi.resetModules();
     (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
