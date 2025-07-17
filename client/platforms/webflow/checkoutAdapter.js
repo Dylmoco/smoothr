@@ -50,14 +50,36 @@ function geoLookup(callback) {
 function initializePickers() {
   const defaultCountry = detectCountryFromLang();
 
-  // gather our three selects
-  const selects = [
-    document.querySelector('select[name="shipping[country]"]'),
-    document.querySelector('select[name="billing[country]"]'),
-    document.querySelector('select[name="phone[country]"]')
-  ].filter(Boolean);
+  // Grab the three selects by name
+  const shippingSelect = document.querySelector('select[name="shipping[country]"]');
+  const billingSelect  = document.querySelector('select[name="billing[country]"]');
+  const phoneSelect    = document.querySelector('select[name="phone[country]"]');
+  const selects = [shippingSelect, billingSelect, phoneSelect].filter(Boolean);
 
-  // turn them into searchable dropdowns
+  // 1) Pre-select the underlying <select> values
+  function applyDefault(iso) {
+    selects.forEach(sel => {
+      if (sel.name === 'phone[country]') {
+        // phone select option values are "ISO|+DialCode"
+        const match = Array.from(sel.options)
+          .find(o => o.value.split('|')[0] === iso);
+        if (match) sel.value = match.value;
+      } else {
+        // shipping/billing just use plain ISO codes
+        if (sel.querySelector(`option[value="${iso}"]`)) {
+          sel.value = iso;
+        }
+      }
+    });
+  }
+
+  if (defaultCountry) {
+    applyDefault(defaultCountry);
+  } else {
+    geoLookup(applyDefault);
+  }
+
+  // 2) Now instantiate Choices.js so it picks up the pre-selected value
   selects.forEach(sel => {
     new window.Choices(sel, {
       searchEnabled: true,
@@ -66,31 +88,7 @@ function initializePickers() {
     });
   });
 
-  // helper to apply default by ISO code
-  function applyDefault(iso) {
-    selects.forEach(sel => {
-      if (sel.name === 'phone[country]') {
-        // phone select has values like "GB|+44"
-        const match = Array.from(sel.options)
-          .find(o => o.value.split('|')[0] === iso);
-        if (match) sel.value = match.value;
-      } else {
-        // billing/shipping country have plain ISO values
-        if (sel.querySelector(`option[value="${iso}"]`)) {
-          sel.value = iso;
-        }
-      }
-    });
-  }
-
-  // run immediately or via Geo-IP
-  if (defaultCountry) {
-    applyDefault(defaultCountry);
-  } else {
-    geoLookup(applyDefault);
-  }
-
-  // finally, init intl-tel-input on your phone **input**
+  // 3) Finally, enhance the phone *input* itself with intl-tel-input
   const phoneInput = document.querySelector('input[name="shipping[phone]"]');
   if (phoneInput) {
     window.intlTelInput(phoneInput, {
