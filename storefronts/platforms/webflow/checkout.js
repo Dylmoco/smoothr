@@ -1,7 +1,7 @@
-export async function initCheckout() {
-  const mod = await import('../../checkout/checkout.js');
-  await mod.initCheckout();
-}
+
+
+import { initCheckout } from '../../checkout/checkout.js';
+
 
 document.addEventListener('DOMContentLoaded', () => {
   initCheckout();
