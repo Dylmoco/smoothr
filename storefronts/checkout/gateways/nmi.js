@@ -1,3 +1,5 @@
+// src/checkout/gateways/nmi.js
+
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
 
@@ -12,7 +14,7 @@ export async function mountCardFields() {
   if (hasMounted) return
   hasMounted = true
 
-  // Dynamically add preconnect and preload for faster loading
+  // PERF: warm & preload our proxied Collect.js
   addPerformanceLinks()
 
   const storeId =
@@ -30,25 +32,33 @@ export async function mountCardFields() {
 }
 
 function addPerformanceLinks() {
-  if (document.querySelector('link[href="https://secure.nmi.com/token/Collect.js"]')) return // Already added
+  // only once
+  if (document.querySelector('link[href="https://sdk.smoothr.io/collect.js"]')) return
 
-  const preconnect = document.createElement('link')
-  preconnect.rel = 'preconnect'
-  preconnect.href = 'https://secure.nmi.com'
-  preconnect.crossOrigin = 'anonymous'
-  document.head.appendChild(preconnect)
+  // DNS-prefetch & preconnect to our own edge domain
+  const dns = document.createElement('link')
+  dns.rel  = 'dns-prefetch'
+  dns.href = 'https://sdk.smoothr.io'
+  document.head.appendChild(dns)
 
-  const preload = document.createElement('link')
-  preload.rel = 'preload'
-  preload.href = 'https://secure.nmi.com/token/Collect.js'
-  preload.as = 'script'
-  document.head.appendChild(preload)
+  const pc = document.createElement('link')
+  pc.rel        = 'preconnect'
+  pc.href       = 'https://sdk.smoothr.io'
+  pc.crossOrigin = ''
+  document.head.appendChild(pc)
+
+  // preload the proxied Collect.js
+  const pl = document.createElement('link')
+  pl.rel  = 'preload'
+  pl.as   = 'script'
+  pl.href = 'https://sdk.smoothr.io/collect.js'
+  document.head.appendChild(pl)
 
   console.log('[NMI] Added performance links for faster load')
 }
 
 /**
- * Exactly your old working code, unchanged.
+ * Exactly your old working code, except now loading from our proxy.
  */
 export function initNMI(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...')
@@ -59,12 +69,14 @@ export function initNMI(tokenizationKey) {
 
   const script = document.createElement('script')
   script.id = 'collectjs-script'
-  script.src = 'https://secure.nmi.com/token/Collect.js'
+  // 🚀 load from our Cloudflare Worker proxy
+  script.src = 'https://sdk.smoothr.io/collect.js'
   script.setAttribute('data-tokenization-key', tokenizationKey)
   console.log(
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
+  // ensure immediate, in-order execution
   script.async = false
   document.head.appendChild(script)
 
@@ -112,7 +124,7 @@ function configureCollectJS() {
           window.SMOOTHR_CONFIG.storeId
         )
 
-        // Gather form + cart data exactly as before...
+        // Gather form + cart data
         const firstName  = document.querySelector('[data-smoothr-first-name]')?.value  || ''
         const lastName   = document.querySelector('[data-smoothr-last-name]')?.value   || ''
         const email      = document.querySelector('[data-smoothr-email]')?.value       || ''
@@ -195,7 +207,7 @@ function configureCollectJS() {
 // Legacy alias
 export const mountNMI = mountCardFields
 
-// These stubs satisfy the checkout dispatcher’s readiness checks
+// Gateway readiness checks
 export function isMounted() {
   return isConfigured
 }
@@ -207,7 +219,7 @@ export async function createPaymentMethod() {
   return { error: { message: 'use CollectJS callback' }, payment_method: null }
 }
 
-// **THE IMPORTANT PART**: export a default gateway object
+// Default export
 export default {
   mountCardFields,
   mountNMI,
@@ -216,12 +228,11 @@ export default {
   createPaymentMethod
 }
 
-// expose the old global hook if you need it
+// Expose global hook & auto-mount
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   window.Smoothr.mountNMIFields = mountCardFields
 
-  // Auto-mount on page load
   if (document.readyState === 'complete') {
     mountCardFields()
   } else {
