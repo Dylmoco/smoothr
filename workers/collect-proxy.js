@@ -1,27 +1,42 @@
 // workers/collect-proxy.js
 addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-    // Only proxy the /collect.js path
-    if (url.pathname === '/collect.js') {
-      event.respondWith(handleCollectProxy(event.request));
-    }
-  });
-  
-  async function handleCollectProxy(request) {
-    const cache = caches.default;
-    // Check cache first
-    let response = await cache.match(request);
-    if (!response) {
-      // Fetch from NMI, with Cloudflare edge caching
-      const upstream = await fetch('https://secure.nmi.com/token/Collect.js', {
-        cf: { cacheTtl: 3600, cacheEverything: true }
-      });
-      response = new Response(upstream.body, upstream);
-      // Allow CORS so your page can load it
-      response.headers.set('Access-Control-Allow-Origin', '*');
-      // Store in cache
-      event.waitUntil(cache.put(request, response.clone()));
-    }
-    return response;
+  const { request } = event;
+  const url = new URL(request.url);
+  if (url.pathname === '/collect.js') {
+    return event.respondWith(handleCollectProxy(request, event));
   }
-  
+  // otherwise, let other routes fall through
+});
+
+async function handleCollectProxy(request, event) {
+  const cache = caches.default;
+  // Try cache
+  let response = await cache.match(request);
+  if (response) return response;
+
+  // Fetch from NMI
+  const upstream = await fetch('https://secure.nmi.com/token/Collect.js', {
+    cf: { cacheTtl: 3600, cacheEverything: true }
+  });
+
+  // Clone headers, force CORS and correct content-type
+  const headers = new Headers(upstream.headers);
+  headers.set('Access-Control-Allow-Origin', '*');
+  // Ensure the browser sees it as JS
+  headers.set('Content-Type', 'application/javascript; charset=utf-8');
+
+  // Read the full body
+  const body = await upstream.arrayBuffer();
+
+  // Build a proper Response
+  response = new Response(body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers
+  });
+
+  // Cache it (don’t block the response)
+  event.waitUntil(cache.put(request, response.clone()));
+
+  return response;
+}
