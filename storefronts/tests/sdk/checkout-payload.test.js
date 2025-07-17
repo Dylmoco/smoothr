@@ -18,6 +18,12 @@ beforeEach(() => {
   delete global.window?.__SMOOTHR_CHECKOUT_INITIALIZED__;
   delete global.window?.__SMOOTHR_CHECKOUT_BOUND__;
 
+  global.localStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn()
+  };
+
   originalFetch = global.fetch;
 
   global.fetch = vi.fn(() =>
@@ -83,6 +89,8 @@ beforeEach(() => {
     })
   };
 
+  submitBtn.closest = vi.fn(() => block);
+
   originalDocument = global.document;
   global.document = {
     querySelector: vi.fn(sel => {
@@ -123,7 +131,7 @@ beforeEach(() => {
     }
   };
   global.window.smoothr = global.window.Smoothr;
-  originalDocument = global.document;
+  global.alert = global.window.alert = vi.fn();
 });
 
 afterEach(() => {
@@ -143,6 +151,7 @@ describe('checkout payload', () => {
 
     expect(typeof clickHandler).toBe('function');
     await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    await flushPromises();
 
 
     expect(global.fetch).toHaveBeenCalled();
