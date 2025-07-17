@@ -1,3 +1,7 @@
+# Codex Command
+# Replace the entire contents of src/checkout/gateways/nmi.js with the following:
+
+cat > src/checkout/gateways/nmi.js << 'EOF'
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
 
@@ -91,9 +95,9 @@ function configureCollectJS() {
       ? cvcPlaceholderEl.textContent.trim()
       : 'CVC'
 
-    // Use card number placeholder styles for all (global)
+    // Use the placeholder pseudo-styles from your Webflow div
     const placeholderStyle = cardNumberPlaceholderEl
-      ? getComputedStyle(cardNumberPlaceholderEl)
+      ? getComputedStyle(cardNumberPlaceholderEl, '::placeholder')
       : divStyle
 
     const customCss = {
@@ -124,7 +128,7 @@ function configureCollectJS() {
       'justify-content': 'flex-start',
       'outline': 'none',
       'vertical-align': 'middle',
-      // apply Webflow div placeholder styles inside the iframe
+      // apply Webflow placeholder styles inside the iframe inputs
       'input::placeholder': {
         'color':         placeholderStyle.color,
         'font-family':   placeholderStyle.fontFamily,
@@ -143,15 +147,15 @@ function configureCollectJS() {
       paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: {
-          selector:   '[data-smoothr-card-number]',
+          selector:    '[data-smoothr-card-number]',
           placeholder: cardNumberPlaceholderText
         },
         ccexp: {
-          selector:   '[data-smoothr-card-expiry]',
+          selector:    '[data-smoothr-card-expiry]',
           placeholder: expiryPlaceholderText
         },
         cvv: {
-          selector:   '[data-smoothr-card-cvc]',
+          selector:    '[data-smoothr-card-cvc]',
           placeholder: cvcPlaceholderText
         }
       },
@@ -160,12 +164,12 @@ function configureCollectJS() {
         console.log('[NMI] Fields available, ready to tokenize')
         const iframes = document.querySelectorAll('iframe[id^="CollectJS"]')
         iframes.forEach(iframe => {
-          iframe.style.position = 'absolute'
-          iframe.style.top      = '0'
-          iframe.style.left     = '0'
-          iframe.style.width    = '100%'
-          iframe.style.height   = cardNumberDiv.offsetHeight + 'px'
-          iframe.style.border   = 'none'
+          iframe.style.position   = 'absolute'
+          iframe.style.top        = '0'
+          iframe.style.left       = '0'
+          iframe.style.width      = '100%'
+          iframe.style.height     = cardNumberDiv.offsetHeight + 'px'
+          iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
         ;[cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(
@@ -279,6 +283,7 @@ export async function createPaymentMethod() {
   return { error: { message: 'use CollectJS callback' }, payment_method: null }
 }
 
+// Default export
 export default {
   mountCardFields,
   mountNMI,
@@ -287,6 +292,7 @@ export default {
   createPaymentMethod
 }
 
+// Expose global hook & auto-mount
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   window.Smoothr.mountNMIFields = mountCardFields
@@ -297,3 +303,4 @@ if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', mountCardFields)
   }
 }
+EOF
