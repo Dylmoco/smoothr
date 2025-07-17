@@ -14,9 +14,6 @@ export async function mountCardFields() {
   if (hasMounted) return
   hasMounted = true
 
-  // PERF: prefetch + preconnect + preload Collect.js
-  addPerformanceLinks()
-
   const storeId =
     typeof window !== 'undefined' && window.Smoothr
       ? window.Smoothr.store_id
@@ -29,33 +26,6 @@ export async function mountCardFields() {
   }
 
   initNMI(tokenizationKey)
-}
-
-function addPerformanceLinks() {
-  // only once
-  if (document.querySelector('link[href="https://secure.nmi.com/token/Collect.js"]')) return
-
-  // DNS-prefetch for NMI
-  const dns = document.createElement('link')
-  dns.rel  = 'dns-prefetch'
-  dns.href = 'https://secure.nmi.com'
-  document.head.appendChild(dns)
-
-  // preconnect to NMI
-  const pc = document.createElement('link')
-  pc.rel         = 'preconnect'
-  pc.href        = 'https://secure.nmi.com'
-  pc.crossOrigin = ''
-  document.head.appendChild(pc)
-
-  // preload the Collect.js script
-  const pl = document.createElement('link')
-  pl.rel  = 'preload'
-  pl.as   = 'script'
-  pl.href = 'https://secure.nmi.com/token/Collect.js'
-  document.head.appendChild(pl)
-
-  console.log('[NMI] Added performance links for faster load')
 }
 
 /**
@@ -76,8 +46,8 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  // ensure immediate, in-order execution once loaded
-  script.async = false
+  // original async behavior
+  script.async = true
   document.head.appendChild(script)
 
   script.onload = () => {
