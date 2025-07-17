@@ -9,7 +9,7 @@ beforeEach(async () => {
   vi.resetModules();
   document.body.innerHTML = '';
   const wrapper = document.createElement('div');
-  ['card-number', 'card-expiry', 'card-cvc', 'postal'].forEach(attr => {
+  ['card-number', 'card-expiry', 'card-cvc', 'bill-postal'].forEach(attr => {
     const div = document.createElement('div');
     div.setAttribute(`data-smoothr-${attr}`, '');
     if (attr === 'card-expiry') {
@@ -62,7 +62,7 @@ describe('mountNMI', () => {
     await mountNMI();
     const num = document.querySelector('[data-smoothr-card-number]');
     const cvc = document.querySelector('[data-smoothr-card-cvc]');
-    const postal = document.querySelector('[data-smoothr-postal]');
+    const postal = document.querySelector('[data-smoothr-bill-postal]');
     const expiry = document.querySelector('[data-smoothr-card-expiry]');
     expect(num?.querySelector('input')?.getAttribute('data-collect')).toBe('cardNumber');
     expect(cvc?.querySelector('input')?.getAttribute('data-collect')).toBe('cvv');
