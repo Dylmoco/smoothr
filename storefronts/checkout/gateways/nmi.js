@@ -1,5 +1,3 @@
-// src/checkout/gateways/nmi.js
-
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
 
@@ -14,6 +12,9 @@ export async function mountCardFields() {
   if (hasMounted) return
   hasMounted = true
 
+  // Dynamically add preconnect and preload for faster loading
+  addPerformanceLinks()
+
   const storeId =
     typeof window !== 'undefined' && window.Smoothr
       ? window.Smoothr.store_id
@@ -26,6 +27,24 @@ export async function mountCardFields() {
   }
 
   initNMI(tokenizationKey)
+}
+
+function addPerformanceLinks() {
+  if (document.querySelector('link[href="https://secure.nmi.com/token/Collect.js"]')) return // Already added
+
+  const preconnect = document.createElement('link')
+  preconnect.rel = 'preconnect'
+  preconnect.href = 'https://secure.nmi.com'
+  preconnect.crossOrigin = 'anonymous'
+  document.head.appendChild(preconnect)
+
+  const preload = document.createElement('link')
+  preload.rel = 'preload'
+  preload.href = 'https://secure.nmi.com/token/Collect.js'
+  preload.as = 'script'
+  document.head.appendChild(preload)
+
+  console.log('[NMI] Added performance links for faster load')
 }
 
 /**
@@ -201,4 +220,11 @@ export default {
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   window.Smoothr.mountNMIFields = mountCardFields
+
+  // Auto-mount on page load
+  if (document.readyState === 'complete') {
+    mountCardFields()
+  } else {
+    document.addEventListener('DOMContentLoaded', mountCardFields)
+  }
 }
