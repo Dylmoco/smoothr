@@ -8,7 +8,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args) => debug && console.log('[bundle-webflow-checkout]', ...args);
-const err = (...args) => debug && console.error('[bundle-webflow-checkout]', ...args);
+// Always log errors, even when SMOOTHR_DEBUG is disabled.
+const err = (...args) => console.error('[bundle-webflow-checkout]', ...args);
 
 const entry = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
 const outFile = join(__dirname, '..', 'dist', 'platforms', 'webflow', 'checkout.js');
