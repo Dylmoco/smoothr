@@ -113,8 +113,6 @@ function configureCollectJS() {
       'justify-content': 'flex-start',
       'outline': 'none',
       'vertical-align': 'middle',
-      'transition': 'all 0.3s ease', // Smooth fade-in
-      'opacity': 0, // Start invisible
       '::placeholder': {
         'color': placeholderStyle.color,
         'font-family': placeholderStyle.fontFamily,
@@ -129,9 +127,15 @@ function configureCollectJS() {
         'position': 'absolute',
         'top': '50%',
         'transform': 'translateY(-50%)',
-        'left': divStyle.paddingLeft,
-        'transition': 'all 0.3s ease' // Smooth shift
+        'left': divStyle.paddingLeft
       }
+    };
+
+    // Map fields to placeholders
+    const fieldToPlaceholder = {
+      'ccnumber': cardNumberPlaceholderEl,
+      'ccexp': expiryPlaceholderEl,
+      'cvv': cvcPlaceholderEl
     };
 
     CollectJS.configure({
@@ -153,6 +157,11 @@ function configureCollectJS() {
         }
       },
       customCss: customCss,
+      focusCallback: function(field) {
+        console.log('[NMI] Focus on:', field);
+        const el = fieldToPlaceholder[field];
+        if (el) el.style.display = 'none';
+      },
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize');
         // Style the iframes directly and force height
@@ -165,11 +174,6 @@ function configureCollectJS() {
           iframe.style.height = cardNumberDiv.offsetHeight + 'px';
           iframe.style.border = 'none';
           iframe.style.background = 'transparent';
-          iframe.style.opacity = '1'; // Fade in
-        });
-        // Hide Webflow placeholder elements
-        [cardNumberPlaceholderEl, expiryPlaceholderEl, cvcPlaceholderEl].forEach(el => {
-          if (el) el.style.display = 'none';
         });
       },
       callback(response) {
