@@ -128,12 +128,17 @@ afterEach(() => {
 
 describe('checkout payload', () => {
   it('sends expected data to fetch', async () => {
-    await import('../../checkout/checkout.js');
+    const mod = await import('../../checkout/checkout.js');
     if (domReadyCb) {
       await domReadyCb();
     }
+    if (mod.initCheckout) await mod.initCheckout();
 
-    await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    if (clickHandler) {
+      await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    } else {
+      throw new Error('Checkout handler not bound');
+    }
 
     expect(global.fetch).toHaveBeenCalled();
     const args = global.fetch.mock.calls[0];
