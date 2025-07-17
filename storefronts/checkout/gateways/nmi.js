@@ -29,7 +29,7 @@ export async function mountCardFields() {
 }
 
 /**
- * Load NMI’s Collect.js and configure.
+ * Load NMI’s Collect.js and configure
  */
 export function initNMI(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...')
