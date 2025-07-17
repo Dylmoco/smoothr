@@ -87,7 +87,9 @@ function configureCollectJS() {
       'letter-spacing': divStyle.letterSpacing,
       'line-height': divStyle.lineHeight,
       'text-align': divStyle.textAlign,
-      'text-shadow': divStyle.textShadow
+      'text-shadow': divStyle.textShadow,
+      'width': '100%',
+      'height': '100%'
     };
 
     CollectJS.configure({
