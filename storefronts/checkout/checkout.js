@@ -309,7 +309,4 @@ export async function initCheckout(config) {
   log(`${eventName} handler attached`);
 }
 
-document.addEventListener('DOMContentLoaded', initCheckout);
-if (document.readyState !== 'loading') {
-  initCheckout();
-}
+// Remove these platform-agnostic auto-bindings; adapter handles it now
