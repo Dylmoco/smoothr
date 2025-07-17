@@ -89,16 +89,27 @@ function configureCollectJS() {
       'text-align': divStyle.textAlign,
       'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': '100%'
+      'height': '100%',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'flex-start',
+      '::placeholder': {
+        'color': divStyle.color,
+        'opacity': 0.7,
+        'line-height': divStyle.lineHeight,
+        'position': 'absolute',
+        'top': '50%',
+        'transform': 'translateY(-50%)'
+      }
     };
 
     CollectJS.configure({
       variant: 'inline',
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: { selector: '[data-smoothr-card-number]' },
-        ccexp:    { selector: '[data-smoothr-card-expiry]' },
-        cvv:      { selector: '[data-smoothr-card-cvc]' }
+        ccnumber: { selector: '[data-smoothr-card-number]', placeholder: 'Card Number' },
+        ccexp:    { selector: '[data-smoothr-card-expiry]', placeholder: 'MM/YY' },
+        cvv:      { selector: '[data-smoothr-card-cvc]', placeholder: 'CVC' }
       },
       customCss: customCss,
       fieldsAvailableCallback() {
