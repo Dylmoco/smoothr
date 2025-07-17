@@ -1,13 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+function flushPromises() {
+  return new Promise(setImmediate);
+}
+
 let domReadyCb;
 let submitBtn;
 let originalDocument;
 let originalFetch;
+let clickHandler;
 
 beforeEach(() => {
   vi.resetModules();
   domReadyCb = null;
+  clickHandler = null;
 
   delete global.window?.__SMOOTHR_CHECKOUT_INITIALIZED__;
   delete global.window?.__SMOOTHR_CHECKOUT_BOUND__;
@@ -40,7 +46,9 @@ beforeEach(() => {
   const cardCvcEl = {};
   submitBtn = {
     disabled: false,
-    addEventListener: vi.fn()
+    addEventListener: vi.fn((ev, cb) => {
+      if (ev === 'click' || ev === 'submit') clickHandler = cb;
+    })
   };
   const block = {
     dataset: { smoothrProductId: 'prod1' },
@@ -130,11 +138,11 @@ describe('checkout payload', () => {
       await domReadyCb();
     }
     if (mod.initCheckout) await mod.initCheckout();
+    await flushPromises();
 
 
-    const handler = submitBtn.addEventListener.mock.calls.find(c => c[0] === 'click')?.[1];
-    expect(typeof handler).toBe('function');
-    await handler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    expect(typeof clickHandler).toBe('function');
+    await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
 
 
     expect(global.fetch).toHaveBeenCalled();
