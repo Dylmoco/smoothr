@@ -46,8 +46,8 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  // original async behavior
-  script.async = true
+  // Load synchronously for faster mount
+  script.async = false
   document.head.appendChild(script)
 
   script.onload = () => {
@@ -73,22 +73,11 @@ function configureCollectJS() {
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]');
     const divStyle = getComputedStyle(cardNumberDiv);
 
-    // Get placeholder info from Webflow elements with custom attributes
-    const cardNumberPlaceholderEl = cardNumberDiv.querySelector('[data-smoothr-card-placeholder]');
-    const expiryPlaceholderEl = document.querySelector('[data-smoothr-card-expiry] [data-smoothr-expiry-placeholder]');
-    const cvcPlaceholderEl = document.querySelector('[data-smoothr-card-cvc] [data-smoothr-cvv-placeholder]');
-
-    const cardNumberPlaceholderText = cardNumberPlaceholderEl ? cardNumberPlaceholderEl.textContent.trim() : 'Card Number';
-    const expiryPlaceholderText = expiryPlaceholderEl ? expiryPlaceholderEl.textContent.trim() : 'MM/YY';
-    const cvcPlaceholderText = cvcPlaceholderEl ? cvcPlaceholderEl.textContent.trim() : 'CVC';
-
-    // Use card number placeholder styles for all (global)
-    const placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle;
-
     const customCss = {
       'background-color': 'transparent',
       'border': 'none',
       'box-shadow': 'none',
+      'padding': '0',
       'margin': '0',
       'color': divStyle.color,
       'font-family': divStyle.fontFamily,
@@ -100,92 +89,20 @@ function configureCollectJS() {
       'text-align': divStyle.textAlign,
       'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': '100%',
-      'min-height': divStyle.minHeight,
-      'max-height': divStyle.maxHeight,
-      'box-sizing': 'border-box',
-      'padding-top': divStyle.paddingTop,
-      'padding-right': divStyle.paddingRight,
-      'padding-bottom': divStyle.paddingBottom,
-      'padding-left': divStyle.paddingLeft,
-      'display': 'flex',
-      'align-items': 'center',
-      'justify-content': 'flex-start',
-      'outline': 'none',
-      'vertical-align': 'middle',
-      '::placeholder': {
-        'color': placeholderStyle.color,
-        'font-family': placeholderStyle.fontFamily,
-        'font-size': placeholderStyle.fontSize,
-        'font-style': placeholderStyle.fontStyle,
-        'font-weight': placeholderStyle.fontWeight,
-        'letter-spacing': placeholderStyle.letterSpacing,
-        'line-height': placeholderStyle.lineHeight,
-        'text-align': placeholderStyle.textAlign,
-        'text-shadow': placeholderStyle.textShadow,
-        'opacity': placeholderStyle.opacity || 0.7,
-        'position': 'absolute',
-        'top': '50%',
-        'transform': 'translateY(-50%)',
-        'left': divStyle.paddingLeft
-      }
-    };
-
-    // Map fields to placeholders and iframe ids
-    const fieldToPlaceholder = {
-      'ccnumber': cardNumberPlaceholderEl,
-      'ccexp': expiryPlaceholderEl,
-      'cvv': cvcPlaceholderEl
-    };
-
-    const fieldToIframeId = {
-      'ccnumber': 'CollectJSccnumber',
-      'ccexp': 'CollectJSccexp',
-      'cvv': 'CollectJScvv'
+      'height': '100%'
     };
 
     CollectJS.configure({
       variant: 'inline',
-      styleSniffer: true,
       paymentSelector: '[data-smoothr-pay]',
       fields: {
-        ccnumber: { 
-          selector: '[data-smoothr-card-number]',
-          placeholder: cardNumberPlaceholderText
-        },
-        ccexp: { 
-          selector: '[data-smoothr-card-expiry]',
-          placeholder: expiryPlaceholderText
-        },
-        cvv: { 
-          selector: '[data-smoothr-card-cvc]',
-          placeholder: cvcPlaceholderText
-        }
+        ccnumber: { selector: '[data-smoothr-card-number]' },
+        ccexp:    { selector: '[data-smoothr-card-expiry]' },
+        cvv:      { selector: '[data-smoothr-card-cvc]' }
       },
       customCss: customCss,
-      focusCallback: function(field) {
-        console.log('[NMI] Focus on:', field);
-        const el = fieldToPlaceholder[field];
-        if (el) el.style.display = 'none';
-
-        const iframeId = fieldToIframeId[field];
-        const iframe = document.getElementById(iframeId);
-        if (iframe) iframe.style.opacity = '1';
-      },
       fieldsAvailableCallback() {
-        console.log('[NMI] Fields available, ready to tokenize');
-        // Style the iframes directly and force height, start hidden
-        const iframes = document.querySelectorAll('iframe[id^="CollectJS"]');
-        iframes.forEach(iframe => {
-          iframe.style.position = 'absolute';
-          iframe.style.top = '0';
-          iframe.style.left = '0';
-          iframe.style.width = '100%';
-          iframe.style.height = cardNumberDiv.offsetHeight + 'px';
-          iframe.style.border = 'none';
-          iframe.style.background = 'transparent';
-          iframe.style.opacity = '0'; // Start hidden
-        });
+        console.log('[NMI] Fields available, ready to tokenize')
       },
       callback(response) {
         console.log('[NMI] Tokenization response:', response)
