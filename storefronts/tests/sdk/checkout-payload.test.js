@@ -131,9 +131,11 @@ describe('checkout payload', () => {
     }
     if (mod.initCheckout) await mod.initCheckout();
 
+
     const handler = submitBtn.addEventListener.mock.calls.find(c => c[0] === 'click')?.[1];
     expect(typeof handler).toBe('function');
     await handler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
+
 
     expect(global.fetch).toHaveBeenCalled();
     const args = global.fetch.mock.calls[0];
