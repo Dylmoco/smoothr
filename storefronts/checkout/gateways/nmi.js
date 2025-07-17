@@ -65,7 +65,7 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  script.async = true
+  script.async = false
   document.head.appendChild(script)
 
   script.onload = () => {
