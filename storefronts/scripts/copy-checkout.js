@@ -1,3 +1,5 @@
+// storefronts/scripts/copy-checkout.js
+
 import { copyFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,9 +13,21 @@ const err = (...args) => debug && console.error('[copy-checkout]', ...args);
 // Use the generic checkout script that mounts individual card fields
 const src = join(__dirname, '..', 'checkout', 'checkout.js');
 const dest = join(__dirname, '..', 'dist', 'checkout.js');
+
+// Gateways
 const gatewaysSrcDir = join(__dirname, '..', 'checkout', 'gateways');
 const gatewaysDestDir = join(__dirname, '..', 'dist', 'gateways');
-const webflowSrc = join(__dirname, '..', 'platforms', 'webflow', 'checkout.js');
+
+// Webflow adapter: point to the updated client/platforms path
+const webflowSrc = join(
+  __dirname,
+  '..',
+  '..',
+  'client',
+  'platforms',
+  'webflow',
+  'checkoutAdapter.js'
+);
 const webflowDest = join(
   __dirname,
   '..',
@@ -22,6 +36,8 @@ const webflowDest = join(
   'webflow',
   'checkout.js'
 );
+
+// Utility scripts
 const waitForElementSrc = join(
   __dirname,
   '..',
@@ -50,7 +66,7 @@ try {
   await copyFile(webflowSrc, webflowDest);
   log(`Copied ${webflowSrc} to ${webflowDest}`);
 } catch (err) {
-  err(`Failed to copy Webflow checkout.js: ${err.message}`);
+  err(`Failed to copy Webflow checkout adapter: ${err.message}`);
   process.exit(1);
 }
 
