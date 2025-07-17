@@ -19,10 +19,7 @@ export async function mountCardFields() {
       ? window.Smoothr.store_id
       : undefined
 
-  console.time('[NMI] Token fetch time');
   const tokenizationKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
-  console.timeEnd('[NMI] Token fetch time');
-
   if (!tokenizationKey) {
     console.warn('[NMI] Tokenization key missing')
     return
@@ -49,7 +46,8 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  script.async = false // Sync load to speed up
+  // original async behavior
+  script.async = true
   document.head.appendChild(script)
 
   script.onload = () => {
@@ -75,10 +73,10 @@ function configureCollectJS() {
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]');
     const divStyle = getComputedStyle(cardNumberDiv);
 
-    // Get placeholder info from Webflow elements
-    const cardNumberPlaceholderEl = cardNumberDiv.querySelector('[data-smoothr-placeholder]');
-    const expiryPlaceholderEl = document.querySelector('[data-smoothr-card-expiry] [data-smoothr-placeholder]');
-    const cvcPlaceholderEl = document.querySelector('[data-smoothr-card-cvc] [data-smoothr-placeholder]');
+    // Get placeholder info from Webflow elements with custom attributes
+    const cardNumberPlaceholderEl = cardNumberDiv.querySelector('[data-smoothr-card-placeholder]');
+    const expiryPlaceholderEl = document.querySelector('[data-smoothr-card-expiry] [data-smoothr-expiry-placeholder]');
+    const cvcPlaceholderEl = document.querySelector('[data-smoothr-card-cvc] [data-smoothr-cvv-placeholder]');
 
     const cardNumberPlaceholderText = cardNumberPlaceholderEl ? cardNumberPlaceholderEl.textContent.trim() : 'Card Number';
     const expiryPlaceholderText = expiryPlaceholderEl ? expiryPlaceholderEl.textContent.trim() : 'MM/YY';
