@@ -8,29 +8,29 @@ let isConfigured = false
 let isLocked     = false
 
 /**
- * Public entry: wait for your tokenization key, then mount.
+ * Public entry: fetch your tokenization key then kick off the old init logic.
  */
 export async function mountCardFields() {
   if (hasMounted) return
   hasMounted = true
 
-  // look up your store-scoped NMI key
   const storeId =
     typeof window !== 'undefined' && window.Smoothr
       ? window.Smoothr.store_id
       : undefined
 
-  const key = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
-  if (!key) {
+  const tokenizationKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
+  if (!tokenizationKey) {
     console.warn('[NMI] Tokenization key missing')
     return
   }
 
-  // now call your old init logic
-  initNMI(key)
+  initNMI(tokenizationKey)
 }
 
-// exactly your old working code, wrapped into initNMI()
+/**
+ * Exactly your old working code, unchanged.
+ */
 export function initNMI(tokenizationKey) {
   console.log('[NMI] Attempting to mount NMI fields...')
   if (isConfigured) {
@@ -70,7 +70,6 @@ function configureCollectJS() {
   try {
     CollectJS.configure({
       variant: 'inline',
-      // <-- this hooks your <div data-smoothr-pay> as the click target
       paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
@@ -94,7 +93,7 @@ function configureCollectJS() {
           window.SMOOTHR_CONFIG.storeId
         )
 
-        // — gather your form/cart data —
+        // Gather form + cart data exactly as before...
         const firstName  = document.querySelector('[data-smoothr-first-name]')?.value  || ''
         const lastName   = document.querySelector('[data-smoothr-last-name]')?.value   || ''
         const email      = document.querySelector('[data-smoothr-email]')?.value       || ''
@@ -126,7 +125,7 @@ function configureCollectJS() {
           return
         }
 
-        // — post to your backend —
+        // Send to your backend
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -174,18 +173,31 @@ function configureCollectJS() {
   }
 }
 
-// Legacy alias for any adapters
+// Legacy alias
 export const mountNMI = mountCardFields
 
-// no-op stubs for your SDK’s readiness checks
-export function isMounted()   { return isConfigured }
-export function ready()       { return isConfigured }
+// These stubs satisfy the checkout dispatcher’s readiness checks
+export function isMounted() {
+  return isConfigured
+}
+export function ready() {
+  return isConfigured
+}
+// unused with CollectJS callback
 export async function createPaymentMethod() {
-  console.error('[NMI] please use the built-in CollectJS callback instead')
   return { error: { message: 'use CollectJS callback' }, payment_method: null }
 }
 
-// expose global hook if you relied on it
+// **THE IMPORTANT PART**: export a default gateway object
+export default {
+  mountCardFields,
+  mountNMI,
+  isMounted,
+  ready,
+  createPaymentMethod
+}
+
+// expose the old global hook if you need it
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   window.Smoothr.mountNMIFields = mountCardFields
