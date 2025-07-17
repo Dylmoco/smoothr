@@ -58,7 +58,7 @@ beforeEach(() => {
         '[data-smoothr-card-number]': cardNumberEl,
         '[data-smoothr-card-expiry]': cardExpiryEl,
         '[data-smoothr-card-cvc]': cardCvcEl,
-        '[data-smoothr-postal]': { value: '12345' },
+        '[data-smoothr-bill-postal]': { value: '12345' },
         '[data-smoothr-ship-line1]': { value: '' },
         '[data-smoothr-ship-line2]': { value: '' },
         '[data-smoothr-ship-city]': { value: '' },
@@ -89,6 +89,10 @@ beforeEach(() => {
         '#smoothr-checkout-theme': null
       };
       return map[sel] || null;
+    }),
+    querySelectorAll: vi.fn(sel => {
+      if (sel === '[data-smoothr-pay]') return [submitBtn];
+      return [];
     }),
     addEventListener: vi.fn((ev, cb) => {
       if (ev === 'DOMContentLoaded') domReadyCb = cb;
