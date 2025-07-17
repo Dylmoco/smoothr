@@ -1,32 +1,32 @@
-const Sr = "smoothr_cart_meta";
-let Mt = !1;
-var fr;
-const ws = (fr = window.SMOOTHR_CONFIG) == null ? void 0 : fr.debug;
-const vs = (...s) => ws && console.warn("smoothr:abandoned-cart", ...s);
-function Xe() {
+const gr = "smoothr_cart_meta";
+let It = !1;
+var ir;
+const us = (ir = window.SMOOTHR_CONFIG) == null ? void 0 : ir.debug;
+const ds = (...s) => us && console.warn("smoothr:abandoned-cart", ...s);
+function Ve() {
   if (typeof window > "u" || !window.localStorage) return {};
   try {
-    const s = window.localStorage.getItem(Sr);
+    const s = window.localStorage.getItem(gr);
     if (s) return JSON.parse(s);
   } catch (s) {
-    vs("invalid meta", s);
+    ds("invalid meta", s);
   }
   return {};
 }
-function Ye(s) {
+function Qe(s) {
   if (!(typeof window > "u" || !window.localStorage))
     try {
-      window.localStorage.setItem(Sr, JSON.stringify(s));
+      window.localStorage.setItem(gr, JSON.stringify(s));
     } catch (e) {
       e("write failed", e);
     }
 }
-function _s(s) {
+function hs(s) {
   if (s.sessionId) return s.sessionId;
   let e;
   return typeof crypto < "u" && crypto.randomUUID ? e = crypto.randomUUID() : e = Date.now().toString(36) + Math.random().toString(36).slice(2), s.sessionId = e, e;
 }
-function bs() {
+function fs() {
   if (typeof window > "u") return {};
   const s = new URLSearchParams(window.location.search), e = {};
   return ["source", "medium", "campaign"].forEach((t) => {
@@ -34,101 +34,101 @@ function bs() {
     r && (e[t] = r);
   }), e;
 }
-function kr(s = {}) {
-  if (Mt || typeof window > "u") return;
-  Mt = !0;
-  const e = !!s.debug, t = Xe();
-  _s(t), !t.referrer && typeof document < "u" && (t.referrer = document.referrer || ""), (!t.utm || Object.keys(t.utm).length === 0) && (t.utm = bs()), t.lastActive = Date.now(), Ye(t);
+function pr(s = {}) {
+  if (It || typeof window > "u") return;
+  It = !0;
+  const e = !!s.debug, t = Ve();
+  hs(t), !t.referrer && typeof document < "u" && (t.referrer = document.referrer || ""), (!t.utm || Object.keys(t.utm).length === 0) && (t.utm = fs()), t.lastActive = Date.now(), Qe(t);
   const r = () => {
-    const i = Xe();
-    i.lastModified = Date.now(), Ye(i), e && console.log("smoothr:abandoned-cart lastModified", i.lastModified);
+    const i = Ve();
+    i.lastModified = Date.now(), Qe(i), e && console.log("smoothr:abandoned-cart lastModified", i.lastModified);
   }, n = () => {
-    const i = Xe();
-    i.lastActive = Date.now(), Ye(i), e && console.log("smoothr:abandoned-cart lastActive", i.lastActive);
+    const i = Ve();
+    i.lastActive = Date.now(), Qe(i), e && console.log("smoothr:abandoned-cart lastActive", i.lastActive);
   };
   window.addEventListener("smoothr:cart:updated", r), ["click", "keydown", "scroll", "mousemove"].forEach((i) => {
     window.addEventListener(i, n);
   });
 }
-function Er() {
+function mr() {
 }
-const Ss = {
-  setupAbandonedCartTracker: kr,
-  triggerRecoveryFlow: Er
-}, ks = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const gs = {
+  setupAbandonedCartTracker: pr,
+  triggerRecoveryFlow: mr
+}, ps = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  default: Ss,
-  setupAbandonedCartTracker: kr,
-  triggerRecoveryFlow: Er
-}, Symbol.toStringTag, { value: "Module" })), Es = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  default: gs,
+  setupAbandonedCartTracker: pr,
+  triggerRecoveryFlow: mr
+}, Symbol.toStringTag, { value: "Module" })), ms = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
-}, Symbol.toStringTag, { value: "Module" })), Ts = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, Symbol.toStringTag, { value: "Module" })), ys = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
 }, Symbol.toStringTag, { value: "Module" }));
-let $ = "USD", V = {
+let R = "USD", V = {
   USD: 1,
   EUR: 0.9,
   GBP: 0.8
 };
-function Tr(s) {
-  $ = s;
+function yr(s) {
+  R = s;
 }
-function ft(s = {}) {
+function ut(s = {}) {
   V = { ...V, ...s };
 }
-function Oe(s, e = $, t = $) {
+function Ue(s, e = R, t = R) {
   if (!V[t] || !V[e])
     throw new Error("Unsupported currency");
   return s / V[t] * V[e];
 }
-function Ce(s, e = $, t = "en-US") {
+function De(s, e = R, t = "en-US") {
   return new Intl.NumberFormat(t, {
     style: "currency",
     currency: e
   }).format(s);
 }
-const Os = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ws = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   get baseCurrency() {
-    return $;
+    return R;
   },
-  convertCurrency: Oe,
-  convertPrice: Oe,
-  formatCurrency: Ce,
-  formatPrice: Ce,
+  convertCurrency: Ue,
+  convertPrice: Ue,
+  formatCurrency: De,
+  formatPrice: De,
   get rates() {
     return V;
   },
-  setBaseCurrency: Tr,
-  updateRates: ft
-}, Symbol.toStringTag, { value: "Module" })), Cs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  setBaseCurrency: yr,
+  updateRates: ut
+}, Symbol.toStringTag, { value: "Module" })), vs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
-}, Symbol.toStringTag, { value: "Module" })), As = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, Symbol.toStringTag, { value: "Module" })), _s = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
-}, Symbol.toStringTag, { value: "Module" })), Or = "smoothr_cart";
-var gr;
-const $s = (gr = window.SMOOTHR_CONFIG) == null ? void 0 : gr.debug;
-const Ps = (...s) => $s && console.warn("[Smoothr Cart]", ...s);
-function Cr() {
+}, Symbol.toStringTag, { value: "Module" })), wr = "smoothr_cart";
+var or;
+const bs = (or = window.SMOOTHR_CONFIG) == null ? void 0 : or.debug;
+const Ss = (...s) => bs && console.warn("[Smoothr Cart]", ...s);
+function vr() {
   return typeof window < "u" && window.localStorage ? window.localStorage : typeof globalThis < "u" && globalThis.localStorage ? globalThis.localStorage : null;
 }
 function N() {
-  const s = Cr();
+  const s = vr();
   if (!s)
     return { items: [], meta: { lastModified: Date.now() } };
   try {
-    const e = s.getItem(Or);
+    const e = s.getItem(wr);
     if (e) return JSON.parse(e);
   } catch (e) {
-    Ps("invalid data", e);
+    Ss("invalid data", e);
   }
   return { items: [], meta: { lastModified: Date.now() } };
 }
 function ge(s) {
-  const e = Cr();
+  const e = vr();
   if (e)
     try {
-      e.setItem(Or, JSON.stringify(s));
+      e.setItem(wr, JSON.stringify(s));
     } catch (t) {
       t("write failed", t);
     }
@@ -138,90 +138,90 @@ function pe(s) {
     new CustomEvent("smoothr:cart:updated", { detail: s })
   );
 }
-function Ar() {
+function _r() {
   return N();
 }
-function js() {
-  return Ar().meta || {};
+function ks() {
+  return _r().meta || {};
 }
-function xs(s, e) {
+function Es(s, e) {
   const t = N();
   t.meta = t.meta || {}, t.meta[s] = e, t.meta.lastModified = Date.now(), ge(t), pe(t);
 }
-function Rs(s) {
+function Ts(s) {
   const e = N(), t = e.items.find((r) => r.product_id === s.product_id);
   t ? t.quantity += s.quantity || 1 : e.items.push({ ...s, quantity: s.quantity || 1 }), e.meta.lastModified = Date.now(), ge(e), pe(e);
 }
-function Is(s) {
+function Os(s) {
   const e = N();
   e.items = e.items.filter((t) => t.product_id !== s), e.meta.lastModified = Date.now(), ge(e), pe(e);
 }
-function Ls(s, e) {
+function As(s, e) {
   const t = N(), r = t.items.find((n) => n.product_id === s);
   r && (e <= 0 ? t.items = t.items.filter((n) => n !== r) : r.quantity = e, t.meta.lastModified = Date.now(), ge(t), pe(t));
 }
-function Us() {
+function Cs() {
   const s = { items: [], meta: { lastModified: Date.now() } };
   ge(s), pe(s);
 }
-function Ds() {
+function $s() {
   return N().items.reduce((s, e) => s + e.price * e.quantity, 0);
 }
-function Bs(s) {
+function js(s) {
   const e = N();
   e.discount = s, e.meta.lastModified = Date.now(), ge(e), pe(e);
 }
-function qs() {
+function Ps() {
   return N().discount || null;
 }
-function Ms() {
+function xs() {
   const s = N();
   let e = s.items.reduce((t, r) => t + r.price * r.quantity, 0);
   return s.discount && (s.discount.type === "percent" ? e -= Math.round(e * (s.discount.amount / 100)) : e -= s.discount.amount), e < 0 ? 0 : e;
 }
-const $t = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const kt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  addItem: Rs,
-  applyDiscount: Bs,
-  clearCart: Us,
-  getCart: Ar,
-  getDiscount: qs,
-  getMeta: js,
-  getSubtotal: Ds,
-  getTotal: Ms,
+  addItem: Ts,
+  applyDiscount: js,
+  clearCart: Cs,
+  getCart: _r,
+  getDiscount: Ps,
+  getMeta: ks,
+  getSubtotal: $s,
+  getTotal: xs,
   readCart: N,
-  removeItem: Is,
-  setMetaField: xs,
-  updateQuantity: Ls
-}, Symbol.toStringTag, { value: "Module" })), Ns = (s) => {
+  removeItem: Os,
+  setMetaField: Es,
+  updateQuantity: As
+}, Symbol.toStringTag, { value: "Module" })), Rs = (s) => {
   let e;
   return s ? e = s : typeof fetch > "u" ? e = (...t) => Promise.resolve().then(() => me).then(({ default: r }) => r(...t)) : e = fetch, (...t) => e(...t);
 };
-class Pt extends Error {
+class Et extends Error {
   constructor(e, t = "FunctionsError", r) {
     super(e), this.name = t, this.context = r;
   }
 }
-class Fs extends Pt {
+class Is extends Et {
   constructor(e) {
     super("Failed to send a request to the Edge Function", "FunctionsFetchError", e);
   }
 }
-class zs extends Pt {
+class Ls extends Et {
   constructor(e) {
     super("Relay Error invoking the Edge Function", "FunctionsRelayError", e);
   }
 }
-class Ws extends Pt {
+class Us extends Et {
   constructor(e) {
     super("Edge Function returned a non-2xx status code", "FunctionsHttpError", e);
   }
 }
-var gt;
+var dt;
 (function(s) {
   s.Any = "any", s.ApNortheast1 = "ap-northeast-1", s.ApNortheast2 = "ap-northeast-2", s.ApSouth1 = "ap-south-1", s.ApSoutheast1 = "ap-southeast-1", s.ApSoutheast2 = "ap-southeast-2", s.CaCentral1 = "ca-central-1", s.EuCentral1 = "eu-central-1", s.EuWest1 = "eu-west-1", s.EuWest2 = "eu-west-2", s.EuWest3 = "eu-west-3", s.SaEast1 = "sa-east-1", s.UsEast1 = "us-east-1", s.UsWest1 = "us-west-1", s.UsWest2 = "us-west-2";
-})(gt || (gt = {}));
-var Gs = function(s, e, t, r) {
+})(dt || (dt = {}));
+var Ds = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
       o(i);
@@ -248,9 +248,9 @@ var Gs = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-class Hs {
-  constructor(e, { headers: t = {}, customFetch: r, region: n = gt.Any } = {}) {
-    this.url = e, this.headers = t, this.region = n, this.fetch = Ns(r);
+class qs {
+  constructor(e, { headers: t = {}, customFetch: r, region: n = dt.Any } = {}) {
+    this.url = e, this.headers = t, this.region = n, this.fetch = Rs(r);
   }
   /**
    * Updates the authorization header
@@ -266,7 +266,7 @@ class Hs {
    */
   invoke(e, t = {}) {
     var r;
-    return Gs(this, void 0, void 0, function* () {
+    return Ds(this, void 0, void 0, function* () {
       try {
         const { headers: n, method: i, body: o } = t;
         let a = {}, { region: c } = t;
@@ -282,12 +282,12 @@ class Hs {
           headers: Object.assign(Object.assign(Object.assign({}, a), this.headers), n),
           body: l
         }).catch((g) => {
-          throw new Fs(g);
+          throw new Is(g);
         }), d = u.headers.get("x-relay-error");
         if (d && d === "true")
-          throw new zs(u);
+          throw new Ls(u);
         if (!u.ok)
-          throw new Ws(u);
+          throw new Us(u);
         let h = ((r = u.headers.get("Content-Type")) !== null && r !== void 0 ? r : "text/plain").split(";")[0].trim(), f;
         return h === "application/json" ? f = yield u.json() : h === "application/octet-stream" ? f = yield u.blob() : h === "text/event-stream" ? f = u : h === "multipart/form-data" ? f = yield u.formData() : f = yield u.text(), { data: f, error: null };
       } catch (n) {
@@ -297,7 +297,7 @@ class Hs {
   }
 }
 var I = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
-function Js(s) {
+function Bs(s) {
   if (s.__esModule) return s;
   var e = s.default;
   if (typeof e == "function") {
@@ -316,7 +316,7 @@ function Js(s) {
     });
   }), t;
 }
-var j = {}, jt = {}, ze = {}, Pe = {}, We = {}, Ge = {}, Ks = function() {
+var j = {}, Tt = {}, Ne = {}, Ae = {}, Fe = {}, ze = {}, Ms = function() {
   if (typeof self < "u")
     return self;
   if (typeof window < "u")
@@ -324,30 +324,30 @@ var j = {}, jt = {}, ze = {}, Pe = {}, We = {}, Ge = {}, Ks = function() {
   if (typeof global < "u")
     return global;
   throw new Error("unable to locate global object");
-}, he = Ks();
-const Vs = he.fetch, $r = he.fetch.bind(he), Pr = he.Headers, Qs = he.Request, Xs = he.Response, me = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, he = Ms();
+const Ns = he.fetch, br = he.fetch.bind(he), Sr = he.Headers, Fs = he.Request, zs = he.Response, me = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Headers: Pr,
-  Request: Qs,
-  Response: Xs,
-  default: $r,
-  fetch: Vs
-}, Symbol.toStringTag, { value: "Module" })), Ys = /* @__PURE__ */ Js(me);
-var He = {};
-Object.defineProperty(He, "__esModule", { value: !0 });
-let Zs = class extends Error {
+  Headers: Sr,
+  Request: Fs,
+  Response: zs,
+  default: br,
+  fetch: Ns
+}, Symbol.toStringTag, { value: "Module" })), Gs = /* @__PURE__ */ Bs(me);
+var Ge = {};
+Object.defineProperty(Ge, "__esModule", { value: !0 });
+let Ws = class extends Error {
   constructor(e) {
     super(e.message), this.name = "PostgrestError", this.details = e.details, this.hint = e.hint, this.code = e.code;
   }
 };
-var Xo = He.default = Zs, jr = I && I.__importDefault || function(s) {
+var Mo = Ge.default = Ws, kr = I && I.__importDefault || function(s) {
   return s && s.__esModule ? s : { default: s };
 };
-Object.defineProperty(Ge, "__esModule", { value: !0 });
-const en = jr(Ys), tn = jr(He);
-let rn = class {
+Object.defineProperty(ze, "__esModule", { value: !0 });
+const Hs = kr(Gs), Js = kr(Ge);
+let Ks = class {
   constructor(e) {
-    this.shouldThrowOnError = !1, this.method = e.method, this.url = e.url, this.headers = e.headers, this.schema = e.schema, this.body = e.body, this.shouldThrowOnError = e.shouldThrowOnError, this.signal = e.signal, this.isMaybeSingle = e.isMaybeSingle, e.fetch ? this.fetch = e.fetch : typeof fetch > "u" ? this.fetch = en.default : this.fetch = fetch;
+    this.shouldThrowOnError = !1, this.method = e.method, this.url = e.url, this.headers = e.headers, this.schema = e.schema, this.body = e.body, this.shouldThrowOnError = e.shouldThrowOnError, this.signal = e.signal, this.isMaybeSingle = e.isMaybeSingle, e.fetch ? this.fetch = e.fetch : typeof fetch > "u" ? this.fetch = Hs.default : this.fetch = fetch;
   }
   /**
    * If there's an error with the query, throwOnError will reject the promise by
@@ -398,7 +398,7 @@ let rn = class {
           };
         }
         if (l && this.isMaybeSingle && (!((c = l == null ? void 0 : l.details) === null || c === void 0) && c.includes("0 rows")) && (l = null, h = 200, f = "OK"), l && this.shouldThrowOnError)
-          throw new tn.default(l);
+          throw new Js.default(l);
       }
       return {
         error: l,
@@ -459,12 +459,12 @@ let rn = class {
     return this;
   }
 };
-var Zo = Ge.default = rn, sn = I && I.__importDefault || function(s) {
+var Fo = ze.default = Ks, Vs = I && I.__importDefault || function(s) {
   return s && s.__esModule ? s : { default: s };
 };
-Object.defineProperty(We, "__esModule", { value: !0 });
-const nn = sn(Ge);
-let on = class extends nn.default {
+Object.defineProperty(Fe, "__esModule", { value: !0 });
+const Qs = Vs(ze);
+let Xs = class extends Qs.default {
   /**
    * Perform a SELECT on the query result.
    *
@@ -627,12 +627,12 @@ let on = class extends nn.default {
     return this;
   }
 };
-var ta = We.default = on, an = I && I.__importDefault || function(s) {
+var Go = Fe.default = Xs, Ys = I && I.__importDefault || function(s) {
   return s && s.__esModule ? s : { default: s };
 };
-Object.defineProperty(Pe, "__esModule", { value: !0 });
-const cn = an(We);
-let ln = class extends cn.default {
+Object.defineProperty(Ae, "__esModule", { value: !0 });
+const Zs = Ys(Fe);
+let en = class extends Zs.default {
   /**
    * Match only rows where `column` is equal to `value`.
    *
@@ -931,12 +931,12 @@ let ln = class extends cn.default {
     return this.url.searchParams.append(e, `${t}.${r}`), this;
   }
 };
-var sa = Pe.default = ln, un = I && I.__importDefault || function(s) {
+var Ho = Ae.default = en, tn = I && I.__importDefault || function(s) {
   return s && s.__esModule ? s : { default: s };
 };
-Object.defineProperty(ze, "__esModule", { value: !0 });
-const we = un(Pe);
-let dn = class {
+Object.defineProperty(Ne, "__esModule", { value: !0 });
+const we = tn(Ae);
+let rn = class {
   constructor(e, { headers: t = {}, schema: r, fetch: n }) {
     this.url = e, this.headers = t, this.schema = r, this.fetch = n;
   }
@@ -1140,20 +1140,20 @@ let dn = class {
     });
   }
 };
-var ia = ze.default = dn, Je = {}, Ke = {};
-Object.defineProperty(Ke, "__esModule", { value: !0 });
-var hn = Ke.version = void 0;
-hn = Ke.version = "0.0.0-automated";
-Object.defineProperty(Je, "__esModule", { value: !0 });
-var fn = Je.DEFAULT_HEADERS = void 0;
-const gn = Ke;
-fn = Je.DEFAULT_HEADERS = { "X-Client-Info": `postgrest-js/${gn.version}` };
-var xr = I && I.__importDefault || function(s) {
+var Ko = Ne.default = rn, We = {}, He = {};
+Object.defineProperty(He, "__esModule", { value: !0 });
+var sn = He.version = void 0;
+sn = He.version = "0.0.0-automated";
+Object.defineProperty(We, "__esModule", { value: !0 });
+var nn = We.DEFAULT_HEADERS = void 0;
+const on = He;
+nn = We.DEFAULT_HEADERS = { "X-Client-Info": `postgrest-js/${on.version}` };
+var Er = I && I.__importDefault || function(s) {
   return s && s.__esModule ? s : { default: s };
 };
-Object.defineProperty(jt, "__esModule", { value: !0 });
-const pn = xr(ze), mn = xr(Pe), yn = Je;
-let wn = class Rr {
+Object.defineProperty(Tt, "__esModule", { value: !0 });
+const an = Er(Ne), cn = Er(Ae), ln = We;
+let un = class Tr {
   // TODO: Add back shouldThrowOnError once we figure out the typings
   /**
    * Creates a PostgREST client.
@@ -1165,7 +1165,7 @@ let wn = class Rr {
    * @param options.fetch - Custom fetch
    */
   constructor(e, { headers: t = {}, schema: r, fetch: n } = {}) {
-    this.url = e, this.headers = Object.assign(Object.assign({}, yn.DEFAULT_HEADERS), t), this.schemaName = r, this.fetch = n;
+    this.url = e, this.headers = Object.assign(Object.assign({}, ln.DEFAULT_HEADERS), t), this.schemaName = r, this.fetch = n;
   }
   /**
    * Perform a query on a table or a view.
@@ -1174,7 +1174,7 @@ let wn = class Rr {
    */
   from(e) {
     const t = new URL(`${this.url}/${e}`);
-    return new pn.default(t, {
+    return new an.default(t, {
       headers: Object.assign({}, this.headers),
       schema: this.schemaName,
       fetch: this.fetch
@@ -1188,7 +1188,7 @@ let wn = class Rr {
    * @param schema - The schema to query
    */
   schema(e) {
-    return new Rr(this.url, {
+    return new Tr(this.url, {
       headers: this.headers,
       schema: e,
       fetch: this.fetch
@@ -1225,7 +1225,7 @@ let wn = class Rr {
       a.searchParams.append(u, d);
     })) : (o = "POST", c = t);
     const l = Object.assign({}, this.headers);
-    return i && (l.Prefer = `count=${i}`), new mn.default({
+    return i && (l.Prefer = `count=${i}`), new cn.default({
       method: o,
       url: a,
       headers: l,
@@ -1236,64 +1236,64 @@ let wn = class Rr {
     });
   }
 };
-var oa = jt.default = wn, ye = I && I.__importDefault || function(s) {
+var Vo = Tt.default = un, ye = I && I.__importDefault || function(s) {
   return s && s.__esModule ? s : { default: s };
 };
 Object.defineProperty(j, "__esModule", { value: !0 });
-var vn = j.PostgrestError = En = j.PostgrestBuilder = kn = j.PostgrestTransformBuilder = Sn = j.PostgrestFilterBuilder = bn = j.PostgrestQueryBuilder = _n = j.PostgrestClient = void 0;
-const Ir = ye(jt);
-var _n = j.PostgrestClient = Ir.default;
-const Lr = ye(ze);
-var bn = j.PostgrestQueryBuilder = Lr.default;
-const Ur = ye(Pe);
-var Sn = j.PostgrestFilterBuilder = Ur.default;
-const Dr = ye(We);
-var kn = j.PostgrestTransformBuilder = Dr.default;
-const Br = ye(Ge);
-var En = j.PostgrestBuilder = Br.default;
-const qr = ye(He);
-vn = j.PostgrestError = qr.default;
-var Tn = j.default = {
-  PostgrestClient: Ir.default,
-  PostgrestQueryBuilder: Lr.default,
-  PostgrestFilterBuilder: Ur.default,
-  PostgrestTransformBuilder: Dr.default,
-  PostgrestBuilder: Br.default,
-  PostgrestError: qr.default
+var dn = j.PostgrestError = mn = j.PostgrestBuilder = pn = j.PostgrestTransformBuilder = gn = j.PostgrestFilterBuilder = fn = j.PostgrestQueryBuilder = hn = j.PostgrestClient = void 0;
+const Or = ye(Tt);
+var hn = j.PostgrestClient = Or.default;
+const Ar = ye(Ne);
+var fn = j.PostgrestQueryBuilder = Ar.default;
+const Cr = ye(Ae);
+var gn = j.PostgrestFilterBuilder = Cr.default;
+const $r = ye(Fe);
+var pn = j.PostgrestTransformBuilder = $r.default;
+const jr = ye(ze);
+var mn = j.PostgrestBuilder = jr.default;
+const Pr = ye(Ge);
+dn = j.PostgrestError = Pr.default;
+var yn = j.default = {
+  PostgrestClient: Or.default,
+  PostgrestQueryBuilder: Ar.default,
+  PostgrestFilterBuilder: Cr.default,
+  PostgrestTransformBuilder: $r.default,
+  PostgrestBuilder: jr.default,
+  PostgrestError: Pr.default
 };
 const {
-  PostgrestClient: On,
-  PostgrestQueryBuilder: aa,
-  PostgrestFilterBuilder: ca,
-  PostgrestTransformBuilder: la,
-  PostgrestBuilder: ua,
-  PostgrestError: da
-} = Tn;
-let pt;
-typeof window > "u" ? pt = require("ws") : pt = window.WebSocket;
-const Cn = pt, An = "2.11.10", $n = { "X-Client-Info": `realtime-js/${An}` }, Pn = "1.0.0";
-const Mr = 1e4, jn = 1e3;
+  PostgrestClient: wn,
+  PostgrestQueryBuilder: Qo,
+  PostgrestFilterBuilder: Xo,
+  PostgrestTransformBuilder: Yo,
+  PostgrestBuilder: Zo,
+  PostgrestError: ea
+} = yn;
+let ht;
+typeof window > "u" ? ht = require("ws") : ht = window.WebSocket;
+const vn = ht, _n = "2.11.10", bn = { "X-Client-Info": `realtime-js/${_n}` }, Sn = "1.0.0";
+const xr = 1e4, kn = 1e3;
 var de;
 (function(s) {
   s[s.connecting = 0] = "connecting", s[s.open = 1] = "open", s[s.closing = 2] = "closing", s[s.closed = 3] = "closed";
 })(de || (de = {}));
-var C;
+var A;
 (function(s) {
   s.closed = "closed", s.errored = "errored", s.joined = "joined", s.joining = "joining", s.leaving = "leaving";
-})(C || (C = {}));
+})(A || (A = {}));
 var U;
 (function(s) {
   s.close = "phx_close", s.error = "phx_error", s.join = "phx_join", s.reply = "phx_reply", s.leave = "phx_leave", s.access_token = "access_token";
 })(U || (U = {}));
-var mt;
+var ft;
 (function(s) {
   s.websocket = "websocket";
-})(mt || (mt = {}));
+})(ft || (ft = {}));
 var ee;
 (function(s) {
   s.Connecting = "connecting", s.Open = "open", s.Closing = "closing", s.Closed = "closed";
 })(ee || (ee = {}));
-class xn {
+class En {
   constructor() {
     this.HEADER_LENGTH = 1;
   }
@@ -1315,7 +1315,7 @@ class xn {
     return { ref: null, topic: a, event: c, payload: l };
   }
 }
-class Nr {
+class Rr {
   constructor(e, t) {
     this.callback = e, this.timerCalc = t, this.timer = void 0, this.tries = 0, this.callback = e, this.timerCalc = t;
   }
@@ -1333,21 +1333,21 @@ var S;
 (function(s) {
   s.abstime = "abstime", s.bool = "bool", s.date = "date", s.daterange = "daterange", s.float4 = "float4", s.float8 = "float8", s.int2 = "int2", s.int4 = "int4", s.int4range = "int4range", s.int8 = "int8", s.int8range = "int8range", s.json = "json", s.jsonb = "jsonb", s.money = "money", s.numeric = "numeric", s.oid = "oid", s.reltime = "reltime", s.text = "text", s.time = "time", s.timestamp = "timestamp", s.timestamptz = "timestamptz", s.timetz = "timetz", s.tsrange = "tsrange", s.tstzrange = "tstzrange";
 })(S || (S = {}));
-const Nt = (s, e, t = {}) => {
+const Lt = (s, e, t = {}) => {
   var r;
   const n = (r = t.skipTypes) !== null && r !== void 0 ? r : [];
-  return Object.keys(e).reduce((i, o) => (i[o] = Rn(o, s, e, n), i), {});
-}, Rn = (s, e, t, r) => {
+  return Object.keys(e).reduce((i, o) => (i[o] = Tn(o, s, e, n), i), {});
+}, Tn = (s, e, t, r) => {
   const n = e.find((a) => a.name === s), i = n == null ? void 0 : n.type, o = t[s];
-  return i && !r.includes(i) ? Fr(i, o) : yt(o);
-}, Fr = (s, e) => {
+  return i && !r.includes(i) ? Ir(i, o) : gt(o);
+}, Ir = (s, e) => {
   if (s.charAt(0) === "_") {
     const t = s.slice(1, s.length);
-    return Dn(e, t);
+    return $n(e, t);
   }
   switch (s) {
     case S.bool:
-      return In(e);
+      return On(e);
     case S.float4:
     case S.float8:
     case S.int2:
@@ -1355,12 +1355,12 @@ const Nt = (s, e, t = {}) => {
     case S.int8:
     case S.numeric:
     case S.oid:
-      return Ln(e);
+      return An(e);
     case S.json:
     case S.jsonb:
-      return Un(e);
+      return Cn(e);
     case S.timestamp:
-      return Bn(e);
+      return jn(e);
     case S.abstime:
     case S.date:
     case S.daterange:
@@ -1374,11 +1374,11 @@ const Nt = (s, e, t = {}) => {
     case S.timetz:
     case S.tsrange:
     case S.tstzrange:
-      return yt(e);
+      return gt(e);
     default:
-      return yt(e);
+      return gt(e);
   }
-}, yt = (s) => s, In = (s) => {
+}, gt = (s) => s, On = (s) => {
   switch (s) {
     case "t":
       return !0;
@@ -1387,14 +1387,14 @@ const Nt = (s, e, t = {}) => {
     default:
       return s;
   }
-}, Ln = (s) => {
+}, An = (s) => {
   if (typeof s == "string") {
     const e = parseFloat(s);
     if (!Number.isNaN(e))
       return e;
   }
   return s;
-}, Un = (s) => {
+}, Cn = (s) => {
   if (typeof s == "string")
     try {
       return JSON.parse(s);
@@ -1402,7 +1402,7 @@ const Nt = (s, e, t = {}) => {
       return console.log(`JSON parse error: ${e}`), s;
     }
   return s;
-}, Dn = (s, e) => {
+}, $n = (s, e) => {
   if (typeof s != "string")
     return s;
   const t = s.length - 1, r = s[t];
@@ -1414,14 +1414,14 @@ const Nt = (s, e, t = {}) => {
     } catch {
       i = o ? o.split(",") : [];
     }
-    return i.map((a) => Fr(e, a));
+    return i.map((a) => Ir(e, a));
   }
   return s;
-}, Bn = (s) => typeof s == "string" ? s.replace(" ", "T") : s, zr = (s) => {
+}, jn = (s) => typeof s == "string" ? s.replace(" ", "T") : s, Lr = (s) => {
   let e = s;
   return e = e.replace(/^ws/i, "http"), e = e.replace(/(\/socket\/websocket|\/socket|\/websocket)\/?$/i, ""), e.replace(/\/+$/, "");
 };
-class Ze {
+class Xe {
   /**
    * Initializes the Push
    *
@@ -1430,7 +1430,7 @@ class Ze {
    * @param payload The payload, for example `{user_id: 123}`
    * @param timeout The push timeout in milliseconds
    */
-  constructor(e, t, r = {}, n = Mr) {
+  constructor(e, t, r = {}, n = xr) {
     this.channel = e, this.event = t, this.payload = r, this.timeout = n, this.sent = !1, this.timeoutTimer = void 0, this.ref = "", this.receivedResp = null, this.recHooks = [], this.refEvent = null;
   }
   resend(e) {
@@ -1482,10 +1482,10 @@ class Ze {
     return this.receivedResp && this.receivedResp.status === e;
   }
 }
-var Ft;
+var Ut;
 (function(s) {
   s.SYNC = "sync", s.JOIN = "join", s.LEAVE = "leave";
-})(Ft || (Ft = {}));
+})(Ut || (Ut = {}));
 class be {
   /**
    * Initializes the Presence.
@@ -1643,35 +1643,35 @@ class be {
     return !this.joinRef || this.joinRef !== this.channel._joinRef();
   }
 }
-var zt;
+var Dt;
 (function(s) {
   s.ALL = "*", s.INSERT = "INSERT", s.UPDATE = "UPDATE", s.DELETE = "DELETE";
-})(zt || (zt = {}));
-var Wt;
+})(Dt || (Dt = {}));
+var qt;
 (function(s) {
   s.BROADCAST = "broadcast", s.PRESENCE = "presence", s.POSTGRES_CHANGES = "postgres_changes", s.SYSTEM = "system";
-})(Wt || (Wt = {}));
+})(qt || (qt = {}));
 var z;
 (function(s) {
   s.SUBSCRIBED = "SUBSCRIBED", s.TIMED_OUT = "TIMED_OUT", s.CLOSED = "CLOSED", s.CHANNEL_ERROR = "CHANNEL_ERROR";
 })(z || (z = {}));
-class xt {
+class Ot {
   constructor(e, t = { config: {} }, r) {
-    this.topic = e, this.params = t, this.socket = r, this.bindings = {}, this.state = C.closed, this.joinedOnce = !1, this.pushBuffer = [], this.subTopic = e.replace(/^realtime:/i, ""), this.params.config = Object.assign({
+    this.topic = e, this.params = t, this.socket = r, this.bindings = {}, this.state = A.closed, this.joinedOnce = !1, this.pushBuffer = [], this.subTopic = e.replace(/^realtime:/i, ""), this.params.config = Object.assign({
       broadcast: { ack: !1, self: !1 },
       presence: { key: "" },
       private: !1
-    }, t.config), this.timeout = this.socket.timeout, this.joinPush = new Ze(this, U.join, this.params, this.timeout), this.rejoinTimer = new Nr(() => this._rejoinUntilConnected(), this.socket.reconnectAfterMs), this.joinPush.receive("ok", () => {
-      this.state = C.joined, this.rejoinTimer.reset(), this.pushBuffer.forEach((n) => n.send()), this.pushBuffer = [];
+    }, t.config), this.timeout = this.socket.timeout, this.joinPush = new Xe(this, U.join, this.params, this.timeout), this.rejoinTimer = new Rr(() => this._rejoinUntilConnected(), this.socket.reconnectAfterMs), this.joinPush.receive("ok", () => {
+      this.state = A.joined, this.rejoinTimer.reset(), this.pushBuffer.forEach((n) => n.send()), this.pushBuffer = [];
     }), this._onClose(() => {
-      this.rejoinTimer.reset(), this.socket.log("channel", `close ${this.topic} ${this._joinRef()}`), this.state = C.closed, this.socket._remove(this);
+      this.rejoinTimer.reset(), this.socket.log("channel", `close ${this.topic} ${this._joinRef()}`), this.state = A.closed, this.socket._remove(this);
     }), this._onError((n) => {
-      this._isLeaving() || this._isClosed() || (this.socket.log("channel", `error ${this.topic}`, n), this.state = C.errored, this.rejoinTimer.scheduleTimeout());
+      this._isLeaving() || this._isClosed() || (this.socket.log("channel", `error ${this.topic}`, n), this.state = A.errored, this.rejoinTimer.scheduleTimeout());
     }), this.joinPush.receive("timeout", () => {
-      this._isJoining() && (this.socket.log("channel", `timeout ${this.topic}`, this.joinPush.timeout), this.state = C.errored, this.rejoinTimer.scheduleTimeout());
+      this._isJoining() && (this.socket.log("channel", `timeout ${this.topic}`, this.joinPush.timeout), this.state = A.errored, this.rejoinTimer.scheduleTimeout());
     }), this._on(U.reply, {}, (n, i) => {
       this._trigger(this._replyEventName(i), n);
-    }), this.presence = new be(this), this.broadcastEndpointURL = zr(this.socket.endPoint) + "/api/broadcast", this.private = this.params.config.private || !1;
+    }), this.presence = new be(this), this.broadcastEndpointURL = Lr(this.socket.endPoint) + "/api/broadcast", this.private = this.params.config.private || !1;
   }
   /** Subscribe registers your client with the server */
   subscribe(e, t = this.timeout) {
@@ -1699,7 +1699,7 @@ class xt {
             if (O && O.event === w && O.schema === k && O.table === y && O.filter === b)
               g.push(Object.assign(Object.assign({}, p), { id: O.id }));
             else {
-              this.unsubscribe(), this.state = C.errored, e == null || e(z.CHANNEL_ERROR, new Error("mismatch between server and client bindings for postgres changes"));
+              this.unsubscribe(), this.state = A.errored, e == null || e(z.CHANNEL_ERROR, new Error("mismatch between server and client bindings for postgres changes"));
               return;
             }
           }
@@ -1707,7 +1707,7 @@ class xt {
           return;
         }
       }).receive("error", (u) => {
-        this.state = C.errored, e == null || e(z.CHANNEL_ERROR, new Error(JSON.stringify(Object.values(u).join(", ") || "error")));
+        this.state = A.errored, e == null || e(z.CHANNEL_ERROR, new Error(JSON.stringify(Object.values(u).join(", ") || "error")));
       }).receive("timeout", () => {
         e == null || e(z.TIMED_OUT);
       });
@@ -1789,12 +1789,12 @@ class xt {
    * channel.unsubscribe().receive("ok", () => alert("left!") )
    */
   unsubscribe(e = this.timeout) {
-    this.state = C.leaving;
+    this.state = A.leaving;
     const t = () => {
       this.socket.log("channel", `leave ${this.topic}`), this._trigger(U.close, "leave", this._joinRef());
     };
     return this.joinPush.destroy(), new Promise((r) => {
-      const n = new Ze(this, U.leave, {}, e);
+      const n = new Xe(this, U.leave, {}, e);
       n.receive("ok", () => {
         t(), r("ok");
       }).receive("timeout", () => {
@@ -1821,7 +1821,7 @@ class xt {
   _push(e, t, r = this.timeout) {
     if (!this.joinedOnce)
       throw `tried to push '${e}' to '${this.topic}' before joining. Use channel.subscribe() before pushing events`;
-    let n = new Ze(this, e, t, r);
+    let n = new Xe(this, e, t, r);
     return this._canPush() ? n.send() : (n.startTimeout(), this.pushBuffer.push(n)), n;
   }
   /**
@@ -1885,19 +1885,19 @@ class xt {
   }
   /** @internal */
   _isClosed() {
-    return this.state === C.closed;
+    return this.state === A.closed;
   }
   /** @internal */
   _isJoined() {
-    return this.state === C.joined;
+    return this.state === A.joined;
   }
   /** @internal */
   _isJoining() {
-    return this.state === C.joining;
+    return this.state === A.joining;
   }
   /** @internal */
   _isLeaving() {
-    return this.state === C.leaving;
+    return this.state === A.leaving;
   }
   /** @internal */
   _replyEventName(e) {
@@ -1917,7 +1917,7 @@ class xt {
     const r = e.toLocaleLowerCase();
     return this.bindings[r] = this.bindings[r].filter((n) => {
       var i;
-      return !(((i = n.type) === null || i === void 0 ? void 0 : i.toLocaleLowerCase()) === r && xt.isEqual(n.filter, t));
+      return !(((i = n.type) === null || i === void 0 ? void 0 : i.toLocaleLowerCase()) === r && Ot.isEqual(n.filter, t));
     }), this;
   }
   /** @internal */
@@ -1959,7 +1959,7 @@ class xt {
   }
   /** @internal */
   _rejoin(e = this.timeout) {
-    this._isLeaving() || (this.socket._leaveOpenTopic(this.topic), this.state = C.joining, this.joinPush.resend(e));
+    this._isLeaving() || (this.socket._leaveOpenTopic(this.topic), this.state = A.joining, this.joinPush.resend(e));
   }
   /** @internal */
   _getPayloadRecords(e) {
@@ -1967,17 +1967,17 @@ class xt {
       new: {},
       old: {}
     };
-    return (e.type === "INSERT" || e.type === "UPDATE") && (t.new = Nt(e.columns, e.record)), (e.type === "UPDATE" || e.type === "DELETE") && (t.old = Nt(e.columns, e.old_record)), t;
+    return (e.type === "INSERT" || e.type === "UPDATE") && (t.new = Lt(e.columns, e.record)), (e.type === "UPDATE" || e.type === "DELETE") && (t.old = Lt(e.columns, e.old_record)), t;
   }
 }
-const Gt = () => {
-}, qn = `
+const Bt = () => {
+}, Pn = `
   addEventListener("message", (e) => {
     if (e.data.event === "start") {
       setInterval(() => postMessage({ event: "keepAlive" }), e.data.interval);
     }
   });`;
-class Mn {
+class xn {
   /**
    * Initializes the Socket.
    *
@@ -1998,7 +1998,7 @@ class Mn {
    */
   constructor(e, t) {
     var r;
-    this.accessTokenValue = null, this.apiKey = null, this.channels = new Array(), this.endPoint = "", this.httpEndpoint = "", this.headers = $n, this.params = {}, this.timeout = Mr, this.heartbeatIntervalMs = 25e3, this.heartbeatTimer = void 0, this.pendingHeartbeatRef = null, this.heartbeatCallback = Gt, this.ref = 0, this.logger = Gt, this.conn = null, this.sendBuffer = [], this.serializer = new xn(), this.stateChangeCallbacks = {
+    this.accessTokenValue = null, this.apiKey = null, this.channels = new Array(), this.endPoint = "", this.httpEndpoint = "", this.headers = bn, this.params = {}, this.timeout = xr, this.heartbeatIntervalMs = 25e3, this.heartbeatTimer = void 0, this.pendingHeartbeatRef = null, this.heartbeatCallback = Bt, this.ref = 0, this.logger = Bt, this.conn = null, this.sendBuffer = [], this.serializer = new En(), this.stateChangeCallbacks = {
       open: [],
       close: [],
       error: [],
@@ -2006,9 +2006,9 @@ class Mn {
     }, this.accessToken = null, this._resolveFetch = (i) => {
       let o;
       return i ? o = i : typeof fetch > "u" ? o = (...a) => Promise.resolve().then(() => me).then(({ default: c }) => c(...a)) : o = fetch, (...a) => o(...a);
-    }, this.endPoint = `${e}/${mt.websocket}`, this.httpEndpoint = zr(e), t != null && t.transport ? this.transport = t.transport : this.transport = null, t != null && t.params && (this.params = t.params), t != null && t.headers && (this.headers = Object.assign(Object.assign({}, this.headers), t.headers)), t != null && t.timeout && (this.timeout = t.timeout), t != null && t.logger && (this.logger = t.logger), (t != null && t.logLevel || t != null && t.log_level) && (this.logLevel = t.logLevel || t.log_level, this.params = Object.assign(Object.assign({}, this.params), { log_level: this.logLevel })), t != null && t.heartbeatIntervalMs && (this.heartbeatIntervalMs = t.heartbeatIntervalMs);
+    }, this.endPoint = `${e}/${ft.websocket}`, this.httpEndpoint = Lr(e), t != null && t.transport ? this.transport = t.transport : this.transport = null, t != null && t.params && (this.params = t.params), t != null && t.headers && (this.headers = Object.assign(Object.assign({}, this.headers), t.headers)), t != null && t.timeout && (this.timeout = t.timeout), t != null && t.logger && (this.logger = t.logger), (t != null && t.logLevel || t != null && t.log_level) && (this.logLevel = t.logLevel || t.log_level, this.params = Object.assign(Object.assign({}, this.params), { log_level: this.logLevel })), t != null && t.heartbeatIntervalMs && (this.heartbeatIntervalMs = t.heartbeatIntervalMs);
     const n = (r = t == null ? void 0 : t.params) === null || r === void 0 ? void 0 : r.apikey;
-    if (n && (this.accessTokenValue = n, this.apiKey = n), this.reconnectAfterMs = t != null && t.reconnectAfterMs ? t.reconnectAfterMs : (i) => [1e3, 2e3, 5e3, 1e4][i - 1] || 1e4, this.encode = t != null && t.encode ? t.encode : (i, o) => o(JSON.stringify(i)), this.decode = t != null && t.decode ? t.decode : this.serializer.decode.bind(this.serializer), this.reconnectTimer = new Nr(async () => {
+    if (n && (this.accessTokenValue = n, this.apiKey = n), this.reconnectAfterMs = t != null && t.reconnectAfterMs ? t.reconnectAfterMs : (i) => [1e3, 2e3, 5e3, 1e4][i - 1] || 1e4, this.encode = t != null && t.encode ? t.encode : (i, o) => o(JSON.stringify(i)), this.decode = t != null && t.decode ? t.decode : this.serializer.decode.bind(this.serializer), this.reconnectTimer = new Rr(async () => {
       this.disconnect(), this.connect();
     }, this.reconnectAfterMs), this.fetch = this._resolveFetch(t == null ? void 0 : t.fetch), t != null && t.worker) {
       if (typeof window < "u" && !window.Worker)
@@ -2022,13 +2022,13 @@ class Mn {
    */
   connect() {
     if (!this.conn) {
-      if (this.transport || (this.transport = Cn), this.transport) {
+      if (this.transport || (this.transport = vn), this.transport) {
         typeof window < "u" && this.transport === window.WebSocket ? this.conn = new this.transport(this.endpointURL()) : this.conn = new this.transport(this.endpointURL(), void 0, {
           headers: this.headers
         }), this.setupConnection();
         return;
       }
-      this.conn = new Nn(this.endpointURL(), void 0, {
+      this.conn = new Rn(this.endpointURL(), void 0, {
         close: () => {
           this.conn = null;
         }
@@ -2040,7 +2040,7 @@ class Mn {
    * @returns string The URL of the websocket.
    */
   endpointURL() {
-    return this._appendParams(this.endPoint, Object.assign({}, this.params, { vsn: Pn }));
+    return this._appendParams(this.endPoint, Object.assign({}, this.params, { vsn: Sn }));
   }
   /**
    * Disconnects the socket.
@@ -2107,7 +2107,7 @@ class Mn {
     if (n)
       return n;
     {
-      const i = new xt(`realtime:${e}`, t, this);
+      const i = new Ot(`realtime:${e}`, t, this);
       return this.channels.push(i), i;
     }
   }
@@ -2155,7 +2155,7 @@ class Mn {
       return;
     }
     if (this.pendingHeartbeatRef) {
-      this.pendingHeartbeatRef = null, this.log("transport", "heartbeat timeout. Attempting to re-establish connection"), this.heartbeatCallback("timeout"), (e = this.conn) === null || e === void 0 || e.close(jn, "hearbeat timeout");
+      this.pendingHeartbeatRef = null, this.log("transport", "heartbeat timeout. Attempting to re-establish connection"), this.heartbeatCallback("timeout"), (e = this.conn) === null || e === void 0 || e.close(kn, "hearbeat timeout");
       return;
     }
     this.pendingHeartbeatRef = this._makeRef(), this.push({
@@ -2259,13 +2259,13 @@ class Mn {
     if (e)
       t = e;
     else {
-      const r = new Blob([qn], { type: "application/javascript" });
+      const r = new Blob([Pn], { type: "application/javascript" });
       t = URL.createObjectURL(r);
     }
     return t;
   }
 }
-class Nn {
+class Rn {
   constructor(e, t, r) {
     this.binaryType = "arraybuffer", this.onclose = () => {
     }, this.onerror = () => {
@@ -2275,7 +2275,7 @@ class Nn {
     }, this.url = null, this.url = e, this.close = r.close;
   }
 }
-class Rt extends Error {
+class At extends Error {
   constructor(e) {
     super(e), this.__isStorageError = !0, this.name = "StorageError";
   }
@@ -2283,7 +2283,7 @@ class Rt extends Error {
 function T(s) {
   return typeof s == "object" && s !== null && "__isStorageError" in s;
 }
-class Fn extends Rt {
+class In extends At {
   constructor(e, t) {
     super(e), this.name = "StorageApiError", this.status = t;
   }
@@ -2295,12 +2295,12 @@ class Fn extends Rt {
     };
   }
 }
-class wt extends Rt {
+class pt extends At {
   constructor(e, t) {
     super(e), this.name = "StorageUnknownError", this.originalError = t;
   }
 }
-var zn = function(s, e, t, r) {
+var Ln = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
       o(i);
@@ -2327,20 +2327,20 @@ var zn = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-const Wr = (s) => {
+const Ur = (s) => {
   let e;
   return s ? e = s : typeof fetch > "u" ? e = (...t) => Promise.resolve().then(() => me).then(({ default: r }) => r(...t)) : e = fetch, (...t) => e(...t);
-}, Wn = () => zn(void 0, void 0, void 0, function* () {
+}, Un = () => Ln(void 0, void 0, void 0, function* () {
   return typeof Response > "u" ? (yield Promise.resolve().then(() => me)).Response : Response;
-}), vt = (s) => {
+}), mt = (s) => {
   if (Array.isArray(s))
-    return s.map((t) => vt(t));
+    return s.map((t) => mt(t));
   if (typeof s == "function" || s !== Object(s))
     return s;
   const e = {};
   return Object.entries(s).forEach(([t, r]) => {
     const n = t.replace(/([-_][a-z])/gi, (i) => i.toUpperCase().replace(/[-_]/g, ""));
-    e[n] = vt(r);
+    e[n] = mt(r);
   }), e;
 };
 var re = function(s, e, t, r) {
@@ -2370,54 +2370,54 @@ var re = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-const et = (s) => s.msg || s.message || s.error_description || s.error || JSON.stringify(s), Gn = (s, e, t) => re(void 0, void 0, void 0, function* () {
-  const r = yield Wn();
+const Ye = (s) => s.msg || s.message || s.error_description || s.error || JSON.stringify(s), Dn = (s, e, t) => re(void 0, void 0, void 0, function* () {
+  const r = yield Un();
   s instanceof r && !(t != null && t.noResolveJson) ? s.json().then((n) => {
-    e(new Fn(et(n), s.status || 500));
+    e(new In(Ye(n), s.status || 500));
   }).catch((n) => {
-    e(new wt(et(n), n));
-  }) : e(new wt(et(s), s));
-}), Hn = (s, e, t, r) => {
+    e(new pt(Ye(n), n));
+  }) : e(new pt(Ye(s), s));
+}), qn = (s, e, t, r) => {
   const n = { method: s, headers: (e == null ? void 0 : e.headers) || {} };
   return s === "GET" ? n : (n.headers = Object.assign({ "Content-Type": "application/json" }, e == null ? void 0 : e.headers), r && (n.body = JSON.stringify(r)), Object.assign(Object.assign({}, n), t));
 };
-function je(s, e, t, r, n, i) {
+function Ce(s, e, t, r, n, i) {
   return re(this, void 0, void 0, function* () {
     return new Promise((o, a) => {
-      s(t, Hn(e, r, n, i)).then((c) => {
+      s(t, qn(e, r, n, i)).then((c) => {
         if (!c.ok)
           throw c;
         return r != null && r.noResolveJson ? c : c.json();
-      }).then((c) => o(c)).catch((c) => Gn(c, a, r));
+      }).then((c) => o(c)).catch((c) => Dn(c, a, r));
     });
   });
 }
 function qe(s, e, t, r) {
   return re(this, void 0, void 0, function* () {
-    return je(s, "GET", e, t, r);
+    return Ce(s, "GET", e, t, r);
   });
 }
-function G(s, e, t, r, n) {
+function W(s, e, t, r, n) {
   return re(this, void 0, void 0, function* () {
-    return je(s, "POST", e, r, n, t);
+    return Ce(s, "POST", e, r, n, t);
   });
 }
-function Jn(s, e, t, r, n) {
+function Bn(s, e, t, r, n) {
   return re(this, void 0, void 0, function* () {
-    return je(s, "PUT", e, r, n, t);
+    return Ce(s, "PUT", e, r, n, t);
   });
 }
-function Kn(s, e, t, r) {
+function Mn(s, e, t, r) {
   return re(this, void 0, void 0, function* () {
-    return je(s, "HEAD", e, Object.assign(Object.assign({}, t), { noResolveJson: !0 }), r);
+    return Ce(s, "HEAD", e, Object.assign(Object.assign({}, t), { noResolveJson: !0 }), r);
   });
 }
-function Gr(s, e, t, r, n) {
+function Dr(s, e, t, r, n) {
   return re(this, void 0, void 0, function* () {
-    return je(s, "DELETE", e, r, n, t);
+    return Ce(s, "DELETE", e, r, n, t);
   });
 }
-var P = function(s, e, t, r) {
+var $ = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
       o(i);
@@ -2444,21 +2444,21 @@ var P = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-const Vn = {
+const Nn = {
   limit: 100,
   offset: 0,
   sortBy: {
     column: "name",
     order: "asc"
   }
-}, Ht = {
+}, Mt = {
   cacheControl: "3600",
   contentType: "text/plain;charset=UTF-8",
   upsert: !1
 };
-class Qn {
+class Fn {
   constructor(e, t = {}, r, n) {
-    this.url = e, this.headers = t, this.bucketId = r, this.fetch = Wr(n);
+    this.url = e, this.headers = t, this.bucketId = r, this.fetch = Ur(n);
   }
   /**
    * Uploads a file to an existing bucket or replaces an existing file at the specified path with a new one.
@@ -2468,10 +2468,10 @@ class Qn {
    * @param fileBody The body of the file to be stored in the bucket.
    */
   uploadOrUpdate(e, t, r, n) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
         let i;
-        const o = Object.assign(Object.assign({}, Ht), n);
+        const o = Object.assign(Object.assign({}, Mt), n);
         let a = Object.assign(Object.assign({}, this.headers), e === "POST" && { "x-upsert": String(o.upsert) });
         const c = o.metadata;
         typeof Blob < "u" && r instanceof Blob ? (i = new FormData(), i.append("cacheControl", o.cacheControl), c && i.append("metadata", this.encodeMetadata(c)), i.append("", r)) : typeof FormData < "u" && r instanceof FormData ? (i = r, i.append("cacheControl", o.cacheControl), c && i.append("metadata", this.encodeMetadata(c))) : (i = r, a["cache-control"] = `max-age=${o.cacheControl}`, a["content-type"] = o.contentType, c && (a["x-metadata"] = this.toBase64(this.encodeMetadata(c)))), n != null && n.headers && (a = Object.assign(Object.assign({}, a), n.headers));
@@ -2494,7 +2494,7 @@ class Qn {
    * @param fileBody The body of the file to be stored in the bucket.
    */
   upload(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       return this.uploadOrUpdate("POST", e, t, r);
     });
   }
@@ -2505,12 +2505,12 @@ class Qn {
    * @param fileBody The body of the file to be stored in the bucket.
    */
   uploadToSignedUrl(e, t, r, n) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       const i = this._removeEmptyFolders(e), o = this._getFinalPath(i), a = new URL(this.url + `/object/upload/sign/${o}`);
       a.searchParams.set("token", t);
       try {
         let c;
-        const l = Object.assign({ upsert: Ht.upsert }, n), u = Object.assign(Object.assign({}, this.headers), { "x-upsert": String(l.upsert) });
+        const l = Object.assign({ upsert: Mt.upsert }, n), u = Object.assign(Object.assign({}, this.headers), { "x-upsert": String(l.upsert) });
         typeof Blob < "u" && r instanceof Blob ? (c = new FormData(), c.append("cacheControl", l.cacheControl), c.append("", r)) : typeof FormData < "u" && r instanceof FormData ? (c = r, c.append("cacheControl", l.cacheControl)) : (c = r, u["cache-control"] = `max-age=${l.cacheControl}`, u["content-type"] = l.contentType);
         const d = yield this.fetch(a.toString(), {
           method: "PUT",
@@ -2536,14 +2536,14 @@ class Qn {
    * @param options.upsert If set to true, allows the file to be overwritten if it already exists.
    */
   createSignedUploadUrl(e, t) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
         let r = this._getFinalPath(e);
         const n = Object.assign({}, this.headers);
         t != null && t.upsert && (n["x-upsert"] = "true");
-        const i = yield G(this.fetch, `${this.url}/object/upload/sign/${r}`, {}, { headers: n }), o = new URL(this.url + i.url), a = o.searchParams.get("token");
+        const i = yield W(this.fetch, `${this.url}/object/upload/sign/${r}`, {}, { headers: n }), o = new URL(this.url + i.url), a = o.searchParams.get("token");
         if (!a)
-          throw new Rt("No token returned by API");
+          throw new At("No token returned by API");
         return { data: { signedUrl: o.toString(), path: e, token: a }, error: null };
       } catch (r) {
         if (T(r))
@@ -2559,7 +2559,7 @@ class Qn {
    * @param fileBody The body of the file to be stored in the bucket.
    */
   update(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       return this.uploadOrUpdate("PUT", e, t, r);
     });
   }
@@ -2571,9 +2571,9 @@ class Qn {
    * @param options The destination options.
    */
   move(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
-        return { data: yield G(this.fetch, `${this.url}/object/move`, {
+        return { data: yield W(this.fetch, `${this.url}/object/move`, {
           bucketId: this.bucketId,
           sourceKey: e,
           destinationKey: t,
@@ -2594,9 +2594,9 @@ class Qn {
    * @param options The destination options.
    */
   copy(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
-        return { data: { path: (yield G(this.fetch, `${this.url}/object/copy`, {
+        return { data: { path: (yield W(this.fetch, `${this.url}/object/copy`, {
           bucketId: this.bucketId,
           sourceKey: e,
           destinationKey: t,
@@ -2618,9 +2618,9 @@ class Qn {
    * @param options.transform Transform the asset before serving it to the client.
    */
   createSignedUrl(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
-        let n = this._getFinalPath(e), i = yield G(this.fetch, `${this.url}/object/sign/${n}`, Object.assign({ expiresIn: t }, r != null && r.transform ? { transform: r.transform } : {}), { headers: this.headers });
+        let n = this._getFinalPath(e), i = yield W(this.fetch, `${this.url}/object/sign/${n}`, Object.assign({ expiresIn: t }, r != null && r.transform ? { transform: r.transform } : {}), { headers: this.headers });
         const o = r != null && r.download ? `&download=${r.download === !0 ? "" : r.download}` : "";
         return i = { signedUrl: encodeURI(`${this.url}${i.signedURL}${o}`) }, { data: i, error: null };
       } catch (n) {
@@ -2638,9 +2638,9 @@ class Qn {
    * @param options.download triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
    */
   createSignedUrls(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
-        const n = yield G(this.fetch, `${this.url}/object/sign/${this.bucketId}`, { expiresIn: t, paths: e }, { headers: this.headers }), i = r != null && r.download ? `&download=${r.download === !0 ? "" : r.download}` : "";
+        const n = yield W(this.fetch, `${this.url}/object/sign/${this.bucketId}`, { expiresIn: t, paths: e }, { headers: this.headers }), i = r != null && r.download ? `&download=${r.download === !0 ? "" : r.download}` : "";
         return {
           data: n.map((o) => Object.assign(Object.assign({}, o), { signedUrl: o.signedURL ? encodeURI(`${this.url}${o.signedURL}${i}`) : null })),
           error: null
@@ -2659,7 +2659,7 @@ class Qn {
    * @param options.transform Transform the asset before serving it to the client.
    */
   download(e, t) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       const n = typeof (t == null ? void 0 : t.transform) < "u" ? "render/image/authenticated" : "object", i = this.transformOptsToQueryString((t == null ? void 0 : t.transform) || {}), o = i ? `?${i}` : "";
       try {
         const a = this._getFinalPath(e);
@@ -2679,13 +2679,13 @@ class Qn {
    * @param path
    */
   info(e) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       const t = this._getFinalPath(e);
       try {
         const r = yield qe(this.fetch, `${this.url}/object/info/${t}`, {
           headers: this.headers
         });
-        return { data: vt(r), error: null };
+        return { data: mt(r), error: null };
       } catch (r) {
         if (T(r))
           return { data: null, error: r };
@@ -2698,14 +2698,14 @@ class Qn {
    * @param path
    */
   exists(e) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       const t = this._getFinalPath(e);
       try {
-        return yield Kn(this.fetch, `${this.url}/object/${t}`, {
+        return yield Mn(this.fetch, `${this.url}/object/${t}`, {
           headers: this.headers
         }), { data: !0, error: null };
       } catch (r) {
-        if (T(r) && r instanceof wt) {
+        if (T(r) && r instanceof pt) {
           const n = r.originalError;
           if ([400, 404].includes(n == null ? void 0 : n.status))
             return { data: !1, error: r };
@@ -2738,9 +2738,9 @@ class Qn {
    * @param paths An array of files to delete, including the path and file name. For example [`'folder/image.png'`].
    */
   remove(e) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
-        return { data: yield Gr(this.fetch, `${this.url}/object/${this.bucketId}`, { prefixes: e }, { headers: this.headers }), error: null };
+        return { data: yield Dr(this.fetch, `${this.url}/object/${this.bucketId}`, { prefixes: e }, { headers: this.headers }), error: null };
       } catch (t) {
         if (T(t))
           return { data: null, error: t };
@@ -2812,10 +2812,10 @@ class Qn {
    * @param path The folder path.
    */
   list(e, t, r) {
-    return P(this, void 0, void 0, function* () {
+    return $(this, void 0, void 0, function* () {
       try {
-        const n = Object.assign(Object.assign(Object.assign({}, Vn), t), { prefix: e || "" });
-        return { data: yield G(this.fetch, `${this.url}/object/list/${this.bucketId}`, n, { headers: this.headers }, r), error: null };
+        const n = Object.assign(Object.assign(Object.assign({}, Nn), t), { prefix: e || "" });
+        return { data: yield W(this.fetch, `${this.url}/object/list/${this.bucketId}`, n, { headers: this.headers }, r), error: null };
       } catch (n) {
         if (T(n))
           return { data: null, error: n };
@@ -2840,7 +2840,7 @@ class Qn {
     return e.width && t.push(`width=${e.width}`), e.height && t.push(`height=${e.height}`), e.resize && t.push(`resize=${e.resize}`), e.format && t.push(`format=${e.format}`), e.quality && t.push(`quality=${e.quality}`), t.join("&");
   }
 }
-const Xn = "2.7.1", Yn = { "X-Client-Info": `storage-js/${Xn}` };
+const zn = "2.7.1", Gn = { "X-Client-Info": `storage-js/${zn}` };
 var se = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
@@ -2868,9 +2868,9 @@ var se = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-class Zn {
+class Wn {
   constructor(e, t = {}, r) {
-    this.url = e, this.headers = Object.assign(Object.assign({}, Yn), t), this.fetch = Wr(r);
+    this.url = e, this.headers = Object.assign(Object.assign({}, Gn), t), this.fetch = Ur(r);
   }
   /**
    * Retrieves the details of all Storage buckets within an existing project.
@@ -2920,7 +2920,7 @@ class Zn {
   }) {
     return se(this, void 0, void 0, function* () {
       try {
-        return { data: yield G(this.fetch, `${this.url}/bucket`, {
+        return { data: yield W(this.fetch, `${this.url}/bucket`, {
           id: e,
           name: e,
           public: t.public,
@@ -2949,7 +2949,7 @@ class Zn {
   updateBucket(e, t) {
     return se(this, void 0, void 0, function* () {
       try {
-        return { data: yield Jn(this.fetch, `${this.url}/bucket/${e}`, {
+        return { data: yield Bn(this.fetch, `${this.url}/bucket/${e}`, {
           id: e,
           name: e,
           public: t.public,
@@ -2971,7 +2971,7 @@ class Zn {
   emptyBucket(e) {
     return se(this, void 0, void 0, function* () {
       try {
-        return { data: yield G(this.fetch, `${this.url}/bucket/${e}/empty`, {}, { headers: this.headers }), error: null };
+        return { data: yield W(this.fetch, `${this.url}/bucket/${e}/empty`, {}, { headers: this.headers }), error: null };
       } catch (t) {
         if (T(t))
           return { data: null, error: t };
@@ -2988,7 +2988,7 @@ class Zn {
   deleteBucket(e) {
     return se(this, void 0, void 0, function* () {
       try {
-        return { data: yield Gr(this.fetch, `${this.url}/bucket/${e}`, {}, { headers: this.headers }), error: null };
+        return { data: yield Dr(this.fetch, `${this.url}/bucket/${e}`, {}, { headers: this.headers }), error: null };
       } catch (t) {
         if (T(t))
           return { data: null, error: t };
@@ -2997,7 +2997,7 @@ class Zn {
     });
   }
 }
-class ei extends Zn {
+class Hn extends Wn {
   constructor(e, t = {}, r) {
     super(e, t, r);
   }
@@ -3007,23 +3007,23 @@ class ei extends Zn {
    * @param id The bucket id to operate on.
    */
   from(e) {
-    return new Qn(this.url, this.headers, e, this.fetch);
+    return new Fn(this.url, this.headers, e, this.fetch);
   }
 }
-const ti = "2.50.0";
+const Jn = "2.50.0";
 let ve = "";
 typeof Deno < "u" ? ve = "deno" : typeof document < "u" ? ve = "web" : typeof navigator < "u" && navigator.product === "ReactNative" ? ve = "react-native" : ve = "node";
-const ri = { "X-Client-Info": `supabase-js-${ve}/${ti}` }, si = {
-  headers: ri
-}, ni = {
+const Kn = { "X-Client-Info": `supabase-js-${ve}/${Jn}` }, Vn = {
+  headers: Kn
+}, Qn = {
   schema: "public"
-}, ii = {
+}, Xn = {
   autoRefreshToken: !0,
   persistSession: !0,
   detectSessionInUrl: !0,
   flowType: "implicit"
-}, oi = {};
-var ai = function(s, e, t, r) {
+}, Yn = {};
+var Zn = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
       o(i);
@@ -3050,19 +3050,19 @@ var ai = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-const ci = (s) => {
+const ei = (s) => {
   let e;
-  return s ? e = s : typeof fetch > "u" ? e = $r : e = fetch, (...t) => e(...t);
-}, li = () => typeof Headers > "u" ? Pr : Headers, ui = (s, e, t) => {
-  const r = ci(t), n = li();
-  return (i, o) => ai(void 0, void 0, void 0, function* () {
+  return s ? e = s : typeof fetch > "u" ? e = br : e = fetch, (...t) => e(...t);
+}, ti = () => typeof Headers > "u" ? Sr : Headers, ri = (s, e, t) => {
+  const r = ei(t), n = ti();
+  return (i, o) => Zn(void 0, void 0, void 0, function* () {
     var a;
     const c = (a = yield e()) !== null && a !== void 0 ? a : s;
     let l = new n(o == null ? void 0 : o.headers);
     return l.has("apikey") || l.set("apikey", s), l.has("Authorization") || l.set("Authorization", `Bearer ${c}`), r(i, Object.assign(Object.assign({}, o), { headers: l }));
   });
 };
-var di = function(s, e, t, r) {
+var si = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
       o(i);
@@ -3089,31 +3089,31 @@ var di = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-function hi(s) {
+function ni(s) {
   return s.endsWith("/") ? s : s + "/";
 }
-function fi(s, e) {
+function ii(s, e) {
   var t, r;
   const { db: n, auth: i, realtime: o, global: a } = s, { db: c, auth: l, realtime: u, global: d } = e, h = {
     db: Object.assign(Object.assign({}, c), n),
     auth: Object.assign(Object.assign({}, l), i),
     realtime: Object.assign(Object.assign({}, u), o),
     global: Object.assign(Object.assign(Object.assign({}, d), a), { headers: Object.assign(Object.assign({}, (t = d == null ? void 0 : d.headers) !== null && t !== void 0 ? t : {}), (r = a == null ? void 0 : a.headers) !== null && r !== void 0 ? r : {}) }),
-    accessToken: () => di(this, void 0, void 0, function* () {
+    accessToken: () => si(this, void 0, void 0, function* () {
       return "";
     })
   };
   return s.accessToken ? h.accessToken = s.accessToken : delete h.accessToken, h;
 }
-const Hr = "2.70.0", le = 30 * 1e3, _t = 3, tt = _t * le, gi = "http://localhost:9999", pi = "supabase.auth.token";
-const mi = { "X-Client-Info": `gotrue-js/${Hr}` };
-const bt = "X-Supabase-Api-Version", Jr = {
+const qr = "2.70.0", le = 30 * 1e3, yt = 3, Ze = yt * le, oi = "http://localhost:9999", ai = "supabase.auth.token";
+const ci = { "X-Client-Info": `gotrue-js/${qr}` };
+const wt = "X-Supabase-Api-Version", Br = {
   "2024-01-01": {
     timestamp: Date.parse("2024-01-01T00:00:00.0Z"),
     name: "2024-01-01"
   }
-}, yi = /^([a-z0-9_-]{4})*($|[a-z0-9_-]{3}$|[a-z0-9_-]{2}$)$/i, wi = 6e5;
-class It extends Error {
+}, li = /^([a-z0-9_-]{4})*($|[a-z0-9_-]{3}$|[a-z0-9_-]{2}$)$/i, ui = 6e5;
+class Ct extends Error {
   constructor(e, t, r) {
     super(e), this.__isAuthError = !0, this.name = "AuthError", this.status = t, this.code = r;
   }
@@ -3121,43 +3121,43 @@ class It extends Error {
 function v(s) {
   return typeof s == "object" && s !== null && "__isAuthError" in s;
 }
-class vi extends It {
+class di extends Ct {
   constructor(e, t, r) {
     super(e, t, r), this.name = "AuthApiError", this.status = t, this.code = r;
   }
 }
-function _i(s) {
+function hi(s) {
   return v(s) && s.name === "AuthApiError";
 }
-class Kr extends It {
+class Mr extends Ct {
   constructor(e, t) {
     super(e), this.name = "AuthUnknownError", this.originalError = t;
   }
 }
-class Q extends It {
+class Q extends Ct {
   constructor(e, t, r, n) {
     super(e, r, n), this.name = t, this.status = r;
   }
 }
-class W extends Q {
+class G extends Q {
   constructor() {
     super("Auth session missing!", "AuthSessionMissingError", 400, void 0);
   }
 }
-function bi(s) {
+function fi(s) {
   return v(s) && s.name === "AuthSessionMissingError";
 }
-class xe extends Q {
+class $e extends Q {
   constructor() {
     super("Auth session or user missing", "AuthInvalidTokenResponseError", 500, void 0);
   }
 }
-class Re extends Q {
+class je extends Q {
   constructor(e) {
     super(e, "AuthInvalidCredentialsError", 400, void 0);
   }
 }
-class Ie extends Q {
+class Pe extends Q {
   constructor(e, t = null) {
     super(e, "AuthImplicitGrantRedirectError", 500, void 0), this.details = null, this.details = t;
   }
@@ -3170,10 +3170,10 @@ class Ie extends Q {
     };
   }
 }
-function Si(s) {
+function gi(s) {
   return v(s) && s.name === "AuthImplicitGrantRedirectError";
 }
-class Jt extends Q {
+class Nt extends Q {
   constructor(e, t = null) {
     super(e, "AuthPKCEGrantCodeExchangeError", 500, void 0), this.details = null, this.details = t;
   }
@@ -3186,15 +3186,15 @@ class Jt extends Q {
     };
   }
 }
-class St extends Q {
+class vt extends Q {
   constructor(e, t) {
     super(e, "AuthRetryableFetchError", t, void 0);
   }
 }
-function rt(s) {
+function et(s) {
   return v(s) && s.name === "AuthRetryableFetchError";
 }
-class Kt extends Q {
+class Ft extends Q {
   constructor(e, t, r) {
     super(e, "AuthWeakPasswordError", t, "weak_password"), this.reasons = r;
   }
@@ -3204,31 +3204,31 @@ class Se extends Q {
     super(e, "AuthInvalidJwtError", 400, "invalid_jwt");
   }
 }
-const Me = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".split(""), Vt = ` 	
-\r=`.split(""), ki = (() => {
+const Be = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".split(""), zt = ` 	
+\r=`.split(""), pi = (() => {
   const s = new Array(128);
   for (let e = 0; e < s.length; e += 1)
     s[e] = -1;
-  for (let e = 0; e < Vt.length; e += 1)
-    s[Vt[e].charCodeAt(0)] = -2;
-  for (let e = 0; e < Me.length; e += 1)
-    s[Me[e].charCodeAt(0)] = e;
+  for (let e = 0; e < zt.length; e += 1)
+    s[zt[e].charCodeAt(0)] = -2;
+  for (let e = 0; e < Be.length; e += 1)
+    s[Be[e].charCodeAt(0)] = e;
   return s;
 })();
-function Qt(s, e, t) {
+function Gt(s, e, t) {
   if (s !== null)
     for (e.queue = e.queue << 8 | s, e.queuedBits += 8; e.queuedBits >= 6; ) {
       const r = e.queue >> e.queuedBits - 6 & 63;
-      t(Me[r]), e.queuedBits -= 6;
+      t(Be[r]), e.queuedBits -= 6;
     }
   else if (e.queuedBits > 0)
     for (e.queue = e.queue << 6 - e.queuedBits, e.queuedBits = 6; e.queuedBits >= 6; ) {
       const r = e.queue >> e.queuedBits - 6 & 63;
-      t(Me[r]), e.queuedBits -= 6;
+      t(Be[r]), e.queuedBits -= 6;
     }
 }
-function Vr(s, e, t) {
-  const r = ki[s];
+function Nr(s, e, t) {
+  const r = pi[s];
   if (r > -1)
     for (e.queue = e.queue << 6 | r, e.queuedBits += 6; e.queuedBits >= 8; )
       t(e.queue >> e.queuedBits - 8 & 255), e.queuedBits -= 8;
@@ -3238,20 +3238,20 @@ function Vr(s, e, t) {
     throw new Error(`Invalid Base64-URL character "${String.fromCharCode(s)}"`);
   }
 }
-function Xt(s) {
+function Wt(s) {
   const e = [], t = (o) => {
     e.push(String.fromCodePoint(o));
   }, r = {
     utf8seq: 0,
     codepoint: 0
   }, n = { queue: 0, queuedBits: 0 }, i = (o) => {
-    Oi(o, r, t);
+    wi(o, r, t);
   };
   for (let o = 0; o < s.length; o += 1)
-    Vr(s.charCodeAt(o), n, i);
+    Nr(s.charCodeAt(o), n, i);
   return e.join("");
 }
-function Ei(s, e) {
+function mi(s, e) {
   if (s <= 127) {
     e(s);
     return;
@@ -3267,17 +3267,17 @@ function Ei(s, e) {
   }
   throw new Error(`Unrecognized Unicode codepoint: ${s.toString(16)}`);
 }
-function Ti(s, e) {
+function yi(s, e) {
   for (let t = 0; t < s.length; t += 1) {
     let r = s.charCodeAt(t);
     if (r > 55295 && r <= 56319) {
       const n = (r - 55296) * 1024 & 65535;
       r = (s.charCodeAt(t + 1) - 56320 & 65535 | n) + 65536, t += 1;
     }
-    Ei(r, e);
+    mi(r, e);
   }
 }
-function Oi(s, e, t) {
+function wi(s, e, t) {
   if (e.utf8seq === 0) {
     if (s <= 127) {
       t(s);
@@ -3303,28 +3303,28 @@ function Oi(s, e, t) {
     e.codepoint = e.codepoint << 6 | s & 63, e.utf8seq -= 1, e.utf8seq === 0 && t(e.codepoint);
   }
 }
-function Ci(s) {
+function vi(s) {
   const e = [], t = { queue: 0, queuedBits: 0 }, r = (n) => {
     e.push(n);
   };
   for (let n = 0; n < s.length; n += 1)
-    Vr(s.charCodeAt(n), t, r);
+    Nr(s.charCodeAt(n), t, r);
   return new Uint8Array(e);
 }
-function Ai(s) {
+function _i(s) {
   const e = [];
-  return Ti(s, (t) => e.push(t)), new Uint8Array(e);
+  return yi(s, (t) => e.push(t)), new Uint8Array(e);
 }
-function $i(s) {
+function bi(s) {
   const e = [], t = { queue: 0, queuedBits: 0 }, r = (n) => {
     e.push(n);
   };
-  return s.forEach((n) => Qt(n, t, r)), Qt(null, t, r), e.join("");
+  return s.forEach((n) => Gt(n, t, r)), Gt(null, t, r), e.join("");
 }
-function Pi(s) {
+function Si(s) {
   return Math.round(Date.now() / 1e3) + s;
 }
-function ji() {
+function ki() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(s) {
     const e = Math.random() * 16 | 0;
     return (s == "x" ? e : e & 3 | 8).toString(16);
@@ -3352,7 +3352,7 @@ const L = () => typeof window < "u" && typeof document < "u", X = {
   }
   return X.writable;
 };
-function xi(s) {
+function Ei(s) {
   const e = {}, t = new URL(s);
   if (t.hash && t.hash[0] === "#")
     try {
@@ -3365,12 +3365,12 @@ function xi(s) {
     e[n] = r;
   }), e;
 }
-const Qr = (s) => {
+const Fr = (s) => {
   let e;
   return s ? e = s : typeof fetch > "u" ? e = (...t) => Promise.resolve().then(() => me).then(({ default: r }) => r(...t)) : e = fetch, (...t) => e(...t);
-}, Ri = (s) => typeof s == "object" && s !== null && "status" in s && "ok" in s && "json" in s && typeof s.json == "function", Xr = async (s, e, t) => {
+}, Ti = (s) => typeof s == "object" && s !== null && "status" in s && "ok" in s && "json" in s && typeof s.json == "function", zr = async (s, e, t) => {
   await s.setItem(e, JSON.stringify(t));
-}, Le = async (s, e) => {
+}, xe = async (s, e) => {
   const t = await s.getItem(e);
   if (!t)
     return null;
@@ -3379,41 +3379,41 @@ const Qr = (s) => {
   } catch {
     return t;
   }
-}, Ue = async (s, e) => {
+}, Re = async (s, e) => {
   await s.removeItem(e);
 };
-class Ve {
+class Je {
   constructor() {
-    this.promise = new Ve.promiseConstructor((e, t) => {
+    this.promise = new Je.promiseConstructor((e, t) => {
       this.resolve = e, this.reject = t;
     });
   }
 }
-Ve.promiseConstructor = Promise;
-function st(s) {
+Je.promiseConstructor = Promise;
+function tt(s) {
   const e = s.split(".");
   if (e.length !== 3)
     throw new Se("Invalid JWT structure");
   for (let r = 0; r < e.length; r++)
-    if (!yi.test(e[r]))
+    if (!li.test(e[r]))
       throw new Se("JWT not in base64url format");
   return {
     // using base64url lib
-    header: JSON.parse(Xt(e[0])),
-    payload: JSON.parse(Xt(e[1])),
-    signature: Ci(e[2]),
+    header: JSON.parse(Wt(e[0])),
+    payload: JSON.parse(Wt(e[1])),
+    signature: vi(e[2]),
     raw: {
       header: e[0],
       payload: e[1]
     }
   };
 }
-async function Ii(s) {
+async function Oi(s) {
   return await new Promise((e) => {
     setTimeout(() => e(null), s);
   });
 }
-function Li(s, e) {
+function Ai(s, e) {
   return new Promise((r, n) => {
     (async () => {
       for (let i = 0; i < 1 / 0; i++)
@@ -3432,10 +3432,10 @@ function Li(s, e) {
     })();
   });
 }
-function Ui(s) {
+function Ci(s) {
   return ("0" + s.toString(16)).substr(-2);
 }
-function Di() {
+function $i() {
   const e = new Uint32Array(56);
   if (typeof crypto > "u") {
     const t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~", r = t.length;
@@ -3444,29 +3444,29 @@ function Di() {
       n += t.charAt(Math.floor(Math.random() * r));
     return n;
   }
-  return crypto.getRandomValues(e), Array.from(e, Ui).join("");
+  return crypto.getRandomValues(e), Array.from(e, Ci).join("");
 }
-async function Bi(s) {
+async function ji(s) {
   const t = new TextEncoder().encode(s), r = await crypto.subtle.digest("SHA-256", t), n = new Uint8Array(r);
   return Array.from(n).map((i) => String.fromCharCode(i)).join("");
 }
-async function qi(s) {
+async function Pi(s) {
   if (!(typeof crypto < "u" && typeof crypto.subtle < "u" && typeof TextEncoder < "u"))
     return console.warn("WebCrypto API is not supported. Code challenge method will default to use plain instead of sha256."), s;
-  const t = await Bi(s);
+  const t = await ji(s);
   return btoa(t).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 async function ne(s, e, t = !1) {
-  const r = Di();
+  const r = $i();
   let n = r;
-  t && (n += "/PASSWORD_RECOVERY"), await Xr(s, `${e}-code-verifier`, n);
-  const i = await qi(r);
+  t && (n += "/PASSWORD_RECOVERY"), await zr(s, `${e}-code-verifier`, n);
+  const i = await Pi(r);
   return [i, r === i ? "plain" : "s256"];
 }
-const Mi = /^2[0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$/i;
-function Ni(s) {
-  const e = s.headers.get(bt);
-  if (!e || !e.match(Mi))
+const xi = /^2[0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$/i;
+function Ri(s) {
+  const e = s.headers.get(wt);
+  if (!e || !e.match(xi))
     return null;
   try {
     return /* @__PURE__ */ new Date(`${e}T00:00:00.0Z`);
@@ -3474,14 +3474,14 @@ function Ni(s) {
     return null;
   }
 }
-function Fi(s) {
+function Ii(s) {
   if (!s)
     throw new Error("Missing exp claim");
   const e = Math.floor(Date.now() / 1e3);
   if (s <= e)
     throw new Error("JWT has expired");
 }
-function zi(s) {
+function Li(s) {
   switch (s) {
     case "RS256":
       return {
@@ -3498,12 +3498,12 @@ function zi(s) {
       throw new Error("Invalid alg claim");
   }
 }
-const Wi = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const Ui = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 function ie(s) {
-  if (!Wi.test(s))
+  if (!Ui.test(s))
     throw new Error("@supabase/auth-js: Expected parameter to be UUID but is not");
 }
-var Gi = function(s, e) {
+var Di = function(s, e) {
   var t = {};
   for (var r in s) Object.prototype.hasOwnProperty.call(s, r) && e.indexOf(r) < 0 && (t[r] = s[r]);
   if (s != null && typeof Object.getOwnPropertySymbols == "function")
@@ -3511,70 +3511,70 @@ var Gi = function(s, e) {
       e.indexOf(r[n]) < 0 && Object.prototype.propertyIsEnumerable.call(s, r[n]) && (t[r[n]] = s[r[n]]);
   return t;
 };
-const Y = (s) => s.msg || s.message || s.error_description || s.error || JSON.stringify(s), Hi = [502, 503, 504];
-async function Yt(s) {
+const Y = (s) => s.msg || s.message || s.error_description || s.error || JSON.stringify(s), qi = [502, 503, 504];
+async function Ht(s) {
   var e;
-  if (!Ri(s))
-    throw new St(Y(s), 0);
-  if (Hi.includes(s.status))
-    throw new St(Y(s), s.status);
+  if (!Ti(s))
+    throw new vt(Y(s), 0);
+  if (qi.includes(s.status))
+    throw new vt(Y(s), s.status);
   let t;
   try {
     t = await s.json();
   } catch (i) {
-    throw new Kr(Y(i), i);
+    throw new Mr(Y(i), i);
   }
   let r;
-  const n = Ni(s);
-  if (n && n.getTime() >= Jr["2024-01-01"].timestamp && typeof t == "object" && t && typeof t.code == "string" ? r = t.code : typeof t == "object" && t && typeof t.error_code == "string" && (r = t.error_code), r) {
+  const n = Ri(s);
+  if (n && n.getTime() >= Br["2024-01-01"].timestamp && typeof t == "object" && t && typeof t.code == "string" ? r = t.code : typeof t == "object" && t && typeof t.error_code == "string" && (r = t.error_code), r) {
     if (r === "weak_password")
-      throw new Kt(Y(t), s.status, ((e = t.weak_password) === null || e === void 0 ? void 0 : e.reasons) || []);
+      throw new Ft(Y(t), s.status, ((e = t.weak_password) === null || e === void 0 ? void 0 : e.reasons) || []);
     if (r === "session_not_found")
-      throw new W();
+      throw new G();
   } else if (typeof t == "object" && t && typeof t.weak_password == "object" && t.weak_password && Array.isArray(t.weak_password.reasons) && t.weak_password.reasons.length && t.weak_password.reasons.reduce((i, o) => i && typeof o == "string", !0))
-    throw new Kt(Y(t), s.status, t.weak_password.reasons);
-  throw new vi(Y(t), s.status || 500, r);
+    throw new Ft(Y(t), s.status, t.weak_password.reasons);
+  throw new di(Y(t), s.status || 500, r);
 }
-const Ji = (s, e, t, r) => {
+const Bi = (s, e, t, r) => {
   const n = { method: s, headers: (e == null ? void 0 : e.headers) || {} };
   return s === "GET" ? n : (n.headers = Object.assign({ "Content-Type": "application/json;charset=UTF-8" }, e == null ? void 0 : e.headers), n.body = JSON.stringify(r), Object.assign(Object.assign({}, n), t));
 };
 async function _(s, e, t, r) {
   var n;
   const i = Object.assign({}, r == null ? void 0 : r.headers);
-  i[bt] || (i[bt] = Jr["2024-01-01"].name), r != null && r.jwt && (i.Authorization = `Bearer ${r.jwt}`);
+  i[wt] || (i[wt] = Br["2024-01-01"].name), r != null && r.jwt && (i.Authorization = `Bearer ${r.jwt}`);
   const o = (n = r == null ? void 0 : r.query) !== null && n !== void 0 ? n : {};
   r != null && r.redirectTo && (o.redirect_to = r.redirectTo);
-  const a = Object.keys(o).length ? "?" + new URLSearchParams(o).toString() : "", c = await Ki(s, e, t + a, {
+  const a = Object.keys(o).length ? "?" + new URLSearchParams(o).toString() : "", c = await Mi(s, e, t + a, {
     headers: i,
     noResolveJson: r == null ? void 0 : r.noResolveJson
   }, {}, r == null ? void 0 : r.body);
   return r != null && r.xform ? r == null ? void 0 : r.xform(c) : { data: Object.assign({}, c), error: null };
 }
-async function Ki(s, e, t, r, n, i) {
-  const o = Ji(e, r, n, i);
+async function Mi(s, e, t, r, n, i) {
+  const o = Bi(e, r, n, i);
   let a;
   try {
     a = await s(t, Object.assign({}, o));
   } catch (c) {
-    throw console.error(c), new St(Y(c), 0);
+    throw console.error(c), new vt(Y(c), 0);
   }
-  if (a.ok || await Yt(a), r != null && r.noResolveJson)
+  if (a.ok || await Ht(a), r != null && r.noResolveJson)
     return a;
   try {
     return await a.json();
   } catch (c) {
-    await Yt(c);
+    await Ht(c);
   }
 }
 function F(s) {
   var e;
   let t = null;
-  Yi(s) && (t = Object.assign({}, s), s.expires_at || (t.expires_at = Pi(s.expires_in)));
+  Gi(s) && (t = Object.assign({}, s), s.expires_at || (t.expires_at = Si(s.expires_in)));
   const r = (e = s.user) !== null && e !== void 0 ? e : s;
   return { data: { session: t, user: r }, error: null };
 }
-function Zt(s) {
+function Jt(s) {
   const e = F(s);
   return !e.error && s.weak_password && typeof s.weak_password == "object" && Array.isArray(s.weak_password.reasons) && s.weak_password.reasons.length && s.weak_password.message && typeof s.weak_password.message == "string" && s.weak_password.reasons.reduce((t, r) => t && typeof r == "string", !0) && (e.data.weak_password = s.weak_password), e;
 }
@@ -3582,11 +3582,11 @@ function K(s) {
   var e;
   return { data: { user: (e = s.user) !== null && e !== void 0 ? e : s }, error: null };
 }
-function Vi(s) {
+function Ni(s) {
   return { data: s, error: null };
 }
-function Qi(s) {
-  const { action_link: e, email_otp: t, hashed_token: r, redirect_to: n, verification_type: i } = s, o = Gi(s, ["action_link", "email_otp", "hashed_token", "redirect_to", "verification_type"]), a = {
+function Fi(s) {
+  const { action_link: e, email_otp: t, hashed_token: r, redirect_to: n, verification_type: i } = s, o = Di(s, ["action_link", "email_otp", "hashed_token", "redirect_to", "verification_type"]), a = {
     action_link: e,
     email_otp: t,
     hashed_token: r,
@@ -3601,14 +3601,14 @@ function Qi(s) {
     error: null
   };
 }
-function Xi(s) {
+function zi(s) {
   return s;
 }
-function Yi(s) {
+function Gi(s) {
   return s.access_token && s.refresh_token && s.expires_in;
 }
-const nt = ["global", "local", "others"];
-var Zi = function(s, e) {
+const rt = ["global", "local", "others"];
+var Wi = function(s, e) {
   var t = {};
   for (var r in s) Object.prototype.hasOwnProperty.call(s, r) && e.indexOf(r) < 0 && (t[r] = s[r]);
   if (s != null && typeof Object.getOwnPropertySymbols == "function")
@@ -3616,9 +3616,9 @@ var Zi = function(s, e) {
       e.indexOf(r[n]) < 0 && Object.prototype.propertyIsEnumerable.call(s, r[n]) && (t[r[n]] = s[r[n]]);
   return t;
 };
-class eo {
+class Hi {
   constructor({ url: e = "", headers: t = {}, fetch: r }) {
-    this.url = e, this.headers = t, this.fetch = Qr(r), this.mfa = {
+    this.url = e, this.headers = t, this.fetch = Fr(r), this.mfa = {
       listFactors: this._listFactors.bind(this),
       deleteFactor: this._deleteFactor.bind(this)
     };
@@ -3628,9 +3628,9 @@ class eo {
    * @param jwt A valid, logged-in JWT.
    * @param scope The logout sope.
    */
-  async signOut(e, t = nt[0]) {
-    if (nt.indexOf(t) < 0)
-      throw new Error(`@supabase/auth-js: Parameter scope must be one of ${nt.join(", ")}`);
+  async signOut(e, t = rt[0]) {
+    if (rt.indexOf(t) < 0)
+      throw new Error(`@supabase/auth-js: Parameter scope must be one of ${rt.join(", ")}`);
     try {
       return await _(this.fetch, "POST", `${this.url}/logout?scope=${t}`, {
         headers: this.headers,
@@ -3671,11 +3671,11 @@ class eo {
    */
   async generateLink(e) {
     try {
-      const { options: t } = e, r = Zi(e, ["options"]), n = Object.assign(Object.assign({}, r), t);
+      const { options: t } = e, r = Wi(e, ["options"]), n = Object.assign(Object.assign({}, r), t);
       return "newEmail" in r && (n.new_email = r == null ? void 0 : r.newEmail, delete n.newEmail), await _(this.fetch, "POST", `${this.url}/admin/generate_link`, {
         body: n,
         headers: this.headers,
-        xform: Qi,
+        xform: Fi,
         redirectTo: t == null ? void 0 : t.redirectTo
       });
     } catch (t) {
@@ -3724,7 +3724,7 @@ class eo {
           page: (r = (t = e == null ? void 0 : e.page) === null || t === void 0 ? void 0 : t.toString()) !== null && r !== void 0 ? r : "",
           per_page: (i = (n = e == null ? void 0 : e.perPage) === null || n === void 0 ? void 0 : n.toString()) !== null && i !== void 0 ? i : ""
         },
-        xform: Xi
+        xform: zi
       });
       if (u.error)
         throw u.error;
@@ -3832,7 +3832,7 @@ class eo {
     }
   }
 }
-const to = {
+const Ji = {
   getItem: (s) => ke() ? globalThis.localStorage.getItem(s) : null,
   setItem: (s, e) => {
     ke() && globalThis.localStorage.setItem(s, e);
@@ -3841,7 +3841,7 @@ const to = {
     ke() && globalThis.localStorage.removeItem(s);
   }
 };
-function er(s = {}) {
+function Kt(s = {}) {
   return {
     getItem: (e) => s[e] || null,
     setItem: (e, t) => {
@@ -3852,7 +3852,7 @@ function er(s = {}) {
     }
   };
 }
-function ro() {
+function Ki() {
   if (typeof globalThis != "object")
     try {
       Object.defineProperty(Object.prototype, "__magic__", {
@@ -3871,14 +3871,14 @@ const oe = {
    */
   debug: !!(globalThis && ke() && globalThis.localStorage && globalThis.localStorage.getItem("supabase.gotrue-js.locks.debug") === "true")
 };
-class Yr extends Error {
+class Gr extends Error {
   constructor(e) {
     super(e), this.isAcquireTimeout = !0;
   }
 }
-class so extends Yr {
+class Vi extends Gr {
 }
-async function no(s, e, t) {
+async function Qi(s, e, t) {
   oe.debug && console.log("@supabase/gotrue-js: navigatorLock: acquire lock", s, e);
   const r = new globalThis.AbortController();
   return e > 0 && setTimeout(() => {
@@ -3899,7 +3899,7 @@ async function no(s, e, t) {
       }
     } else {
       if (e === 0)
-        throw oe.debug && console.log("@supabase/gotrue-js: navigatorLock: not immediately available", s), new so(`Acquiring an exclusive Navigator LockManager lock "${s}" immediately failed`);
+        throw oe.debug && console.log("@supabase/gotrue-js: navigatorLock: not immediately available", s), new Vi(`Acquiring an exclusive Navigator LockManager lock "${s}" immediately failed`);
       if (oe.debug)
         try {
           const i = await globalThis.navigator.locks.query();
@@ -3911,34 +3911,34 @@ async function no(s, e, t) {
     }
   }));
 }
-ro();
-const io = {
-  url: gi,
-  storageKey: pi,
+Ki();
+const Xi = {
+  url: oi,
+  storageKey: ai,
   autoRefreshToken: !0,
   persistSession: !0,
   detectSessionInUrl: !0,
-  headers: mi,
+  headers: ci,
   flowType: "implicit",
   debug: !1,
   hasCustomAuthorizationHeader: !1
 };
-async function tr(s, e, t) {
+async function Vt(s, e, t) {
   return await t();
 }
-class Ae {
+class Oe {
   /**
    * Create a new client for use in the browser.
    */
   constructor(e) {
     var t, r;
-    this.memoryStorage = null, this.stateChangeEmitters = /* @__PURE__ */ new Map(), this.autoRefreshTicker = null, this.visibilityChangedCallback = null, this.refreshingDeferred = null, this.initializePromise = null, this.detectSessionInUrl = !0, this.hasCustomAuthorizationHeader = !1, this.suppressGetSessionWarning = !1, this.lockAcquired = !1, this.pendingInLock = [], this.broadcastChannel = null, this.logger = console.log, this.instanceID = Ae.nextInstanceID, Ae.nextInstanceID += 1, this.instanceID > 0 && L() && console.warn("Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.");
-    const n = Object.assign(Object.assign({}, io), e);
-    if (this.logDebugMessages = !!n.debug, typeof n.debug == "function" && (this.logger = n.debug), this.persistSession = n.persistSession, this.storageKey = n.storageKey, this.autoRefreshToken = n.autoRefreshToken, this.admin = new eo({
+    this.memoryStorage = null, this.stateChangeEmitters = /* @__PURE__ */ new Map(), this.autoRefreshTicker = null, this.visibilityChangedCallback = null, this.refreshingDeferred = null, this.initializePromise = null, this.detectSessionInUrl = !0, this.hasCustomAuthorizationHeader = !1, this.suppressGetSessionWarning = !1, this.lockAcquired = !1, this.pendingInLock = [], this.broadcastChannel = null, this.logger = console.log, this.instanceID = Oe.nextInstanceID, Oe.nextInstanceID += 1, this.instanceID > 0 && L() && console.warn("Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.");
+    const n = Object.assign(Object.assign({}, Xi), e);
+    if (this.logDebugMessages = !!n.debug, typeof n.debug == "function" && (this.logger = n.debug), this.persistSession = n.persistSession, this.storageKey = n.storageKey, this.autoRefreshToken = n.autoRefreshToken, this.admin = new Hi({
       url: n.url,
       headers: n.headers,
       fetch: n.fetch
-    }), this.url = n.url, this.headers = n.headers, this.fetch = Qr(n.fetch), this.lock = n.lock || tr, this.detectSessionInUrl = n.detectSessionInUrl, this.flowType = n.flowType, this.hasCustomAuthorizationHeader = n.hasCustomAuthorizationHeader, n.lock ? this.lock = n.lock : L() && (!((t = globalThis == null ? void 0 : globalThis.navigator) === null || t === void 0) && t.locks) ? this.lock = no : this.lock = tr, this.jwks = { keys: [] }, this.jwks_cached_at = Number.MIN_SAFE_INTEGER, this.mfa = {
+    }), this.url = n.url, this.headers = n.headers, this.fetch = Fr(n.fetch), this.lock = n.lock || Vt, this.detectSessionInUrl = n.detectSessionInUrl, this.flowType = n.flowType, this.hasCustomAuthorizationHeader = n.hasCustomAuthorizationHeader, n.lock ? this.lock = n.lock : L() && (!((t = globalThis == null ? void 0 : globalThis.navigator) === null || t === void 0) && t.locks) ? this.lock = Qi : this.lock = Vt, this.jwks = { keys: [] }, this.jwks_cached_at = Number.MIN_SAFE_INTEGER, this.mfa = {
       verify: this._verify.bind(this),
       enroll: this._enroll.bind(this),
       unenroll: this._unenroll.bind(this),
@@ -3946,7 +3946,7 @@ class Ae {
       listFactors: this._listFactors.bind(this),
       challengeAndVerify: this._challengeAndVerify.bind(this),
       getAuthenticatorAssuranceLevel: this._getAuthenticatorAssuranceLevel.bind(this)
-    }, this.persistSession ? n.storage ? this.storage = n.storage : ke() ? this.storage = to : (this.memoryStorage = {}, this.storage = er(this.memoryStorage)) : (this.memoryStorage = {}, this.storage = er(this.memoryStorage)), L() && globalThis.BroadcastChannel && this.persistSession && this.storageKey) {
+    }, this.persistSession ? n.storage ? this.storage = n.storage : ke() ? this.storage = Ji : (this.memoryStorage = {}, this.storage = Kt(this.memoryStorage)) : (this.memoryStorage = {}, this.storage = Kt(this.memoryStorage)), L() && globalThis.BroadcastChannel && this.persistSession && this.storageKey) {
       try {
         this.broadcastChannel = new globalThis.BroadcastChannel(this.storageKey);
       } catch (i) {
@@ -3959,7 +3959,7 @@ class Ae {
     this.initialize();
   }
   _debug(...e) {
-    return this.logDebugMessages && this.logger(`GoTrueClient@${this.instanceID} (${Hr}) ${(/* @__PURE__ */ new Date()).toISOString()}`, ...e), this;
+    return this.logDebugMessages && this.logger(`GoTrueClient@${this.instanceID} (${qr}) ${(/* @__PURE__ */ new Date()).toISOString()}`, ...e), this;
   }
   /**
    * Initializes the client session either from the url or from storage.
@@ -3978,12 +3978,12 @@ class Ae {
   async _initialize() {
     var e;
     try {
-      const t = xi(window.location.href);
+      const t = Ei(window.location.href);
       let r = "none";
       if (this._isImplicitGrantCallback(t) ? r = "implicit" : await this._isPKCECallback(t) && (r = "pkce"), L() && this.detectSessionInUrl && r !== "none") {
         const { data: n, error: i } = await this._getSessionFromURL(t, r);
         if (i) {
-          if (this._debug("#_initialize()", "error detecting session from URL", i), Si(i)) {
+          if (this._debug("#_initialize()", "error detecting session from URL", i), gi(i)) {
             const c = (e = i.details) === null || e === void 0 ? void 0 : e.code;
             if (c === "identity_already_exists" || c === "identity_not_found" || c === "single_identity_not_deletable")
               return { error: i };
@@ -3998,7 +3998,7 @@ class Ae {
       return await this._recoverAndRefresh(), { error: null };
     } catch (t) {
       return v(t) ? { error: t } : {
-        error: new Kr("Unexpected error during initialization", t)
+        error: new Mr("Unexpected error during initialization", t)
       };
     } finally {
       await this._handleVisibilityChange(), this._debug("#_initialize()", "end");
@@ -4074,7 +4074,7 @@ class Ae {
           xform: F
         });
       } else
-        throw new Re("You must provide either an email or phone number and a password");
+        throw new je("You must provide either an email or phone number and a password");
       const { data: o, error: a } = i;
       if (a || !o)
         return { data: { user: null, session: null }, error: a };
@@ -4106,7 +4106,7 @@ class Ae {
             password: o,
             gotrue_meta_security: { captcha_token: a == null ? void 0 : a.captchaToken }
           },
-          xform: Zt
+          xform: Jt
         });
       } else if ("phone" in e) {
         const { phone: i, password: o, options: a } = e;
@@ -4117,12 +4117,12 @@ class Ae {
             password: o,
             gotrue_meta_security: { captcha_token: a == null ? void 0 : a.captchaToken }
           },
-          xform: Zt
+          xform: Jt
         });
       } else
-        throw new Re("You must provide either an email or phone number and a password");
+        throw new je("You must provide either an email or phone number and a password");
       const { data: r, error: n } = t;
-      return n ? { data: { user: null, session: null }, error: n } : !r || !r.session || !r.user ? { data: { user: null, session: null }, error: new xe() } : (r.session && (await this._saveSession(r.session), await this._notifyAllSubscribers("SIGNED_IN", r.session)), {
+      return n ? { data: { user: null, session: null }, error: n } : !r || !r.session || !r.user ? { data: { user: null, session: null }, error: new $e() } : (r.session && (await this._saveSession(r.session), await this._notifyAllSubscribers("SIGNED_IN", r.session)), {
         data: Object.assign({ user: r.user, session: r.session }, r.weak_password ? { weakPassword: r.weak_password } : null),
         error: n
       });
@@ -4192,15 +4192,15 @@ class Ae {
           domain: O.host,
           uri: O.href
         }), k ? { statement: k } : null));
-        let x;
+        let P;
         if (Array.isArray(E) && E[0] && typeof E[0] == "object")
-          x = E[0];
+          P = E[0];
         else if (E && typeof E == "object" && "signedMessage" in E && "signature" in E)
-          x = E;
+          P = E;
         else
           throw new Error("@supabase/auth-js: Wallet method signIn() returned unrecognized value");
-        if ("signedMessage" in x && "signature" in x && (typeof x.signedMessage == "string" || x.signedMessage instanceof Uint8Array) && x.signature instanceof Uint8Array)
-          g = typeof x.signedMessage == "string" ? x.signedMessage : new TextDecoder().decode(x.signedMessage), m = x.signature;
+        if ("signedMessage" in P && "signature" in P && (typeof P.signedMessage == "string" || P.signedMessage instanceof Uint8Array) && P.signature instanceof Uint8Array)
+          g = typeof P.signedMessage == "string" ? P.signedMessage : new TextDecoder().decode(P.signedMessage), m = P.signature;
         else
           throw new Error("@supabase/auth-js: Wallet method signIn() API returned object without signedMessage and signature fields");
       } else {
@@ -4220,7 +4220,7 @@ class Ae {
           ...!((l = y == null ? void 0 : y.signInWithSolana) === null || l === void 0) && l.requestId ? [`Request ID: ${y.signInWithSolana.requestId}`] : [],
           ...!((d = (u = y == null ? void 0 : y.signInWithSolana) === null || u === void 0 ? void 0 : u.resources) === null || d === void 0) && d.length ? [
             "Resources",
-            ...y.signInWithSolana.resources.map((x) => `- ${x}`)
+            ...y.signInWithSolana.resources.map((P) => `- ${P}`)
           ] : []
         ].join(`
 `);
@@ -4233,14 +4233,14 @@ class Ae {
     try {
       const { data: p, error: w } = await _(this.fetch, "POST", `${this.url}/token?grant_type=web3`, {
         headers: this.headers,
-        body: Object.assign({ chain: "solana", message: g, signature: $i(m) }, !((h = e.options) === null || h === void 0) && h.captchaToken ? { gotrue_meta_security: { captcha_token: (f = e.options) === null || f === void 0 ? void 0 : f.captchaToken } } : null),
+        body: Object.assign({ chain: "solana", message: g, signature: bi(m) }, !((h = e.options) === null || h === void 0) && h.captchaToken ? { gotrue_meta_security: { captcha_token: (f = e.options) === null || f === void 0 ? void 0 : f.captchaToken } } : null),
         xform: F
       });
       if (w)
         throw w;
       return !p || !p.session || !p.user ? {
         data: { user: null, session: null },
-        error: new xe()
+        error: new $e()
       } : (p.session && (await this._saveSession(p.session), await this._notifyAllSubscribers("SIGNED_IN", p.session)), { data: Object.assign({}, p), error: w });
     } catch (p) {
       if (v(p))
@@ -4249,7 +4249,7 @@ class Ae {
     }
   }
   async _exchangeCodeForSession(e) {
-    const t = await Le(this.storage, `${this.storageKey}-code-verifier`), [r, n] = (t ?? "").split("/");
+    const t = await xe(this.storage, `${this.storageKey}-code-verifier`), [r, n] = (t ?? "").split("/");
     try {
       const { data: i, error: o } = await _(this.fetch, "POST", `${this.url}/token?grant_type=pkce`, {
         headers: this.headers,
@@ -4259,11 +4259,11 @@ class Ae {
         },
         xform: F
       });
-      if (await Ue(this.storage, `${this.storageKey}-code-verifier`), o)
+      if (await Re(this.storage, `${this.storageKey}-code-verifier`), o)
         throw o;
       return !i || !i.session || !i.user ? {
         data: { user: null, session: null, redirectType: null },
-        error: new xe()
+        error: new $e()
       } : (i.session && (await this._saveSession(i.session), await this._notifyAllSubscribers("SIGNED_IN", i.session)), { data: Object.assign(Object.assign({}, i), { redirectType: n ?? null }), error: o });
     } catch (i) {
       if (v(i))
@@ -4290,7 +4290,7 @@ class Ae {
       }), { data: c, error: l } = a;
       return l ? { data: { user: null, session: null }, error: l } : !c || !c.session || !c.user ? {
         data: { user: null, session: null },
-        error: new xe()
+        error: new $e()
       } : (c.session && (await this._saveSession(c.session), await this._notifyAllSubscribers("SIGNED_IN", c.session)), { data: c, error: l });
     } catch (t) {
       if (v(t))
@@ -4349,7 +4349,7 @@ class Ae {
         });
         return { data: { user: null, session: null, messageId: l == null ? void 0 : l.message_id }, error: u };
       }
-      throw new Re("You must provide either an email or phone number.");
+      throw new je("You must provide either an email or phone number.");
     } catch (a) {
       if (v(a))
         return { data: { user: null, session: null }, error: a };
@@ -4403,7 +4403,7 @@ class Ae {
       return this.flowType === "pkce" && ([i, o] = await ne(this.storage, this.storageKey)), await _(this.fetch, "POST", `${this.url}/sso`, {
         body: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, "providerId" in e ? { provider_id: e.providerId } : null), "domain" in e ? { domain: e.domain } : null), { redirect_to: (r = (t = e.options) === null || t === void 0 ? void 0 : t.redirectTo) !== null && r !== void 0 ? r : void 0 }), !((n = e == null ? void 0 : e.options) === null || n === void 0) && n.captchaToken ? { gotrue_meta_security: { captcha_token: e.options.captchaToken } } : null), { skip_http_redirect: !0, code_challenge: i, code_challenge_method: o }),
         headers: this.headers,
-        xform: Vi
+        xform: Ni
       });
     } catch (i) {
       if (v(i))
@@ -4425,7 +4425,7 @@ class Ae {
         if (r)
           throw r;
         if (!t)
-          throw new W();
+          throw new G();
         const { error: n } = await _(this.fetch, "GET", `${this.url}/reauthenticate`, {
           headers: this.headers,
           jwt: t.access_token
@@ -4466,7 +4466,7 @@ class Ae {
         });
         return { data: { user: null, session: null, messageId: o == null ? void 0 : o.message_id }, error: a };
       }
-      throw new Re("You must provide either an email or phone number and a type");
+      throw new je("You must provide either an email or phone number and a type");
     } catch (t) {
       if (v(t))
         return { data: { user: null, session: null }, error: t };
@@ -4549,10 +4549,10 @@ class Ae {
     this._debug("#__loadSession()", "begin"), this.lockAcquired || this._debug("#__loadSession()", "used outside of an acquired lock!", new Error().stack);
     try {
       let e = null;
-      const t = await Le(this.storage, this.storageKey);
+      const t = await xe(this.storage, this.storageKey);
       if (this._debug("#getSession()", "session from storage", t), t !== null && (this._isValidSession(t) ? e = t : (this._debug("#getSession()", "session from storage is not valid"), await this._removeSession())), !e)
         return { data: { session: null }, error: null };
-      const r = e.expires_at ? e.expires_at * 1e3 - Date.now() < tt : !1;
+      const r = e.expires_at ? e.expires_at * 1e3 - Date.now() < Ze : !1;
       if (this._debug("#__loadSession()", `session has${r ? "" : " not"} expired`, "expires_at", e.expires_at), !r) {
         if (this.storage.isServer) {
           let o = this.suppressGetSessionWarning;
@@ -4589,7 +4589,7 @@ class Ae {
         const { data: o, error: a } = t;
         if (a)
           throw a;
-        return !(!((r = o.session) === null || r === void 0) && r.access_token) && !this.hasCustomAuthorizationHeader ? { data: { user: null }, error: new W() } : await _(this.fetch, "GET", `${this.url}/user`, {
+        return !(!((r = o.session) === null || r === void 0) && r.access_token) && !this.hasCustomAuthorizationHeader ? { data: { user: null }, error: new G() } : await _(this.fetch, "GET", `${this.url}/user`, {
           headers: this.headers,
           jwt: (i = (n = o.session) === null || n === void 0 ? void 0 : n.access_token) !== null && i !== void 0 ? i : void 0,
           xform: K
@@ -4597,7 +4597,7 @@ class Ae {
       });
     } catch (t) {
       if (v(t))
-        return bi(t) && (await this._removeSession(), await Ue(this.storage, `${this.storageKey}-code-verifier`)), { data: { user: null }, error: t };
+        return fi(t) && (await this._removeSession(), await Re(this.storage, `${this.storageKey}-code-verifier`)), { data: { user: null }, error: t };
       throw t;
     }
   }
@@ -4614,7 +4614,7 @@ class Ae {
         if (i)
           throw i;
         if (!n.session)
-          throw new W();
+          throw new G();
         const o = n.session;
         let a = null, c = null;
         this.flowType === "pkce" && e.email != null && ([a, c] = await ne(this.storage, this.storageKey));
@@ -4646,10 +4646,10 @@ class Ae {
   async _setSession(e) {
     try {
       if (!e.access_token || !e.refresh_token)
-        throw new W();
+        throw new G();
       const t = Date.now() / 1e3;
       let r = t, n = !0, i = null;
-      const { payload: o } = st(e.access_token);
+      const { payload: o } = tt(e.access_token);
       if (o.exp && (r = o.exp, n = r <= t), n) {
         const { session: a, error: c } = await this._callRefreshToken(e.refresh_token);
         if (c)
@@ -4697,7 +4697,7 @@ class Ae {
           e = (r = o.session) !== null && r !== void 0 ? r : void 0;
         }
         if (!(e != null && e.refresh_token))
-          throw new W();
+          throw new G();
         const { session: n, error: i } = await this._callRefreshToken(e.refresh_token);
         return i ? { data: { user: null, session: null }, error: i } : n ? { data: { user: n.user, session: n }, error: null } : { data: { user: null, session: null }, error: null };
       });
@@ -4713,26 +4713,26 @@ class Ae {
   async _getSessionFromURL(e, t) {
     try {
       if (!L())
-        throw new Ie("No browser detected.");
+        throw new Pe("No browser detected.");
       if (e.error || e.error_description || e.error_code)
-        throw new Ie(e.error_description || "Error in URL with unspecified error_description", {
+        throw new Pe(e.error_description || "Error in URL with unspecified error_description", {
           error: e.error || "unspecified_error",
           code: e.error_code || "unspecified_code"
         });
       switch (t) {
         case "implicit":
           if (this.flowType === "pkce")
-            throw new Jt("Not a valid PKCE flow url.");
+            throw new Nt("Not a valid PKCE flow url.");
           break;
         case "pkce":
           if (this.flowType === "implicit")
-            throw new Ie("Not a valid implicit grant flow url.");
+            throw new Pe("Not a valid implicit grant flow url.");
           break;
         default:
       }
       if (t === "pkce") {
         if (this._debug("#_initialize()", "begin", "is PKCE flow", !0), !e.code)
-          throw new Jt("No code detected.");
+          throw new Nt("No code detected.");
         const { data: k, error: y } = await this._exchangeCodeForSession(e.code);
         if (y)
           throw y;
@@ -4741,7 +4741,7 @@ class Ae {
       }
       const { provider_token: r, provider_refresh_token: n, access_token: i, refresh_token: o, expires_in: a, expires_at: c, token_type: l } = e;
       if (!i || !a || !o || !l)
-        throw new Ie("No session defined in URL");
+        throw new Pe("No session defined in URL");
       const u = Math.round(Date.now() / 1e3), d = parseInt(a);
       let h = u + d;
       c && (h = parseInt(c));
@@ -4779,7 +4779,7 @@ class Ae {
    * Checks if the current URL and backing storage contain parameters given by a PKCE flow
    */
   async _isPKCECallback(e) {
-    const t = await Le(this.storage, `${this.storageKey}-code-verifier`);
+    const t = await xe(this.storage, `${this.storageKey}-code-verifier`);
     return !!(e.code && t);
   }
   /**
@@ -4802,10 +4802,10 @@ class Ae {
       const o = (r = n.session) === null || r === void 0 ? void 0 : r.access_token;
       if (o) {
         const { error: a } = await this.admin.signOut(o, e);
-        if (a && !(_i(a) && (a.status === 404 || a.status === 401 || a.status === 403)))
+        if (a && !(hi(a) && (a.status === 404 || a.status === 401 || a.status === 403)))
           return { error: a };
       }
-      return e !== "others" && (await this._removeSession(), await Ue(this.storage, `${this.storageKey}-code-verifier`)), { error: null };
+      return e !== "others" && (await this._removeSession(), await Re(this.storage, `${this.storageKey}-code-verifier`)), { error: null };
     });
   }
   /**
@@ -4813,7 +4813,7 @@ class Ae {
    * @param callback A callback function to be invoked when an auth event happens.
    */
   onAuthStateChange(e) {
-    const t = ji(), r = {
+    const t = ki(), r = {
       id: t,
       callback: e,
       unsubscribe: () => {
@@ -4947,13 +4947,13 @@ class Ae {
     this._debug(t, "begin");
     try {
       const r = Date.now();
-      return await Li(async (n) => (n > 0 && await Ii(200 * Math.pow(2, n - 1)), this._debug(t, "refreshing attempt", n), await _(this.fetch, "POST", `${this.url}/token?grant_type=refresh_token`, {
+      return await Ai(async (n) => (n > 0 && await Oi(200 * Math.pow(2, n - 1)), this._debug(t, "refreshing attempt", n), await _(this.fetch, "POST", `${this.url}/token?grant_type=refresh_token`, {
         body: { refresh_token: e },
         headers: this.headers,
         xform: F
       })), (n, i) => {
         const o = 200 * Math.pow(2, n);
-        return i && rt(i) && // retryable only if the request can be sent before the backoff overflows the tick duration
+        return i && et(i) && // retryable only if the request can be sent before the backoff overflows the tick duration
         Date.now() + o - r < le;
       });
     } catch (r) {
@@ -4984,16 +4984,16 @@ class Ae {
     const t = "#_recoverAndRefresh()";
     this._debug(t, "begin");
     try {
-      const r = await Le(this.storage, this.storageKey);
+      const r = await xe(this.storage, this.storageKey);
       if (this._debug(t, "session from storage", r), !this._isValidSession(r)) {
         this._debug(t, "session is not valid"), r !== null && await this._removeSession();
         return;
       }
-      const n = ((e = r.expires_at) !== null && e !== void 0 ? e : 1 / 0) * 1e3 - Date.now() < tt;
-      if (this._debug(t, `session has${n ? "" : " not"} expired with margin of ${tt}s`), n) {
+      const n = ((e = r.expires_at) !== null && e !== void 0 ? e : 1 / 0) * 1e3 - Date.now() < Ze;
+      if (this._debug(t, `session has${n ? "" : " not"} expired with margin of ${Ze}s`), n) {
         if (this.autoRefreshToken && r.refresh_token) {
           const { error: i } = await this._callRefreshToken(r.refresh_token);
-          i && (console.error(i), rt(i) || (this._debug(t, "refresh failed with a non-retryable error, removing the session", i), await this._removeSession()));
+          i && (console.error(i), et(i) || (this._debug(t, "refresh failed with a non-retryable error, removing the session", i), await this._removeSession()));
         }
       } else
         await this._notifyAllSubscribers("SIGNED_IN", r);
@@ -5007,25 +5007,25 @@ class Ae {
   async _callRefreshToken(e) {
     var t, r;
     if (!e)
-      throw new W();
+      throw new G();
     if (this.refreshingDeferred)
       return this.refreshingDeferred.promise;
     const n = `#_callRefreshToken(${e.substring(0, 5)}...)`;
     this._debug(n, "begin");
     try {
-      this.refreshingDeferred = new Ve();
+      this.refreshingDeferred = new Je();
       const { data: i, error: o } = await this._refreshAccessToken(e);
       if (o)
         throw o;
       if (!i.session)
-        throw new W();
+        throw new G();
       await this._saveSession(i.session), await this._notifyAllSubscribers("TOKEN_REFRESHED", i.session);
       const a = { session: i.session, error: null };
       return this.refreshingDeferred.resolve(a), a;
     } catch (i) {
       if (this._debug(n, "error", i), v(i)) {
         const o = { session: null, error: i };
-        return rt(i) || await this._removeSession(), (t = this.refreshingDeferred) === null || t === void 0 || t.resolve(o), o;
+        return et(i) || await this._removeSession(), (t = this.refreshingDeferred) === null || t === void 0 || t.resolve(o), o;
       }
       throw (r = this.refreshingDeferred) === null || r === void 0 || r.reject(i), i;
     } finally {
@@ -5058,10 +5058,10 @@ class Ae {
    * process to _startAutoRefreshToken if possible
    */
   async _saveSession(e) {
-    this._debug("#_saveSession()", e), this.suppressGetSessionWarning = !0, await Xr(this.storage, this.storageKey, e);
+    this._debug("#_saveSession()", e), this.suppressGetSessionWarning = !0, await zr(this.storage, this.storageKey, e);
   }
   async _removeSession() {
-    this._debug("#_removeSession()"), await Ue(this.storage, this.storageKey), await this._notifyAllSubscribers("SIGNED_OUT", null);
+    this._debug("#_removeSession()"), await Re(this.storage, this.storageKey), await this._notifyAllSubscribers("SIGNED_OUT", null);
   }
   /**
    * Removes any registered visibilitychange callback.
@@ -5152,7 +5152,7 @@ class Ae {
                 return;
               }
               const n = Math.floor((r.expires_at * 1e3 - e) / le);
-              this._debug("#_autoRefreshTokenTick()", `access token expires in ${n} ticks, a tick lasts ${le}ms, refresh threshold is ${_t} ticks`), n <= _t && await this._callRefreshToken(r.refresh_token);
+              this._debug("#_autoRefreshTokenTick()", `access token expires in ${n} ticks, a tick lasts ${le}ms, refresh threshold is ${yt} ticks`), n <= yt && await this._callRefreshToken(r.refresh_token);
             });
           } catch (t) {
             console.error("Auto refresh tick failed with error. This is likely a transient error.", t);
@@ -5162,7 +5162,7 @@ class Ae {
         }
       });
     } catch (e) {
-      if (e.isAcquireTimeout || e instanceof Yr)
+      if (e.isAcquireTimeout || e instanceof Gr)
         this._debug("auto refresh token tick lock not available");
       else
         throw e;
@@ -5343,7 +5343,7 @@ class Ae {
           data: { currentLevel: null, nextLevel: null, currentAuthenticationMethods: [] },
           error: null
         };
-      const { payload: o } = st(n.access_token);
+      const { payload: o } = tt(n.access_token);
       let a = null;
       o.aal && (a = o.aal);
       let c = a;
@@ -5354,7 +5354,7 @@ class Ae {
   }
   async fetchJwk(e, t = { keys: [] }) {
     let r = t.keys.find((o) => o.kid === e);
-    if (r || (r = this.jwks.keys.find((o) => o.kid === e), r && this.jwks_cached_at + wi > Date.now()))
+    if (r || (r = this.jwks.keys.find((o) => o.kid === e), r && this.jwks_cached_at + ui > Date.now()))
       return r;
     const { data: n, error: i } = await _(this.fetch, "GET", `${this.url}/.well-known/jwks.json`, {
       headers: this.headers
@@ -5380,8 +5380,8 @@ class Ae {
           return { data: null, error: g };
         r = f.session.access_token;
       }
-      const { header: n, payload: i, signature: o, raw: { header: a, payload: c } } = st(r);
-      if (Fi(i.exp), !n.kid || n.alg === "HS256" || !("crypto" in globalThis && "subtle" in globalThis.crypto)) {
+      const { header: n, payload: i, signature: o, raw: { header: a, payload: c } } = tt(r);
+      if (Ii(i.exp), !n.kid || n.alg === "HS256" || !("crypto" in globalThis && "subtle" in globalThis.crypto)) {
         const { error: f } = await this.getUser(r);
         if (f)
           throw f;
@@ -5394,10 +5394,10 @@ class Ae {
           error: null
         };
       }
-      const l = zi(n.alg), u = await this.fetchJwk(n.kid, t), d = await crypto.subtle.importKey("jwk", u, l, !0, [
+      const l = Li(n.alg), u = await this.fetchJwk(n.kid, t), d = await crypto.subtle.importKey("jwk", u, l, !0, [
         "verify"
       ]);
-      if (!await crypto.subtle.verify(l, d, o, Ai(`${a}.${c}`)))
+      if (!await crypto.subtle.verify(l, d, o, _i(`${a}.${c}`)))
         throw new Se("Invalid JWT signature");
       return {
         data: {
@@ -5414,14 +5414,14 @@ class Ae {
     }
   }
 }
-Ae.nextInstanceID = 0;
-const oo = Ae;
-class ao extends oo {
+Oe.nextInstanceID = 0;
+const Yi = Oe;
+class Zi extends Yi {
   constructor(e) {
     super(e);
   }
 }
-var co = function(s, e, t, r) {
+var eo = function(s, e, t, r) {
   function n(i) {
     return i instanceof t ? i : new t(function(o) {
       o(i);
@@ -5448,7 +5448,7 @@ var co = function(s, e, t, r) {
     l((r = r.apply(s, e || [])).next());
   });
 };
-class lo {
+class to {
   /**
    * Create a new client for use in the browser.
    * @param supabaseUrl The unique Supabase URL which is supplied when you create a new project in your project dashboard.
@@ -5467,19 +5467,19 @@ class lo {
       throw new Error("supabaseUrl is required.");
     if (!t)
       throw new Error("supabaseKey is required.");
-    const a = hi(e), c = new URL(a);
+    const a = ni(e), c = new URL(a);
     this.realtimeUrl = new URL("realtime/v1", c), this.realtimeUrl.protocol = this.realtimeUrl.protocol.replace("http", "ws"), this.authUrl = new URL("auth/v1", c), this.storageUrl = new URL("storage/v1", c), this.functionsUrl = new URL("functions/v1", c);
     const l = `sb-${c.hostname.split(".")[0]}-auth-token`, u = {
-      db: ni,
-      realtime: oi,
-      auth: Object.assign(Object.assign({}, ii), { storageKey: l }),
-      global: si
-    }, d = fi(r ?? {}, u);
+      db: Qn,
+      realtime: Yn,
+      auth: Object.assign(Object.assign({}, Xn), { storageKey: l }),
+      global: Vn
+    }, d = ii(r ?? {}, u);
     this.storageKey = (n = d.auth.storageKey) !== null && n !== void 0 ? n : "", this.headers = (i = d.global.headers) !== null && i !== void 0 ? i : {}, d.accessToken ? (this.accessToken = d.accessToken, this.auth = new Proxy({}, {
       get: (h, f) => {
         throw new Error(`@supabase/supabase-js: Supabase Client is configured with the accessToken option, accessing supabase.auth.${String(f)} is not possible`);
       }
-    })) : this.auth = this._initSupabaseAuthClient((o = d.auth) !== null && o !== void 0 ? o : {}, this.headers, d.global.fetch), this.fetch = ui(t, this._getAccessToken.bind(this), d.global.fetch), this.realtime = this._initRealtimeClient(Object.assign({ headers: this.headers, accessToken: this._getAccessToken.bind(this) }, d.realtime)), this.rest = new On(new URL("rest/v1", c).href, {
+    })) : this.auth = this._initSupabaseAuthClient((o = d.auth) !== null && o !== void 0 ? o : {}, this.headers, d.global.fetch), this.fetch = ri(t, this._getAccessToken.bind(this), d.global.fetch), this.realtime = this._initRealtimeClient(Object.assign({ headers: this.headers, accessToken: this._getAccessToken.bind(this) }, d.realtime)), this.rest = new wn(new URL("rest/v1", c).href, {
       headers: this.headers,
       schema: d.db.schema,
       fetch: this.fetch
@@ -5489,7 +5489,7 @@ class lo {
    * Supabase Functions allows you to deploy and invoke edge functions.
    */
   get functions() {
-    return new Hs(this.functionsUrl.href, {
+    return new qs(this.functionsUrl.href, {
       headers: this.headers,
       customFetch: this.fetch
     });
@@ -5498,7 +5498,7 @@ class lo {
    * Supabase Storage allows you to manage user-generated content, such as photos or videos.
    */
   get storage() {
-    return new ei(this.storageUrl.href, this.headers, this.fetch);
+    return new Hn(this.storageUrl.href, this.headers, this.fetch);
   }
   /**
    * Perform a query on a table or a view.
@@ -5579,7 +5579,7 @@ class lo {
   }
   _getAccessToken() {
     var e, t;
-    return co(this, void 0, void 0, function* () {
+    return eo(this, void 0, void 0, function* () {
       if (this.accessToken)
         return yield this.accessToken();
       const { data: r } = yield this.auth.getSession();
@@ -5591,7 +5591,7 @@ class lo {
       Authorization: `Bearer ${this.supabaseKey}`,
       apikey: `${this.supabaseKey}`
     };
-    return new ao({
+    return new Zi({
       url: this.authUrl.href,
       headers: Object.assign(Object.assign({}, d), l),
       storageKey: i,
@@ -5609,7 +5609,7 @@ class lo {
     });
   }
   _initRealtimeClient(e) {
-    return new Mn(this.realtimeUrl.href, Object.assign(Object.assign({}, e), { params: Object.assign({ apikey: this.supabaseKey }, e == null ? void 0 : e.params) }));
+    return new xn(this.realtimeUrl.href, Object.assign(Object.assign({}, e), { params: Object.assign({ apikey: this.supabaseKey }, e == null ? void 0 : e.params) }));
   }
   _listenForAuthEvents() {
     return this.auth.onAuthStateChange((t, r) => {
@@ -5620,11 +5620,11 @@ class lo {
     (e === "TOKEN_REFRESHED" || e === "SIGNED_IN") && this.changedAccessToken !== r ? this.changedAccessToken = r : e === "SIGNED_OUT" && (this.realtime.setAuth(), t == "STORAGE" && this.auth.signOut(), this.changedAccessToken = void 0);
   }
 }
-const uo = (s, e, t) => new lo(s, e, t), ho = "https://lpuqrzvokroazwlricgn.supabase.co", it = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU", R = uo(ho, it, {
+const ro = (s, e, t) => new to(s, e, t), so = "https://lpuqrzvokroazwlricgn.supabase.co", st = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU", x = ro(so, st, {
   global: {
     headers: {
-      apikey: it,
-      Authorization: `Bearer ${it}`
+      apikey: st,
+      Authorization: `Bearer ${st}`
     }
   },
   auth: {
@@ -5633,41 +5633,41 @@ const uo = (s, e, t) => new lo(s, e, t), ho = "https://lpuqrzvokroazwlricgn.supa
     detectSessionInUrl: !1
   }
 });
-var pr;
-const Lt = (pr = window.SMOOTHR_CONFIG) == null ? void 0 : pr.debug, De = (...s) => Lt && console.log("[Smoothr Orders]", ...s), rr = (...s) => Lt && console.warn("[Smoothr Orders]", ...s), fo = (...s) => Lt && console.error("[Smoothr Orders]", ...s);
-async function Zr(s) {
+var ar;
+const $t = (ar = window.SMOOTHR_CONFIG) == null ? void 0 : ar.debug, Ie = (...s) => $t && console.log("[Smoothr Orders]", ...s), Qt = (...s) => $t && console.warn("[Smoothr Orders]", ...s), no = (...s) => $t && console.error("[Smoothr Orders]", ...s);
+async function Wr(s) {
   if (!s) return [];
   try {
-    const { data: e, error: t } = await R.from("orders").select("*").eq("customer_id", s).order("order_date", { ascending: !1 });
-    return t ? (fo("fetch error", t), []) : (De(`fetched ${e.length} records`), e || []);
+    const { data: e, error: t } = await x.from("orders").select("*").eq("customer_id", s).order("order_date", { ascending: !1 });
+    return t ? (no("fetch error", t), []) : (Ie(`fetched ${e.length} records`), e || []);
   } catch (e) {
     return e("fetch error", e), [];
   }
 }
-async function es(s) {
+async function Hr(s) {
   var a, c;
   if (typeof document > "u") return;
   const e = typeof s == "string" ? document.querySelector(s) : s || document, t = e.querySelector('[data-smoothr="order-list"]');
   if (!t) {
-    rr("container not found");
+    Qt("container not found");
     return;
   }
   const r = t.querySelector('[data-smoothr="order-card"]');
   if (!r) {
-    rr("template not found");
+    Qt("template not found");
     return;
   }
   const n = e.querySelector('[data-smoothr="no-orders"]');
   r.setAttribute("hidden", ""), t.querySelectorAll('[data-smoothr="order-card"]').forEach((l) => {
     l !== r && l.remove();
   });
-  const i = (c = (a = window.smoothr) == null ? void 0 : a.auth) == null ? void 0 : c.user, o = await Zr(i == null ? void 0 : i.id);
+  const i = (c = (a = window.smoothr) == null ? void 0 : a.auth) == null ? void 0 : c.user, o = await Wr(i == null ? void 0 : i.id);
   if (!o.length) {
     t.setAttribute("hidden", ""), n && (n.removeAttribute("hidden"), n.style.display = "flex");
     return;
   }
   t.removeAttribute("hidden"), n && (n.setAttribute("hidden", ""), n.style.display = "none"), o.forEach((l) => {
-    De("rendering order object", l);
+    Ie("rendering order object", l);
     const u = r.cloneNode(!0);
     u.removeAttribute("hidden"), u.style.display = "flex";
     const d = (f, g) => {
@@ -5682,43 +5682,43 @@ async function es(s) {
       });
       h.textContent = m;
     }
-    d('[data-smoothr="order-number"]', l.order_number), d('[data-smoothr="customer-name"]', l.customer_name), De("customer email", l.customer_email), De("order price", l.total_price), d('[data-smoothr="order-email"]', l.customer_email), d(
+    d('[data-smoothr="order-number"]', l.order_number), d('[data-smoothr="customer-name"]', l.customer_name), Ie("customer email", l.customer_email), Ie("order price", l.total_price), d('[data-smoothr="order-email"]', l.customer_email), d(
       '[data-smoothr="order-price"]',
       `£${Number(l.total_price).toFixed(2)}`
     ), d('[data-smoothr="order-status"]', l.status), t.appendChild(u);
   });
 }
-const go = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const io = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  fetchOrderHistory: Zr,
-  renderOrders: es
-}, Symbol.toStringTag, { value: "Module" })), po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  fetchOrderHistory: Wr,
+  renderOrders: Hr
+}, Symbol.toStringTag, { value: "Module" })), oo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
-}, Symbol.toStringTag, { value: "Module" })), mo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, Symbol.toStringTag, { value: "Module" })), ao = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
-}, Symbol.toStringTag, { value: "Module" })), yo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, Symbol.toStringTag, { value: "Module" })), co = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
 }, Symbol.toStringTag, { value: "Module" }));
-var mr;
-const ts = typeof window < "u" && ((mr = window.SMOOTHR_CONFIG) == null ? void 0 : mr.debug), kt = (...s) => ts && console.log("[Smoothr Auth]", ...s);
-const rs = (...s) => ts && console.error("[Smoothr Auth]", ...s);
-function wo() {
+var cr;
+const Jr = typeof window < "u" && ((cr = window.SMOOTHR_CONFIG) == null ? void 0 : cr.debug), _t = (...s) => Jr && console.log("[Smoothr Auth]", ...s);
+const Kr = (...s) => Jr && console.error("[Smoothr Auth]", ...s);
+function lo() {
   return typeof window < "u" ? window.location.origin : "";
 }
-function vo() {
+function uo() {
   return typeof window < "u" ? window.location.origin : "";
 }
-function ot(s) {
+function nt(s) {
   return /^\S+@\S+\.\S+$/.test(s);
 }
-function Ut(s) {
+function jt(s) {
   let e = 0;
   return s.length >= 8 && e++, /[a-z]/.test(s) && e++, /[A-Z]/.test(s) && e++, /\d/.test(s) && e++, /[^A-Za-z0-9]/.test(s) && e++, e;
 }
-function ss(s, e) {
+function Vr(s, e) {
   const t = s.querySelector("[data-smoothr-password-strength]");
   if (!t) return;
-  const r = Ut(e), n = r >= 4 ? "Strong" : r >= 3 ? "Medium" : "Weak";
+  const r = jt(e), n = r >= 4 ? "Strong" : r >= 3 ? "Medium" : "Weak";
   t.tagName === "PROGRESS" ? t.value = r : t.textContent = n;
 }
 function H(s, e) {
@@ -5737,7 +5737,7 @@ function H(s, e) {
       s.disabled = !1;
     }
 }
-function ns(s, e) {
+function Qr(s, e) {
   let t = s;
   for (; t; ) {
     if (t.matches && t.matches(e)) return t;
@@ -5749,33 +5749,33 @@ function ns(s, e) {
   }
   return null;
 }
-function A(s, e, t, r) {
-  const n = ns(r || s, "[data-smoothr-error]") || s.querySelector("[data-smoothr-error]");
-  n ? (n.removeAttribute("hidden"), n.textContent = e, n.style.display = "", n.focus && n.focus()) : (rs("No [data-smoothr-error] container found"), alert(e)), t && t.focus && t.focus();
+function C(s, e, t, r) {
+  const n = Qr(r || s, "[data-smoothr-error]") || s.querySelector("[data-smoothr-error]");
+  n ? (n.removeAttribute("hidden"), n.textContent = e, n.style.display = "", n.focus && n.focus()) : (Kr("No [data-smoothr-error] container found"), alert(e)), t && t.focus && t.focus();
 }
-function Be(s, e, t) {
-  const r = ns(t || s, "[data-smoothr-success]") || s.querySelector("[data-smoothr-success]");
-  r ? (r.removeAttribute("hidden"), r.textContent = e, r.style.display = "", r.focus && r.focus()) : (kt("No [data-smoothr-success] container found"), alert(e));
+function Le(s, e, t) {
+  const r = Qr(t || s, "[data-smoothr-success]") || s.querySelector("[data-smoothr-success]");
+  r ? (r.removeAttribute("hidden"), r.textContent = e, r.style.display = "", r.focus && r.focus()) : (_t("No [data-smoothr-success] container found"), alert(e));
 }
-function is(s) {
+function Xr(s) {
   return s = s || "", s.replace(/^www\./, "").toLowerCase();
 }
 async function fe(s) {
-  const e = is(window.location.hostname);
+  const e = Xr(window.location.hostname);
   try {
-    const { data: t, error: r } = await R.from("stores").select(`${s}_redirect_url`).eq("store_domain", e).single();
+    const { data: t, error: r } = await x.from("stores").select(`${s}_redirect_url`).eq("store_domain", e).single();
     if (r || !t)
       throw r;
     return t[`${s}_redirect_url`] || window.location.origin;
   } catch (t) {
-    return rs(t), window.location.origin;
+    return Kr(t), window.location.origin;
   }
 }
-function os() {
-  const s = R.auth.getUser().then(async ({ data: { user: e } }) => {
+function Yr() {
+  const s = x.auth.getUser().then(async ({ data: { user: e } }) => {
     var t, r;
     if (typeof window < "u") {
-      window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: e || null }, e ? kt(`%c✅ Smoothr Auth: Logged in as ${e.email}`, "color: #22c55e; font-weight: bold;") : kt("%c🔒 Smoothr Auth: Not logged in", "color: #f87171; font-weight: bold;");
+      window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: e || null }, e ? _t(`%c✅ Smoothr Auth: Logged in as ${e.email}`, "color: #22c55e; font-weight: bold;") : _t("%c🔒 Smoothr Auth: Not logged in", "color: #f87171; font-weight: bold;");
       const n = typeof localStorage < "u" ? localStorage : typeof globalThis < "u" ? globalThis.localStorage : void 0;
       if (((t = n == null ? void 0 : n.getItem) == null ? void 0 : t.call(n, "smoothr_oauth")) && e) {
         document.dispatchEvent(new CustomEvent("smoothr:login", { detail: { user: e } })), (r = n == null ? void 0 : n.removeItem) == null || r.call(n, "smoothr_oauth");
@@ -5785,51 +5785,51 @@ function os() {
     }
   });
   return document.addEventListener("DOMContentLoaded", () => {
-    Et(), us(), typeof MutationObserver < "u" && new MutationObserver(() => Et()).observe(document.body, { childList: !0, subtree: !0 });
+    bt(), rs(), typeof MutationObserver < "u" && new MutationObserver(() => bt()).observe(document.body, { childList: !0, subtree: !0 });
   }), s;
 }
-async function as() {
-  await fe("login"), typeof window < "u" && localStorage.setItem("smoothr_oauth", "1"), await R.auth.signInWithOAuth({
+async function Zr() {
+  await fe("login"), typeof window < "u" && localStorage.setItem("smoothr_oauth", "1"), await x.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: wo() }
+    options: { redirectTo: lo() }
   });
 }
-async function cs(s, e) {
-  const { data: t, error: r } = await R.auth.signUp({ email: s, password: e });
+async function es(s, e) {
+  const { data: t, error: r } = await x.auth.signUp({ email: s, password: e });
   return !r && typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: t.user || null }), { data: t, error: r };
 }
-async function ls(s) {
-  return await R.auth.resetPasswordForEmail(s, {
-    redirectTo: vo()
+async function ts(s) {
+  return await x.auth.resetPasswordForEmail(s, {
+    redirectTo: uo()
   });
 }
-function _o({ redirectTo: s = "/" } = {}) {
+function ho({ redirectTo: s = "/" } = {}) {
   document.addEventListener("DOMContentLoaded", () => {
     const e = new URLSearchParams(window.location.hash.slice(1)), t = e.get("access_token"), r = e.get("refresh_token");
-    t && r && R.auth.setSession({ access_token: t, refresh_token: r }), document.querySelectorAll('form[data-smoothr="password-reset-confirm"]').forEach((n) => {
+    t && r && x.auth.setSession({ access_token: t, refresh_token: r }), document.querySelectorAll('form[data-smoothr="password-reset-confirm"]').forEach((n) => {
       const i = n.querySelector('[data-smoothr-input="password"]');
       i && i.addEventListener && i.addEventListener("input", () => {
-        ss(n, i.value);
+        Vr(n, i.value);
       }), n.addEventListener && n.addEventListener("submit", async (o) => {
         o.preventDefault();
         const a = n.querySelector('[data-smoothr-input="password-confirm"]'), c = (i == null ? void 0 : i.value) || "", l = (a == null ? void 0 : a.value) || "";
-        if (Ut(c) < 3) {
-          A(n, "Weak password", i, n);
+        if (jt(c) < 3) {
+          C(n, "Weak password", i, n);
           return;
         }
         if (c !== l) {
-          A(n, "Passwords do not match", a, n);
+          C(n, "Passwords do not match", a, n);
           return;
         }
         const u = n.querySelector('[type="submit"]');
         H(u, !0);
         try {
-          const { data: d, error: h } = await R.auth.updateUser({ password: c });
-          h ? A(n, h.message || "Password update failed", u, n) : (typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: d.user || null }), Be(n, "Password updated", n), setTimeout(() => {
+          const { data: d, error: h } = await x.auth.updateUser({ password: c });
+          h ? C(n, h.message || "Password update failed", u, n) : (typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: d.user || null }), Le(n, "Password updated", n), setTimeout(() => {
             window.location.href = s;
           }, 1e3));
         } catch (d) {
-          A(n, d.message || "Password update failed", u, n);
+          C(n, d.message || "Password update failed", u, n);
         } finally {
           H(u, !1);
         }
@@ -5837,51 +5837,51 @@ function _o({ redirectTo: s = "/" } = {}) {
     });
   });
 }
-let Et = () => {
-}, us = () => {
+let bt = () => {
+}, rs = () => {
 };
-function bo(s, e) {
-  Et = s, us = e;
+function fo(s, e) {
+  bt = s, rs = e;
 }
-var yr;
-const So = (yr = window.SMOOTHR_CONFIG) == null ? void 0 : yr.debug, at = (...s) => So && console.log("[Smoothr Auth]", ...s);
-function sr(s, e, t) {
+var lr;
+const go = (lr = window.SMOOTHR_CONFIG) == null ? void 0 : lr.debug, it = (...s) => go && console.log("[Smoothr Auth]", ...s);
+function Xt(s, e, t) {
   try {
     s && s.dataset && (s.dataset[e] = t);
   } catch {
   }
 }
-function ko(s = document) {
+function po(s = document) {
   s.querySelectorAll('[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]').forEach((t) => {
     var o;
     if (t.dataset.smoothrBoundAuth) return;
-    sr(t, "smoothrBoundAuth", "1");
+    Xt(t, "smoothrBoundAuth", "1");
     const r = t.getAttribute("data-smoothr"), n = (a) => {
       t.tagName === "FORM" ? t.addEventListener && t.addEventListener("submit", a) : t.addEventListener && t.addEventListener("click", a);
     }, i = t.tagName === "FORM" ? t : t.closest("form");
     switch (r) {
       case "login": {
-        i && t !== i && !((o = i.dataset) != null && o.smoothrBoundLoginSubmit) && (sr(i, "smoothrBoundLoginSubmit", "1"), i.addEventListener && i.addEventListener("submit", (a) => {
+        i && t !== i && !((o = i.dataset) != null && o.smoothrBoundLoginSubmit) && (Xt(i, "smoothrBoundLoginSubmit", "1"), i.addEventListener && i.addEventListener("submit", (a) => {
           a.preventDefault(), t.dispatchEvent && t.dispatchEvent(new Event("click", { bubbles: !0, cancelable: !0 }));
         })), n(async (a) => {
           a.preventDefault();
           const c = i;
           if (!c) return;
           const l = c.querySelector('[data-smoothr-input="email"]'), u = c.querySelector('[data-smoothr-input="password"]'), d = (l == null ? void 0 : l.value) || "", h = (u == null ? void 0 : u.value) || "";
-          if (!ot(d)) {
-            A(c, "Enter a valid email address", l, t);
+          if (!nt(d)) {
+            C(c, "Enter a valid email address", l, t);
             return;
           }
           H(t, !0);
           try {
-            const { data: f, error: g } = await R.auth.signInWithPassword({
+            const { data: f, error: g } = await x.auth.signInWithPassword({
               email: d,
               password: h
             });
             if (g)
-              A(c, g.message || "Invalid credentials", l, t);
+              C(c, g.message || "Invalid credentials", l, t);
             else {
-              typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: f.user || null }), Be(c, "Logged in, redirecting...", t), document.dispatchEvent(
+              typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: f.user || null }), Le(c, "Logged in, redirecting...", t), document.dispatchEvent(
                 new CustomEvent("smoothr:login", { detail: f })
               );
               const m = await fe("login");
@@ -5890,7 +5890,7 @@ function ko(s = document) {
               }, 1e3);
             }
           } catch (f) {
-            A(c, f.message || "Network error", l, t);
+            C(c, f.message || "Network error", l, t);
           } finally {
             H(t, !1);
           }
@@ -5899,7 +5899,7 @@ function ko(s = document) {
       }
       case "login-google": {
         n(async (a) => {
-          a.preventDefault(), await as();
+          a.preventDefault(), await Zr();
         });
         break;
       }
@@ -5907,7 +5907,7 @@ function ko(s = document) {
         if (i) {
           const a = i.querySelector('[data-smoothr-input="password"]');
           a && a.addEventListener && a.addEventListener("input", () => {
-            ss(i, a.value);
+            Vr(i, a.value);
           });
         }
         n(async (a) => {
@@ -5915,33 +5915,33 @@ function ko(s = document) {
           const c = i;
           if (!c) return;
           const l = c.querySelector('[data-smoothr-input="email"]'), u = c.querySelector('[data-smoothr-input="password"]'), d = c.querySelector('[data-smoothr-input="password-confirm"]'), h = (l == null ? void 0 : l.value) || "", f = (u == null ? void 0 : u.value) || "", g = (d == null ? void 0 : d.value) || "";
-          if (!ot(h)) {
-            A(c, "Enter a valid email address", l, t);
+          if (!nt(h)) {
+            C(c, "Enter a valid email address", l, t);
             return;
           }
-          if (Ut(f) < 3) {
-            A(c, "Weak password", u, t);
+          if (jt(f) < 3) {
+            C(c, "Weak password", u, t);
             return;
           }
           if (f !== g) {
-            A(c, "Passwords do not match", d, t);
+            C(c, "Passwords do not match", d, t);
             return;
           }
           const m = c.querySelector('[type="submit"]');
           H(m, !0);
           try {
-            const { data: p, error: w } = await cs(h, f);
+            const { data: p, error: w } = await es(h, f);
             if (w)
-              A(c, w.message || "Signup failed", l, t);
+              C(c, w.message || "Signup failed", l, t);
             else {
-              typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: p.user || null }), document.dispatchEvent(new CustomEvent("smoothr:login", { detail: p })), Be(c, "Account created! Redirecting...", t);
+              typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: p.user || null }), document.dispatchEvent(new CustomEvent("smoothr:login", { detail: p })), Le(c, "Account created! Redirecting...", t);
               const k = await fe("login");
               setTimeout(() => {
                 window.location.href = k;
               }, 1e3);
             }
           } catch (p) {
-            A(c, p.message || "Network error", l, t);
+            C(c, p.message || "Network error", l, t);
           } finally {
             H(m, !1);
           }
@@ -5954,22 +5954,22 @@ function ko(s = document) {
           const c = i;
           if (!c) return;
           const l = c.querySelector('[data-smoothr-input="email"]'), u = (l == null ? void 0 : l.value) || "";
-          if (!ot(u)) {
-            A(c, "Enter a valid email address", l, t);
+          if (!nt(u)) {
+            C(c, "Enter a valid email address", l, t);
             return;
           }
           const d = c.querySelector('[type="submit"]');
           H(d, !0);
           try {
-            const { error: h } = await ls(u);
-            h ? A(
+            const { error: h } = await ts(u);
+            h ? C(
               c,
               h.message || "Error requesting password reset",
               l,
               t
-            ) : Be(c, "Check your email for a reset link.", t);
+            ) : Le(c, "Check your email for a reset link.", t);
           } catch (h) {
-            A(
+            C(
               c,
               h.message || "Error requesting password reset",
               l,
@@ -5984,31 +5984,31 @@ function ko(s = document) {
     }
   });
 }
-function Eo() {
+function mo() {
   document.querySelectorAll('[data-smoothr="logout"]').forEach((s) => {
     s.addEventListener("click", async (e) => {
       e.preventDefault();
-      const { error: t } = await R.auth.signOut();
-      t && at(t);
+      const { error: t } = await x.auth.signOut();
+      t && it(t);
       const {
         data: { user: r }
-      } = await R.auth.getUser();
-      typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: r || null }, r ? at(`%c✅ Smoothr Auth: Logged in as ${r.email}`, "color: #22c55e; font-weight: bold;") : at("%c🔒 Smoothr Auth: Not logged in", "color: #f87171; font-weight: bold;")), document.dispatchEvent(new CustomEvent("smoothr:logout"));
+      } = await x.auth.getUser();
+      typeof window < "u" && (window.smoothr = window.smoothr || {}, window.smoothr.auth = { user: r || null }, r ? it(`%c✅ Smoothr Auth: Logged in as ${r.email}`, "color: #22c55e; font-weight: bold;") : it("%c🔒 Smoothr Auth: Not logged in", "color: #f87171; font-weight: bold;")), document.dispatchEvent(new CustomEvent("smoothr:logout"));
       const n = await fe("logout");
       window.location.href = n;
     });
   });
 }
-bo(ko, Eo);
-const To = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+fo(po, mo);
+const yo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  initAuth: os,
-  initPasswordResetConfirmation: _o,
+  initAuth: Yr,
+  initPasswordResetConfirmation: ho,
   lookupRedirectUrl: fe,
-  normalizeDomain: is,
-  requestPasswordReset: ls,
-  signInWithGoogle: as,
-  signUp: cs
+  normalizeDomain: Xr,
+  requestPasswordReset: ts,
+  signInWithGoogle: Zr,
+  signUp: es
 }, Symbol.toStringTag, { value: "Module" }));
 function ae(s) {
   if (typeof document > "u") return;
@@ -6018,9 +6018,9 @@ function ae(s) {
     n ? (n.style.width = "100%", n.style.minWidth = "100%", n.style.display = "block", n.style.opacity = "1", r && (r.style.width = "100%", r.style.minWidth = "100%", typeof window < "u" && window.getComputedStyle(r).position === "static" && (r.style.position = "relative")), console.log(`[Smoothr Stripe] Forced iframe styles for ${s}`), clearInterval(t)) : ++e >= 20 && clearInterval(t);
   }, 100);
 }
-let Tt = !1, nr = 0, ue, M, ct, lt, q, B;
-var wr;
-const ds = (wr = window.SMOOTHR_CONFIG) == null ? void 0 : wr.debug, D = (...s) => ds && console.log("[Smoothr Stripe]", ...s), te = (...s) => ds && console.warn("[Smoothr Stripe]", ...s);
+let St = !1, Yt = 0, ue, M, ot, at, B, q;
+var ur;
+const ss = (ur = window.SMOOTHR_CONFIG) == null ? void 0 : ur.debug, D = (...s) => ss && console.log("[Smoothr Stripe]", ...s), te = (...s) => ss && console.warn("[Smoothr Stripe]", ...s);
 if (typeof document < "u" && typeof document.createElement == "function" && !document.querySelector("#smoothr-card-styles")) {
   const s = document.createElement("style");
   s.id = "smoothr-card-styles", s.textContent = `[data-smoothr-card-number],
@@ -6028,7 +6028,7 @@ if (typeof document < "u" && typeof document.createElement == "function" && !doc
 [data-smoothr-card-cvc]{display:block;position:relative;}
 iframe[data-accept-id]{display:block!important;}`, document.head.appendChild(s);
 }
-async function hs(s, e = 1e3) {
+async function ns(s, e = 1e3) {
   if (!(!s || typeof s.getBoundingClientRect != "function")) {
     D("Waiting for element to be visible", s);
     for (let t = 0; t < 10; t++) {
@@ -6054,7 +6054,7 @@ async function Ee(s, e = 1500) {
   }
   te("Mount target not interactable after 1.5s");
 }
-function ut(s) {
+function ct(s) {
   if (!s || typeof window > "u" || typeof window.getComputedStyle != "function") return {};
   const e = window.getComputedStyle(s), t = {
     base: {
@@ -6071,9 +6071,9 @@ function ut(s) {
   };
   return console.log("[Stripe] element style from container", t), t;
 }
-async function Oo() {
+async function wo() {
   var t;
-  if (lt) return lt;
+  if (at) return at;
   const s = window.SMOOTHR_CONFIG || {};
   let e = s.stripeKey;
   if (e)
@@ -6081,10 +6081,10 @@ async function Oo() {
   else {
     const r = s.storeId;
     if (r) {
-      const n = await qt(r);
+      const n = await Rt(r);
       if (n != null && n.stripeKey && (e = n.stripeKey, D("Loaded key from Supabase.store_settings")), !e)
         try {
-          const { data: i, error: o } = await R.from("store_integrations").select("api_key, settings").eq("store_id", r).eq("provider", "stripe").maybeSingle();
+          const { data: i, error: o } = await x.from("store_integrations").select("api_key, settings").eq("store_id", r).eq("provider", "stripe").maybeSingle();
           o ? te("Integration lookup failed:", o.message || o) : i && (e = i.api_key || ((t = i.settings) == null ? void 0 : t.public_key) || "", e && D(
             "Loaded key from Supabase." + (i.api_key ? "store_integrations.api_key" : "store_integrations.settings.public_key")
           ));
@@ -6095,18 +6095,18 @@ async function Oo() {
   }
   if (!e)
     throw new Error("❌ Stripe key not found — aborting Stripe mount.");
-  return lt = e, s.stripeKey || (s.stripeKey = e), e;
+  return at = e, s.stripeKey || (s.stripeKey = e), e;
 }
-async function Qe() {
-  return ue && M ? { stripe: ue, elements: M } : (ct || (ct = (async () => {
-    const s = await Oo();
+async function Ke() {
+  return ue && M ? { stripe: ue, elements: M } : (ot || (ot = (async () => {
+    const s = await wo();
     return s ? (D("Using Stripe key", s), ue = Stripe(s), M = ue.elements(), { stripe: ue, elements: M }) : { stripe: null, elements: null };
-  })()), ct);
+  })()), ot);
 }
-async function Dt() {
-  if (B) return B;
-  if (!Tt)
-    return B = (async () => {
+async function Pt() {
+  if (q) return q;
+  if (!St)
+    return q = (async () => {
       D("Mounting split fields");
       const s = document.querySelector("[data-smoothr-card-number]"), e = document.querySelector("[data-smoothr-card-expiry]"), t = document.querySelector("[data-smoothr-card-cvc]");
       if (D("Targets found", {
@@ -6114,31 +6114,31 @@ async function Dt() {
         expiry: !!e,
         cvc: !!t
       }), !s && !e && !t) {
-        nr < 5 ? (nr++, B = null, setTimeout(Dt, 200)) : (te("card fields not found"), B = null);
+        Yt < 5 ? (Yt++, q = null, setTimeout(Pt, 200)) : (te("card fields not found"), q = null);
         return;
       }
-      const { elements: r } = await Qe();
+      const { elements: r } = await Ke();
       if (!r) {
-        B = null;
+        q = null;
         return;
       }
-      Tt = !0;
+      St = !0;
       const n = r.getElement ? r.getElement("cardNumber") : null;
       if (s && !n) {
         await Ee(s);
-        const a = ut(s);
+        const a = ct(s);
         console.log("[Stripe] cardNumber style", a);
         const c = M.create("cardNumber", { style: a });
         c.mount("[data-smoothr-card-number]"), console.log("[Stripe] Mounted iframe"), setTimeout(() => {
           var d;
           const l = document.querySelector("[data-smoothr-card-number] iframe"), u = l == null ? void 0 : l.getBoundingClientRect().width;
-          console.log("[Stripe] iframe bbox", u), l && u < 10 && (console.warn("[Stripe] iframe dead → remounting now..."), (d = q == null ? void 0 : q.unmount) == null || d.call(q), q = M.create("cardNumber", { style: a }), q.mount("[data-smoothr-card-number]"), ae("[data-smoothr-card-number]"));
-        }, 500), ae("[data-smoothr-card-number]"), q = c;
+          console.log("[Stripe] iframe bbox", u), l && u < 10 && (console.warn("[Stripe] iframe dead → remounting now..."), (d = B == null ? void 0 : B.unmount) == null || d.call(B), B = M.create("cardNumber", { style: a }), B.mount("[data-smoothr-card-number]"), ae("[data-smoothr-card-number]"));
+        }, 500), ae("[data-smoothr-card-number]"), B = c;
       }
       const i = r.getElement ? r.getElement("cardExpiry") : null;
       if (e && !i) {
         await Ee(e);
-        const a = ut(e);
+        const a = ct(e);
         console.log("[Stripe] cardExpiry style", a);
         const c = M.create("cardExpiry", { style: a });
         c.mount("[data-smoothr-card-expiry]"), console.log("[Stripe] Mounted iframe"), setTimeout(() => {
@@ -6150,7 +6150,7 @@ async function Dt() {
       const o = r.getElement ? r.getElement("cardCvc") : null;
       if (t && !o) {
         await Ee(t);
-        const a = ut(t);
+        const a = ct(t);
         console.log("[Stripe] cardCvc style", a);
         const c = M.create("cardCvc", { style: a });
         c.mount("[data-smoothr-card-cvc]"), console.log("[Stripe] Mounted iframe"), setTimeout(() => {
@@ -6160,32 +6160,32 @@ async function Dt() {
         }, 500), ae("[data-smoothr-card-cvc]");
       }
       D("Mounted split fields");
-    })(), B = B.finally(() => {
-      B = null;
-    }), B;
+    })(), q = q.finally(() => {
+      q = null;
+    }), q;
 }
-function fs() {
-  return Tt;
+function is() {
+  return St;
 }
-function Bt() {
-  return !!ue && !!q;
+function xt() {
+  return !!ue && !!B;
 }
-async function qt(s) {
+async function Rt(s) {
   if (!s) return null;
   try {
-    const { data: e, error: t } = await R.from("store_settings").select("settings").eq("store_id", s).maybeSingle();
+    const { data: e, error: t } = await x.from("store_settings").select("settings").eq("store_id", s).maybeSingle();
     return t ? (te("Store settings lookup failed:", t.message || t), null) : (e == null ? void 0 : e.settings) || null;
   } catch (e) {
     return te("Store settings fetch error:", (e == null ? void 0 : e.message) || e), null;
   }
 }
-async function gs(s) {
-  if (!Bt())
+async function os(s) {
+  if (!xt())
     return { error: { message: "Stripe not ready" } };
-  const { stripe: e, elements: t } = await Qe();
+  const { stripe: e, elements: t } = await Ke();
   if (!e || !t)
     return { error: { message: "Stripe not ready" } };
-  const r = q || (typeof t.getElement == "function" ? t.getElement("cardNumber") : null), n = await e.createPaymentMethod({
+  const r = B || (typeof t.getElement == "function" ? t.getElement("cardNumber") : null), n = await e.createPaymentMethod({
     type: "card",
     card: r,
     billing_details: s
@@ -6195,35 +6195,35 @@ async function gs(s) {
     payment_method: n.paymentMethod || null
   };
 }
-const Co = {
-  mountCardFields: Dt,
-  isMounted: fs,
-  ready: Bt,
-  getStoreSettings: qt,
-  getElements: Qe,
-  createPaymentMethod: gs,
-  waitForVisible: hs,
+const vo = {
+  mountCardFields: Pt,
+  isMounted: is,
+  ready: xt,
+  getStoreSettings: Rt,
+  getElements: Ke,
+  createPaymentMethod: os,
+  waitForVisible: ns,
   waitForInteractable: Ee
-}, ps = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, as = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createPaymentMethod: gs,
-  default: Co,
-  getElements: Qe,
-  getStoreSettings: qt,
-  isMounted: fs,
-  mountCardFields: Dt,
-  ready: Bt,
+  createPaymentMethod: os,
+  default: vo,
+  getElements: Ke,
+  getStoreSettings: Rt,
+  isMounted: is,
+  mountCardFields: Pt,
+  ready: xt,
   waitForInteractable: Ee,
-  waitForVisible: hs
+  waitForVisible: ns
 }, Symbol.toStringTag, { value: "Module" }));
-var vr;
-const ha = typeof window < "u" && ((vr = window.SMOOTHR_CONFIG) == null ? void 0 : vr.debug);
-function Ao() {
+var dr;
+const ta = typeof window < "u" && ((dr = window.SMOOTHR_CONFIG) == null ? void 0 : dr.debug);
+function _o() {
   var s;
   return typeof window < "u" && ((s = window.SMOOTHR_CONFIG) == null ? void 0 : s.liveRatesToken) || typeof process < "u" && process.env.LIVE_RATES_AUTH_TOKEN;
 }
-const $o = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP";
-async function Po(s = "GBP", e = ["USD", "EUR", "GBP"], t) {
+const bo = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP";
+async function So(s = "GBP", e = ["USD", "EUR", "GBP"], t) {
   if (typeof fetch > "u") return null;
   const r = "smoothrRatesCache";
   if (typeof window < "u")
@@ -6234,7 +6234,7 @@ async function Po(s = "GBP", e = ["USD", "EUR", "GBP"], t) {
     } catch {
     }
   try {
-    const n = t || $o;
+    const n = t || bo;
     let i = n;
     const o = [];
     /[?&]base=/.test(n) || o.push(`base=${encodeURIComponent(s)}`), /[?&]symbols=/.test(n) || o.push(`symbols=${e.join(",")}`), o.length && (i += (n.includes("?") ? "&" : "?") + o.join("&"));
@@ -6245,7 +6245,7 @@ async function Po(s = "GBP", e = ["USD", "EUR", "GBP"], t) {
     try {
       const { hostname: d, pathname: h } = new URL(i);
       if (d.endsWith(".functions.supabase.co") && h === "/proxy-live-rates") {
-        const f = Ao();
+        const f = _o();
         f && (a.Authorization = `Token ${f}`);
       }
     } catch {
@@ -6271,25 +6271,25 @@ async function Po(s = "GBP", e = ["USD", "EUR", "GBP"], t) {
     return null;
   }
 }
-typeof window < "u" && (window.Smoothr = window.Smoothr || {}, window.Smoothr.cart = { ...$t });
-let ir = !1, or = !1, ar = !1;
-var _r;
-const J = (_r = window.SMOOTHR_CONFIG) == null ? void 0 : _r.debug, Z = (...s) => J && console.log("[Smoothr Cart]", ...s), ce = (...s) => J && console.warn("[Smoothr Cart]", ...s);
-function Ne() {
+typeof window < "u" && (window.Smoothr = window.Smoothr || {}, window.Smoothr.cart = { ...kt });
+let Zt = !1, er = !1, tr = !1;
+var hr;
+const J = (hr = window.SMOOTHR_CONFIG) == null ? void 0 : hr.debug, Z = (...s) => J && console.log("[Smoothr Cart]", ...s), ce = (...s) => J && console.warn("[Smoothr Cart]", ...s);
+function Me() {
   var t, r;
-  if (J && !ir && (Z("🧩 initCartBindings loaded and executing"), ir = !0), typeof document > "u") return;
+  if (J && !Zt && (Z("🧩 initCartBindings loaded and executing"), Zt = !0), typeof document > "u") return;
   const s = window.Smoothr || window.smoothr;
   if (!((t = s == null ? void 0 : s.cart) != null && t.addItem)) {
     ce("cart module not found");
     return;
   }
   const e = document.querySelectorAll("[data-smoothr-add]");
-  if (J && !ar && Z(`found ${e.length} [data-smoothr-add] elements`), ar = !0, e.length === 0) {
+  if (J && !tr && Z(`found ${e.length} [data-smoothr-add] elements`), tr = !0, e.length === 0) {
     if ((((r = window.location) == null ? void 0 : r.pathname) || "").includes("/checkout")) {
       J && Z("🧩 addToCart polling disabled on checkout page");
       return;
     }
-    or || (ce("no buttons found; retrying..."), or = !0), setTimeout(Ne, 500);
+    er || (ce("no buttons found; retrying..."), er = !0), setTimeout(Me, 500);
     return;
   }
   e.forEach((n) => {
@@ -6325,30 +6325,30 @@ function Ne() {
     }));
   });
 }
-function jo() {
+function ko() {
   document.addEventListener("DOMContentLoaded", () => {
-    Z("✅ DOM ready – calling initCartBindings"), Ne();
+    Z("✅ DOM ready – calling initCartBindings"), Me();
   });
 }
-typeof window < "u" && jo();
-function dt(s) {
+typeof window < "u" && ko();
+function lt(s) {
   var e, t;
   return typeof window > "u" ? ((e = s == null ? void 0 : s.currency) == null ? void 0 : e.baseCurrency) || "USD" : localStorage.getItem("smoothr:currency") || ((t = s == null ? void 0 : s.currency) == null ? void 0 : t.baseCurrency) || "USD";
 }
-function xo() {
+function Eo() {
   typeof document > "u" || document.querySelectorAll("[data-smoothr-template]").forEach((s) => s.style.display = "none");
 }
 function Te() {
   var i, o, a, c;
   const s = (i = window.SMOOTHR_CONFIG) == null ? void 0 : i.debug;
   if (s && console.log("🎨 renderCart() triggered"), typeof document > "u") return;
-  setTimeout(() => xo(), 50);
+  setTimeout(() => Eo(), 50);
   const e = window.Smoothr || window.smoothr;
   if (!(e != null && e.cart)) return;
   const t = e.cart.getCart(), r = e.cart.getTotal(), n = ((o = e.currency) == null ? void 0 : o.format) || ((a = e.currency) == null ? void 0 : a.formatPrice) || ((c = e.currency) == null ? void 0 : c.formatCurrency);
   document.querySelectorAll("[data-smoothr-total]").forEach((l) => {
     var f;
-    const u = r / 100, d = dt(e);
+    const u = r / 100, d = lt(e);
     let h = u;
     (f = e.currency) != null && f.convertPrice && (h = e.currency.convertPrice(
       u,
@@ -6372,7 +6372,7 @@ function Te() {
         g.textContent = String(d.quantity);
       }), h.querySelectorAll("[data-smoothr-price]").forEach((g) => {
         var k;
-        const m = d.price / 100, p = dt(e);
+        const m = d.price / 100, p = lt(e);
         let w = m;
         (k = e.currency) != null && k.convertPrice && (w = e.currency.convertPrice(
           m,
@@ -6381,7 +6381,7 @@ function Te() {
         )), g.dataset.smoothrBase = m, g.setAttribute("data-smoothr-price", w), n ? g.textContent = n(w, p) : g.textContent = String(w);
       }), h.querySelectorAll("[data-smoothr-subtotal]").forEach((g) => {
         var k;
-        const m = d.price * d.quantity / 100, p = dt(e);
+        const m = d.price * d.quantity / 100, p = lt(e);
         let w = m;
         (k = e.currency) != null && k.convertPrice && (w = e.currency.convertPrice(
           m,
@@ -6401,159 +6401,93 @@ function Te() {
   });
 }
 typeof window < "u" && (document.addEventListener("DOMContentLoaded", Te), window.addEventListener("smoothr:cart:updated", Te), window.renderCart = Te);
-const Ro = '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]';
-function Io(s) {
+const To = '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]';
+function Oo(s) {
   return parseFloat(s.replace(/[£$€]/g, "").replace(/[\,\s]/g, ""));
 }
-function Lo(s, e) {
+function Ao(s, e) {
+  if (s.hasAttribute("data-product-price"))
+    return parseFloat(s.getAttribute("data-product-price"));
   let t = parseFloat(s.dataset.smoothrBase);
-  return isNaN(t) && (t = parseFloat(s.getAttribute(e)) || Io(s.textContent || ""), isNaN(t) || (s.dataset.smoothrBase = t)), t;
+  return isNaN(t) && (t = parseFloat(s.getAttribute(e)) || Oo(s.textContent || ""), isNaN(t) || (s.dataset.smoothrBase = t)), t;
+}
+function Co() {
+  return typeof window > "u" ? R : localStorage.getItem("smoothr:currency") || R;
+}
+function $o(s) {
+  typeof window > "u" || (localStorage.setItem("smoothr:currency", s), document.dispatchEvent(
+    new CustomEvent("smoothr:currencychange", { detail: { currency: s } })
+  ));
+}
+function rr() {
+  const s = Co();
+  document.querySelectorAll(To).forEach((e) => {
+    const t = e.hasAttribute("data-smoothr-total") ? "data-smoothr-total" : "data-smoothr-price", r = Ao(e, t);
+    if (isNaN(r)) return;
+    const n = Ue(r, s, R);
+    e.textContent = De(n, s), e.setAttribute(t, n);
+  });
+}
+function jo() {
+  typeof document > "u" || (rr(), document.addEventListener("smoothr:currencychange", rr));
+}
+typeof window < "u" && jo();
+const Po = "[data-smoothr-price], [data-smoothr-total]";
+function xo(s) {
+  return parseFloat(s.replace(/[£$€]/g, "").replace(/[\,\s]/g, ""));
+}
+function Ro(s, e) {
+  let t = parseFloat(s.dataset.smoothrBase);
+  return isNaN(t) && (t = parseFloat(s.getAttribute(e)) || xo(s.textContent || ""), isNaN(t) || (s.dataset.smoothrBase = t)), t;
+}
+function Io() {
+  return typeof window > "u" ? R : localStorage.getItem("smoothr:currency") || R;
+}
+function cs(s) {
+  typeof window > "u" || (localStorage.setItem("smoothr:currency", s), document.dispatchEvent(
+    new CustomEvent("smoothr:currencychange", { detail: { currency: s } })
+  ));
+}
+function sr() {
+  const s = Io();
+  document.querySelectorAll(Po).forEach((e) => {
+    const t = e.hasAttribute("data-smoothr-total") ? "data-smoothr-total" : "data-smoothr-price", r = Ro(e, t);
+    if (isNaN(r)) return;
+    const n = Ue(r, s, R);
+    e.textContent = De(n, s), e.setAttribute(t, n);
+  });
+}
+function Lo(s = document) {
+  s.querySelectorAll('[id^="currency-"]').forEach((e) => {
+    const t = e.id.slice(9).toUpperCase();
+    e.__smoothrCurrencyBound || (e.addEventListener("click", () => cs(t)), e.__smoothrCurrencyBound = !0);
+  });
 }
 function Uo() {
-  return typeof window > "u" ? $ : localStorage.getItem("smoothr:currency") || $;
-}
-function Do(s) {
-  typeof window > "u" || (localStorage.setItem("smoothr:currency", s), document.dispatchEvent(
-    new CustomEvent("smoothr:currencychange", { detail: { currency: s } })
-  ));
-}
-function cr() {
-  const s = Uo();
-  document.querySelectorAll(Ro).forEach((e) => {
-    const t = e.hasAttribute("data-smoothr-total") ? "data-smoothr-total" : "data-smoothr-price", r = Lo(e, t);
-    if (isNaN(r)) return;
-    const n = Oe(r, s, $);
-    e.textContent = Ce(n, s), e.setAttribute(t, n);
-  });
-}
-function Bo() {
-  typeof document > "u" || (cr(), document.addEventListener("smoothr:currencychange", cr));
-}
-typeof window < "u" && Bo();
-const $e = '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]', lr = [
-  ".w-commerce-commerceproductprice",
-  ".w-commerce-commercecartitemprice",
-  ".product-price"
-];
-function ms(s) {
-  return parseFloat(
-    s.replace(/[£$€]/g, "").replace(/[,\s]/g, "")
-  );
-}
-function qo(s, e) {
-  let t = parseFloat(s.dataset.smoothrBase);
-  return isNaN(t) && (t = parseFloat(s.getAttribute(e)) || ms(s.textContent || ""), isNaN(t) || (s.dataset.smoothrBase = t)), t;
-}
-function Mo() {
-  return typeof window > "u" ? $ : localStorage.getItem("smoothr:currency") || $;
-}
-function Ot(s) {
-  typeof window > "u" || (localStorage.setItem("smoothr:currency", s), document.dispatchEvent(
-    new CustomEvent("smoothr:currencychange", { detail: { currency: s } })
-  ));
-}
-function Fe(s) {
-  const e = s.hasAttribute("data-smoothr-total") ? "data-smoothr-total" : "data-smoothr-price", t = qo(s, e);
-  if (isNaN(t)) return;
-  const r = Mo(), n = Oe(t, r, $);
-  s.textContent = Ce(n, r), s.setAttribute(e, n);
-}
-function Ct(s = document) {
-  const e = [];
-  s.matches && (lr.some((t) => s.matches(t)) || s.matches($e)) && e.push(s), s.querySelectorAll && s.querySelectorAll([...lr, $e].join(",")).forEach((t) => e.push(t)), e.forEach((t) => {
-    var n;
-    const r = t.hasAttribute("data-smoothr-total") ? "data-smoothr-total" : "data-smoothr-price";
-    if (!t.hasAttribute(r)) {
-      const i = ms(t.textContent || "");
-      isNaN(i) || (t.dataset.smoothrBase = i, (n = window.SMOOTHR_CONFIG) != null && n.debug && console.log("smoothr:bind-price", t, i));
-    }
-    Fe(t);
-  });
-}
-function ur(s = document) {
-  Ct(s), s.querySelectorAll($e).forEach(Fe);
-}
-function ht(s = document) {
-  if (s.id && s.id.startsWith("currency-")) {
-    const e = s.id.slice(9).toUpperCase();
-    s.__smoothrCurrencyBound || (s.addEventListener("click", () => Ot(e)), s.__smoothrCurrencyBound = !0);
-  }
-  s.querySelectorAll('[id^="currency-"]').forEach((e) => {
-    const t = e.id.slice(9).toUpperCase();
-    e.__smoothrCurrencyBound || (e.addEventListener("click", () => Ot(t)), e.__smoothrCurrencyBound = !0);
-  });
-}
-function No() {
-  if (typeof document > "u") return;
-  const s = typeof MutationObserver < "u" ? new MutationObserver((e) => {
-    e.forEach((t) => {
-      t.addedNodes.forEach((r) => {
-        var n;
-        r.nodeType === 1 && (Ct(r), r.matches && r.matches($e) && Fe(r), r.matches && ((n = r.id) != null && n.startsWith("currency-")) && ht(r), r.querySelectorAll && (r.querySelectorAll($e).forEach(Fe), r.querySelectorAll('[id^="currency-"]').forEach((i) => ht(i))));
-      });
-    });
-  }) : null;
-  document.addEventListener("DOMContentLoaded", () => {
-    Ct(), ur(), ht(), s == null || s.observe(document.body, { childList: !0, subtree: !0 });
-  }), document.addEventListener("smoothr:currencychange", () => ur());
-}
-typeof window < "u" && No();
-const Fo = "[data-smoothr-price], [data-smoothr-total]";
-function zo(s) {
-  return parseFloat(s.replace(/[£$€]/g, "").replace(/[\,\s]/g, ""));
-}
-function Wo(s, e) {
-  let t = parseFloat(s.dataset.smoothrBase);
-  return isNaN(t) && (t = parseFloat(s.getAttribute(e)) || zo(s.textContent || ""), isNaN(t) || (s.dataset.smoothrBase = t)), t;
-}
-function Go() {
-  return typeof window > "u" ? $ : localStorage.getItem("smoothr:currency") || $;
-}
-function ys(s) {
-  typeof window > "u" || (localStorage.setItem("smoothr:currency", s), document.dispatchEvent(
-    new CustomEvent("smoothr:currencychange", { detail: { currency: s } })
-  ));
-}
-function dr() {
-  const s = Go();
-  document.querySelectorAll(Fo).forEach((e) => {
-    const t = e.hasAttribute("data-smoothr-total") ? "data-smoothr-total" : "data-smoothr-price", r = Wo(e, t);
-    if (isNaN(r)) return;
-    const n = Oe(r, s, $);
-    e.textContent = Ce(n, s), e.setAttribute(t, n);
-  });
-}
-function Ho(s = document) {
-  s.querySelectorAll('[id^="currency-"]').forEach((e) => {
-    const t = e.id.slice(9).toUpperCase();
-    e.__smoothrCurrencyBound || (e.addEventListener("click", () => ys(t)), e.__smoothrCurrencyBound = !0);
-  });
-}
-function Jo() {
   typeof document > "u" || (document.addEventListener("DOMContentLoaded", () => {
-    dr(), Ho();
-  }), document.addEventListener("smoothr:currencychange", dr));
+    sr(), Lo();
+  }), document.addEventListener("smoothr:currencychange", sr));
 }
-typeof window < "u" && Jo();
-var br;
-const Ko = typeof window < "u" && ((br = window.SMOOTHR_CONFIG) == null ? void 0 : br.debug), _e = (...s) => Ko && console.log("[Smoothr SDK]", ...s);
+typeof window < "u" && Uo();
+var fr;
+const Do = typeof window < "u" && ((fr = window.SMOOTHR_CONFIG) == null ? void 0 : fr.debug), _e = (...s) => Do && console.log("[Smoothr SDK]", ...s);
 _e("Smoothr SDK loaded");
-const Vo = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP", hr = {
-  abandonedCart: ks,
-  affiliates: Es,
-  analytics: Ts,
-  currency: Os,
-  dashboard: Cs,
-  discounts: As,
-  cart: $t,
-  orders: go,
-  returns: po,
-  reviews: mo,
-  subscriptions: yo,
-  auth: To,
-  checkout: ps
+const qo = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP", nr = {
+  abandonedCart: ps,
+  affiliates: ms,
+  analytics: ys,
+  currency: ws,
+  dashboard: vs,
+  discounts: _s,
+  cart: kt,
+  orders: io,
+  returns: oo,
+  reviews: ao,
+  subscriptions: co,
+  auth: yo,
+  checkout: as
 };
-let At = Do;
+let ls = $o;
 if (typeof window < "u") {
   const s = window.SMOOTHR_CONFIG || {};
   if (typeof document < "u" && typeof document.createElement == "function" && !document.querySelector("#smoothr-card-styles")) {
@@ -6563,36 +6497,36 @@ if (typeof window < "u") {
 [data-smoothr-card-cvc]{display:block;position:relative;}
 iframe[data-accept-id]{display:block!important;}`, document.head.appendChild(n);
   }
-  s.baseCurrency && Tr(s.baseCurrency), s.rates && ft(s.rates);
-  const e = s.baseCurrency || $, t = s.rates ? Object.keys(s.rates) : Object.keys(V), r = s.rateSource || Vo;
+  s.baseCurrency && yr(s.baseCurrency), s.rates && ut(s.rates);
+  const e = s.baseCurrency || R, t = s.rates ? Object.keys(s.rates) : Object.keys(V), r = s.rateSource || qo;
   if (s.debug) {
     let n = r;
     /[?&]base=/.test(r) || (n += (n.includes("?") ? "&" : "?") + `base=${encodeURIComponent(e)}`), /[?&]symbols=/.test(r) || (n += (n.includes("?") ? "&" : "?") + `symbols=${t.join(",")}`), _e("smoothr:live-rates-url", n);
   }
-  Po(e, t, s.rateSource).then((n) => {
-    n && (ft(n), s.debug && _e("smoothr:live-rates", n));
+  So(e, t, s.rateSource).then((n) => {
+    n && (ut(n), s.debug && _e("smoothr:live-rates", n));
   }).catch(() => {
-  }), s.platform === "webflow-ecom" ? At = Ot : s.platform === "cms" && (At = ys), window.Smoothr = hr, window.smoothr = window.smoothr || hr, window.renderCart = Te, _e("🎨 renderCart registered in SDK"), window.Smoothr = window.Smoothr || {}, window.Smoothr.cart = { ...$t, ...window.Smoothr.cart || {} }, window.Smoothr.cart.renderCart = Te, window.Smoothr.checkout = ps, window.initCartBindings = Ne, document.addEventListener("DOMContentLoaded", () => {
-    _e("✅ DOM ready – calling initCartBindings"), Ne();
-  }), Promise.resolve(os()).then(() => {
+  }), s.platform === "cms" && (ls = cs), window.Smoothr = nr, window.smoothr = window.smoothr || nr, window.renderCart = Te, _e("🎨 renderCart registered in SDK"), window.Smoothr = window.Smoothr || {}, window.Smoothr.cart = { ...kt, ...window.Smoothr.cart || {} }, window.Smoothr.cart.renderCart = Te, window.Smoothr.checkout = as, window.initCartBindings = Me, document.addEventListener("DOMContentLoaded", () => {
+    _e("✅ DOM ready – calling initCartBindings"), Me();
+  }), Promise.resolve(Yr()).then(() => {
     var n, i;
-    (i = (n = window.smoothr) == null ? void 0 : n.auth) != null && i.user && es();
+    (i = (n = window.smoothr) == null ? void 0 : n.auth) != null && i.user && Hr();
   });
 }
-globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || At;
+globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || ls;
 export {
-  ks as abandonedCart,
-  Es as affiliates,
-  Ts as analytics,
-  To as auth,
-  $t as cart,
-  ps as checkout,
-  Os as currency,
-  Cs as dashboard,
-  hr as default,
-  As as discounts,
-  go as orders,
-  po as returns,
-  mo as reviews,
-  yo as subscriptions
+  ps as abandonedCart,
+  ms as affiliates,
+  ys as analytics,
+  yo as auth,
+  kt as cart,
+  as as checkout,
+  ws as currency,
+  vs as dashboard,
+  nr as default,
+  _s as discounts,
+  io as orders,
+  oo as returns,
+  ao as reviews,
+  co as subscriptions
 };

@@ -116,8 +116,7 @@ Call `renderCart()` after page load to display items and totals. Use
 with the attributes `data-smoothr-card-number`, `data-smoothr-card-expiry` and
 `data-smoothr-card-cvc` where the fields should render. If any target is missing
 the script retries mounting every 200ms for up to five attempts. Attach
-`data-smoothr-pay` to the form or button that submits payment. Use
-`data-smoothr-checkout` only for navigating from the cart to the checkout page.
+`data-smoothr-pay` to the form or button that submits payment.
 If `data-smoothr-pay` is placed on a `<form>`
 the SDK listens for the `submit` event so clicks on child elements won't start
 checkout. Avoid adding the attribute to generic containers to prevent unwanted
