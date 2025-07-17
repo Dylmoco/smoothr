@@ -1,56 +1,76 @@
-// NMI Gateway Logic
-let hasMounted = false;
-let isConfigured = false;
-let isLocked = false;
+// src/checkout/gateways/nmi.js
 
-// Shared post-success behavior
-import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+import { resolveTokenizationKey } from '../providers/nmi.js'
+import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
 
-// Entry point: call this with your tokenization key
-export function initNMI(tokenizationKey) {
-  mountNMIFields(tokenizationKey);
+let hasMounted   = false
+let isConfigured = false
+let isLocked     = false
+
+/**
+ * Public entry: wait for your tokenization key, then mount.
+ */
+export async function mountCardFields() {
+  if (hasMounted) return
+  hasMounted = true
+
+  // look up your store-scoped NMI key
+  const storeId =
+    typeof window !== 'undefined' && window.Smoothr
+      ? window.Smoothr.store_id
+      : undefined
+
+  const key = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
+  if (!key) {
+    console.warn('[NMI] Tokenization key missing')
+    return
+  }
+
+  // now call your old init logic
+  initNMI(key)
 }
 
-function mountNMIFields(tokenizationKey) {
-  console.log('[NMI] Attempting to mount NMI fields...');
-  if (hasMounted) {
-    console.log('[NMI] NMI fields already mounted, skipping.');
-    return;
+// exactly your old working code, wrapped into initNMI()
+export function initNMI(tokenizationKey) {
+  console.log('[NMI] Attempting to mount NMI fields...')
+  if (isConfigured) {
+    console.log('[NMI] already configured, skipping')
+    return
   }
-  hasMounted = true;
 
-  const script = document.createElement('script');
-  script.id = 'collectjs-script';
-  script.src = 'https://secure.nmi.com/token/Collect.js';
-  script.setAttribute('data-tokenization-key', tokenizationKey);
+  const script = document.createElement('script')
+  script.id = 'collectjs-script'
+  script.src = 'https://secure.nmi.com/token/Collect.js'
+  script.setAttribute('data-tokenization-key', tokenizationKey)
   console.log(
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
-  );
-  script.async = true;
-  document.head.appendChild(script);
+  )
+  script.async = true
+  document.head.appendChild(script)
 
   script.onload = () => {
-    console.log('[NMI] CollectJS script loaded.');
-    configureCollectJS();
-  };
+    console.log('[NMI] CollectJS script loaded.')
+    configureCollectJS()
+  }
   script.onerror = () => {
-    console.error('[NMI] Failed to load CollectJS script.');
-  };
+    console.error('[NMI] Failed to load CollectJS script.')
+  }
 }
 
 function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
     console.error(
       '[NMI] CollectJS not ready or locked, delaying configuration.'
-    );
-    return setTimeout(configureCollectJS, 500);
+    )
+    return setTimeout(configureCollectJS, 500)
   }
-  isLocked = true;
+  isLocked = true
 
   try {
     CollectJS.configure({
       variant: 'inline',
+      // <-- this hooks your <div data-smoothr-pay> as the click target
       paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: { selector: '[data-smoothr-card-number]' },
@@ -58,55 +78,55 @@ function configureCollectJS() {
         cvv:      { selector: '[data-smoothr-card-cvc]' }
       },
       fieldsAvailableCallback() {
-        console.log('[NMI] Fields available, setting handlers');
+        console.log('[NMI] Fields available, ready to tokenize')
       },
       callback(response) {
-        console.log('[NMI] Tokenization response:', response);
+        console.log('[NMI] Tokenization response:', response)
         if (!response.token) {
-          console.log('[NMI] Failed:', response.reason);
-          isLocked = false;
-          return;
+          console.log('[NMI] Failed:', response.reason)
+          isLocked = false
+          return
         }
 
-        console.log('[NMI] Success, token:', response.token);
+        console.log('[NMI] Success, token:', response.token)
         console.log(
           '[NMI] Sending POST with store_id:',
           window.SMOOTHR_CONFIG.storeId
-        );
+        )
 
-        // Gather required form values
-        const firstName  = document.querySelector('[data-smoothr-first-name]')?.value || '';
-        const lastName   = document.querySelector('[data-smoothr-last-name]')?.value  || '';
-        const email      = document.querySelector('[data-smoothr-email]')?.value      || '';
-        const shipLine1  = document.querySelector('[data-smoothr-ship-line1]')?.value || '';
-        const shipLine2  = document.querySelector('[data-smoothr-ship-line2]')?.value || '';
-        const shipCity   = document.querySelector('[data-smoothr-ship-city]')?.value  || '';
-        const shipState  = document.querySelector('[data-smoothr-ship-state]')?.value || '';
-        const shipPostal = document.querySelector('[data-smoothr-ship-postal]')?.value|| '';
-        const shipCountry= document.querySelector('[data-smoothr-ship-country]')?.value || '';
+        // — gather your form/cart data —
+        const firstName  = document.querySelector('[data-smoothr-first-name]')?.value  || ''
+        const lastName   = document.querySelector('[data-smoothr-last-name]')?.value   || ''
+        const email      = document.querySelector('[data-smoothr-email]')?.value       || ''
+        const shipLine1  = document.querySelector('[data-smoothr-ship-line1]')?.value  || ''
+        const shipLine2  = document.querySelector('[data-smoothr-ship-line2]')?.value  || ''
+        const shipCity   = document.querySelector('[data-smoothr-ship-city]')?.value   || ''
+        const shipState  = document.querySelector('[data-smoothr-ship-state]')?.value  || ''
+        const shipPostal = document.querySelector('[data-smoothr-ship-postal]')?.value || ''
+        const shipCountry= document.querySelector('[data-smoothr-ship-country]')?.value|| ''
 
-        const amountEl = document.querySelector('[data-smoothr-total]');
+        const amountEl = document.querySelector('[data-smoothr-total]')
         const amount   = amountEl
           ? Math.round(parseFloat(amountEl.textContent.replace(/[^0-9.]/g, '')) * 100)
-          : 0;
-        const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP';
+          : 0
 
-        // Build cart payload
-        const cartData  = window.Smoothr.cart.getCart() || {};
-        const cartItems = Array.isArray(cartData.items) ? cartData.items : [];
+        const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP'
+
+        const cartData  = window.Smoothr.cart.getCart() || {}
+        const cartItems = Array.isArray(cartData.items) ? cartData.items : []
         const cart = cartItems.map(item => ({
           product_id: item.id   || 'unknown',
           name:       item.name,
           quantity:   item.quantity,
           price:      Math.round((item.price ?? 0) * 100)
-        }));
+        }))
         if (cart.length === 0) {
-          console.error('[NMI] Cart is empty');
-          isLocked = false;
-          return;
+          console.error('[NMI] Cart is empty')
+          isLocked = false
+          return
         }
 
-        // Send to backend
+        // — post to your backend —
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -134,23 +154,39 @@ function configureCollectJS() {
         })
           .then(res =>
             res.json().then(data => {
-              console.log('[NMI] Backend response:', data);
-              // Clear cart & redirect on success
-              handleSuccessRedirect(res, data);
-              isLocked = false;
+              console.log('[NMI] Backend response:', data)
+              handleSuccessRedirect(res, data)
+              isLocked = false
             })
           )
           .catch(error => {
-            console.error('[NMI] POST error:', error);
-            isLocked = false;
-          });
+            console.error('[NMI] POST error:', error)
+            isLocked = false
+          })
       }
-    });
+    })
 
-    isConfigured = true;
-    console.log('[NMI] CollectJS configured successfully');
+    isConfigured = true
+    console.log('[NMI] CollectJS configured successfully')
   } catch (error) {
-    console.error('[NMI] Error configuring CollectJS:', error);
-    isLocked = false;
+    console.error('[NMI] Error configuring CollectJS:', error)
+    isLocked = false
   }
+}
+
+// Legacy alias for any adapters
+export const mountNMI = mountCardFields
+
+// no-op stubs for your SDK’s readiness checks
+export function isMounted()   { return isConfigured }
+export function ready()       { return isConfigured }
+export async function createPaymentMethod() {
+  console.error('[NMI] please use the built-in CollectJS callback instead')
+  return { error: { message: 'use CollectJS callback' }, payment_method: null }
+}
+
+// expose global hook if you relied on it
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {}
+  window.Smoothr.mountNMIFields = mountCardFields
 }
