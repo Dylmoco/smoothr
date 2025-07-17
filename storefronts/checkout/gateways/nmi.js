@@ -74,9 +74,8 @@ function configureCollectJS() {
     const divStyle = getComputedStyle(cardNumberDiv);
 
     const customCss = {
-      'background-color': divStyle.backgroundColor,
-      'border': divStyle.border,
-      'border-radius': divStyle.borderRadius,
+      'background-color': 'transparent',
+      'border': 'none',
       'box-shadow': 'none',
       'margin': '0',
       'color': divStyle.color,
@@ -89,7 +88,7 @@ function configureCollectJS() {
       'text-align': divStyle.textAlign,
       'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': '100%',
+      'height': divStyle.height,  // Force exact height
       'min-height': divStyle.minHeight,
       'max-height': divStyle.maxHeight,
       'box-sizing': 'border-box',
@@ -115,14 +114,14 @@ function configureCollectJS() {
       customCss: customCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize');
-        // Style the iframes directly
+        // Style the iframes directly and force height
         const iframes = document.querySelectorAll('iframe[id^="CollectJS"]');
         iframes.forEach(iframe => {
           iframe.style.position = 'absolute';
           iframe.style.top = '0';
           iframe.style.left = '0';
           iframe.style.width = '100%';
-          iframe.style.height = '100%';
+          iframe.style.height = cardNumberDiv.offsetHeight + 'px';  // Explicit force
           iframe.style.border = 'none';
           iframe.style.background = 'transparent';
         });
