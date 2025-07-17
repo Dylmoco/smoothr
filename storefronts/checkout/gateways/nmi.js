@@ -19,7 +19,10 @@ export async function mountCardFields() {
       ? window.Smoothr.store_id
       : undefined
 
+  console.time('[NMI] Token fetch time');
   const tokenizationKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
+  console.timeEnd('[NMI] Token fetch time');
+
   if (!tokenizationKey) {
     console.warn('[NMI] Tokenization key missing')
     return
@@ -46,7 +49,7 @@ export function initNMI(tokenizationKey) {
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
-  script.async = false // Sync load for faster mount
+  script.async = false // Sync load to speed up
   document.head.appendChild(script)
 
   script.onload = () => {
