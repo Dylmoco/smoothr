@@ -131,15 +131,18 @@ function configureCollectJS() {
       }
     };
 
-    // Map fields to placeholders
+    // Map fields to placeholders and iframe ids
     const fieldToPlaceholder = {
       'ccnumber': cardNumberPlaceholderEl,
       'ccexp': expiryPlaceholderEl,
       'cvv': cvcPlaceholderEl
     };
 
-    // Track if placeholder has been hidden
-    const hiddenPlaceholders = new Set();
+    const fieldToIframeId = {
+      'ccnumber': 'CollectJSccnumber',
+      'ccexp': 'CollectJSccexp',
+      'cvv': 'CollectJScvv'
+    };
 
     CollectJS.configure({
       variant: 'inline',
@@ -163,14 +166,15 @@ function configureCollectJS() {
       focusCallback: function(field) {
         console.log('[NMI] Focus on:', field);
         const el = fieldToPlaceholder[field];
-        if (el && !hiddenPlaceholders.has(field)) {
-          el.style.display = 'none';
-          hiddenPlaceholders.add(field); // Mark as hidden permanently
-        }
+        if (el) el.style.display = 'none';
+
+        const iframeId = fieldToIframeId[field];
+        const iframe = document.getElementById(iframeId);
+        if (iframe) iframe.style.opacity = '1';
       },
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize');
-        // Style the iframes directly and force height
+        // Style the iframes directly and force height, start hidden
         const iframes = document.querySelectorAll('iframe[id^="CollectJS"]');
         iframes.forEach(iframe => {
           iframe.style.position = 'absolute';
@@ -180,6 +184,7 @@ function configureCollectJS() {
           iframe.style.height = cardNumberDiv.offsetHeight + 'px';
           iframe.style.border = 'none';
           iframe.style.background = 'transparent';
+          iframe.style.opacity = '0'; // Start hidden
         });
       },
       callback(response) {
