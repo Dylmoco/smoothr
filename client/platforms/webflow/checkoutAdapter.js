@@ -13,11 +13,11 @@ function loadScript(src, cb) {
   document.head.appendChild(s);
 }
 
-// inject CSS
+// inject the CSS
 loadCSS('https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css');
 loadCSS('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css');
 
-// load JS in sequence, then bootstrap on DOMContentLoaded
+// load the scripts in sequence, then defer initialization until DOMContentLoaded
 loadScript('https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js', () => {
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js', () => {
     loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js', () => {
@@ -25,7 +25,6 @@ loadScript('https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choice
     });
   });
 });
-
 
 // ─── Utilities ───────────────────────────────────────────────────────────────────
 function detectCountryFromLang() {
@@ -42,7 +41,6 @@ function geoLookup(callback) {
     .then(data => callback(data.country_code || 'GB'))
     .catch(() => callback('GB'));
 }
-
 
 // ─── Bootstrap & Initialize all pickers & auto-select ───────────────────────────
 function bootstrap(iso) {
@@ -61,7 +59,7 @@ function bootstrap(iso) {
     }
   });
 
-  // initialize Choices.js
+  // initialize Choices.js on the selects
   selects.forEach(sel => {
     new window.Choices(sel, {
       searchEnabled: true,
@@ -70,7 +68,7 @@ function bootstrap(iso) {
     });
   });
 
-  // intl-tel-input on the phone input
+  // initialize intl-tel-input on the phone input
   const phoneInput = document.querySelector('input[name="shipping[phone]"]');
   if (phoneInput) {
     window.intlTelInput(phoneInput, {
@@ -81,7 +79,8 @@ function bootstrap(iso) {
   }
 }
 
+// ─── Entry point ────────────────────────────────────────────────────────────────
 function initializePickers() {
-  // always force Geo-IP
+  // Always force Geo-IP lookup for country detection
   geoLookup(bootstrap);
 }
