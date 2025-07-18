@@ -2,10 +2,12 @@
 
 import { resolveTokenizationKey } from '../providers/nmi.js'
 import { handleSuccessRedirect }   from '../utils/handleSuccessRedirect.js'
+import { disableButton, enableButton } from '../utils/cartHash.js'
 
 let hasMounted   = false
 let isConfigured = false
 let isLocked     = false
+let isSubmitting = false
 
 function rgbToHex(rgb) {
   const match = rgb.match(/\d+/g)
@@ -221,10 +223,13 @@ function configureCollectJS() {
       },
       callback(response) {
         console.log('[NMI] Tokenization response:', response)
+        const payButtons = document.querySelectorAll('[data-smoothr-pay]')
         if (!response.token) {
           console.log('[NMI] Failed:', response.reason)
           alert('Payment failed: ' + (response.reason || 'Unknown error. Try again.'))
           isLocked = false
+          isSubmitting = false
+          payButtons.forEach(enableButton)
           return
         }
 
@@ -324,14 +329,31 @@ function configureCollectJS() {
               console.log('[NMI] Backend response:', data)
               handleSuccessRedirect(res, data)
               isLocked = false
+              isSubmitting = false
+              payButtons.forEach(enableButton)
             })
           )
           .catch(error => {
             console.error('[NMI] POST error:', error)
             alert('Payment processing error. Please try again.')
             isLocked = false
+            isSubmitting = false
+            payButtons.forEach(enableButton)
           })
       }
+      })
+
+    // Attach guarded click handler to prevent duplicate submissions
+    const payButtons = document.querySelectorAll('[data-smoothr-pay]')
+    payButtons.forEach(btn => {
+      btn.addEventListener('click', ev => {
+        ev.preventDefault()
+        if (isSubmitting) return false
+        isSubmitting = true
+        payButtons.forEach(disableButton)
+        CollectJS.startPayment()
+        return false
+      })
     })
 
     isConfigured = true
