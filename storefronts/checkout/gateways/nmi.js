@@ -66,22 +66,29 @@ function configureCollectJS() {
     console.error(
       '[NMI] CollectJS not ready or locked, delaying configuration.'
     )
-    return setTimeout(configureCollectJS, 500)
-  }
+    return setTimeoutCollectJS, 500
+  )
   isLocked = true
 
   try {
-    // Find a real Webflow input as style template (e.g., email field)
-    const templateInput = document.querySelector('[data-smoothr-email]') ||
-                          document.querySelector('input[type="text"]') // Fallback
-    if (!templateInput) {
-      console.warn('[NMI] No template input found for styles')
-    }
-    const inputStyle = templateInput ? getComputedStyle(templateInput) : {}
-    const placeholderStyle = templateInput ? getComputedStyle(templateInput, '::placeholder') : {}
-
-    // Get placeholder text from Webflow elements (keep as is)
+    // Get styles from the placeholder div
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
+    const divStyle = getComputedStyle(cardNumberDiv)
+
+    // Find the Webflow email input for placeholder styles
+    const emailInput = document.querySelector('[data-smoothr-email]')
+    let placeholderStyle;
+    if (emailInput) {
+      placeholderStyle = getComputedStyle(emailInput, '::placeholder')
+    } else {
+      console.warn('[NMI] Email input not found, falling back to original placeholder style')
+      const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
+        '[data-smoothr-card-placeholder]'
+      )
+      placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
+    }
+
+    // Get placeholder info from Webflow elements with custom attributes
     const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
       '[data-smoothr-card-placeholder]'
     )
@@ -103,44 +110,44 @@ function configureCollectJS() {
       : 'CVC'
 
     const customCss = {
-      'background-color': inputStyle.backgroundColor || 'transparent',
-      'border': inputStyle.border || 'none',
-      'box-shadow': inputStyle.boxShadow || 'none',
-      'margin': inputStyle.margin || '0',
-      'color': inputStyle.color,
-      'font-family': inputStyle.fontFamily,
-      'font-size': inputStyle.fontSize,
-      'font-style': inputStyle.fontStyle,
-      'font-weight': inputStyle.fontWeight,
-      'letter-spacing': inputStyle.letterSpacing,
-      'line-height': inputStyle.lineHeight,
-      'text-align': inputStyle.textAlign,
-      'text-shadow': inputStyle.textShadow || 'none',
+      'background-color': 'transparent',
+      'border': 'none',
+      'box-shadow': 'none',
+      'margin': '0',
+      'color': divStyle.color,
+      'font-family': divStyle.fontFamily,
+      'font-size': divStyle.fontSize,
+      'font-style': divStyle.fontStyle,
+      'font-weight': divStyle.fontWeight,
+      'letter-spacing': divStyle.letterSpacing,
+      'line-height': divStyle.lineHeight,
+      'text-align': divStyle.textAlign,
+      'text-shadow': divStyle.textShadow,
       'width': '100%',
-      'height': inputStyle.height,
-      'min-height': inputStyle.minHeight,
-      'max-height': inputStyle.maxHeight,
-      'box-sizing': inputStyle.boxSizing || 'border-box',
-      'padding-top': inputStyle.paddingTop,
-      'padding-right': inputStyle.paddingRight,
-      'padding-bottom': inputStyle.paddingBottom,
-      'padding-left': inputStyle.paddingLeft,
+      'height': divStyle.height,
+      'min-height': divStyle.minHeight,
+      'max-height': divStyle.maxHeight,
+      'box-sizing': 'border-box',
+      'padding-top': divStyle.paddingTop,
+      'padding-right': divStyle.paddingRight,
+      'padding-bottom': divStyle.paddingBottom,
+      'padding-left': divStyle.paddingLeft,
       'display': 'flex',
       'align-items': 'center',
       'justify-content': 'flex-start',
-      'outline': inputStyle.outline || 'none',
+      'outline': 'none',
       'vertical-align': 'middle',
-      // Placeholder styles from pseudo-element
+      // apply styles to the iframe input placeholder
       '::placeholder': {
         'color':          placeholderStyle.color,
-        'font-family':    placeholderStyle.fontFamily || inputStyle.fontFamily,
-        'font-size':      placeholderStyle.fontSize || inputStyle.fontSize,
-        'font-style':     placeholderStyle.fontStyle || inputStyle.fontStyle,
-        'font-weight':    placeholderStyle.fontWeight || inputStyle.fontWeight,
-        'letter-spacing': placeholderStyle.letterSpacing || inputStyle.letterSpacing,
-        'line-height':    placeholderStyle.lineHeight || inputStyle.lineHeight,
-        'text-align':     placeholderStyle.textAlign || inputStyle.textAlign,
-        'opacity':        placeholderStyle.opacity || '1'
+        'font-family':    placeholderStyle.fontFamily,
+        'font-size':      placeholderStyle.fontSize,
+        'font-style':     placeholderStyle.fontStyle,
+        'font-weight':    placeholderStyle.fontWeight,
+        'letter-spacing': placeholderStyle.letterSpacing,
+        'line-height':    placeholderStyle.lineHeight,
+        'text-align':     placeholderStyle.textAlign,
+        'opacity':        placeholderStyle.opacity
       }
     }
 
@@ -171,7 +178,7 @@ function configureCollectJS() {
           iframe.style.top        = '0'
           iframe.style.left       = '0'
           iframe.style.width      = '100%'
-          iframe.style.height     = (templateInput ? templateInput.offsetHeight : cardNumberDiv.offsetHeight) + 'px'
+          iframe.style.height     = cardNumberDiv.offsetHeight + 'px'
           iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
