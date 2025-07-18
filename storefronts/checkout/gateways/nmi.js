@@ -44,17 +44,87 @@ export function initNMI(tokenizationKey) {
     return
   }
 
+  // Get styles early for script attributes
+  const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
+  const divStyle = getComputedStyle(cardNumberDiv)
+
+  const emailDiv = document.querySelector('[data-smoothr-email]')
+  let placeholderStyle;
+  if (emailDiv) {
+    placeholderStyle = getComputedStyle(emailDiv)
+    // Log the pulled styles for debugging
+    console.log('[NMI] Placeholder color:', placeholderStyle.color)
+    console.log('[NMI] Placeholder font-family:', placeholderStyle.fontFamily)
+    console.log('[NMI] Placeholder font-size:', placeholderStyle.fontSize)
+    console.log('[NMI] Placeholder opacity:', placeholderStyle.opacity)
+    console.log('[NMI] Placeholder font-weight:', placeholderStyle.fontWeight)
+  } else {
+    console.warn('[NMI] Email div not found, falling back to original placeholder style')
+    const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
+      '[data-smoothr-card-placeholder]'
+    )
+    placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
+  }
+
+  // Convert to hex and normalize weight
+  const placeholderColorHex = rgbToHex(placeholderStyle.color)
+  const placeholderFontWeight = placeholderStyle.fontWeight === '400' ? 'normal' : placeholderStyle.fontWeight
+
+  const customCssObj = {
+    'background-color': 'transparent',
+    'border': 'none',
+    'box-shadow': 'none',
+    'margin': '0',
+    'color': divStyle.color,
+    'font-family': divStyle.fontFamily,
+    'font-size': divStyle.fontSize,
+    'font-style': divStyle.fontStyle,
+    'font-weight': divStyle.fontWeight,
+    'letter-spacing': divStyle.letterSpacing,
+    'line-height': divStyle.lineHeight,
+    'text-align': divStyle.textAlign,
+    'text-shadow': divStyle.textShadow,
+    'width': '100%',
+    'height': divStyle.height,
+    'min-height': divStyle.minHeight,
+    'max-height': divStyle.maxHeight,
+    'box-sizing': 'border-box',
+    'padding-top': divStyle.paddingTop,
+    'padding-right': divStyle.paddingRight,
+    'padding-bottom': divStyle.paddingBottom,
+    'padding-left': divStyle.paddingLeft,
+    'display': 'flex',
+    'align-items': 'center',
+    'justify-content': 'flex-start',
+    'outline': 'none',
+    'vertical-align': 'middle'
+  }
+
+  const placeholderCssObj = {
+    'color': placeholderColorHex,
+    'font-family': placeholderStyle.fontFamily,
+    'font-size': placeholderStyle.fontSize,
+    'font-style': placeholderStyle.fontStyle,
+    'font-weight': placeholderFontWeight,
+    'letter-spacing': placeholderStyle.letterSpacing,
+    'line-height': placeholderStyle.lineHeight,
+    'text-align': placeholderStyle.textAlign,
+    'opacity': placeholderStyle.opacity
+  }
+
   const script = document.createElement('script')
   script.id = 'collectjs-script'
   script.src = 'https://secure.nmi.com/token/Collect.js'
   script.setAttribute('data-tokenization-key', tokenizationKey)
+  script.setAttribute('data-custom-css', JSON.stringify(customCssObj))
+  script.setAttribute('data-placeholder-css', JSON.stringify(placeholderCssObj))
+  script.setAttribute('data-style-sniffer', 'true')
   console.log(
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
   )
   // original async behavior
   script.async = true
-  document.head.appendChild(script)
 
   script.onload = () => {
     console.log('[NMI] CollectJS script loaded.')
@@ -64,6 +134,8 @@ export function initNMI(tokenizationKey) {
     console.error('[NMI] Failed to load CollectJS script.')
     alert('Unable to load payment system. Please refresh the page.')
   }
+
+  document.head.appendChild(script)
 }
 
 function configureCollectJS() {
@@ -79,29 +151,6 @@ function configureCollectJS() {
     // Get styles from the placeholder div
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
     const divStyle = getComputedStyle(cardNumberDiv)
-
-    // Find the Webflow email input for placeholder styles
-    const emailInput = document.querySelector('[data-smoothr-email]')
-    let placeholderStyle;
-    if (emailInput) {
-      placeholderStyle = getComputedStyle(emailInput, '::placeholder')
-      // Log the pulled styles for debugging
-      console.log('[NMI] Placeholder color:', placeholderStyle.color)
-      console.log('[NMI] Placeholder font-family:', placeholderStyle.fontFamily)
-      console.log('[NMI] Placeholder font-size:', placeholderStyle.fontSize)
-      console.log('[NMI] Placeholder opacity:', placeholderStyle.opacity)
-      console.log('[NMI] Placeholder font-weight:', placeholderStyle.fontWeight)
-    } else {
-      console.warn('[NMI] Email input not found, falling back to original placeholder style')
-      const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
-        '[data-smoothr-card-placeholder]'
-      )
-      placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
-    }
-
-    // Convert to hex and normalize weight
-    const placeholderColorHex = rgbToHex(placeholderStyle.color);
-    const placeholderFontWeight = placeholderStyle.fontWeight === '400' ? 'normal' : placeholderStyle.fontWeight;
 
     // Get placeholder info from Webflow elements with custom attributes
     const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
@@ -124,51 +173,8 @@ function configureCollectJS() {
       ? cvcPlaceholderEl.textContent.trim()
       : 'CVC'
 
-    const customCss = {
-      'background-color': 'transparent',
-      'border': 'none',
-      'box-shadow': 'none',
-      'margin': '0',
-      'color': divStyle.color,
-      'font-family': divStyle.fontFamily,
-      'font-size': divStyle.fontSize,
-      'font-style': divStyle.fontStyle,
-      'font-weight': divStyle.fontWeight,
-      'letter-spacing': divStyle.letterSpacing,
-      'line-height': divStyle.lineHeight,
-      'text-align': divStyle.textAlign,
-      'text-shadow': divStyle.textShadow,
-      'width': '100%',
-      'height': divStyle.height,
-      'min-height': divStyle.minHeight,
-      'max-height': divStyle.maxHeight,
-      'box-sizing': 'border-box',
-      'padding-top': divStyle.paddingTop,
-      'padding-right': divStyle.paddingRight,
-      'padding-bottom': divStyle.paddingBottom,
-      'padding-left': divStyle.paddingLeft,
-      'display': 'flex',
-      'align-items': 'center',
-      'justify-content': 'flex-start',
-      'outline': 'none',
-      'vertical-align': 'middle'
-    }
-
-    const placeholderCss = {
-      'color': placeholderColorHex,
-      'font-family': placeholderStyle.fontFamily,
-      'font-size': placeholderStyle.fontSize,
-      'font-style': placeholderStyle.fontStyle,
-      'font-weight': placeholderFontWeight,
-      'letter-spacing': placeholderStyle.letterSpacing,
-      'line-height': placeholderStyle.lineHeight,
-      'text-align': placeholderStyle.textAlign,
-      'opacity': placeholderStyle.opacity
-    }
-
     CollectJS.configure({
       variant: 'inline',
-      styleSniffer: true,
       paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: { 
@@ -184,8 +190,6 @@ function configureCollectJS() {
           placeholder: cvcPlaceholderText
         }
       },
-      customCss,
-      placeholderCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize')
         // Style the iframes directly and force height
