@@ -212,9 +212,18 @@ set to `paypal` and store your REST credentials under the `settings` column:
 The server reads both `client_id` and `secret` – falling back to `api_key` for
 the client ID – when creating and capturing orders.
 
+
 Activate the gateway by setting
 `store_settings.settings.active_payment_gateway` to `paypal` (or override it on
 the client via `window.SMOOTHR_CONFIG.active_payment_gateway`).
+
+### DEDUPE_WINDOW_MS
+
+The Checkout API suppresses duplicate orders by comparing incoming carts and
+rejecting identical submissions created within a time window. Configure the
+window with the `DEDUPE_WINDOW_MS` environment variable. It defaults to 30
+seconds. Setting a lower value or `0` disables server-side duplicate
+suppression.
 
 ## Checkout flow
 
