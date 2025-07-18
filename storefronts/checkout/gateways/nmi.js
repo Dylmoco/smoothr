@@ -271,12 +271,16 @@ function configureCollectJS() {
             console.error('[NMI] Invalid total amount')
             alert('Issue with order total. Please refresh.')
             isLocked = false
+            isSubmitting = false
+            payButtons.forEach(enableButton)
             return
           }
         } else {
           console.error('[NMI] Total element missing')
           alert('Order total not found. Please try again.')
           isLocked = false
+          isSubmitting = false
+          payButtons.forEach(enableButton)
           return
         }
 
@@ -294,6 +298,8 @@ function configureCollectJS() {
           console.error('[NMI] Cart is empty')
           alert('Your cart is empty. Add items to proceed.')
           isLocked = false
+          isSubmitting = false
+          payButtons.forEach(enableButton)
           return
         }
 
