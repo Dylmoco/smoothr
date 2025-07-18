@@ -280,7 +280,7 @@ function configureCollectJS() {
           product_id: item.id   || 'unknown',
           name:       item.name,
           quantity:   item.quantity,
-          price:      Math.round(item.price ?? 0)  // Removed *100, assuming prices already in cents
+          price:      Math.round(item.price ?? 0)
         }))
         if (cart.length === 0) {
           console.error('[NMI] Cart is empty')
@@ -308,17 +308,6 @@ function configureCollectJS() {
                 state:       shipState,
                 postal_code: shipPostal,
                 country:     shipCountry
-              }
-            },
-            billing: {
-              name: `${firstName} ${lastName}`.trim(),
-              address: {
-                line1:       billLine1,
-                line2:       billLine2,
-                city:        billCity,
-                state:       billState,
-                postal_code: billPostal,
-                country:     billCountry
               }
             },
             cart,
