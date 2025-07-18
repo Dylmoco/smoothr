@@ -241,12 +241,16 @@ function configureCollectJS() {
         const shipPostal  = document.querySelector('[data-smoothr-ship-postal]')?.value  || ''
         const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value || ''
 
-        // Check for required fields
-        if (!firstName || !lastName || !email || !shipLine1 || !shipCity || !shipState || !shipPostal || !shipCountry) {
-          alert('Please fill in all shipping and contact details.')
-          isLocked = false
-          return
-        }
+        // Check if billing same as shipping
+        const sameBillingElem = document.querySelector('[data-smoothr-billing-same-as-shipping]:checked')
+        const sameBilling = !!sameBillingElem
+
+        let billLine1   = sameBilling ? shipLine1   : document.querySelector('[data-smoothr-bill-line1]')?.value   || ''
+        let billLine2   = sameBilling ? shipLine2   : document.querySelector('[data-smoothr-bill-line2]')?.value   || ''
+        let billCity    = sameBilling ? shipCity    : document.querySelector('[data-smoothr-bill-city]')?.value    || ''
+        let billState   = sameBilling ? shipState   : document.querySelector('[data-smoothr-bill-state]')?.value   || ''
+        let billPostal  = sameBilling ? shipPostal  : document.querySelector('[data-smoothr-bill-postal]')?.value  || ''
+        let billCountry = sameBilling ? shipCountry : document.querySelector('[data-smoothr-bill-country]')?.value || ''
 
         const amountEl = document.querySelector('[data-smoothr-total]')
         let amount = 0
@@ -304,6 +308,17 @@ function configureCollectJS() {
                 state:       shipState,
                 postal_code: shipPostal,
                 country:     shipCountry
+              }
+            },
+            billing: {
+              name: `${firstName} ${lastName}`.trim(),
+              address: {
+                line1:       billLine1,
+                line2:       billLine2,
+                city:        billCity,
+                state:       billState,
+                postal_code: billPostal,
+                country:     billCountry
               }
             },
             cart,
