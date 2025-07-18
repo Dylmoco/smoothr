@@ -10,7 +10,6 @@ if (
   document.head.appendChild(style);
 }
 
-import { getPublicCredential } from './getPublicCredential.js';
 import bindCardInputs from './utils/inputFormatters.js';
 import checkoutLogger from './utils/checkoutLogger.js';
 import getActivePaymentGateway from './utils/resolveGateway.js';
@@ -58,30 +57,16 @@ export async function initCheckout(config) {
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
 
-  // NMI handles its own flow
-  if (provider === 'nmi') return;
-
-  // Shared setup for other gateways
+  // Assign to global checkout namespace
   window.Smoothr = window.Smoothr || window.smoothr || {};
   window.smoothr = window.Smoothr;
-  window.Smoothr.checkout = { ...window.Smoothr.checkout, version: 'dev6', ...gateway };
+  window.Smoothr.checkout = {
+    ...(window.Smoothr.checkout || {}),
+    version: 'dev6',
+    ...gateway
+  };
 
-  if (provider === 'stripe') {
-    let stripeKey = window.SMOOTHR_CONFIG?.stripeKey;
-    if (!stripeKey) {
-      const storeId = window.SMOOTHR_CONFIG.storeId;
-      const cred = await getPublicCredential(storeId, 'stripe');
-      stripeKey = cred?.api_key || cred?.settings?.publishable_key || '';
-      if (stripeKey) window.SMOOTHR_CONFIG.stripeKey = stripeKey;
-    }
-    log(`stripeKey: ${stripeKey}`);
-    if (!stripeKey) {
-      warn('❌ Missing Stripe key');
-      return;
-    }
-    log('Stripe key confirmed');
-  }
-
+  // Shared mount of card fields for all gateways
   const checkoutEl = await select('[data-smoothr-pay]');
   if (!checkoutEl) {
     warn('Missing [data-smoothr-pay]');
@@ -89,7 +74,6 @@ export async function initCheckout(config) {
   }
   log('checkout trigger found', checkoutEl);
 
-  // Collect form fields and email input
   const fields = collectFormFields(q);
   let { emailField } = fields;
   if (!emailField) emailField = await select('[data-smoothr-email]');
@@ -110,6 +94,12 @@ export async function initCheckout(config) {
     return;
   }
   bindCardInputs();
+
+  // If NMI, skip shared click-binding (it handles its own)
+  if (provider === 'nmi') {
+    log('Skipping shared click binding for NMI');
+    return;
+  }
 
   const isForm = checkoutEl.tagName.toLowerCase() === 'form';
   const eventName = isForm ? 'submit' : 'click';
@@ -136,7 +126,7 @@ export async function initCheckout(config) {
       const cartInfo = window.Smoothr.cart.getCart();
       const items = Array.isArray(cartInfo.items) ? cartInfo.items : [];
       const total = Math.round(
-        (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g,'')) || 0) * 100
+        (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0) * 100
       );
       const currency = window.SMOOTHR_CONFIG.baseCurrency;
       const customer_id = window.smoothr.auth.user?.id || null;
@@ -290,7 +280,7 @@ function showValidationErrors(errors) {
 
 function clearErrorMessages() {
   document.querySelectorAll('.smoothr-error').forEach(e => e.remove());
-  document.querySelectorAll('.smoothr-error-field').forEach(e => e.classList.remove('smoothr-error-field'));  
+  document.querySelectorAll('.smoothr-error-field').forEach(e => e.classList.remove('smoothr-error-field'));
   hideUserMessage();
 }
 
