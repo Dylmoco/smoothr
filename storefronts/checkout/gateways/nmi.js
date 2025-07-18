@@ -188,7 +188,6 @@ function configureCollectJS() {
 
     CollectJS.configure({
       variant: 'inline',
-      paymentSelector: '[data-smoothr-pay]',
       fields: {
         ccnumber: { 
           selector:    '[data-smoothr-card-number]',
@@ -351,7 +350,15 @@ function configureCollectJS() {
         if (isSubmitting) return false
         isSubmitting = true
         payButtons.forEach(disableButton)
-        CollectJS.startPayment()
+        if (typeof CollectJS.startPaymentRequest === 'function') {
+          CollectJS.startPaymentRequest()
+        } else if (typeof CollectJS.tokenize === 'function') {
+          CollectJS.tokenize()
+        } else {
+          console.error('[NMI] No CollectJS tokenization method found')
+          isSubmitting = false
+          payButtons.forEach(enableButton)
+        }
         return false
       })
     })
