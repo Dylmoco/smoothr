@@ -18,6 +18,11 @@ import getActivePaymentGateway from './utils/resolveGateway.js';
 import collectFormFields from './utils/collectFormFields.js';
 import constructPayload from './utils/constructPayload.js';
 import gatewayDispatcher from './utils/gatewayDispatcher.js';
+import {
+  computeCartHash,
+  disableButton,
+  enableButton
+} from './utils/cartHash.js';
 
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
@@ -28,17 +33,6 @@ const gatewayLoaders = {
 };
 
 
-export async function computeCartHash(cart, total, email) {
-  const normalized = [...cart]
-    .map(item => ({ id: item.product_id, qty: item.quantity }))
-    .sort((a, b) => (a.id > b.id ? 1 : a.id < b.id ? -1 : 0));
-  const input = `${email}-${total}-${JSON.stringify(normalized)}`;
-  const data = new TextEncoder().encode(input);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
 
 export async function initCheckout(config) {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
@@ -158,7 +152,7 @@ export async function initCheckout(config) {
         return;
       }
       isSubmitting = true;
-    if ('disabled' in btn) btn.disabled = true;
+      disableButton(btn);
       log('[data-smoothr-pay] triggered');
 
     const email =
@@ -210,7 +204,7 @@ export async function initCheckout(config) {
 
     if (!email || !first_name || !last_name || !total) {
       warn('Missing required fields; aborting checkout');
-      if ('disabled' in btn) btn.disabled = false;
+      enableButton(btn);
       isSubmitting = false;
       return;
     }
@@ -218,7 +212,7 @@ export async function initCheckout(config) {
     const cartHash = await computeCartHash(cart.items, total, email);
     const lastHash = localStorage.getItem('smoothr_last_cart_hash');
     if (cartHash === lastHash) {
-      if ('disabled' in btn) btn.disabled = false;
+      enableButton(btn);
       isSubmitting = false;
       alert("You’ve already submitted this cart. Please wait or modify your order.");
       return;
@@ -227,7 +221,7 @@ export async function initCheckout(config) {
 
     if (!gateway.ready()) {
       err('Payment gateway not ready');
-      if ('disabled' in btn) btn.disabled = false;
+      enableButton(btn);
       isSubmitting = false;
       return;
     }
@@ -244,13 +238,13 @@ export async function initCheckout(config) {
         (!token?.dataDescriptor || !token?.dataValue)
       ) {
         alert('Invalid payment details. Please try again.');
-        if ('disabled' in btn) btn.disabled = false;
+        enableButton(btn);
         isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err('Failed to create payment method', { error: pmError, payment_method: token });
-        if ('disabled' in btn) btn.disabled = false;
+        enableButton(btn);
         isSubmitting = false;
         return;
       }
@@ -300,7 +294,7 @@ export async function initCheckout(config) {
         hasShownCheckoutError = true;
       }
     } finally {
-      if ('disabled' in btn) btn.disabled = false;
+      enableButton(btn);
       isSubmitting = false;
       log('submit handler complete');
     }
