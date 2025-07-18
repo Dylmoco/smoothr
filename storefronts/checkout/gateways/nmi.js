@@ -69,7 +69,7 @@ function configureCollectJS() {
   isLocked = true
 
   try {
-    // Get styles from the placeholder div
+    // Get styles from the placeholder divv
     const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
     const divStyle = getComputedStyle(cardNumberDiv)
 
