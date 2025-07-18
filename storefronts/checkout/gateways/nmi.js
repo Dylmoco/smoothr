@@ -48,10 +48,10 @@ export function initNMI(tokenizationKey) {
   const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
   const divStyle = getComputedStyle(cardNumberDiv)
 
-  const emailDiv = document.querySelector('[data-smoothr-email]')
+  const emailInput = document.querySelector('[data-smoothr-email]')
   let placeholderStyle;
-  if (emailDiv) {
-    placeholderStyle = getComputedStyle(emailDiv)
+  if (emailInput) {
+    placeholderStyle = getComputedStyle(emailInput, '::placeholder')
     // Log the pulled styles for debugging
     console.log('[NMI] Placeholder color:', placeholderStyle.color)
     console.log('[NMI] Placeholder font-family:', placeholderStyle.fontFamily)
@@ -59,7 +59,7 @@ export function initNMI(tokenizationKey) {
     console.log('[NMI] Placeholder opacity:', placeholderStyle.opacity)
     console.log('[NMI] Placeholder font-weight:', placeholderStyle.fontWeight)
   } else {
-    console.warn('[NMI] Email div not found, falling back to original placeholder style')
+    console.warn('[NMI] Email input not found, falling back to original placeholder style')
     const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
       '[data-smoothr-card-placeholder]'
     )
@@ -68,6 +68,7 @@ export function initNMI(tokenizationKey) {
 
   // Convert to hex and normalize weight
   const placeholderColorHex = rgbToHex(placeholderStyle.color)
+  console.log('[NMI] Placeholder color hex:', placeholderColorHex)
   const placeholderFontWeight = placeholderStyle.fontWeight === '400' ? 'normal' : placeholderStyle.fontWeight
 
   const customCssObj = {
