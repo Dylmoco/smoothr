@@ -61,7 +61,7 @@ export async function initCheckout(config) {
   // NMI handles its own flow
   if (provider === 'nmi') return;
 
-  // Shared setup for other gatewayss
+  // Shared setup for other gateways
   window.Smoothr = window.Smoothr || window.smoothr || {};
   window.smoothr = window.Smoothr;
   window.Smoothr.checkout = { ...window.Smoothr.checkout, version: 'dev6', ...gateway };
@@ -275,7 +275,22 @@ function showUserMessage(text, type='info') {
     box.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:12px;border-radius:4px;font-weight:500;max-width:300px;';
     document.body.appendChild(box);
   }
-  const themes = { success:'#d4edda error':'#f8d7da warning':'#fff3cd info':'#d1ecf1' };
+  const themes = {
+    success: '#d4edda',
+    error: '#f8d7da',
+    warning: '#fff3cd',
+    info: '#d1ecf1'
+  };
+  box.style.background = themes[type] || themes.info;
+  box.textContent = text;
+  if (type === 'success') setTimeout(hideUserMessage, 5000);
+}
+  const themes = {
+  success: '#d4edda',
+  error: '#f8d7da',
+  warning: '#fff3cd',
+  info: '#d1ecf1'
+};
   box.style.background = themes[type] || themes.info;
   box.textContent = text;
   if (type==='success') setTimeout(hideUserMessage,5000);
