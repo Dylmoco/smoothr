@@ -8,6 +8,38 @@ interface NmiPayload {
   payment_token: string;
   amount: number;
   store_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  shipping: {
+    name: string;
+    address: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+    };
+  };
+  billing?: {
+    name: string;
+    address: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+    };
+  };
+  cart: Array<{
+    product_id: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  currency: string;
 }
 
 export default async function handleNmi(payload: NmiPayload) {
@@ -29,11 +61,47 @@ export default async function handleNmi(payload: NmiPayload) {
     return { success: false, error: 'Missing security key' };
   }
 
+  // Prepare NMI params with full details
   const params = new URLSearchParams({
     security_key: securityKey,
     type: 'sale',
     amount: (payload.amount / 100).toFixed(2),
-    payment_token: payload.payment_token
+    payment_token: payload.payment_token,
+    firstname: payload.first_name,
+    lastname: payload.last_name,
+    email: payload.email,
+    address1: payload.shipping.address.line1,
+    address2: payload.shipping.address.line2 || '',
+    city: payload.shipping.address.city,
+    state: payload.shipping.address.state,
+    zip: payload.shipping.address.postal_code,
+    country: payload.shipping.address.country,
+    currency_code: payload.currency,
+    shipping_firstname: payload.first_name,
+    shipping_lastname: payload.last_name,
+    shipping_address1: payload.shipping.address.line1,
+    shipping_address2: payload.shipping.address.line2 || '',
+    shipping_city: payload.shipping.address.city,
+    shipping_state: payload.shipping.address.state,
+    shipping_zip: payload.shipping.address.postal_code,
+    shipping_country: payload.shipping.address.country,
+  });
+
+  // Add billing if provided, else use shipping
+  const billAddr = payload.billing?.address || payload.shipping.address;
+  params.append('billing_address1', billAddr.line1);
+  params.append('billing_address2', billAddr.line2 || '');
+  params.append('billing_city', billAddr.city);
+  params.append('billing_state', billAddr.state);
+  params.append('billing_zip', billAddr.postal_code);
+  params.append('billing_country', billAddr.country);
+
+  // Add cart items as products (NMI supports multiple product lines)
+  payload.cart.forEach((item, index) => {
+    params.append(`product[${index}][sku]`, item.product_id);
+    params.append(`product[${index}][description]`, item.name);
+    params.append(`product[${index}][qty]`, item.quantity.toString());
+    params.append(`product[${index}][price]`, (item.price / 100).toFixed(2));
   });
 
   try {
