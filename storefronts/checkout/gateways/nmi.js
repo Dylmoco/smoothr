@@ -66,8 +66,8 @@ function configureCollectJS() {
     console.error(
       '[NMI] CollectJS not ready or locked, delaying configuration.'
     )
-    return setTimeoutCollectJS, 500
-  )
+    return setTimeout(configureCollectJS, 500)
+  }
   isLocked = true
 
   try {
