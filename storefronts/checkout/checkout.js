@@ -1,4 +1,3 @@
-
 if (
   typeof document !== 'undefined' &&
   typeof document.createElement === 'function' &&
@@ -217,7 +216,6 @@ export async function initCheckout(config) {
       alert("You’ve already submitted this cart. Please wait or modify your order.");
       return;
     }
-    localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
     if (!gateway.ready()) {
       err('Payment gateway not ready');
@@ -285,10 +283,16 @@ export async function initCheckout(config) {
           alert('Failed to start checkout');
           hasShownCheckoutError = true;
         }
+        return; // Don't save hash on fail
       }
+
+      // Save hash only on success
+      localStorage.setItem('smoothr_last_cart_hash', cartHash);
+      // Clear hash on success for immediate re-buy
+      localStorage.removeItem('smoothr_last_cart_hash');
     } catch (error) {
       console.error(error);
-      err(`\u274C ${error.message}`);
+      err(`❌ ${error.message}`);
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
         hasShownCheckoutError = true;

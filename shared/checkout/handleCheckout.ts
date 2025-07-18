@@ -333,7 +333,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       return;
     }
 
-    const dedupWindowMs = 5 * 60 * 1000; // five minutes
+    const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 60 * 1000; // Shortened default to 1 minute
     if (existingOrders && existingOrders.length > 0) {
       const existing = existingOrders[0];
       const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
