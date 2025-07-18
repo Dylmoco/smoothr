@@ -66,10 +66,13 @@ export function initNMI(tokenizationKey) {
     placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
   }
 
-  // Convert to hex and use raw font-weight
+  // Convert to hex and map weight for compatibility
   const placeholderColorHex = rgbToHex(placeholderStyle.color)
   console.log('[NMI] Placeholder color hex:', placeholderColorHex)
-  const placeholderFontWeight = placeholderStyle.fontWeight
+  let placeholderFontWeight = placeholderStyle.fontWeight
+  if (placeholderFontWeight === '400') {
+    placeholderFontWeight = 'normal'
+  }
 
   const customCssObj = {
     'background-color': 'transparent',
