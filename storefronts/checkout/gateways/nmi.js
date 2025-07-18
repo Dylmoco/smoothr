@@ -86,7 +86,8 @@ function configureCollectJS() {
         const buttons = document.querySelectorAll('[data-smoothr-pay]')
         if (!response.token) {
           console.error('[NMI] Tokenization failed', response.reason)
-          alert('Payment failed: ' + (response.reason||''))
+          // User-friendly error
+          alert('Please check your payment details and try again.')
           resetSubmission(buttons)
           return
         }
@@ -94,6 +95,18 @@ function configureCollectJS() {
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId /*...*/ })
+        })
+          .then(res => res.json().then(data => {
+            handleSuccessRedirect(res, data)
+            resetSubmission(buttons)
+          }))
+          .catch(err => {
+            console.error('[NMI] POST error', err)
+            // Same user-friendly error
+            alert('Please check your payment details and try again.')
+            resetSubmission(buttons)
+          })
+      }
         })
           .then(res => res.json().then(data => {
             handleSuccessRedirect(res, data)
