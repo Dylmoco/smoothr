@@ -61,7 +61,7 @@ export async function initCheckout(config) {
   // NMI handles its own flow
   if (provider === 'nmi') return;
 
-  // Shared setup for other gateways
+  // Shared setup for other gatewayss
   window.Smoothr = window.Smoothr || window.smoothr || {};
   window.smoothr = window.Smoothr;
   window.Smoothr.checkout = { ...window.Smoothr.checkout, version: 'dev6', ...gateway };
