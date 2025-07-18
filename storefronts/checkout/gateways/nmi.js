@@ -356,9 +356,7 @@ function configureCollectJS() {
         if (isSubmitting) return false
         isSubmitting = true
         payButtons.forEach(disableButton)
-        if (typeof CollectJS.startPaymentRequest === 'function') {
-          CollectJS.startPaymentRequest()
-        } else if (typeof CollectJS.tokenize === 'function') {
+        if (typeof CollectJS.tokenize === 'function') {
           CollectJS.tokenize()
         } else {
           console.error('[NMI] No CollectJS tokenization method found')
