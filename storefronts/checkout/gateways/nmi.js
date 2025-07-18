@@ -52,7 +52,8 @@ export function initNMI(tokenKey) {
 
   const script = document.createElement('script')
   script.id = 'collectjs-script'
-  script.src = 'https://secure.nmi.com/js/CollectJS.js'
+  // Use correct tokenization path
+  script.src = 'https://secure.nmi.com/token/Collect.js'
   script.async = true
   script.setAttribute('data-tokenization-key', tokenKey)
   script.onload = () => {
