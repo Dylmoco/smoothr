@@ -23,6 +23,10 @@ import {
   enableButton
 } from './utils/cartHash.js';
 
+function forEachPayButton(fn) {
+  document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
+}
+
 const gatewayLoaders = {
   stripe: () => import('./gateways/stripe.js'),
   authorizeNet: () => import('./gateways/authorizeNet.js'),
@@ -153,7 +157,7 @@ export async function initCheckout(config) {
       }
 
       isSubmitting = true;
-      payButtons.forEach(disableButton);
+      forEachPayButton(disableButton);
 
       // Clear any previous error messages
       clearErrorMessages();
@@ -165,7 +169,7 @@ export async function initCheckout(config) {
       const validationErrors = validateFormData(formData);
       if (validationErrors.length > 0) {
         showValidationErrors(validationErrors);
-        payButtons.forEach(enableButton);
+        forEachPayButton(enableButton);
         isSubmitting = false;
         return;
       }
@@ -188,14 +192,14 @@ export async function initCheckout(config) {
 
       if (lastSubmission.hash === cartHash && lastSubmission.success && (Date.now() - lastSubmission.timestamp) < 60000) {
         showUserMessage("You've already submitted this order. Please check your email for confirmation.", 'warning');
-        payButtons.forEach(enableButton);
+        forEachPayButton(enableButton);
         isSubmitting = false;
         return;
       }
 
       if (!gateway.ready()) {
         showUserMessage('Payment system is loading. Please wait a moment and try again.', 'error');
-        payButtons.forEach(enableButton);
+        forEachPayButton(enableButton);
         isSubmitting = false;
         return;
       }
@@ -209,14 +213,14 @@ export async function initCheckout(config) {
         if (pmError || !token) {
           const errorMessage = getPaymentMethodErrorMessage(pmError, provider);
           showUserMessage(errorMessage, 'error');
-          payButtons.forEach(enableButton);
+          forEachPayButton(enableButton);
           isSubmitting = false;
           return;
         }
 
         if (provider === 'authorizeNet' && (!token?.dataDescriptor || !token?.dataValue)) {
           showUserMessage('Please check your payment details and try again.', 'error');
-          payButtons.forEach(enableButton);
+          forEachPayButton(enableButton);
           isSubmitting = false;
           return;
         }
@@ -286,7 +290,7 @@ export async function initCheckout(config) {
         }));
 
       } finally {
-        payButtons.forEach(enableButton);
+        forEachPayButton(enableButton);
         isSubmitting = false;
         log('submit handler complete');
       }
