@@ -66,10 +66,10 @@ export function initNMI(tokenizationKey) {
     placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
   }
 
-  // Convert to hex and normalize weight
+  // Convert to hex and use raw font-weight
   const placeholderColorHex = rgbToHex(placeholderStyle.color)
   console.log('[NMI] Placeholder color hex:', placeholderColorHex)
-  const placeholderFontWeight = placeholderStyle.fontWeight === '400' ? 'normal' : placeholderStyle.fontWeight
+  const placeholderFontWeight = placeholderStyle.fontWeight
 
   const customCssObj = {
     'background-color': 'transparent',
@@ -329,7 +329,7 @@ function configureCollectJS() {
   }
 }
 
-// Legacy aliass
+// Legacy alias
 export const mountNMI = mountCardFields
 
 // Gateway readiness checks
