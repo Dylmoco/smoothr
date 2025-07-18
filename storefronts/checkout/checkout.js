@@ -217,7 +217,6 @@ export async function initCheckout(config) {
       alert("You’ve already submitted this cart. Please wait or modify your order.");
       return;
     }
-    localStorage.setItem('smoothr_last_cart_hash', cartHash);
 
     if (!gateway.ready()) {
       err('Payment gateway not ready');
@@ -238,12 +237,14 @@ export async function initCheckout(config) {
         (!token?.dataDescriptor || !token?.dataValue)
       ) {
         alert('Invalid payment details. Please try again.');
+        localStorage.removeItem('smoothr_last_cart_hash');
         enableButton(btn);
         isSubmitting = false;
         return;
       }
       if (!token || pmError) {
         err('Failed to create payment method', { error: pmError, payment_method: token });
+        localStorage.removeItem('smoothr_last_cart_hash');
         enableButton(btn);
         isSubmitting = false;
         return;
@@ -281,14 +282,18 @@ export async function initCheckout(config) {
 
       if (!res || !res.ok || !data.success) {
         err('Checkout failed');
+        localStorage.removeItem('smoothr_last_cart_hash');
         if (!hasShownCheckoutError) {
           alert('Failed to start checkout');
           hasShownCheckoutError = true;
         }
+      } else {
+        localStorage.setItem('smoothr_last_cart_hash', cartHash);
       }
     } catch (error) {
       console.error(error);
       err(`\u274C ${error.message}`);
+      localStorage.removeItem('smoothr_last_cart_hash');
       if (!hasShownCheckoutError) {
         alert('Failed to start checkout');
         hasShownCheckoutError = true;
