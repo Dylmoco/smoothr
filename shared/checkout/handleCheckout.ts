@@ -370,7 +370,17 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         name,
         address: { line1, line2: line2 || undefined, city, state, postal_code, country }
       },
-      billing,
+      billing: billing || {
+        name: `${first_name} ${last_name}`.trim(),
+        address: {
+          line1,
+          line2: line2 || undefined,
+          city,
+          state,
+          postal_code,
+          country
+        }
+      },
       billing_first_name,
       billing_last_name,
       cart,
@@ -381,15 +391,16 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       metaCartString,
       store_id
     });
+    console.log('[handleCheckout] Provider result:', JSON.stringify(providerResult, null, 2));
   } catch (e: any) {
-    err('Provider handler error:', e?.message || e);
-    res.status(500).json({ error: 'Failed to process payment' });
+    console.error('[handleCheckout] Provider handler error:', e?.message || e);
+    res.status(500).json({ error: 'Failed to process payment', details: e?.message || 'Unknown error' });
     return;
   }
 
   if (providerResult && providerResult.success === false) {
-    warn('Provider handler returned error:', providerResult.error);
-    res.status(400).json({ error: providerResult.error });
+    console.warn('[handleCheckout] Provider handler returned error:', providerResult.error || 'No error message');
+    res.status(400).json({ error: providerResult.error || 'Payment failed', details: providerResult });
     return;
   }
 
@@ -638,7 +649,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     payment_intent_id: paymentIntentId
   });
   } catch (e: any) {
-    err(e.message || e);
-    return res.status(400).json({ error: e.message });
+    console.error('[handleCheckout] Global error:', e.message || e);
+    return res.status(400).json({ error: e.message || 'Unknown error', details: e });
   }
 }
