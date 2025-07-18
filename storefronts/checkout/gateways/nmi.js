@@ -7,6 +7,11 @@ let hasMounted   = false
 let isConfigured = false
 let isLocked     = false
 
+function rgbToHex(rgb) {
+  const [r, g, b] = rgb.match(/\d+/g).map(Number);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 /**
  * Public entry: fetch your tokenization key then kick off the init logic.
  */
@@ -94,6 +99,10 @@ function configureCollectJS() {
       placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
     }
 
+    // Convert to hex and normalize weight
+    const placeholderColorHex = rgbToHex(placeholderStyle.color);
+    const placeholderFontWeight = placeholderStyle.fontWeight === '400' ? 'normal' : placeholderStyle.fontWeight;
+
     // Get placeholder info from Webflow elements with custom attributes
     const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
       '[data-smoothr-card-placeholder]'
@@ -142,18 +151,19 @@ function configureCollectJS() {
       'align-items': 'center',
       'justify-content': 'flex-start',
       'outline': 'none',
-      'vertical-align': 'middle',
-      '::placeholder': {
-        'color':          placeholderStyle.color,
-        'font-family':    placeholderStyle.fontFamily,
-        'font-size':      placeholderStyle.fontSize,
-        'font-style':     placeholderStyle.fontStyle,
-        'font-weight':    placeholderStyle.fontWeight,
-        'letter-spacing': placeholderStyle.letterSpacing,
-        'line-height':    placeholderStyle.lineHeight,
-        'text-align':     placeholderStyle.textAlign,
-        'opacity':        placeholderStyle.opacity
-      }
+      'vertical-align': 'middle'
+    }
+
+    const placeholderCss = {
+      'color': placeholderColorHex,
+      'font-family': placeholderStyle.fontFamily,
+      'font-size': placeholderStyle.fontSize,
+      'font-style': placeholderStyle.fontStyle,
+      'font-weight': placeholderFontWeight,
+      'letter-spacing': placeholderStyle.letterSpacing,
+      'line-height': placeholderStyle.lineHeight,
+      'text-align': placeholderStyle.textAlign,
+      'opacity': placeholderStyle.opacity
     }
 
     CollectJS.configure({
@@ -175,6 +185,7 @@ function configureCollectJS() {
         }
       },
       customCss,
+      placeholderCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize')
         // Style the iframes directly and force height
