@@ -115,7 +115,7 @@ Call `renderCart()` after page load to display items and totals. Use
 `initCheckout` now mounts Stripe card fields automatically. Provide elements
 with the attributes `data-smoothr-card-number`, `data-smoothr-card-expiry` and
 `data-smoothr-card-cvc` where the fields should render. If any target is missing
-the script retries mounting every 200ms for up to five attempts. Attach
+the script only attempts to mount once and logs a warning if it fails. Attach
 `data-smoothr-pay` to the form or button that submits payment.
 If `data-smoothr-pay` is placed on a `<form>`
 the SDK listens for the `submit` event so clicks on child elements won't start
