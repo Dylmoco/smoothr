@@ -329,7 +329,7 @@ function configureCollectJS() {
   }
 }
 
-// Legacy alias
+// Legacy aliass
 export const mountNMI = mountCardFields
 
 // Gateway readiness checks
