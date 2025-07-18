@@ -142,19 +142,19 @@ function configureCollectJS() {
       'align-items': 'center',
       'justify-content': 'flex-start',
       'outline': 'none',
-      'vertical-align': 'middle',
-      // apply styles to the iframe input placeholder
-      'input::placeholder': {
-        'color':          placeholderStyle.color,
-        'font-family':    placeholderStyle.fontFamily,
-        'font-size':      placeholderStyle.fontSize,
-        'font-style':     placeholderStyle.fontStyle,
-        'font-weight':    placeholderStyle.fontWeight,
-        'letter-spacing': placeholderStyle.letterSpacing,
-        'line-height':    placeholderStyle.lineHeight,
-        'text-align':     placeholderStyle.textAlign,
-        'opacity':        placeholderStyle.opacity
-      }
+      'vertical-align': 'middle'
+    }
+
+    const placeholderCss = {
+      'color': placeholderStyle.color,
+      'font-family': placeholderStyle.fontFamily,
+      'font-size': placeholderStyle.fontSize,
+      'font-style': placeholderStyle.fontStyle,
+      'font-weight': placeholderStyle.fontWeight,
+      'letter-spacing': placeholderStyle.letterSpacing,
+      'line-height': placeholderStyle.lineHeight,
+      'text-align': placeholderStyle.textAlign,
+      'opacity': placeholderStyle.opacity
     }
 
     CollectJS.configure({
@@ -175,6 +175,7 @@ function configureCollectJS() {
         }
       },
       customCss,
+      placeholderCss,
       fieldsAvailableCallback() {
         console.log('[NMI] Fields available, ready to tokenize')
         // Style the iframes directly and force height
