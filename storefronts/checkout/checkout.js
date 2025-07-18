@@ -89,6 +89,7 @@ export async function initCheckout(config) {
   }
   log('checkout trigger found', checkoutEl);
 
+  // Collect form fields and email input
   const fields = collectFormFields(q);
   let { emailField } = fields;
   if (!emailField) emailField = await select('[data-smoothr-email]');
@@ -134,7 +135,9 @@ export async function initCheckout(config) {
       const { email, first_name, last_name, shipping, billing, bill_first_name, bill_last_name } = data;
       const cartInfo = window.Smoothr.cart.getCart();
       const items = Array.isArray(cartInfo.items) ? cartInfo.items : [];
-      const total = Math.round((window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g,'')) || 0) * 100);
+      const total = Math.round(
+        (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g,'')) || 0) * 100
+      );
       const currency = window.SMOOTHR_CONFIG.baseCurrency;
       const customer_id = window.smoothr.auth.user?.id || null;
       const store_id = window.SMOOTHR_CONFIG.storeId;
@@ -165,24 +168,48 @@ export async function initCheckout(config) {
         }
 
         const payload = constructPayload(provider, payment_method, {
-          email, first_name, last_name, shipping, billing, bill_first_name, bill_last_name,
-          cart: items, total, currency, customer_id, store_id, platform
+          email,
+          first_name,
+          last_name,
+          shipping,
+          billing,
+          bill_first_name,
+          bill_last_name,
+          cart: items,
+          total,
+          currency,
+          customer_id,
+          store_id,
+          platform
         });
 
         if (window.SMOOTHR_CONFIG.debug) window.__latestSmoothrPayload = payload;
 
-        const { res, data: resp } = await gatewayDispatcher(provider, payload, payment_method, log, warn, err);
+        const { res, data: resp } = await gatewayDispatcher(
+          provider,
+          payload,
+          payment_method,
+          log,
+          warn,
+          err
+        );
         if (!res.ok || !resp.success) {
           handleCheckoutError(res, resp, cartHash);
           return;
         }
 
-        localStorage.setItem('smoothr_last_submission', JSON.stringify({ hash: cartHash, success: true, timestamp: Date.now() }));
+        localStorage.setItem(
+          'smoothr_last_submission',
+          JSON.stringify({ hash: cartHash, success: true, timestamp: Date.now() })
+        );
         showUserMessage('Order submitted!', 'success');
         handleCheckoutSuccess(resp);
       } catch (error) {
         console.error(error);
-        localStorage.setItem('smoothr_last_submission', JSON.stringify({ hash: cartHash, success: false, timestamp: Date.now() }));
+        localStorage.setItem(
+          'smoothr_last_submission',
+          JSON.stringify({ hash: cartHash, success: false, timestamp: Date.now() })
+        );
       } finally {
         forEachPayButton(enableButton);
         isSubmitting = false;
@@ -263,11 +290,11 @@ function showValidationErrors(errors) {
 
 function clearErrorMessages() {
   document.querySelectorAll('.smoothr-error').forEach(e => e.remove());
-  document.querySelectorAll('.smoothr-error-field').forEach(e => e.classList.remove('smoothr-error-field'));
+  document.querySelectorAll('.smoothr-error-field').forEach(e => e.classList.remove('smoothr-error-field'));  
   hideUserMessage();
 }
 
-function showUserMessage(text, type='info') {
+function showUserMessage(text, type = 'info') {
   let box = document.querySelector('.smoothr-message');
   if (!box) {
     box = document.createElement('div');
@@ -285,16 +312,6 @@ function showUserMessage(text, type='info') {
   box.textContent = text;
   if (type === 'success') setTimeout(hideUserMessage, 5000);
 }
-  const themes = {
-  success: '#d4edda',
-  error: '#f8d7da',
-  warning: '#fff3cd',
-  info: '#d1ecf1'
-};
-  box.style.background = themes[type] || themes.info;
-  box.textContent = text;
-  if (type==='success') setTimeout(hideUserMessage,5000);
-}
 
 function hideUserMessage() {
   const box = document.querySelector('.smoothr-message');
@@ -309,13 +326,13 @@ function getPaymentMethodErrorMessage(err) {
 }
 
 function handleCheckoutError(res, data, hash) {
-  if (res.status===409) showUserMessage('Order already submitted.','warning');
-  else showUserMessage(data.error||'Checkout failed','error');
-  localStorage.setItem('smoothr_last_submission',JSON.stringify({hash,success:false,timestamp:Date.now()}));
+  if (res.status === 409) showUserMessage('Order already submitted.', 'warning');
+  else showUserMessage(data.error || 'Checkout failed', 'error');
+  localStorage.setItem('smoothr_last_submission', JSON.stringify({ hash, success: false, timestamp: Date.now() }));
 }
 
 function handleCheckoutSuccess(resp) {
   localStorage.removeItem('smoothr_last_submission');
   if (window.SMOOTHR_CONFIG.successUrl) window.location.href = window.SMOOTHR_CONFIG.successUrl;
-  window.dispatchEvent(new CustomEvent('smoothr:checkout:success',{detail:resp}));
+  window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: resp }));
 }
