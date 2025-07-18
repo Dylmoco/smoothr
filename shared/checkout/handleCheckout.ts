@@ -114,7 +114,11 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   const payload = req.body as CheckoutPayload;
   if (!payload.store_id) {
     warn('Missing store_id');
-    res.status(400).json({ error: 'Missing store_id' });
+    res.status(400).json({ 
+      error: 'Missing store_id',
+      field: 'store_id',
+      user_message: 'Configuration error. Please refresh the page and try again.'
+    });
     return;
   }
 
@@ -144,35 +148,32 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   } = payload;
   let total = payload.total;
 
-  console.log('[handleCheckout] Checking required fields:');
-  console.log('email:', email ? 'present' : 'missing');
-  console.log('first_name:', first_name ? 'present' : 'missing');
-  console.log('last_name:', last_name ? 'present' : 'missing');
-  console.log('shipping:', shipping ? 'present' : 'missing');
-  console.log('cart:', cart ? 'present' : 'missing');
-  console.log('total:', typeof total === 'number' ? 'present' : 'missing');
-  console.log('currency:', currency ? 'present' : 'missing');
-  console.log('store_id:', store_id ? 'present' : 'missing');
+  const missingFields = [] as any[];
+  if (!email) missingFields.push({ field: 'email', message: 'Email is required' });
+  if (!first_name) missingFields.push({ field: 'first_name', message: 'First name is required' });
+  if (!last_name) missingFields.push({ field: 'last_name', message: 'Last name is required' });
+  if (!shipping) missingFields.push({ field: 'shipping', message: 'Shipping information is required' });
+  if (!cart || !Array.isArray(cart) || cart.length === 0) {
+    missingFields.push({ field: 'cart', message: 'Cart cannot be empty' });
+  }
+  if (typeof total !== 'number' || total <= 0) {
+    missingFields.push({ field: 'total', message: 'Invalid order total' });
+  }
+  if (!currency) missingFields.push({ field: 'currency', message: 'Currency is required' });
+  if (!store_id) missingFields.push({ field: 'store_id', message: 'Store ID is required' });
 
-  if (!email || !first_name || !last_name || !shipping || !cart || typeof total !== 'number' || !currency || !store_id) {
-    warn('Missing required fields');
-    res.status(400).json({ error: 'Missing required fields' });
+  if (missingFields.length > 0) {
+    warn('Missing required fields:', missingFields);
+    res.status(400).json({
+      error: 'Missing required fields',
+      missing_fields: missingFields,
+      user_message: 'Please fill in all required fields and try again.'
+    });
     return;
   }
 
   log('[debug] Raw payment_method:', payment_method);
 
-  if (!Array.isArray(cart) || cart.length === 0) {
-    warn('Empty cart');
-    res.status(400).json({ error: 'Cart cannot be empty' });
-    return;
-  }
-
-  if (total <= 0) {
-    warn('Invalid total:', total);
-    res.status(400).json({ error: 'Invalid total' });
-    return;
-  }
 
   let customerId: string | null = null;
   try {
@@ -186,17 +187,22 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   const { name, address } = shipping;
   const { line1, line2, city, state, postal_code, country } = address || {};
-  console.log('[handleCheckout] Shipping details check:');
-  console.log('shipping.name:', name ? 'present' : 'missing');
-  console.log('address.line1:', line1 ? 'present' : 'missing');
-  console.log('address.city:', city ? 'present' : 'missing');
-  console.log('address.postal_code:', postal_code ? 'present' : 'missing');
-  console.log('address.state:', state ? 'present' : 'missing');
-  console.log('address.country:', country ? 'present' : 'missing');
 
-  if (!name || !line1 || !city || !postal_code || !state || !country) {
-    warn('Invalid shipping details');
-    res.status(400).json({ error: 'Invalid shipping details' });
+  const shippingErrors = [] as any[];
+  if (!name) shippingErrors.push({ field: 'shipping_name', message: 'Recipient name is required' });
+  if (!line1) shippingErrors.push({ field: 'ship_line1', message: 'Street address is required' });
+  if (!city) shippingErrors.push({ field: 'ship_city', message: 'City is required' });
+  if (!postal_code) shippingErrors.push({ field: 'ship_postal', message: 'Postal code is required' });
+  if (!state) shippingErrors.push({ field: 'ship_state', message: 'State is required' });
+  if (!country) shippingErrors.push({ field: 'ship_country', message: 'Country is required' });
+
+  if (shippingErrors.length > 0) {
+    warn('Invalid shipping details:', shippingErrors);
+    res.status(400).json({ 
+      error: 'Invalid shipping details',
+      shipping_errors: shippingErrors,
+      user_message: 'Please check your shipping information and try again.'
+    });
     return;
   }
 
@@ -305,21 +311,17 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   if (provider !== 'authorizeNet') {
     try {
       cart_meta_hash = hashCartMeta(email, total, cart);
-      if (!cart_meta_hash) {
-        warn('cart_meta_hash is missing — using fallback');
-        cart_meta_hash = crypto
-          .createHash('sha256')
-          .update(JSON.stringify(cart))
-          .digest('hex');
-      }
     } catch (err) {
       err('[error] Failed to compute cart_meta_hash:', err.message || err);
-      return res.status(500).json({ error: 'cart_meta_hash failed' });
+      return res.status(500).json({ 
+        error: 'cart_meta_hash failed',
+        user_message: 'Processing error. Please try again.'
+      });
     }
 
     const { data: existingOrders, error: lookupErr } = await supabase
       .from('orders')
-      .select('id, created_at, status')
+      .select('id, created_at, status, payment_intent_id')
       .eq('store_id', store_id)
       .eq('customer_email', email)
       .eq('total_price', total)
@@ -329,17 +331,32 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
     if (lookupErr) {
       err('Order deduplication check failed:', lookupErr.message);
-      res.status(500).json({ error: 'Order lookup failed' });
+      res.status(500).json({ 
+        error: 'Order lookup failed',
+        user_message: 'Processing error. Please try again.'
+      });
       return;
     }
 
-    const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 60 * 1000; // Shortened default to 1 minute
+    const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 30 * 1000; // Reduced to 30 seconds
     if (existingOrders && existingOrders.length > 0) {
       const existing = existingOrders[0];
       const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
-      if (existing.status !== 'paid' && ageMs < dedupWindowMs) {
-        warn('Duplicate order detected within window', { order_id: existing.id });
-        res.status(409).json({ error: 'Duplicate order detected. Please wait for payment to complete.' });
+      if (existing.status === 'paid') {
+        warn('Duplicate paid order detected', { order_id: existing.id });
+        res.status(409).json({ 
+          error: 'Order already completed',
+          order_id: existing.id,
+          user_message: 'This order was already submitted and paid. Please check your email for confirmation.'
+        });
+        return;
+      } else if (ageMs < dedupWindowMs && existing.payment_intent_id) {
+        warn('Duplicate order in progress', { order_id: existing.id });
+        res.status(409).json({ 
+          error: 'Order processing in progress',
+          order_id: existing.id,
+          user_message: 'This order is currently being processed. Please wait a moment before trying again.'
+        });
         return;
       }
     }
@@ -394,13 +411,45 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     console.log('[handleCheckout] Provider result:', JSON.stringify(providerResult, null, 2));
   } catch (e: any) {
     console.error('[handleCheckout] Provider handler error:', e?.message || e);
-    res.status(500).json({ error: 'Failed to process payment', details: e?.message || 'Unknown error' });
+
+    let userMessage = 'Payment processing failed. Please try again.';
+    if (e?.message?.includes('card')) {
+      userMessage = 'Payment method error. Please check your card details and try again.';
+    } else if (e?.message?.includes('declined')) {
+      userMessage = 'Your payment was declined. Please try a different payment method.';
+    } else if (e?.message?.includes('insufficient')) {
+      userMessage = 'Insufficient funds. Please try a different payment method.';
+    } else if (e?.message?.includes('network')) {
+      userMessage = 'Network error. Please check your connection and try again.';
+    }
+
+    res.status(500).json({ 
+      error: 'Failed to process payment', 
+      details: e?.message || 'Unknown error',
+      user_message: userMessage
+    });
     return;
   }
 
   if (providerResult && providerResult.success === false) {
     console.warn('[handleCheckout] Provider handler returned error:', providerResult.error || 'No error message');
-    res.status(400).json({ error: providerResult.error || 'Payment failed', details: providerResult });
+
+    let userMessage = 'Payment failed. Please try again.';
+    const errorMsg = providerResult.error || '';
+
+    if (errorMsg.includes('card')) {
+      userMessage = 'Payment method error. Please check your card details.';
+    } else if (errorMsg.includes('declined')) {
+      userMessage = 'Your payment was declined. Please try a different payment method.';
+    } else if (errorMsg.includes('insufficient')) {
+      userMessage = 'Insufficient funds. Please try a different payment method.';
+    }
+
+    res.status(400).json({ 
+      error: providerResult.error || 'Payment failed', 
+      details: providerResult,
+      user_message: userMessage
+    });
     return;
   }
 
@@ -503,7 +552,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       success: true,
       order_id: updated?.id,
       order_number: orderNumber,
-      payment_intent_id: paymentIntentId
+      payment_intent_id: paymentIntentId,
+      user_message: 'Order submitted successfully!'
     });
   }
 
@@ -646,10 +696,22 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     success: true,
     order_id: orderData?.id,
     order_number: orderNumber,
-    payment_intent_id: paymentIntentId
+    payment_intent_id: paymentIntentId,
+    user_message: 'Order submitted successfully!'
   });
   } catch (e: any) {
     console.error('[handleCheckout] Global error:', e.message || e);
-    return res.status(400).json({ error: e.message || 'Unknown error', details: e });
+    let userMessage = 'An error occurred. Please try again.';
+    if (e?.message?.includes('network')) {
+      userMessage = 'Network error. Please check your connection and try again.';
+    } else if (e?.message?.includes('database')) {
+      userMessage = 'Database error. Please try again in a moment.';
+    }
+
+    return res.status(500).json({ 
+      error: e.message || 'Unknown error', 
+      details: e,
+      user_message: userMessage
+    });
   }
 }
