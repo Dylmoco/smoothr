@@ -35,8 +35,6 @@ const gatewayLoaders = {
   segpay: () => import('./gateways/segpay.js')
 };
 
-
-
 export async function initCheckout(config) {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
@@ -58,6 +56,11 @@ export async function initCheckout(config) {
   }
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
+
+  // If NMI, skip the shared click binding; NMI script handles its own flow
+  if (provider === 'nmi') {
+    return;
+  }
 
   window.Smoothr = window.Smoothr || window.smoothr || {};
   window.smoothr = window.Smoothr;
@@ -94,7 +97,6 @@ export async function initCheckout(config) {
     return;
   }
 
-
   const block = checkoutEl.closest?.('[data-smoothr-product-id]') || document;
   const productId =
     checkoutEl.dataset?.smoothrProductId || block.dataset?.smoothrProductId;
@@ -108,7 +110,7 @@ export async function initCheckout(config) {
   const cardNumberEl = q('[data-smoothr-card-number]');
   const cardExpiryEl = q('[data-smoothr-card-expiry]');
   const cardCvcEl = q('[data-smoothr-card-cvc]');
-  const postalEl = q('[data-smoothr-bill-postal]'); // Updated to match nmi.js
+  const postalEl = q('[data-smoothr-bill-postal]');
   const themeEl = document.querySelector('#smoothr-checkout-theme');
   const logFields = [
     ['[data-smoothr-email]', emailField?.value || ''],
@@ -118,7 +120,7 @@ export async function initCheckout(config) {
     ['[data-smoothr-card-number]', cardNumberEl ? 'found' : 'missing'],
     ['[data-smoothr-card-expiry]', cardExpiryEl ? 'found' : 'missing'],
     ['[data-smoothr-card-cvc]', cardCvcEl ? 'found' : 'missing'],
-    ['[data-smoothr-bill-postal]', postalEl ? 'found' : 'missing'] // Updated log
+    ['[data-smoothr-bill-postal]', postalEl ? 'found' : 'missing']
   ];
   logFields.forEach(([name, val]) => log(`${name} = ${val}`));
   if (!emailField) warn('missing [data-smoothr-email]');
@@ -127,7 +129,7 @@ export async function initCheckout(config) {
 
   // Initialize payment gateway fields with retry
   let mountAttempts = 0;
-  const maxAttempts = 1; // Limit to one retry
+  const maxAttempts = 1;
   while (mountAttempts < maxAttempts && !gateway.isMounted()) {
     log(`Attempting to mount gateway, attempt ${mountAttempts + 1}`);
     try {
@@ -299,8 +301,6 @@ export async function initCheckout(config) {
   log(`${eventName} handler attached`);
 }
 
-// Remove these platform-agnostic auto-bindings; adapter handles it now
-
 function collectFormData(fields, emailField) {
   const email = emailField?.value?.trim() || emailField?.getAttribute('data-smoothr-email')?.trim() || '';
   const first_name = fields.firstName?.value?.trim() || '';
@@ -338,138 +338,4 @@ function collectFormData(fields, emailField) {
   };
 }
 
-function validateFormData(formData) {
-  const errors = [];
-  if (!formData.email) errors.push({ field: 'email', message: 'Email is required' });
-  if (!formData.first_name) errors.push({ field: 'first_name', message: 'First name is required' });
-  if (!formData.last_name) errors.push({ field: 'last_name', message: 'Last name is required' });
-  if (!formData.shipping.address.line1) errors.push({ field: 'ship_line1', message: 'Street address is required' });
-  if (!formData.shipping.address.city) errors.push({ field: 'ship_city', message: 'City is required' });
-  if (!formData.shipping.address.state) errors.push({ field: 'ship_state', message: 'State is required' });
-  if (!formData.shipping.address.postal_code) errors.push({ field: 'ship_postal', message: 'Postal code is required' });
-  if (!formData.shipping.address.country) errors.push({ field: 'ship_country', message: 'Country is required' });
-  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    errors.push({ field: 'email', message: 'Please enter a valid email address' });
-  }
-  return errors;
-}
-
-function showValidationErrors(errors) {
-  document.querySelectorAll('.smoothr-error').forEach(el => el.remove());
-
-  errors.forEach(error => {
-    const field = document.querySelector(`[data-smoothr-${error.field}]`);
-    if (field) {
-      field.classList.add('smoothr-error-field');
-      const errorEl = document.createElement('div');
-      errorEl.className = 'smoothr-error';
-      errorEl.textContent = error.message;
-      errorEl.style.color = '#dc3545';
-      errorEl.style.fontSize = '0.875rem';
-      errorEl.style.marginTop = '0.25rem';
-      field.parentNode.insertBefore(errorEl, field.nextSibling);
-    }
-  });
-
-  showUserMessage('Please fix the errors above and try again.', 'error');
-}
-
-function clearErrorMessages() {
-  document.querySelectorAll('.smoothr-error').forEach(el => el.remove());
-  document.querySelectorAll('.smoothr-error-field').forEach(el => el.classList.remove('smoothr-error-field'));
-  hideUserMessage();
-}
-
-function showUserMessage(message, type = 'info') {
-  let messageContainer = document.querySelector('.smoothr-message');
-  if (!messageContainer) {
-    messageContainer = document.createElement('div');
-    messageContainer.className = 'smoothr-message';
-    messageContainer.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      padding: 12px 16px;
-      border-radius: 4px;
-      font-size: 14px;
-      font-weight: 500;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    document.body.appendChild(messageContainer);
-  }
-
-  const colors = {
-    success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
-    error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
-    warning: { bg: '#fff3cd', text: '#856404', border: '#ffeaa7' },
-    info: { bg: '#d1ecf1', text: '#0c5460', border: '#bee5eb' }
-  };
-
-  const color = colors[type] || colors.info;
-  messageContainer.style.backgroundColor = color.bg;
-  messageContainer.style.color = color.text;
-  messageContainer.style.border = `1px solid ${color.border}`;
-  messageContainer.textContent = message;
-  messageContainer.style.display = 'block';
-
-  if (type === 'success') {
-    setTimeout(() => hideUserMessage(), 5000);
-  }
-}
-
-function hideUserMessage() {
-  const messageContainer = document.querySelector('.smoothr-message');
-  if (messageContainer) {
-    messageContainer.style.display = 'none';
-  }
-}
-
-function getPaymentMethodErrorMessage(error, provider) {
-  if (!error) return 'Payment method creation failed. Please try again.';
-  const message = error.message || error.code || '';
-  if (message.includes('card_number')) return 'Please check your card number and try again.';
-  if (message.includes('expiry') || message.includes('exp_')) return 'Please check your card expiry date.';
-  if (message.includes('cvc') || message.includes('cvv')) return 'Please check your security code.';
-  if (message.includes('postal') || message.includes('zip')) return 'Please check your postal code.';
-  if (message.includes('declined')) return 'Your card was declined. Please try a different payment method.';
-  if (message.includes('insufficient')) return 'Insufficient funds. Please try a different payment method.';
-  return 'Please check your payment details and try again.';
-}
-
-function handleCheckoutError(res, data, cartHash) {
-  const errorMessage = data?.error || 'Checkout failed';
-
-  if (res.status === 409) {
-    showUserMessage('This order was already submitted. Please check your email for confirmation.', 'warning');
-  } else if (res.status === 400) {
-    if (errorMessage.includes('required fields')) {
-      showUserMessage('Please fill in all required fields and try again.', 'error');
-    } else if (errorMessage.includes('shipping')) {
-      showUserMessage('Please check your shipping information and try again.', 'error');
-    } else if (errorMessage.includes('payment')) {
-      showUserMessage('Payment processing failed. Please check your payment details.', 'error');
-    } else {
-      showUserMessage(errorMessage, 'error');
-    }
-  } else if (res.status === 500) {
-    showUserMessage('Server error. Please try again in a moment.', 'error');
-  } else {
-    showUserMessage('An error occurred. Please try again.', 'error');
-  }
-
-  localStorage.setItem('smoothr_last_submission', JSON.stringify({
-    hash: cartHash,
-    success: false,
-    timestamp: Date.now()
-  }));
-}
-
-function handleCheckoutSuccess(data) {
-  localStorage.removeItem('smoothr_last_submission');
-  if (window.SMOOTHR_CONFIG?.successUrl) {
-    window.location.href = window.SMOOTHR_CONFIG.successUrl;
-  }
-  window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: data }));
-}
+... (rest of file unchanged)
