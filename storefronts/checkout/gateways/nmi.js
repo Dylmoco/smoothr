@@ -22,6 +22,7 @@ export async function mountCardFields() {
   const tokenizationKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
   if (!tokenizationKey) {
     console.warn('[NMI] Tokenization key missing')
+    alert('Payment setup issue. Please try again or contact support.')
     return
   }
 
@@ -56,6 +57,7 @@ export function initNMI(tokenizationKey) {
   }
   script.onerror = () => {
     console.error('[NMI] Failed to load CollectJS script.')
+    alert('Unable to load payment system. Please refresh the page.')
   }
 }
 
@@ -69,11 +71,17 @@ function configureCollectJS() {
   isLocked = true
 
   try {
-    // Get styles from the placeholder divv
-    const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
-    const divStyle = getComputedStyle(cardNumberDiv)
+    // Find a real Webflow input as style template (e.g., email field)
+    const templateInput = document.querySelector('[data-smoothr-email]') ||
+                          document.querySelector('input[type="text"]') // Fallback
+    if (!templateInput) {
+      console.warn('[NMI] No template input found for styles')
+    }
+    const inputStyle = templateInput ? getComputedStyle(templateInput) : {}
+    const placeholderStyle = templateInput ? getComputedStyle(templateInput, '::placeholder') : {}
 
-    // Get placeholder info from Webflow elements with custom attributes
+    // Get placeholder text from Webflow elements (keep as is)
+    const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
     const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
       '[data-smoothr-card-placeholder]'
     )
@@ -94,50 +102,45 @@ function configureCollectJS() {
       ? cvcPlaceholderEl.textContent.trim()
       : 'CVC'
 
-    // Grab the computed style from your Webflow placeholder DIV
-    const placeholderStyle = cardNumberPlaceholderEl
-      ? getComputedStyle(cardNumberPlaceholderEl)
-      : divStyle
-
     const customCss = {
-      'background-color': 'transparent',
-      'border': 'none',
-      'box-shadow': 'none',
-      'margin': '0',
-      'color': divStyle.color,
-      'font-family': divStyle.fontFamily,
-      'font-size': divStyle.fontSize,
-      'font-style': divStyle.fontStyle,
-      'font-weight': divStyle.fontWeight,
-      'letter-spacing': divStyle.letterSpacing,
-      'line-height': divStyle.lineHeight,
-      'text-align': divStyle.textAlign,
-      'text-shadow': divStyle.textShadow,
+      'background-color': inputStyle.backgroundColor || 'transparent',
+      'border': inputStyle.border || 'none',
+      'box-shadow': inputStyle.boxShadow || 'none',
+      'margin': inputStyle.margin || '0',
+      'color': inputStyle.color,
+      'font-family': inputStyle.fontFamily,
+      'font-size': inputStyle.fontSize,
+      'font-style': inputStyle.fontStyle,
+      'font-weight': inputStyle.fontWeight,
+      'letter-spacing': inputStyle.letterSpacing,
+      'line-height': inputStyle.lineHeight,
+      'text-align': inputStyle.textAlign,
+      'text-shadow': inputStyle.textShadow || 'none',
       'width': '100%',
-      'height': divStyle.height,
-      'min-height': divStyle.minHeight,
-      'max-height': divStyle.maxHeight,
-      'box-sizing': 'border-box',
-      'padding-top': divStyle.paddingTop,
-      'padding-right': divStyle.paddingRight,
-      'padding-bottom': divStyle.paddingBottom,
-      'padding-left': divStyle.paddingLeft,
+      'height': inputStyle.height,
+      'min-height': inputStyle.minHeight,
+      'max-height': inputStyle.maxHeight,
+      'box-sizing': inputStyle.boxSizing || 'border-box',
+      'padding-top': inputStyle.paddingTop,
+      'padding-right': inputStyle.paddingRight,
+      'padding-bottom': inputStyle.paddingBottom,
+      'padding-left': inputStyle.paddingLeft,
       'display': 'flex',
       'align-items': 'center',
       'justify-content': 'flex-start',
-      'outline': 'none',
+      'outline': inputStyle.outline || 'none',
       'vertical-align': 'middle',
-      // apply your Webflow DIV’s style to the iframe input placeholder
+      // Placeholder styles from pseudo-element
       '::placeholder': {
         'color':          placeholderStyle.color,
-        'font-family':    placeholderStyle.fontFamily,
-        'font-size':      placeholderStyle.fontSize,
-        'font-style':     placeholderStyle.fontStyle,
-        'font-weight':    placeholderStyle.fontWeight,
-        'letter-spacing': placeholderStyle.letterSpacing,
-        'line-height':    placeholderStyle.lineHeight,
-        'text-align':     placeholderStyle.textAlign,
-        'opacity':        placeholderStyle.opacity
+        'font-family':    placeholderStyle.fontFamily || inputStyle.fontFamily,
+        'font-size':      placeholderStyle.fontSize || inputStyle.fontSize,
+        'font-style':     placeholderStyle.fontStyle || inputStyle.fontStyle,
+        'font-weight':    placeholderStyle.fontWeight || inputStyle.fontWeight,
+        'letter-spacing': placeholderStyle.letterSpacing || inputStyle.letterSpacing,
+        'line-height':    placeholderStyle.lineHeight || inputStyle.lineHeight,
+        'text-align':     placeholderStyle.textAlign || inputStyle.textAlign,
+        'opacity':        placeholderStyle.opacity || '1'
       }
     }
 
@@ -168,7 +171,7 @@ function configureCollectJS() {
           iframe.style.top        = '0'
           iframe.style.left       = '0'
           iframe.style.width      = '100%'
-          iframe.style.height     = cardNumberDiv.offsetHeight + 'px'
+          iframe.style.height     = (templateInput ? templateInput.offsetHeight : cardNumberDiv.offsetHeight) + 'px'
           iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
@@ -181,6 +184,7 @@ function configureCollectJS() {
         console.log('[NMI] Tokenization response:', response)
         if (!response.token) {
           console.log('[NMI] Failed:', response.reason)
+          alert('Payment failed: ' + (response.reason || 'Unknown error. Try again.'))
           isLocked = false
           return
         }
@@ -202,10 +206,32 @@ function configureCollectJS() {
         const shipPostal  = document.querySelector('[data-smoothr-ship-postal]')?.value  || ''
         const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value || ''
 
+        // Check for required fields
+        if (!firstName || !lastName || !email || !shipLine1 || !shipCity || !shipState || !shipPostal || !shipCountry) {
+          alert('Please fill in all shipping and contact details.')
+          isLocked = false
+          return
+        }
+
         const amountEl = document.querySelector('[data-smoothr-total]')
-        const amount   = amountEl
-          ? Math.round(parseFloat(amountEl.textContent.replace(/[^0-9.]/g, '')) * 100)
-          : 0
+        let amount = 0
+        if (amountEl) {
+          const cleanText = amountEl.textContent.trim().replace(/[^0-9.]/g, '')
+          const parsed = parseFloat(cleanText)
+          if (!isNaN(parsed)) {
+            amount = Math.round(parsed * 100)
+          } else {
+            console.error('[NMI] Invalid total amount')
+            alert('Issue with order total. Please refresh.')
+            isLocked = false
+            return
+          }
+        } else {
+          console.error('[NMI] Total element missing')
+          alert('Order total not found. Please try again.')
+          isLocked = false
+          return
+        }
 
         const currency = window.SMOOTHR_CONFIG.baseCurrency || 'GBP'
 
@@ -219,6 +245,7 @@ function configureCollectJS() {
         }))
         if (cart.length === 0) {
           console.error('[NMI] Cart is empty')
+          alert('Your cart is empty. Add items to proceed.')
           isLocked = false
           return
         }
@@ -258,6 +285,7 @@ function configureCollectJS() {
           )
           .catch(error => {
             console.error('[NMI] POST error:', error)
+            alert('Payment processing error. Please try again.')
             isLocked = false
           })
       }
@@ -267,6 +295,7 @@ function configureCollectJS() {
     console.log('[NMI] CollectJS configured successfully')
   } catch (error) {
     console.error('[NMI] Error configuring CollectJS:', error)
+    alert('Setup error. Refresh the page or contact support.')
     isLocked = false
   }
 }
