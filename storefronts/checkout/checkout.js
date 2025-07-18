@@ -122,9 +122,9 @@ export async function initCheckout(config) {
   if (!totalEl) warn('missing [data-smoothr-total]');
   log('no polling loops active');
 
-  // Initialize payment gateway fields with retry
+  // Initialize payment gateway fields with a single attempt
   let mountAttempts = 0;
-  const maxAttempts = 1; // Limit to one retry
+  const maxAttempts = 1; // no retries
   while (mountAttempts < maxAttempts && !gateway.isMounted()) {
     log(`Attempting to mount gateway, attempt ${mountAttempts + 1}`);
     try {
