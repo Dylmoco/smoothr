@@ -1,7 +1,9 @@
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+import { disableButton, enableButton } from '../utils/cartHash.js';
 
 let mounted = false;
+let isSubmitting = false;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -181,6 +183,9 @@ export async function mountCardFields() {
         document.querySelectorAll('[data-smoothr-pay]').forEach(btn => {
           btn.addEventListener('click', async ev => {
             ev.preventDefault();
+            if (isSubmitting) return;
+            isSubmitting = true;
+            disableButton(btn);
             try {
               const payload = await hostedFields.submit({ contingency: '3D_SECURE' });
               const res = await fetch(`${apiBase}/api/checkout/paypal/capture-order`, {
@@ -192,6 +197,9 @@ export async function mountCardFields() {
               handleSuccessRedirect(null, json);
             } catch (err) {
               console.error('[Smoothr PayPal]', err);
+            } finally {
+              isSubmitting = false;
+              enableButton(btn);
             }
           });
         });
