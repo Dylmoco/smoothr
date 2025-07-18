@@ -280,7 +280,7 @@ function configureCollectJS() {
           product_id: item.id   || 'unknown',
           name:       item.name,
           quantity:   item.quantity,
-          price:      Math.round((item.price ?? 0) * 100)
+          price:      Math.round(item.price ?? 0)  // Removed *100, assuming prices already in cents
         }))
         if (cart.length === 0) {
           console.error('[NMI] Cart is empty')
