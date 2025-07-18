@@ -333,7 +333,7 @@ function configureCollectJS() {
 // Legacy alias
 export const mountNMI = mountCardFields
 
-// Gateway readiness checks
+// Gateway readiness checkss
 export function isMounted() {
   return isConfigured
 }
