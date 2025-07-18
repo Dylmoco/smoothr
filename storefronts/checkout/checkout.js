@@ -1,3 +1,5 @@
+// checkout.js
+
 if (
   typeof document !== 'undefined' &&
   typeof document.createElement === 'function' &&
@@ -57,7 +59,7 @@ export async function initCheckout(config) {
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
 
-  // Assign to global checkout namespace
+  // assign gateway methods to global namespace
   window.Smoothr = window.Smoothr || window.smoothr || {};
   window.smoothr = window.Smoothr;
   window.Smoothr.checkout = {
@@ -66,7 +68,7 @@ export async function initCheckout(config) {
     ...gateway
   };
 
-  // Shared mount of card fields for all gateways
+  // mount fields common to all gateways
   const checkoutEl = await select('[data-smoothr-pay]');
   if (!checkoutEl) {
     warn('Missing [data-smoothr-pay]');
@@ -79,7 +81,7 @@ export async function initCheckout(config) {
   if (!emailField) emailField = await select('[data-smoothr-email]');
   const totalEl = await select('[data-smoothr-total]');
 
-  // Mount card fields
+  // attempt to mount card fields (for non-NMI gateways too)
   let attempts = 0;
   while (attempts < 2 && !gateway.isMounted()) {
     try {
@@ -95,7 +97,7 @@ export async function initCheckout(config) {
   }
   bindCardInputs();
 
-  // If NMI, skip shared click-binding (it handles its own)
+  // NMI handles its own click flow
   if (provider === 'nmi') {
     log('Skipping shared click binding for NMI');
     return;
@@ -108,23 +110,36 @@ export async function initCheckout(config) {
     btn.addEventListener(eventName, async e => {
       e.preventDefault();
       e.stopPropagation();
-      if (isSubmitting) return warn('Already in progress');
+
+      if (isSubmitting) {
+        warn('Checkout already in progress');
+        return;
+      }
       isSubmitting = true;
       forEachPayButton(disableButton);
       clearErrorMessages();
+      log('[data-smoothr-pay] triggered');
 
-      const data = collectFormData(fields, emailField);
-      const errors = validateFormData(data);
-      if (errors.length) {
-        showValidationErrors(errors);
+      const {
+        email,
+        first_name,
+        last_name,
+        shipping,
+        billing,
+        bill_first_name,
+        bill_last_name
+      } = collectFormData(fields, emailField);
+
+      const validationErrors = validateFormData({ email, first_name, last_name, shipping });
+      if (validationErrors.length) {
+        showValidationErrors(validationErrors);
         forEachPayButton(enableButton);
         isSubmitting = false;
         return;
       }
 
-      const { email, first_name, last_name, shipping, billing, bill_first_name, bill_last_name } = data;
-      const cartInfo = window.Smoothr.cart.getCart();
-      const items = Array.isArray(cartInfo.items) ? cartInfo.items : [];
+      const cart = window.Smoothr.cart.getCart() || { items: [] };
+      const items = Array.isArray(cart.items) ? cart.items : [];
       const total = Math.round(
         (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0) * 100
       );
@@ -209,17 +224,18 @@ export async function initCheckout(config) {
   log(`${eventName} handler attached`);
 }
 
+// collects form data, supports billing same-as-shipping
 function collectFormData(fields, emailField) {
-  const email = emailField.value.trim();
-  const first_name = fields.firstName.value.trim();
-  const last_name = fields.lastName.value.trim();
+  const email = emailField?.value.trim() || '';
+  const first_name = fields.firstName?.value.trim() || '';
+  const last_name = fields.lastName?.value.trim() || '';
   const ship = {
-    line1: fields.ship_line1.value.trim(),
-    line2: fields.ship_line2.value.trim(),
-    city: fields.ship_city.value.trim(),
-    state: fields.ship_state.value.trim(),
-    postal_code: fields.ship_postal.value.trim(),
-    country: fields.ship_country.value.trim()
+    line1: fields.ship_line1?.value.trim() || '',
+    line2: fields.ship_line2?.value.trim() || '',
+    city: fields.ship_city?.value.trim() || '',
+    state: fields.ship_state?.value.trim() || '',
+    postal_code: fields.ship_postal?.value.trim() || '',
+    country: fields.ship_country?.value.trim() || ''
   };
   const same = document.querySelector('[data-smoothr-billing-same-as-shipping]')?.checked;
   const shipping = { name: `${first_name} ${last_name}`, address: ship };
@@ -231,29 +247,30 @@ function collectFormData(fields, emailField) {
     bill_first_name = first_name;
     bill_last_name = last_name;
   } else {
-    bill_first_name = fields.bill_first_name.value.trim();
-    bill_last_name = fields.bill_last_name.value.trim();
+    bill_first_name = fields.bill_first_name?.value.trim() || '';
+    bill_last_name = fields.bill_last_name?.value.trim() || '';
     billing = {
       name: `${bill_first_name} ${bill_last_name}`.trim(),
       address: {
-        line1: fields.bill_line1.value.trim(),
-        line2: fields.bill_line2.value.trim(),
-        city: fields.bill_city.value.trim(),
-        state: fields.bill_state.value.trim(),
-        postal_code: fields.bill_postal.value.trim(),
-        country: fields.bill_country.value.trim()
+        line1: fields.bill_line1?.value.trim() || '',
+        line2: fields.bill_line2?.value.trim() || '',
+        city: fields.bill_city?.value.trim() || '',
+        state: fields.bill_state?.value.trim() || '',
+        postal_code: fields.bill_postal?.value.trim() || '',
+        country: fields.bill_country?.value.trim() || ''
       }
     };
   }
   return { email, first_name, last_name, shipping, billing, bill_first_name, bill_last_name };
 }
 
-function validateFormData(data) {
+// simple validation
+function validateFormData({ email, first_name, last_name, shipping }) {
   const errs = [];
-  if (!data.email) errs.push({ field: 'email', message: 'Email required' });
-  if (!data.first_name) errs.push({ field: 'first_name', message: 'First name required' });
-  if (!data.last_name) errs.push({ field: 'last_name', message: 'Last name required' });
-  const addr = data.shipping.address;
+  if (!email) errs.push({ field: 'email', message: 'Email required' });
+  if (!first_name) errs.push({ field: 'first_name', message: 'First name required' });
+  if (!last_name) errs.push({ field: 'last_name', message: 'Last name required' });
+  const addr = shipping.address;
   if (!addr.line1) errs.push({ field: 'ship_line1', message: 'Street required' });
   if (!addr.city) errs.push({ field: 'ship_city', message: 'City required' });
   if (!addr.state) errs.push({ field: 'ship_state', message: 'State required' });
@@ -312,6 +329,8 @@ function getPaymentMethodErrorMessage(err) {
   if (!err) return 'Payment failed';
   const m = err.message || '';
   if (m.includes('card')) return 'Check your card number.';
+  if (m.includes('expiry')) return 'Check your card expiry.';
+  if (m.includes('cvv')) return 'Check your security code.';
   return 'Please check payment details.';
 }
 
