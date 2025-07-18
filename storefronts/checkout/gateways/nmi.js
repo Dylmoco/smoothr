@@ -71,6 +71,11 @@ export function initNMI(tokenizationKey) {
   console.log('[NMI] Placeholder color hex:', placeholderColorHex)
   const placeholderFontWeight = placeholderStyle.fontWeight
 
+  // Extract main font name for dynamic loading (e.g., "Montserrat" from "Montserrat, sans-serif")
+  const fontFamily = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '')
+  const googleFontString = `${fontFamily}:100,200,300,400,500,600,700,800,900`
+  console.log('[NMI] Dynamic Google font:', googleFontString)
+
   const customCssObj = {
     'background-color': 'transparent',
     'border': 'none',
@@ -120,7 +125,7 @@ export function initNMI(tokenizationKey) {
   script.setAttribute('data-custom-css', JSON.stringify(customCssObj))
   script.setAttribute('data-placeholder-css', JSON.stringify(placeholderCssObj))
   script.setAttribute('data-style-sniffer', 'true')
-  script.setAttribute('data-google-font', 'Montserrat:100,200,300,400,500,600,700,800,900')  // Load all weights
+  script.setAttribute('data-google-font', googleFontString)
   console.log(
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
@@ -333,7 +338,7 @@ function configureCollectJS() {
 // Legacy alias
 export const mountNMI = mountCardFields
 
-// Gateway readiness checkss
+// Gateway readiness checks
 export function isMounted() {
   return isConfigured
 }
