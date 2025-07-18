@@ -342,7 +342,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     if (existingOrders && existingOrders.length > 0) {
       const existing = existingOrders[0];
       const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
-      if (existing.status === 'paid') {
+      if (existing.status === 'paid' && ageMs < dedupWindowMs) {
         warn('Duplicate paid order detected', { order_id: existing.id });
         res.status(409).json({ 
           error: 'Order already completed',
