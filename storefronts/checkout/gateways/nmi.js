@@ -85,22 +85,13 @@ function configureCollectJS() {
       console.log('[NMI] Placeholder font-family:', placeholderStyle.fontFamily)
       console.log('[NMI] Placeholder font-size:', placeholderStyle.fontSize)
       console.log('[NMI] Placeholder opacity:', placeholderStyle.opacity)
+      console.log('[NMI] Placeholder font-weight:', placeholderStyle.fontWeight)
     } else {
       console.warn('[NMI] Email input not found, falling back to original placeholder style')
       const cardNumberPlaceholderEl = cardNumberDiv.querySelector(
         '[data-smoothr-card-placeholder]'
       )
       placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
-    }
-
-    // If placeholderStyle values are empty or default (e.g., transparent color), fallback to divStyle with common placeholder adjustments
-    if (!placeholderStyle.color || placeholderStyle.color === 'rgba(0, 0, 0, 0)') {
-      console.warn('[NMI] Placeholder styles empty, using fallback')
-      placeholderStyle = {
-        ...placeholderStyle,
-        color: divStyle.color ? `rgba(${parseInt(divStyle.color.slice(1,3),16)}, ${parseInt(divStyle.color.slice(3,5),16)}, ${parseInt(divStyle.color.slice(5,7),16)}, 0.5)` : 'rgba(0,0,0,0.5)',
-        opacity: '1'
-      }
     }
 
     // Get placeholder info from Webflow elements with custom attributes
@@ -153,7 +144,7 @@ function configureCollectJS() {
       'outline': 'none',
       'vertical-align': 'middle',
       // apply styles to the iframe input placeholder
-      '::placeholder': {
+      'input::placeholder': {
         'color':          placeholderStyle.color,
         'font-family':    placeholderStyle.fontFamily,
         'font-size':      placeholderStyle.fontSize,
