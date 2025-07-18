@@ -12,18 +12,8 @@ let configPromise
 let resolveConfig
 
 /**
- * Converts RGB string to hex
- */
-function rgbToHex(rgb) {
-  const match = rgb.match(/\d+/g)
-  if (!match || match.length < 3) return rgb
-  const [r, g, b] = match.map(Number)
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
-}
-
-/**
  * Public entry: fetch tokenization key and initialize NMI
- * Returns a promise that resolves when configuration completes
+ * Returns a promise resolving when config completes
  */
 export async function mountCardFields() {
   if (hasMounted) return configPromise
@@ -44,7 +34,7 @@ export async function mountCardFields() {
 }
 
 /**
- * Injects CollectJS script, configures when ready
+ * Inject CollectJS and configure
  */
 export function initNMI(tokenKey) {
   if (isConfigured) return
@@ -52,8 +42,7 @@ export function initNMI(tokenKey) {
 
   const script = document.createElement('script')
   script.id = 'collectjs-script'
-  // Use correct tokenization path
-  script.src = 'https://secure.nmi.com/token/Collect.js'
+  script.src = 'https://secure.nmi.com/js/CollectJS.js'
   script.async = true
   script.setAttribute('data-tokenization-key', tokenKey)
   script.onload = () => {
@@ -70,7 +59,7 @@ export function initNMI(tokenKey) {
 }
 
 /**
- * Configures CollectJS fields, attaches click handler
+ * Configure fields & click guard
  */
 function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
@@ -99,10 +88,51 @@ function configureCollectJS() {
         }
         console.log('[NMI] Token:', response.token)
 
+        // Build full payload
+        const firstName = document.querySelector('[data-smoothr-first-name]')?.value || ''
+        const lastName  = document.querySelector('[data-smoothr-last-name]')?.value || ''
+        const email     = document.querySelector('[data-smoothr-email]')?.value || ''
+        const shipLine1 = document.querySelector('[data-smoothr-ship-line1]')?.value || ''
+        const shipLine2 = document.querySelector('[data-smoothr-ship-line2]')?.value || ''
+        const shipCity  = document.querySelector('[data-smoothr-ship-city]')?.value || ''
+        const shipState = document.querySelector('[data-smoothr-ship-state]')?.value || ''
+        const shipPostal= document.querySelector('[data-smoothr-ship-postal]')?.value || ''
+        const shipCountry = document.querySelector('[data-smoothr-ship-country]')?.value || ''
+        const sameBilling = !!document.querySelector('[data-smoothr-billing-same-as-shipping]:checked')
+        let billLine1   = sameBilling ? shipLine1 : document.querySelector('[data-smoothr-bill-line1]')?.value || ''
+        let billLine2   = sameBilling ? shipLine2 : document.querySelector('[data-smoothr-bill-line2]')?.value || ''
+        let billCity    = sameBilling ? shipCity  : document.querySelector('[data-smoothr-bill-city]')?.value || ''
+        let billState   = sameBilling ? shipState : document.querySelector('[data-smoothr-bill-state]')?.value || ''
+        let billPostal  = sameBilling ? shipPostal: document.querySelector('[data-smoothr-bill-postal]')?.value || ''
+        let billCountry = sameBilling ? shipCountry: document.querySelector('[data-smoothr-bill-country]')?.value || ''
+        const cartData = window.Smoothr.cart.getCart() || { items: [] }
+        const items = Array.isArray(cartData.items) ? cartData.items : []
+        const total = Math.round((window.Smoothr.cart.getTotal() || 0) * 100)
+        const currency = window.SMOOTHR_CONFIG.baseCurrency || 'USD'
+
+        const payload = {
+          payment_token: response.token,
+          store_id: window.SMOOTHR_CONFIG.storeId,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          shipping: {
+            name: `${firstName} ${lastName}`.trim(),
+            address: { line1: shipLine1, line2: shipLine2, city: shipCity, state: shipState, postal_code: shipPostal, country: shipCountry }
+          },
+          billing: {
+            name: `${firstName} ${lastName}`.trim(),
+            address: { line1: billLine1, line2: billLine2, city: billCity, state: billState, postal_code: billPostal, country: billCountry }
+          },
+          cart: items.map(item => ({ product_id: item.id, name: item.name, quantity: item.quantity, price: Math.round(item.price) })),
+          total,
+          currency
+        }
+
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId /* full payload here */ })
+          body: JSON.stringify(payload)
         })
           .then(res => res.json().then(data => {
             handleSuccessRedirect(res, data)
@@ -110,16 +140,15 @@ function configureCollectJS() {
           }))
           .catch(err => {
             console.error('[NMI] POST error', err)
-            alert('Please check your payment details and try again.')
+            alert('Payment processing error. Please try again.')
             resetSubmission(buttons)
           })
       }
     })
 
-    // Guarded click handler
+    // Guarded click handler picks up correct token method
     const buttons = Array.from(document.querySelectorAll('[data-smoothr-pay]'))
-    const tokenFn = CollectJS.tokenize || CollectJS.requestToken || null
-
+    const tokenFn = CollectJS.tokenize || CollectJS.requestToken || CollectJS.startPaymentRequest || null
     buttons.forEach(btn => {
       btn.addEventListener('click', ev => {
         ev.preventDefault()
@@ -137,14 +166,14 @@ function configureCollectJS() {
     resolveConfig()
   } catch (e) {
     console.error('[NMI] Config error', e)
-    alert('Setup error. Refresh the page or contact support.')
+    alert('Setup error. Refresh or contact support.')
     resetSubmission(Array.from(document.querySelectorAll('[data-smoothr-pay]')))
     resolveConfig()
   }
 }
 
 /**
- * Resets submission guard and re-enables buttons
+ * Re-enable buttons & clear flags
  */
 function resetSubmission(buttons) {
   isLocked = false
@@ -152,16 +181,13 @@ function resetSubmission(buttons) {
   buttons.forEach(enableButton)
 }
 
-// Legacy alias and readiness
+// Exports & auto-mount
 export const mountNMI = mountCardFields
 export function isMounted() { return isConfigured }
 export function ready() { return isConfigured }
-export async function createPaymentMethod() {
-  return { error:{message:'use CollectJS callback'}, payment_method: null }
-}
+export async function createPaymentMethod() { return { error:{message:'use CollectJS callback'}, payment_method:null } }
 export default { mountCardFields, isMounted, ready, createPaymentMethod }
 
-// Auto-mount on DOM ready
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   if (document.readyState === 'complete') mountCardFields()
