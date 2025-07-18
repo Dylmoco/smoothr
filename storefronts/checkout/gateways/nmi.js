@@ -11,6 +11,9 @@ let isSubmitting = false
 let configPromise
 let resolveConfig
 
+/**
+ * Converts RGB string to hex
+ */
 function rgbToHex(rgb) {
   const match = rgb.match(/\d+/g)
   if (!match || match.length < 3) return rgb
@@ -19,7 +22,7 @@ function rgbToHex(rgb) {
 }
 
 /**
- * Public entry: fetch your tokenization key then initialize NMI
+ * Public entry: fetch tokenization key and initialize NMI
  * Returns a promise that resolves when configuration completes
  */
 export async function mountCardFields() {
@@ -28,22 +31,22 @@ export async function mountCardFields() {
   configPromise = new Promise(resolve => { resolveConfig = resolve })
 
   const storeId = window?.Smoothr?.store_id
-  const tokenizationKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
-  if (!tokenizationKey) {
+  const tokenKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
+  if (!tokenKey) {
     console.warn('[NMI] Tokenization key missing')
     alert('Payment setup issue. Please try again or contact support.')
     resolveConfig()
     return configPromise
   }
 
-  initNMI(tokenizationKey)
+  initNMI(tokenKey)
   return configPromise
 }
 
 /**
- * Append Collect.js script and configure fields once loaded
+ * Injects CollectJS script, configures when ready
  */
-export function initNMI(tokenizationKey) {
+export function initNMI(tokenKey) {
   if (isConfigured) return
   console.log('[NMI] Appending CollectJS script...')
 
@@ -51,7 +54,7 @@ export function initNMI(tokenizationKey) {
   script.id = 'collectjs-script'
   script.src = 'https://secure.nmi.com/token/Collect.js'
   script.async = true
-  script.setAttribute('data-tokenization-key', tokenizationKey)
+  script.setAttribute('data-tokenization-key', tokenKey)
   script.onload = () => {
     console.log('[NMI] CollectJS loaded')
     configureCollectJS()
@@ -61,9 +64,13 @@ export function initNMI(tokenizationKey) {
     alert('Unable to load payment system. Please refresh the page.')
     resolveConfig()
   }
+
   document.head.appendChild(script)
 }
 
+/**
+ * Configures CollectJS fields, attaches click handler
+ */
 function configureCollectJS() {
   if (isLocked || typeof CollectJS === 'undefined') {
     return setTimeout(configureCollectJS, 500)
@@ -71,7 +78,6 @@ function configureCollectJS() {
   isLocked = true
 
   try {
-    // CollectJS field configuration
     CollectJS.configure({
       variant: 'inline',
       fields: {
@@ -83,18 +89,19 @@ function configureCollectJS() {
         console.log('[NMI] Fields available')
       },
       callback(response) {
-        const buttons = document.querySelectorAll('[data-smoothr-pay]')
+        const buttons = Array.from(document.querySelectorAll('[data-smoothr-pay]'))
         if (!response.token) {
           console.error('[NMI] Tokenization failed', response.reason)
-          // User-friendly error
           alert('Please check your payment details and try again.')
           resetSubmission(buttons)
           return
         }
         console.log('[NMI] Token:', response.token)
+
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId /*...*/ })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_token: response.token, store_id: window.SMOOTHR_CONFIG.storeId /* full payload here */ })
         })
           .then(res => res.json().then(data => {
             handleSuccessRedirect(res, data)
@@ -102,66 +109,60 @@ function configureCollectJS() {
           }))
           .catch(err => {
             console.error('[NMI] POST error', err)
-            // Same user-friendly error
             alert('Please check your payment details and try again.')
-            resetSubmission(buttons)
-          })
-      }
-        })
-          .then(res => res.json().then(data => {
-            handleSuccessRedirect(res, data)
-            resetSubmission(buttons)
-          }))
-          .catch(err => {
-            console.error('[NMI] POST error', err)
-            alert('Payment error')
             resetSubmission(buttons)
           })
       }
     })
 
     // Guarded click handler
-    const buttons = document.querySelectorAll('[data-smoothr-pay]')
+    const buttons = Array.from(document.querySelectorAll('[data-smoothr-pay]'))
     const tokenFn = CollectJS.tokenize || CollectJS.requestToken || null
+
     buttons.forEach(btn => {
       btn.addEventListener('click', ev => {
         ev.preventDefault()
-        if (isSubmitting) return
+        if (isSubmitting) return false
         isSubmitting = true
         buttons.forEach(disableButton)
         if (tokenFn) tokenFn()
         else resetSubmission(buttons)
+        return false
       })
     })
 
     isConfigured = true
-    resolveConfig()
     console.log('[NMI] Config complete')
-  } catch(e) {
+    resolveConfig()
+  } catch (e) {
     console.error('[NMI] Config error', e)
-    alert('Setup error')
-    resetSubmission(document.querySelectorAll('[data-smoothr-pay]'))
+    alert('Setup error. Refresh the page or contact support.')
+    resetSubmission(Array.from(document.querySelectorAll('[data-smoothr-pay]')))
     resolveConfig()
   }
 }
 
-function resetSubmission(btns) {
-  isLocked = false; isSubmitting = false;
-  btns.forEach(enableButton)
+/**
+ * Resets submission guard and re-enables buttons
+ */
+function resetSubmission(buttons) {
+  isLocked = false
+  isSubmitting = false
+  buttons.forEach(enableButton)
 }
 
-// Legacy alias & readiness
+// Legacy alias and readiness
 export const mountNMI = mountCardFields
 export function isMounted() { return isConfigured }
 export function ready() { return isConfigured }
 export async function createPaymentMethod() {
-  return { error:{message:'use CollectJS callback'}, payment_method:null }
+  return { error:{message:'use CollectJS callback'}, payment_method: null }
 }
 export default { mountCardFields, isMounted, ready, createPaymentMethod }
 
 // Auto-mount on DOM ready
 if (typeof window !== 'undefined') {
-  window.Smoothr = window.Smoothr||{}
-  if (document.readyState==='complete') mountCardFields()
+  window.Smoothr = window.Smoothr || {}
+  if (document.readyState === 'complete') mountCardFields()
   else document.addEventListener('DOMContentLoaded', mountCardFields)
 }
