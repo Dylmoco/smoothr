@@ -66,13 +66,10 @@ export function initNMI(tokenizationKey) {
     placeholderStyle = cardNumberPlaceholderEl ? getComputedStyle(cardNumberPlaceholderEl) : divStyle
   }
 
-  // Convert to hex and map weight for compatibility
+  // Convert to hex and use raw font-weight
   const placeholderColorHex = rgbToHex(placeholderStyle.color)
   console.log('[NMI] Placeholder color hex:', placeholderColorHex)
-  let placeholderFontWeight = placeholderStyle.fontWeight
-  if (placeholderFontWeight === '400') {
-    placeholderFontWeight = 'normal'
-  }
+  const placeholderFontWeight = placeholderStyle.fontWeight
 
   const customCssObj = {
     'background-color': 'transparent',
@@ -123,6 +120,7 @@ export function initNMI(tokenizationKey) {
   script.setAttribute('data-custom-css', JSON.stringify(customCssObj))
   script.setAttribute('data-placeholder-css', JSON.stringify(placeholderCssObj))
   script.setAttribute('data-style-sniffer', 'true')
+  script.setAttribute('data-google-font', 'Montserrat:100,200,300,400,500,600,700,800,900')  // Load all weights
   console.log(
     '[NMI] Set data-tokenization-key on script tag:',
     tokenizationKey.substring(0, 8) + '…'
