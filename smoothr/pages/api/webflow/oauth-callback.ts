@@ -18,7 +18,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const code = req.query.code as string | undefined;
-  const user_id = req.query.state as string | undefined;
+  const customer_id = req.query.state as string | undefined;
 
   if (!code) {
     res.status(400).json({ error: 'Missing code' });
@@ -52,9 +52,9 @@ export default async function handler(req: any, res: any) {
       site_id: string;
     };
 
-    if (user_id) {
+    if (customer_id) {
       await supabase.from('webflow_connections').insert({
-        user_id,
+        customer_id,
         site_id,
         access_token,
       });
