@@ -210,6 +210,15 @@ function configureCollectJS() {
         const total = Math.round((window.Smoothr.cart.getTotal() || 0) * 100)
         const currency = window.SMOOTHR_CONFIG.baseCurrency || 'USD'
 
+        // Add billing validation if not same as shipping
+        if (!sameBilling) {
+          if (!billLine1 || !billCity || !billState || !billPostal || !billCountry) {
+            alert('Please fill in all billing details.')
+            resetSubmission(buttons)
+            return
+          }
+        }
+
         const payload = {
           payment_token: response.token,
           store_id: window.SMOOTHR_CONFIG.storeId,
