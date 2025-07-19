@@ -48,7 +48,7 @@ interface CheckoutPayload {
   customer_id?: string | null;
   store_id: string;
   platform?: string;
-  same_billing?: boolean;  // Added for checkbox flagg
+  same_billing?: boolean;  // Added for checkbox flag
 }
 // Optional global to allow custom order number generation
 const generateOrderNumber =
