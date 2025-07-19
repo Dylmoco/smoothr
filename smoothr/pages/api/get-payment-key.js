@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       .from('store_integrations')
       .select('settings')
       .eq('store_id', storeId)
-      .eq('provider', provider)
+      .eq('gateway', provider)
       .single();
 
     if (error) {

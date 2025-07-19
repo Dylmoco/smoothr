@@ -9,10 +9,10 @@ export async function getPublicCredential(storeId, integrationId, gateway) {
       .eq('store_id', storeId);
     if (gateway) {
       query = query.or(
-        `provider.eq.${integrationId},settings->>gateway.eq.${gateway}`
+        `gateway.eq.${integrationId},settings->>gateway.eq.${gateway}`
       );
     } else {
-      query = query.eq('provider', integrationId);
+      query = query.eq('gateway', integrationId);
     }
     const { data, error } = await query.maybeSingle();
     if (error) {

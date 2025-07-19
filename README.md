@@ -122,7 +122,7 @@ resolveGateway({ active_payment_gateway: 'bogus' });
 ```
 
 To enable Authorize.net create a row in the `store_integrations` table with
-`provider` set to `authorizeNet` and store your API credentials under the
+`gateway` set to `authorizeNet` and store your API credentials under the
 `settings` column:
 
 ```json
@@ -162,7 +162,7 @@ override this global to customize how order numbers are produced.
 
 ### NMI Integration
 
-To enable NMI create a row in the `store_integrations` table with `provider`
+To enable NMI create a row in the `store_integrations` table with `gateway`
 set to `nmi` and store both the API key and tokenization key under the
 `settings` column:
 
@@ -198,7 +198,7 @@ a Stripe `payment_method`.
 
 ### PayPal Integration
 
-To enable PayPal create a row in the `store_integrations` table with `provider`
+To enable PayPal create a row in the `store_integrations` table with `gateway`
 set to `paypal` and store your REST credentials under the `settings` column:
 
 ```json
