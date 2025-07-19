@@ -235,7 +235,8 @@ function configureCollectJS() {
           },
           cart: items.map(item => ({ product_id: item.id, name: item.name, quantity: item.quantity, price: Math.round((item.price || 0) * 100) })),
           total,
-          currency
+          currency,
+          same_billing: sameBilling  // Added this flag for backend
         }
 
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {

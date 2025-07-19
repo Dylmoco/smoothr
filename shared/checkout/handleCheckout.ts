@@ -48,6 +48,7 @@ interface CheckoutPayload {
   customer_id?: string | null;
   store_id: string;
   platform?: string;
+  same_billing?: boolean;  // Added for checkbox flag
 }
 // Optional global to allow custom order number generation
 const generateOrderNumber =
@@ -144,7 +145,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     platform,
     description,
     discount_code,
-    discount_id
+    discount_id,
+    same_billing  // Use the flag
   } = payload;
   let total = payload.total;
 
@@ -207,26 +209,23 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   // Billing validation
-  const sameBilling = !!req.body.same_billing; // Adjust if flag sent differently
-  if (!billing || Object.keys(billing).length === 0) {
-    if (!sameBilling) {
-      const billingErrors = [];
-      const billAddr = billing.address || {};
-      if (!billAddr.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
-      if (!billAddr.city) billingErrors.push({ field: 'bill_city', message: 'Billing city required' });
-      if (!billAddr.state) billingErrors.push({ field: 'bill_state', message: 'Billing state required' });
-      if (!billAddr.postal_code) billingErrors.push({ field: 'bill_postal', message: 'Billing postal required' });
-      if (!billAddr.country) billingErrors.push({ field: 'bill_country', message: 'Billing country required' });
+  if (!same_billing) {
+    const billingErrors = [];
+    const billAddr = billing?.address || {};
+    if (!billAddr.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
+    if (!billAddr.city) billingErrors.push({ field: 'bill_city', message: 'Billing city required' });
+    if (!billAddr.state) billingErrors.push({ field: 'bill_state', message: 'Billing state required' });
+    if (!billAddr.postal_code) billingErrors.push({ field: 'bill_postal', message: 'Billing postal required' });
+    if (!billAddr.country) billingErrors.push({ field: 'bill_country', message: 'Billing country required' });
 
-      if (billingErrors.length > 0) {
-        warn('Invalid billing details:', billingErrors);
-        res.status(400).json({ 
-          error: 'Invalid billing details',
-          billing_errors: billingErrors,
-          user_message: 'Please check your billing information and try again.'
-        });
-        return;
-      }
+    if (billingErrors.length > 0) {
+      warn('Invalid billing details:', billingErrors);
+      res.status(400).json({ 
+        error: 'Invalid billing details',
+        billing_errors: billingErrors,
+        user_message: 'Please check your billing information and try again.'
+      });
+      return;
     }
   }
 
