@@ -135,3 +135,23 @@ ADD CONSTRAINT orders_store_id_order_number_key UNIQUE (store_id, order_number);
 
 This statement is saved in
 `supabase/migrations/20250710000000_add-order-unique-store-id-order-number.sql`.
+
+## Orders table structure
+
+The checkout functions store transactions in a minimal `orders` table. Important columns include:
+
+- `id` UUID primary key
+- `store_id` UUID referencing `stores.id`
+- `customer_id` UUID referencing `customers.id`
+- `order_number` text unique per store
+- `status` text (`paid` or `unpaid`)
+- `gateway` text identifying the payment provider
+- `payment_intent_id` text, optional
+- `discount_id` UUID, optional
+- `total_price` numeric
+- `cart_meta_hash` text, optional
+- `paid_at` timestamptz, optional
+- `created_at` timestamptz
+- `updated_at` timestamptz
+
+Older columns like `provider` have been removed.
