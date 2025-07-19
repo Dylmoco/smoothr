@@ -48,7 +48,7 @@ interface CheckoutPayload {
   customer_id?: string | null;
   store_id: string;
   platform?: string;
-  same_billing?: boolean;  // Added for checkbox flagg
+  same_billing?: boolean;  // Added for checkbox flag
 }
 // Optional global to allow custom order number generation
 const generateOrderNumber =
@@ -361,19 +361,14 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       return;
     }
   
-    const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 30 * 1000; // Reduced to 30 seconds
     if (existingOrders && existingOrders.length > 0) {
       const existing = existingOrders[0];
       const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
-      if (existing.status === 'paid' && ageMs < dedupWindowMs) {
-        warn('Duplicate paid order detected', { order_id: existing.id });
-        res.status(409).json({ 
-          error: 'Order already completed',
-          order_id: existing.id,
-          user_message: 'This order was already submitted and paid. Please check your email for confirmation.'
-        });
-        return;
-      } else if (ageMs < dedupWindowMs && existing.payment_intent_id) {
+      const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 30 * 1000;
+      console.log('[handleCheckout] Duplicate check: ageMs=', ageMs, 'status=', existing.status, 'payment_intent_id=', existing.payment_intent_id, 'dedupWindowMs=', dedupWindowMs);
+      if (existing.status === 'paid') {
+        // No block for completed payments, allow new order
+      } else if (existing.payment_intent_id) {
         warn('Duplicate order in progress', { order_id: existing.id });
         res.status(409).json({ 
           error: 'Order processing in progress',
