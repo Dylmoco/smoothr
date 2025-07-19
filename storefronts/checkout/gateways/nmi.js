@@ -20,7 +20,7 @@ export async function mountCardFields() {
   hasMounted = true
   configPromise = new Promise(resolve => { resolveConfig = resolve })
 
-  const storeId = window?.Smoothr?.store_id
+  const storeId = window.SMOOTHR_CONFIG.storeId
   const tokenKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
   if (!tokenKey) {
     console.warn('[NMI] Tokenization key missing')
@@ -42,7 +42,7 @@ export function initNMI(tokenKey) {
 
   const script = document.createElement('script')
   script.id = 'collectjs-script'
-  script.src = 'https://secure.nmi.com/js/CollectJS.js'
+  script.src = 'https://secure.nmi.com/token/Collect.js'
   script.async = true
   script.setAttribute('data-tokenization-key', tokenKey)
   script.onload = () => {
@@ -124,7 +124,7 @@ function configureCollectJS() {
             name: `${firstName} ${lastName}`.trim(),
             address: { line1: billLine1, line2: billLine2, city: billCity, state: billState, postal_code: billPostal, country: billCountry }
           },
-          cart: items.map(item => ({ product_id: item.id, name: item.name, quantity: item.quantity, price: Math.round(item.price) })),
+          cart: items.map(item => ({ product_id: item.id, name: item.name, quantity: item.quantity, price: Math.round((item.price || 0) * 100) })),
           total,
           currency
         }
