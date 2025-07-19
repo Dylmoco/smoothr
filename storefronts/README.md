@@ -144,7 +144,7 @@ resolveGateway({});
 ```
 
 To integrate Authorize.net create a record in the `store_integrations` table
-with `provider` set to `authorizeNet` and save your credentials in the
+with `gateway` set to `authorizeNet` and save your credentials in the
 `settings` JSON column:
 
 ```json
@@ -169,7 +169,7 @@ setting on the client by defining the following snippet before loading the SDK:
 ```
 
 A Network Merchants (NMI) integration is also supported. Create a new record in
-`store_integrations` with either `provider` or `settings.gateway` set to `nmi`
+`store_integrations` with either `gateway` or `settings.gateway` set to `nmi`
 and place your credentials in the `settings` JSON column:
 
 ```json

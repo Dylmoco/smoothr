@@ -98,7 +98,7 @@ async function resolveStripeKey() {
             .from('store_integrations')
             .select('api_key, settings')
             .eq('store_id', storeId)
-            .eq('provider', 'stripe')
+            .eq('gateway', 'stripe')
             .maybeSingle();
           if (error) {
             warn('Integration lookup failed:', error.message || error);
