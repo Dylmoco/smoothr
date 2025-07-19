@@ -186,6 +186,15 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
+  let customer_profile_id: string | null = null;
+  const { data: profileData } = await supabase
+    .from('customer_payment_profiles')
+    .select('profile_id')
+    .eq('customer_id', customerId)
+    .eq('gateway', 'nmi')
+    .single();
+  customer_profile_id = profileData?.profile_id || null;
+
 
   const { name, address } = shipping;
   const { line1, line2, city, state, postal_code, country } = address || {};
@@ -323,9 +332,9 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return res.status(400).json({ error: 'order_number is required' });
   }
 
-  if (provider === 'nmi' && !payment_token) {
-    warn('Missing payment_token for NMI checkout');
-    return res.status(400).json({ error: 'payment_token is required' });
+  if (provider === 'nmi' && !payment_token && !customer_profile_id) {
+    warn('Missing payment_token or customer_profile_id for NMI checkout');
+    return res.status(400).json({ error: 'payment_token or customer_profile_id is required' });
   }
 
   log('[debug] Passed payment_method checks');
@@ -398,6 +407,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     providerResult = await providerHandler({
       payment_method,
       payment_token,
+      customer_profile_id,
       email,
       first_name,
       last_name,
@@ -468,6 +478,16 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       user_message: userMessage
     });
     return;
+  }
+
+  if (provider === 'nmi' && providerResult.success && !customer_profile_id && providerResult.customer_vault_id) {
+    await supabase
+      .from('customer_payment_profiles')
+      .upsert({
+        customer_id: customerId,
+        gateway: 'nmi',
+        profile_id: providerResult.customer_vault_id
+      }, { onConflict: 'customer_id, gateway' });
   }
 
   const intent = providerResult?.intent ?? providerResult;

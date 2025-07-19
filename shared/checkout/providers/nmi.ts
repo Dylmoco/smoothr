@@ -5,7 +5,8 @@ const err = (...args: any[]) => debug && console.error('[Checkout NMI]', ...args
 import { getStoreIntegration } from '../getStoreIntegration';
 
 interface NmiPayload {
-  payment_token: string;
+  payment_token?: string; // Optional for vaulted payments
+  customer_profile_id?: string; // Optional vault ID for repeat payments
   amount: number;
   store_id: string;
   first_name: string;
@@ -66,7 +67,6 @@ export default async function handleNmi(payload: NmiPayload) {
     security_key: securityKey,
     type: 'sale',
     amount: (payload.amount / 100).toFixed(2),
-    payment_token: payload.payment_token,
     firstname: payload.first_name,
     lastname: payload.last_name,
     email: payload.email,
@@ -85,9 +85,15 @@ export default async function handleNmi(payload: NmiPayload) {
     shipping_state: payload.shipping.address.state,
     shipping_zip: payload.shipping.address.postal_code,
     shipping_country: payload.shipping.address.country,
-    dup_seconds: '0',  // Disable duplicate transaction check
     orderid: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`  // Unique ID for each payment
   });
+
+  if (payload.customer_profile_id) {
+    params.append('customer_vault_id', payload.customer_profile_id);
+  } else {
+    params.append('customer_vault', 'add_customer');
+    params.append('payment_token', payload.payment_token || '');
+  }
 
   // Add billing if provided, else use shipping
   const billAddr = payload.billing?.address || payload.shipping.address;
@@ -122,7 +128,8 @@ export default async function handleNmi(payload: NmiPayload) {
     return {
       success,
       data,
-      transaction_id: data.get('transactionid') ?? null
+      transaction_id: data.get('transactionid') ?? null,
+      customer_vault_id: data.get('customer_vault_id') ?? null // Capture for new vaults
     };
   } catch (e: any) {
     err('NMI error:', e?.message || e);
