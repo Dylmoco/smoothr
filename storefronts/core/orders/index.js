@@ -14,7 +14,7 @@ export async function fetchOrderHistory(customer_id) {
   try {
     const { data, error } = await supabase
       .from('orders')
-      .select('*')
+      .select('*, customers(email, name)')
       .eq('customer_id', customer_id)
       .order('order_date', { ascending: false });
     if (error) {
@@ -99,10 +99,10 @@ export async function renderOrders(container) {
       dateEl.textContent = formattedDate;
     }
     setText('[data-smoothr="order-number"]', order.order_number);
-    setText('[data-smoothr="customer-name"]', order.customer_name);
-    log('customer email', order.customer_email);
+    setText('[data-smoothr="customer-name"]', order.customers?.name);
+    log('customer email', order.customers?.email);
     log('order price', order.total_price);
-    setText('[data-smoothr="order-email"]', order.customer_email);
+    setText('[data-smoothr="order-email"]', order.customers?.email);
     setText(
       '[data-smoothr="order-price"]',
       `£${Number(order.total_price).toFixed(2)}`
