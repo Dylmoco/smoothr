@@ -63,8 +63,8 @@ const err = (...args: any[]) => debug && console.error('[Smoothr Checkout]', ...
 
 function hashCartMeta(email: string, total: number, cart: any[]): string {
   const normalized = cart
-    .map(i => ({ id: i.product_id, qty: i.quantity }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .map(i => ({ id: i.product_id || i.name || '', qty: i.quantity }))
+    .sort((a, b) => (a.id ?? '').toString().localeCompare((b.id ?? '').toString()));
   const input = `${email}-${total}-${JSON.stringify(normalized)}`;
   return crypto.createHash('sha256').update(input).digest('hex');
 }
@@ -334,14 +334,14 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   if (provider !== 'authorizeNet') {
     try {
       cart_meta_hash = hashCartMeta(email, total, cart);
-    } catch (err) {
-      err('[error] Failed to compute cart_meta_hash:', err.message || err);
+    } catch (error) {
+      err('[error] Failed to compute cart_meta_hash:', error.message || error);
       return res.status(500).json({ 
         error: 'cart_meta_hash failed',
         user_message: 'Processing error. Please try again.'
       });
     }
-
+  
     const { data: existingOrders, error: lookupErr } = await supabase
       .from('orders')
       .select('id, created_at, status, payment_intent_id')
@@ -351,7 +351,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       .eq('cart_meta_hash', cart_meta_hash)
       .order('created_at', { ascending: false })
       .limit(1);
-
+  
     if (lookupErr) {
       err('Order deduplication check failed:', lookupErr.message);
       res.status(500).json({ 
@@ -360,7 +360,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       });
       return;
     }
-
+  
     const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 30 * 1000; // Reduced to 30 seconds
     if (existingOrders && existingOrders.length > 0) {
       const existing = existingOrders[0];
@@ -650,8 +650,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       items: cart // Add cart to items column
     };
     console.log('[handleCheckout] orderPayload before upsert:', orderPayload);
-  } catch (err) {
-    err('[error] Failed to build orderPayload:', err.message || err);
+  } catch (error) {
+    err('[error] Failed to build orderPayload:', error.message || error);
     return res.status(500).json({ error: 'Failed to build orderPayload' });
   }
 
