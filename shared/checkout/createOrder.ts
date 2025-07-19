@@ -15,6 +15,7 @@ export interface CreateOrderPayload {
   billing?: any;
   store_id: string;
   order_number?: string;
+  customer_id?: string | null;
 }
 
 export async function createOrder(payload: CreateOrderPayload) {
@@ -36,8 +37,6 @@ export async function createOrder(payload: CreateOrderPayload) {
     throw new Error('store_id is required');
   }
 
-  const items = Array.isArray(cart) ? cart : [];
-
   let orderNumber: string | undefined = order_number;
   if (!orderNumber) {
     try {
@@ -56,10 +55,7 @@ export async function createOrder(payload: CreateOrderPayload) {
       payment_provider: gateway,
       total_price,
       store_id,
-      platform: platform || null,
-      customer_email: email,
-      items,
-      raw_data: { email, name, cart, total_price, currency, gateway, platform, shipping, billing },
+      customer_id: payload.customer_id ?? null,
     })
     .select('*')
     .single();

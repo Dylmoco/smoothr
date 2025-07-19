@@ -82,16 +82,12 @@ describe.skip('webflow-order-handler', () => {
     );
     expect(insertCustomerMock).toHaveBeenCalledWith({ store_id: 'site', email: 'user@example.com' });
     expect(insertOrderMock).toHaveBeenCalledWith({
-      customer_email: 'user@example.com',
-      customer_id: 'cust-1',
-      platform: 'webflow',
       store_id: 'site',
-      raw_data: payload,
-      tracking_number: null,
-      label_url: null,
-      problem_flag: false,
-      flag_reason: null,
-      updated_at: expect.any(String),
+      customer_id: 'cust-1',
+      order_number: payload.orderId,
+      status: 'paid',
+      payment_provider: null,
+      total_price: 10,
     });
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ success: true, site_id: 'site' });

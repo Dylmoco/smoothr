@@ -65,6 +65,9 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
             };
           }
         }
+        if (table === 'order_items' || table === 'discount_usages') {
+          return { insert: vi.fn().mockResolvedValue({ error: null }) };
+        }
         return {};
       }
     }
@@ -109,7 +112,6 @@ describe('handleCheckout authorizeNet', () => {
     };
 
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
-    expect(orderPayload.raw_data.transaction_id).toBe('t123');
     expect(orderPayload.payment_intent_id).toBe('t123');
     expect(orderPayload.status).toBe('paid');
   });
