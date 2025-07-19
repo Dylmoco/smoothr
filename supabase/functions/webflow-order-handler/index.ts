@@ -63,18 +63,14 @@ export async function handleRequest(req: Request): Promise<Response> {
     }
   }
 
-  // Insert the incoming Webflow order into the existing `orders` table
+  // Insert the incoming Webflow order into the simplified `orders` table
   const { error } = await supabase.from('orders').insert({
-    customer_email: email,
-    customer_id: customerId,
-    platform: payload.platform || 'webflow',
     store_id: siteId,
-    raw_data: payload,
-    tracking_number: null,
-    label_url: null,
-    problem_flag: false,
-    flag_reason: null,
-    updated_at: new Date().toISOString(),
+    customer_id: customerId,
+    order_number: payload.orderId,
+    status: payload.orderStatus || 'paid',
+    payment_provider: payload.processor || null,
+    total_price: payload.total,
   });
 
   if (error) {

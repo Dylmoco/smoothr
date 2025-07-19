@@ -85,6 +85,9 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
             };
           }
         }
+        if (table === 'order_items' || table === 'discount_usages') {
+          return { insert: vi.fn().mockResolvedValue({ error: null }) };
+        }
         return {};
       }
     }
@@ -133,9 +136,6 @@ describe('handleCheckout nmi', () => {
       expect.objectContaining({ payment_token: 'tok_123', amount: 100 })
     );
     expect(orderPayload.payment_intent_id).toBe('t123');
-    expect(orderPayload.raw_data.transaction_id).toBe('t123');
-    expect(orderPayload.raw_data.transactionResponse).toBeInstanceOf(URLSearchParams);
-    expect(orderPayload.raw_data.transactionResponse.get('transactionid')).toBe('t123');
     expect(orderPayload.status).toBe('paid');
     expect(typeof orderPayload.paid_at).toBe('string');
   });

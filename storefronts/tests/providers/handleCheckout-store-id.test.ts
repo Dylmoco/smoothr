@@ -57,6 +57,10 @@ describe('handleCheckout store_id validation', () => {
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Missing store_id' });
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Missing store_id',
+      field: 'store_id',
+      user_message: 'Configuration error. Please refresh the page and try again.'
+    });
   });
 });

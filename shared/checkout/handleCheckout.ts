@@ -142,7 +142,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     cart,
     currency,
     store_id,
-    platform,
     description,
     discount_code,
     discount_id,
@@ -355,7 +354,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       .from('orders')
       .select('id, created_at, status, payment_intent_id')
       .eq('store_id', store_id)
-      .eq('customer_email', email)
+      .eq('customer_id', customerId)
       .eq('total_price', total)
       .eq('cart_meta_hash', cart_meta_hash)
       .order('created_at', { ascending: false })
@@ -516,7 +515,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     const orderNumber = payload.order_number!;
     const { data: existingOrder, error: lookupError } = await supabase
       .from('orders')
-      .select('id, raw_data, platform')
+      .select('id')
       .eq('store_id', store_id)
       .eq('order_number', orderNumber)
       .maybeSingle();
@@ -538,14 +537,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       paid_at: new Date().toISOString(),
       payment_intent_id: paymentIntentId,
       customer_id: customerId,
-      platform: payload.platform || existingOrder.platform || null,
-      raw_data: {
-        ...(existingOrder.raw_data || {}),
-        transaction_id: transactionId,
-        transactionResponse: providerResult?.data?.transactionResponse
-      },
-      items: cart // Add cart to items column
-    };
+      ...(discountRecord ? { discount_id: discountRecord.id } : {}),
+    } as any;
 
     if (provider === 'authorizeNet') {
       const transId = providerResult?.data?.transactionResponse?.transId;
@@ -583,6 +576,38 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     if (!updated) {
       warn('Order not updated:', orderNumber);
       return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const itemRows = cart.map((item: any) => ({
+      order_id: updated.id,
+      sku: item.product_id || item.sku || '',
+      product_name: item.name || item.product_name || '',
+      quantity: item.quantity,
+      unit_price: item.price || item.unit_price
+    }));
+
+    if (itemRows.length) {
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemRows);
+      if (itemsError) {
+        err('Failed to insert order items:', itemsError.message);
+        return res.status(500).json({ error: 'Failed to insert order items' });
+      }
+    }
+
+    if (discountRecord) {
+      const { error: usageErr } = await supabase
+        .from('discount_usages')
+        .insert({
+          order_id: updated.id,
+          customer_id: customerId,
+          discount_id: discountRecord.id,
+          used_at: new Date().toISOString()
+        });
+      if (usageErr) {
+        warn('Failed to log discount usage:', usageErr.message);
+      }
     }
 
     return res.status(200).json({
@@ -644,25 +669,12 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       status: paymentConfirmed ? 'paid' : 'unpaid',
       ...(paymentConfirmed ? { paid_at: new Date().toISOString() } : {}),
       payment_provider: provider,
-      raw_data:
-        provider === 'authorizeNet'
-          ? { ...req.body, transaction_id: transactionId }
-          : provider === 'nmi' && providerResult?.success
-            ? {
-                ...req.body,
-                transaction_id: transactionId,
-                transactionResponse: providerResult.data
-              }
-            : req.body,
       cart_meta_hash,
       total_price: total,
       store_id,
-      platform: platform || 'webflow',
       customer_id: customerId,
-      customer_email: email,
       ...(discountRecord ? { discount_id: discountRecord.id } : {}),
       payment_intent_id: paymentIntentId,
-      items: cart // Add cart to items column
     };
     console.log('[handleCheckout] orderPayload before upsert:', orderPayload);
   } catch (error) {
