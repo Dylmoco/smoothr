@@ -211,7 +211,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   // Billing validation
   if (!same_billing) {
     const billingErrors = [];
-    const billAddr = billing?.address || {} as any;  // Use as any to bypass TS
+    const billAddr: any = billing?.address || {};  // Use any to bypass TS
     if (!billAddr.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
     if (!billAddr.city) billingErrors.push({ field: 'bill_city', message: 'Billing city required' });
     if (!billAddr.state) billingErrors.push({ field: 'bill_state', message: 'Billing state required' });
@@ -434,7 +434,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     console.log('[handleCheckout] Provider result:', JSON.stringify(providerResult, null, 2));
   } catch (e: any) {
     console.error('[handleCheckout] Provider handler error:', e?.message || e);
-
     let userMessage = 'Payment processing failed. Please try again.';
     if (e?.message?.includes('card')) {
       userMessage = 'Payment method error. Please check your card details and try again.';
