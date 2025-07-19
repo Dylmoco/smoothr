@@ -211,12 +211,12 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   // Billing validation
   if (!same_billing) {
     const billingErrors = [];
-    const billAddr = billing?.address || {};
-    if (!billAddr?.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
-    if (!billAddr?.city) billingErrors.push({ field: 'bill_city', message: 'Billing city required' });
-    if (!billAddr?.state) billingErrors.push({ field: 'bill_state', message: 'Billing state required' });
-    if (!billAddr?.postal_code) billingErrors.push({ field: 'bill_postal', message: 'Billing postal required' });
-    if (!billAddr?.country) billingErrors.push({ field: 'bill_country', message: 'Billing country required' });
+    const billAddr = billing?.address || {} as any;  // Use as any to bypass TS
+    if (!billAddr.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
+    if (!billAddr.city) billingErrors.push({ field: 'bill_city', message: 'Billing city required' });
+    if (!billAddr.state) billingErrors.push({ field: 'bill_state', message: 'Billing state required' });
+    if (!billAddr.postal_code) billingErrors.push({ field: 'bill_postal', message: 'Billing postal required' });
+    if (!billAddr.country) billingErrors.push({ field: 'bill_country', message: 'Billing country required' });
 
     if (billingErrors.length > 0) {
       warn('Invalid billing details:', billingErrors);
