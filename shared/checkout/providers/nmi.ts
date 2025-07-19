@@ -85,6 +85,7 @@ export default async function handleNmi(payload: NmiPayload) {
     shipping_state: payload.shipping.address.state,
     shipping_zip: payload.shipping.address.postal_code,
     shipping_country: payload.shipping.address.country,
+    dup_seconds: '0'  // Disable duplicate transaction check
   });
 
   // Add billing if provided, else use shipping
