@@ -76,6 +76,7 @@ the Webflow checkout script.
 ## Checkout API
 
 The admin dashboard exposes two endpoints for initiating a checkout:
+Store integrations use a `gateway` column to specify the active payment provider. Any prior references to a `provider` column are obsolete.
 
 1. `/api/checkout/[provider]` – processes a posted cart using the configured payment gateway. This single route handles checkouts for all providers (e.g. `stripe` or `authorizeNet`). The `[provider]` segment must match the gateway configured for the store. The request body must include the following fields:
 
