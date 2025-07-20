@@ -1,3 +1,23 @@
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+async function loadConfig(storeId) {
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('settings')
+    .eq('store_id', storeId)
+    .single();
+  if (error) throw error;
+  window.SMOOTHR_CONFIG = data.settings;
+  // ensure storeId is always available
+  window.SMOOTHR_CONFIG.storeId = storeId;
+}
+
+await loadConfig(STORE_ID_TOKEN);
+
 const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
 
@@ -58,7 +78,7 @@ const Smoothr = {
 let setSelectedCurrency = setDomCurrency;
 
 if (typeof window !== 'undefined') {
-  const cfg = window.SMOOTHR_CONFIG || {};
+  const cfg = window.SMOOTHR_CONFIG;
   if (
     typeof document !== 'undefined' &&
     typeof document.createElement === 'function' &&
