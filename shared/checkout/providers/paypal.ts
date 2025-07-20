@@ -18,8 +18,8 @@ interface PayPalPayload {
 }
 
 export default async function handlePayPal(payload: PayPalPayload) {
-  let clientId = process.env.PAYPAL_CLIENT_ID || '';
-  let clientSecret = process.env.PAYPAL_SECRET || process.env.PAYPAL_CLIENT_SECRET || '';
+  let clientId = '';
+  let clientSecret = '';
 
   try {
     const integration = await getStoreIntegration(payload.store_id, 'paypal');

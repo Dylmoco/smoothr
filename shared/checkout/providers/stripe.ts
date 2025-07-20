@@ -35,7 +35,6 @@ export default async function handleStripe(payload: StripePayload) {
   const stripeSecret =
     integration?.settings?.secret_key ||
     integration?.api_key ||
-    process.env.STRIPE_SECRET_KEY ||
     '';
   if (!stripeSecret.trim()) {
     err('Missing Stripe credentials');

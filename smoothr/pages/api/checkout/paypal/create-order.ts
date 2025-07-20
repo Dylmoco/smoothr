@@ -11,8 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'store_id required' });
   }
 
-  let clientId = process.env.PAYPAL_CLIENT_ID || '';
-  let secret = process.env.PAYPAL_SECRET || process.env.PAYPAL_CLIENT_SECRET || '';
+  let clientId = '';
+  let secret = '';
   try {
     const integration = await getStoreIntegration(store_id, 'paypal');
     if (integration) {
