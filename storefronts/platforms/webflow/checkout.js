@@ -35,8 +35,9 @@ import { initCheckout } from '../../checkout/checkout.js';
 
 export { initCheckout };
 
-// ✅ DOM ready → retry until Smoothr.bootstrap is available, then run initCheckout
+// ✅ DOM ready → retry until Smoothr.bootstrap is available (max 50 attempts)
 document.addEventListener('DOMContentLoaded', () => {
+  let attempts = 0;
   const tryInit = () => {
     const boot = window.Smoothr?.bootstrap;
     if (typeof boot === 'function') {
@@ -48,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('[Smoothr] Bootstrap failed:', err);
         });
     } else {
+      if (attempts++ > 50) {
+        console.warn('[Smoothr] bootstrap retry limit reached — aborting initCheckout');
+        return;
+      }
       console.log('[Smoothr] bootstrap not ready, retrying...');
       setTimeout(tryInit, 100);
     }
