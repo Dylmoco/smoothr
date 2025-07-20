@@ -216,6 +216,8 @@ create table "public"."store_settings" (
 );
 
 
+alter table "public"."store_settings" enable row level security;
+
 create table "public"."stores" (
     "id" uuid not null default gen_random_uuid(),
     "store_name" text not null,
@@ -561,9 +563,6 @@ grant select on table "public"."reviews" to "anon";
 
 grant select on table "public"."store_integrations" to "anon";
 
-grant select on table "public"."store_settings" to "anon";
-
-grant select on table "public"."store_settings" to "authenticated";
 
 grant select on table "public"."stores" to "anon";
 
@@ -652,4 +651,15 @@ using ((customer_id = auth.uid()))
 with check ((customer_id = auth.uid()));
 
 
+create policy "store_settings_admin_all"
+on "public"."store_settings"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = store_settings.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = store_settings.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
 
