@@ -20,7 +20,7 @@ import { renderCart } from './cart/renderCart.js';
 import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow/webflow-dom.js';
 import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
 
-// Load the store_settings JSON into window.SMOOTHR_CONFIG
+// Load config from public_store_settings into window.SMOOTHR_CONFIG
 async function loadConfig(storeId) {
   const { data, error } = await supabase
     .from('public_store_settings')
