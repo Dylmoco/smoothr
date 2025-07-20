@@ -125,7 +125,7 @@ triggers.
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
 active payment gateway. This single endpoint handles all providers. `initCheckout` chooses the gateway by first checking
 `window.SMOOTHR_CONFIG.active_payment_gateway`. If not set it queries
-`store_settings.settings.active_payment_gateway` in Supabase using the provided
+`public_store_settings.active_payment_gateway` in Supabase using the provided
 `storeId`. The default provider is `stripe`.
 
 Gateway detection relies on `core/utils/resolveGateway()`. It will **throw an
