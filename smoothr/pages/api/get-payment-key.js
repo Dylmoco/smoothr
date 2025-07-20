@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     console.log('[API] Querying store_integrations for store:', storeId, 'provider:', provider);
     const { data, error } = await supabase
       .from('store_integrations')
-      .select('settings')
+      .select('api_key')
       .eq('store_id', storeId)
       .eq('gateway', provider)
       .single();
@@ -41,13 +41,9 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to fetch key', details: error.message });
     }
 
-    if (data && data.settings) {
-      const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : data.settings;
-      const tokenizationKey = settings.tokenization_key || settings.api_key; // Fallback to api_key if tokenization_key missing
-      if (tokenizationKey) {
-        console.log('[API] Key fetched successfully for store:', storeId, 'key:', tokenizationKey);
-        return res.status(200).json({ tokenization_key: tokenizationKey });
-      }
+    if (data && data.api_key) {
+      console.log('[API] Key fetched successfully for store:', storeId);
+      return res.status(200).json({ tokenization_key: data.api_key });
     }
 
     console.error('[API] No key found for store:', storeId, 'provider:', provider, 'data:', data);
