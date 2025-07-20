@@ -23,7 +23,7 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
           }))
         };
       }
-      if (table === 'store_settings') {
+      if (table === 'public_store_settings') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({

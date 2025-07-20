@@ -23,18 +23,17 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
             }))
           };
         }
-        if (table === 'store_settings') {
+        if (table === 'public_store_settings') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'nmi' } }, error: null }))
+                maybeSingle: vi.fn(async () => ({ data: { active_payment_gateway: 'nmi' }, error: null }))
               }))
             }))
           };
         }
         return {};
       }
-    }
   };
   return { default: client, createServerSupabaseClient: () => client };
 });

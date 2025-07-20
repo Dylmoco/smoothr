@@ -23,7 +23,7 @@ describe('store tables queries', () => {
     }
     createClientMock = vi.fn(() => ({
       from: (table: string) =>
-        table === 'store_settings' ? settingsBuilder : integrationsBuilder,
+        table === 'public_store_settings' ? settingsBuilder : integrationsBuilder,
     }))
     vi.mock('@supabase/supabase-js', () => ({ createClient: createClientMock }))
     await loadClient()
@@ -36,14 +36,14 @@ describe('store tables queries', () => {
 
   it('returns settings and integrations data', async () => {
     const storeId = 'store-123'
-    const settingsRow = { id: 's1', store_id: storeId }
+    const settingsRow = { store_id: storeId }
     const integrationRow = { id: 'i1', store_id: storeId }
 
     settingsBuilder.maybeSingle.mockResolvedValue({ data: settingsRow, error: null })
     integrationsBuilder.maybeSingle.mockResolvedValue({ data: integrationRow, error: null })
 
     const { data: settings, error: settingsError } = await supabase
-      .from('store_settings')
+      .from('public_store_settings')
       .select('*')
       .eq('store_id', storeId)
       .maybeSingle()

@@ -28,11 +28,11 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
           }
           return {};
         }
-        if (table === 'store_settings') {
+        if (table === 'public_store_settings') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'authorizeNet' } }, error: null }))
+                maybeSingle: vi.fn(async () => ({ data: { active_payment_gateway: 'authorizeNet' }, error: null }))
               }))
             }))
           };
@@ -69,7 +69,6 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
         }
         return {};
       }
-    }
   };
   return {
     default: client,
