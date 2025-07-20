@@ -35,13 +35,22 @@ import { initCheckout } from '../../checkout/checkout.js';
 
 export { initCheckout };
 
-// ✅ DOM ready → wait for Smoothr.bootstrap → then run initCheckout
+// ✅ DOM ready → retry until Smoothr.bootstrap is available, then run initCheckout
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.Smoothr?.bootstrap) {
-    window.Smoothr.bootstrap().then(() => {
-      initCheckout();
-    });
-  } else {
-    console.warn('[Smoothr] bootstrap not available — skipping checkout init');
-  }
+  const tryInit = () => {
+    const boot = window.Smoothr?.bootstrap;
+    if (typeof boot === 'function') {
+      boot()
+        .then(() => {
+          initCheckout();
+        })
+        .catch((err) => {
+          console.error('[Smoothr] Bootstrap failed:', err);
+        });
+    } else {
+      console.log('[Smoothr] bootstrap not ready, retrying...');
+      setTimeout(tryInit, 100);
+    }
+  };
+  tryInit();
 });
