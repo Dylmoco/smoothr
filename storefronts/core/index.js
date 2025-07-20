@@ -20,10 +20,13 @@ async function loadConfig(storeId) {
   try {
     await loadConfig(STORE_ID_TOKEN);
   } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
+    // only rethrow in test mode if process exists and NODE_ENV !== 'test'
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
       throw err;
     }
+    // otherwise swallow (browser or test mode)
   }
+  
 
   const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
   const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
