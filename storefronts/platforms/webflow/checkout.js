@@ -38,6 +38,8 @@ export { initCheckout };
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 window.SMOOTHR_CONFIG.platform = 'webflow';
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCheckout);
+} else {
   initCheckout();
-});
+}
