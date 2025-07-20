@@ -616,13 +616,33 @@ using ((EXISTS ( SELECT 1
   WHERE ((o.id = order_items.order_id) AND (o.customer_id = auth.uid())))));
 
 
-create policy "orders_customer_all"
+create policy "orders_customer_select_insert"
 on "public"."orders"
 as permissive
-for all
+for select, insert
 to public
 using ((customer_id = auth.uid()))
 with check ((customer_id = auth.uid()));
+
+create policy "orders_customer_unpaid_modify"
+on "public"."orders"
+as permissive
+for update, delete
+to public
+using (((customer_id = auth.uid()) AND (paid_at IS NULL)))
+with check (((customer_id = auth.uid()) AND (paid_at IS NULL)));
+
+create policy "orders_admin_service_modify"
+on "public"."orders"
+as permissive
+for update, delete
+to public
+using (((auth.role() = 'service_role') OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = orders.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))))
+with check (((auth.role() = 'service_role') OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = orders.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
 
 
 create policy "store_integrations_service_role_admin_select"
