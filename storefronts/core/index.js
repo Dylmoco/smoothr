@@ -23,12 +23,12 @@ import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.j
 // Load the store_settings JSON into window.SMOOTHR_CONFIG
 async function loadConfig(storeId) {
   const { data, error } = await supabase
-    .from('store_settings')
-    .select('settings')
+    .from('public_store_settings')
+    .select('*')
     .eq('store_id', storeId)
     .single();
   if (error) throw error;
-  window.SMOOTHR_CONFIG = data.settings;
+  window.SMOOTHR_CONFIG = data || {};
   window.SMOOTHR_CONFIG.storeId = storeId;
 }
 

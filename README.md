@@ -100,7 +100,7 @@ Store integrations use a `gateway` column to specify the active payment provider
 
 The SDK determines the active payment gateway by first checking
 `window.SMOOTHR_CONFIG.active_payment_gateway`. If absent, it loads the value
-from the store's `store_settings` table in Supabase using the configured
+from the store's `public_store_settings` table in Supabase using the configured
 `storeId`. The `[provider]` segment in the route should match this value and
 defaults to `stripe` when no configuration is found.
 

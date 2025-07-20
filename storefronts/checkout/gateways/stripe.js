@@ -250,15 +250,15 @@ export async function getStoreSettings(storeId) {
   if (!storeId) return null;
   try {
     const { data, error } = await supabase
-      .from('store_settings')
-      .select('settings')
+      .from('public_store_settings')
+      .select('*')
       .eq('store_id', storeId)
       .maybeSingle();
     if (error) {
       warn('Store settings lookup failed:', error.message || error);
       return null;
     }
-    return data?.settings || null;
+    return data || null;
   } catch (e) {
     warn('Store settings fetch error:', e?.message || e);
     return null;
