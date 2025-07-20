@@ -54,10 +54,6 @@ export default async function handleNmi(payload: NmiPayload) {
   }
 
   if (!securityKey.trim()) {
-    securityKey = process.env.NMI_SECURITY_KEY || '';
-  }
-
-  if (!securityKey.trim()) {
     console.warn('[Checkout NMI] Missing security key');
     return { success: false, error: 'Missing security key' };
   }
