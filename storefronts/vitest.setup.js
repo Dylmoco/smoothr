@@ -57,3 +57,17 @@ globalThis.MutationObserver = class {
 if (typeof globalThis.alert === "undefined") {
   globalThis.alert = vi.fn();
 }
+
+// Stub storeId for SDK bootstrap during tests
+Object.defineProperty(document, 'currentScript', {
+  value: {
+    dataset: {
+      storeId: '00000000-0000-0000-0000-000000000000',
+    },
+  },
+});
+
+// Block all real fetch() calls by default to prevent accidental network hits
+global.fetch = async (...args) => {
+  throw new Error(`Blocked fetch during test: ${args[0]}`);
+};

@@ -239,6 +239,11 @@ function configureCollectJS() {
           same_billing: sameBilling  // Added this flag for backend
         }
 
+        if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+          resetSubmission(buttons)
+          return { error: 'NMI gateway calls disabled in test environment' }
+        }
+
         fetch(`${window.SMOOTHR_CONFIG.apiBase}/api/checkout/nmi`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
