@@ -1,12 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import 'shared/init';
-import supabase from 'shared/supabase/serverClient';
+import { createServerSupabaseClient } from 'shared/supabase/serverClient';
 import { createOrder } from 'shared/checkout/createOrder';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  const supabase = createServerSupabaseClient();
   if (req.method === 'OPTIONS') {
     return res
       .status(200)

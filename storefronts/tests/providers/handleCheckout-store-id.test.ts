@@ -4,20 +4,19 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 let handleCheckout: any;
 
 vi.mock('../../../shared/supabase/serverClient.ts', () => {
-  return {
-    default: {
-      from: (table: string) => {
-        if (table === 'stores') {
-          return {
-            select: vi.fn(() => ({
-              or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
-            }))
-          };
-        }
-        return {};
+  const client = {
+    from: (table: string) => {
+      if (table === 'stores') {
+        return {
+          select: vi.fn(() => ({
+            or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
+          }))
+        };
       }
-    }
+      return {};
+    },
   };
+  return { default: client, createServerSupabaseClient: () => client };
 });
 
 async function loadModule() {

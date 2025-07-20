@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import supabase from '../supabase/serverClient';
+import { createServerSupabaseClient } from '../supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import stripeProvider from './providers/stripe';
@@ -73,6 +73,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   console.log('[handleCheckout] Invoked');
   console.log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
   try {
+  const supabase = createServerSupabaseClient();
 
   const origin = req.headers.origin as string | undefined;
   if (!origin) {

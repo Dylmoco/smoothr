@@ -1,7 +1,8 @@
-import supabase from '../supabase/serverClient';
+import { createServerSupabaseClient } from '../supabase/serverClient';
 
 export async function getStoreIntegration(storeId: string, integrationId: string) {
   if (!storeId || !integrationId) return null;
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('store_integrations')
     .select('api_key, settings')
