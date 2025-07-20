@@ -3,8 +3,7 @@ export const SUPPORTED_GATEWAYS = ['stripe', 'authorizeNet', 'paypal', 'nmi', 's
 export default function resolveGateway(config = {}, storeSettings = {}) {
   const provider =
     config.active_payment_gateway ||
-    storeSettings.active_payment_gateway ||
-    storeSettings.settings?.active_payment_gateway;
+    storeSettings.active_payment_gateway;
 
   if (!provider) {
     throw new Error('active_payment_gateway not configured');
