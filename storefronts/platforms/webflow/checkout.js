@@ -35,30 +35,9 @@ import { initCheckout } from '../../checkout/checkout.js';
 
 export { initCheckout };
 
-// ✅ DOM ready → retry until Smoothr.bootstrap + SMOOTHR_CONFIG available
-document.addEventListener('DOMContentLoaded', () => {
-  let attempts = 0;
-  const tryInit = () => {
-    const ready =
-      typeof window.Smoothr?.bootstrap === 'function' &&
-      typeof window.SMOOTHR_CONFIG === 'object';
+window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
+window.SMOOTHR_CONFIG.platform = 'webflow';
 
-    if (ready) {
-      window.Smoothr.bootstrap()
-        .then(() => {
-          initCheckout();
-        })
-        .catch((err) => {
-          console.error('[Smoothr] Bootstrap failed:', err);
-        });
-    } else {
-      if (attempts++ > 100) {
-        console.warn('[Smoothr] bootstrap retry limit reached — aborting initCheckout');
-        return;
-      }
-      console.log('[Smoothr] bootstrap not ready, retrying...');
-      setTimeout(tryInit, 100);
-    }
-  };
-  tryInit();
+document.addEventListener('DOMContentLoaded', () => {
+  initCheckout();
 });
