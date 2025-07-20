@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  __NEXT_PUBLIC_SUPABASE_URL__,
+  __NEXT_PUBLIC_SUPABASE_ANON_KEY__
 );
 
 async function loadConfig(storeId) {
@@ -19,6 +19,7 @@ async function loadConfig(storeId) {
 try {
   await loadConfig(STORE_ID_TOKEN);
 } catch (err) {
+  // in test mode, swallow network errors; in prod/dev, rethrow
   if (process.env.NODE_ENV !== 'test') {
     throw err;
   }
@@ -28,6 +29,7 @@ const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
 
 log('Smoothr SDK loaded');
+
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
 import * as analytics from './analytics/index.js';
@@ -45,7 +47,6 @@ import { fetchExchangeRates } from './currency/live-rates.js';
 import { initCartBindings } from './cart/addToCart.js';
 import { renderCart } from './cart/renderCart.js';
 
-// Default endpoint for retrieving live exchange rates via Supabase proxy.
 const DEFAULT_RATE_SOURCE =
   'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
 
@@ -133,7 +134,6 @@ if (typeof window !== 'undefined') {
   window.renderCart = renderCart;
   log('🎨 renderCart registered in SDK');
   window.Smoothr = window.Smoothr || {};
-  // Clone the cart module so additional properties can be assigned
   window.Smoothr.cart = { ...cart, ...(window.Smoothr.cart || {}) };
   window.Smoothr.cart.renderCart = renderCart;
   window.Smoothr.checkout = stripeGateway;
