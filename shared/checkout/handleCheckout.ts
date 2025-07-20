@@ -325,8 +325,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   const { data: storeSettings, error: settingsError } = await supabase
-    .from('store_settings')
-    .select('settings')
+    .from('public_store_settings')
+    .select('active_payment_gateway')
     .eq('store_id', store_id)
     .maybeSingle();
 
@@ -338,7 +338,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  const provider = storeSettings?.settings?.active_payment_gateway as string;
+  const provider = (storeSettings?.active_payment_gateway || '') as string;
   log('Selected provider:', provider);
 
   const providers: Record<string, any> = {
