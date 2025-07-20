@@ -20,12 +20,17 @@ async function loadConfig(storeId) {
   try {
     await loadConfig(STORE_ID_TOKEN);
   } catch (err) {
-    // only rethrow in test mode if process exists and NODE_ENV !== 'test'
-    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
+    // swallow only in test mode
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      // noop
+    } else {
+      // in browser or non-test env, crash early to avoid undefined config
       throw err;
     }
-    // otherwise swallow (browser or test mode)
   }
+  // …rest of init…
+})();
+
   
 
   const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
