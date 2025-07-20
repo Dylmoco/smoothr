@@ -665,3 +665,270 @@ with check ((EXISTS ( SELECT 1
    FROM user_stores us
   WHERE ((us.store_id = store_settings.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
 
+create policy "abandoned_carts_admin_select"
+on "public"."abandoned_carts"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = abandoned_carts.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "abandoned_carts_admin_write"
+on "public"."abandoned_carts"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = abandoned_carts.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = abandoned_carts.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "affiliate_usages_admin_select"
+on "public"."affiliate_usages"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM affiliates a
+     JOIN user_stores us ON ((us.store_id = a.store_id))
+  WHERE ((a.id = affiliate_usages.affiliate_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "affiliate_usages_admin_write"
+on "public"."affiliate_usages"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM affiliates a
+     JOIN user_stores us ON ((us.store_id = a.store_id))
+  WHERE ((a.id = affiliate_usages.affiliate_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM affiliates a
+     JOIN user_stores us ON ((us.store_id = a.store_id))
+  WHERE ((a.id = affiliate_usages.affiliate_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "affiliates_admin_select"
+on "public"."affiliates"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = affiliates.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "affiliates_admin_write"
+on "public"."affiliates"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = affiliates.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = affiliates.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "audit_logs_admin_select"
+on "public"."audit_logs"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "audit_logs_admin_write"
+on "public"."audit_logs"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "discount_usages_admin_select"
+on "public"."discount_usages"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM discounts d
+     JOIN user_stores us ON ((us.store_id = d.store_id))
+  WHERE ((d.id = discount_usages.discount_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "discount_usages_admin_write"
+on "public"."discount_usages"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM discounts d
+     JOIN user_stores us ON ((us.store_id = d.store_id))
+  WHERE ((d.id = discount_usages.discount_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM discounts d
+     JOIN user_stores us ON ((us.store_id = d.store_id))
+  WHERE ((d.id = discount_usages.discount_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "discounts_admin_select"
+on "public"."discounts"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = discounts.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "discounts_admin_write"
+on "public"."discounts"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = discounts.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = discounts.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "notifications_admin_select"
+on "public"."notifications"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = notifications.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "notifications_admin_write"
+on "public"."notifications"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = notifications.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = notifications.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "referrals_admin_select"
+on "public"."referrals"
+as permissive
+for select
+to public
+using (((referrer_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
+
+create policy "referrals_admin_write"
+on "public"."referrals"
+as permissive
+for all
+to public
+using (((referrer_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))) )
+with check (((referrer_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
+
+create policy "returns_admin_select"
+on "public"."returns"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM orders o
+     JOIN user_stores us ON ((us.store_id = o.store_id))
+  WHERE ((o.id = returns.order_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "returns_admin_write"
+on "public"."returns"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM orders o
+     JOIN user_stores us ON ((us.store_id = o.store_id))
+  WHERE ((o.id = returns.order_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM orders o
+     JOIN user_stores us ON ((us.store_id = o.store_id))
+  WHERE ((o.id = returns.order_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "reviews_admin_select"
+on "public"."reviews"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM orders o
+     JOIN user_stores us ON ((us.store_id = o.store_id))
+  WHERE ((o.id = reviews.order_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "reviews_admin_write"
+on "public"."reviews"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM orders o
+     JOIN user_stores us ON ((us.store_id = o.store_id))
+  WHERE ((o.id = reviews.order_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM orders o
+     JOIN user_stores us ON ((us.store_id = o.store_id))
+  WHERE ((o.id = reviews.order_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "subscriptions_admin_select"
+on "public"."subscriptions"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM customers c
+     JOIN user_stores us ON ((us.store_id = c.store_id))
+  WHERE ((c.id = subscriptions.customer_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))));
+
+create policy "subscriptions_admin_write"
+on "public"."subscriptions"
+as permissive
+for all
+to public
+using ((EXISTS ( SELECT 1
+   FROM customers c
+     JOIN user_stores us ON ((us.store_id = c.store_id))
+  WHERE ((c.id = subscriptions.customer_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text)))))
+with check ((EXISTS ( SELECT 1
+   FROM customers c
+     JOIN user_stores us ON ((us.store_id = c.store_id))
+  WHERE ((c.id = subscriptions.customer_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))));
+
+create policy "webflow_connections_admin_select"
+on "public"."webflow_connections"
+as permissive
+for select
+to public
+using (((customer_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
+
+create policy "webflow_connections_admin_write"
+on "public"."webflow_connections"
+as permissive
+for all
+to public
+using (((customer_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))) )
+with check (((customer_id = auth.uid()) OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
+
