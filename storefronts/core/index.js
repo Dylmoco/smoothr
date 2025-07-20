@@ -79,7 +79,6 @@ export default Smoothr;
 
 // Bootstrap SDK: load config and then initialize everything
 (async function initSmoothr() {
-  // Try to find the script tag containing the store ID
   const currentScript =
     document.currentScript ||
     document.querySelector('script[src*="smoothr-sdk"][data-store-id]');
@@ -88,14 +87,11 @@ export default Smoothr;
 
   console.log('[Smoothr SDK] Bootstrap triggered', { storeId });
 
-  if (!storeId) {
-    throw new Error('Missing data-store-id on <script> tag');
-  }
+  if (!storeId) throw new Error('Missing data-store-id on <script> tag');
 
   try {
     await loadConfig(storeId);
   } catch (err) {
-    // swallow only in test mode
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
       // noop
     } else {
@@ -113,7 +109,7 @@ export default Smoothr;
   if (typeof window !== 'undefined') {
     const cfg = window.SMOOTHR_CONFIG;
 
-    // Inject card styles if not present
+    // Inject card styles
     if (
       typeof document !== 'undefined' &&
       typeof document.createElement === 'function' &&
@@ -158,7 +154,6 @@ export default Smoothr;
       setSelectedCurrency = setCmsCurrency;
     }
 
-    // Expose globals
     window.Smoothr = Smoothr;
     window.smoothr = window.smoothr || Smoothr;
     window.renderCart = renderCart;
@@ -180,7 +175,6 @@ export default Smoothr;
       }
     });
 
-    // Expose currency helper
     globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || setSelectedCurrency;
   }
 })();
