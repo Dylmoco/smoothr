@@ -1,5 +1,6 @@
 import forceStripeIframeStyle from './forceStripeIframeStyle.js';
 import supabase from '../../../supabase/supabaseClient.js';
+import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 let fieldsMounted = false;
 let mountAttempts = 0;
@@ -80,48 +81,28 @@ function elementStyleFromContainer(el) {
 
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
-  const cfg = window.SMOOTHR_CONFIG || {};
-  let key = cfg.stripeKey;
-  if (key) {
-    log('Loaded key from window.SMOOTHR_CONFIG');
-  } else {
-    const storeId = cfg.storeId;
-    if (storeId) {
-      const settings = await getStoreSettings(storeId);
-      if (settings?.stripeKey) {
-        key = settings.stripeKey;
-        log('Loaded key from Supabase.store_settings');
-      }
-      if (!key) {
-        try {
-          const { data, error } = await supabase
-            .from('store_integrations')
-            .select('api_key, settings')
-            .eq('store_id', storeId)
-            .eq('gateway', 'stripe')
-            .maybeSingle();
-          if (error) {
-            warn('Integration lookup failed:', error.message || error);
-          } else if (data) {
-            key = data.api_key || data.settings?.public_key || '';
-            if (key) {
-              log(
-                'Loaded key from Supabase.' +
-                  (data.api_key ? 'store_integrations.api_key' : 'store_integrations.settings.public_key')
-              );
-            }
-          }
-        } catch (e) {
-          warn('Integration fetch error:', e?.message || e);
+  const storeId = window.SMOOTHR_CONFIG?.storeId;
+  let key;
+  if (storeId) {
+    try {
+      const cred = await getPublicCredential(storeId, 'stripe');
+      if (cred) {
+        key = cred.api_key || cred.settings?.public_key || '';
+        if (key) {
+          log(
+            'Loaded key from Supabase.' +
+              (cred.api_key ? 'store_integrations.api_key' : 'store_integrations.settings.public_key')
+          );
         }
       }
+    } catch (e) {
+      warn('Integration fetch error:', e?.message || e);
     }
   }
   if (!key) {
     throw new Error('❌ Stripe key not found — aborting Stripe mount.');
   }
   cachedKey = key;
-  if (!cfg.stripeKey) cfg.stripeKey = key;
   return key;
 }
 
