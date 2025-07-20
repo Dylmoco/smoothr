@@ -79,8 +79,15 @@ export default Smoothr;
 
 // Bootstrap SDK: load config and then initialize everything
 (async function initSmoothr() {
+  // Read storeId from the <script> tag that loaded this module
+  const currentScript = document.currentScript;
+  const storeId = currentScript?.dataset?.storeId;
+  if (!storeId) {
+    throw new Error('Missing data-store-id on <script> tag');
+  }
+
   try {
-    await loadConfig(STORE_ID_TOKEN);
+    await loadConfig(storeId);
   } catch (err) {
     // swallow only in test mode
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
