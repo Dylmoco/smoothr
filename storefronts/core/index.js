@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(
-  __NEXT_PUBLIC_SUPABASE_URL__,
-  __NEXT_PUBLIC_SUPABASE_ANON_KEY__
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 async function loadConfig(storeId) {

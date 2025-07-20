@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     define: {
-      __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
-      __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      // Map Cloudflare’s NEXT_PUBLIC_* secrets into Vite’s import.meta.env.VITE_*
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
       __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__: JSON.stringify(
         env.NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL
       ),
@@ -20,12 +21,11 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       lib: {
-        entry: path.resolve(__dirname, 'core/index.js'), // SDK entry point
+        entry: path.resolve(__dirname, 'core/index.js'),
         name: 'SmoothrSDK',
         fileName: () => 'smoothr-sdk.js',
-        formats: ['es'] // Output ES module only
+        formats: ['es']
       },
-      // rollupOptions removed for bundling everything
       rollupOptions: {
         treeshake: false
       },
