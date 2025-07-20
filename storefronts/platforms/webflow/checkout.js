@@ -35,11 +35,22 @@ import { initCheckout } from '../../checkout/checkout.js';
 
 export { initCheckout };
 
+// ✅ Set platform
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
-window.SMOOTHR_CONFIG.platform = 'webflow';
+window.SMOOTHR_CONFIG.platform = 'webflow-ecom';
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initCheckout);
-} else {
-  initCheckout();
-}
+const waitForStoreId = () => {
+  if (window.SMOOTHR_CONFIG?.storeId) {
+    console.log('[Smoothr] initCheckout ready — mounting');
+    initCheckout();
+  } else {
+    console.log('[Smoothr] Waiting for storeId...');
+    setTimeout(waitForStoreId, 50);
+  }
+};
+
+// ✅ Always run waitForStoreId on SDK ready
+window.addEventListener('smoothr:ready', waitForStoreId);
+
+// ✅ Also run it immediately in case SDK already fired
+waitForStoreId();
