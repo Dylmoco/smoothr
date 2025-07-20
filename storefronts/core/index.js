@@ -16,73 +16,21 @@ async function loadConfig(storeId) {
   window.SMOOTHR_CONFIG.storeId = storeId;
 }
 
-try {
-  await loadConfig(STORE_ID_TOKEN);
-} catch (err) {
-  // in test mode, swallow network errors; in prod/dev, rethrow
-  if (process.env.NODE_ENV !== 'test') {
-    throw err;
+(async () => {
+  try {
+    await loadConfig(STORE_ID_TOKEN);
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'test') {
+      throw err;
+    }
   }
-}
 
-const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
-const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
+  const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+  const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
 
-log('Smoothr SDK loaded');
+  log('Smoothr SDK loaded');
 
-import * as abandonedCart from './abandoned-cart/index.js';
-import * as affiliates from './affiliates/index.js';
-import * as analytics from './analytics/index.js';
-import * as currency from './currency/index.js';
-import * as dashboard from './dashboard/index.js';
-import * as discounts from './discounts/index.js';
-import * as cart from './cart.js';
-import * as orders from './orders/index.js';
-import * as returns from './returns/index.js';
-import * as reviews from './reviews/index.js';
-import * as subscriptions from './subscriptions/index.js';
-import * as auth from './auth/index.js';
-import * as stripeGateway from '../checkout/gateways/stripe.js';
-import { fetchExchangeRates } from './currency/live-rates.js';
-import { initCartBindings } from './cart/addToCart.js';
-import { renderCart } from './cart/renderCart.js';
-
-const DEFAULT_RATE_SOURCE =
-  'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
-
-export {
-  abandonedCart,
-  affiliates,
-  analytics,
-  currency,
-  dashboard,
-  discounts,
-  cart,
-  orders,
-  returns,
-  reviews,
-  subscriptions,
-  auth,
-  stripeGateway as checkout
-};
-
-const Smoothr = {
-  abandonedCart,
-  affiliates,
-  analytics,
-  currency,
-  dashboard,
-  discounts,
-  cart,
-  orders,
-  returns,
-  reviews,
-  subscriptions,
-  auth,
-  checkout: stripeGateway
-};
-
-let setSelectedCurrency = setDomCurrency;
+  let setSelectedCurrency = setDomCurrency;
 
 if (typeof window !== 'undefined') {
   const cfg = window.SMOOTHR_CONFIG;
@@ -149,10 +97,62 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export default Smoothr;
+  globalThis.setSelectedCurrency =
+    globalThis.setSelectedCurrency || setSelectedCurrency;
+})();
 
+import * as abandonedCart from './abandoned-cart/index.js';
+import * as affiliates from './affiliates/index.js';
+import * as analytics from './analytics/index.js';
+import * as currency from './currency/index.js';
+import * as dashboard from './dashboard/index.js';
+import * as discounts from './discounts/index.js';
+import * as cart from './cart.js';
+import * as orders from './orders/index.js';
+import * as returns from './returns/index.js';
+import * as reviews from './reviews/index.js';
+import * as subscriptions from './subscriptions/index.js';
+import * as auth from './auth/index.js';
+import * as stripeGateway from '../checkout/gateways/stripe.js';
+import { fetchExchangeRates } from './currency/live-rates.js';
+import { initCartBindings } from './cart/addToCart.js';
+import { renderCart } from './cart/renderCart.js';
 import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow/webflow-dom.js';
 import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
-// Always expose helper on the global object for browser embeds
-globalThis.setSelectedCurrency =
-  globalThis.setSelectedCurrency || setSelectedCurrency;
+
+const DEFAULT_RATE_SOURCE =
+  'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
+
+export {
+  abandonedCart,
+  affiliates,
+  analytics,
+  currency,
+  dashboard,
+  discounts,
+  cart,
+  orders,
+  returns,
+  reviews,
+  subscriptions,
+  auth,
+  stripeGateway as checkout
+};
+
+const Smoothr = {
+  abandonedCart,
+  affiliates,
+  analytics,
+  currency,
+  dashboard,
+  discounts,
+  cart,
+  orders,
+  returns,
+  reviews,
+  subscriptions,
+  auth,
+  checkout: stripeGateway
+};
+
+export default Smoothr;
