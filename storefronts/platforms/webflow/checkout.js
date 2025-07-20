@@ -35,7 +35,13 @@ import { initCheckout } from '../../checkout/checkout.js';
 
 export { initCheckout };
 
-// Bootstrap the shared checkout flow as soon as the DOM is ready
+// ✅ DOM ready → wait for Smoothr.bootstrap → then run initCheckout
 document.addEventListener('DOMContentLoaded', () => {
-  initCheckout();
+  if (window.Smoothr?.bootstrap) {
+    window.Smoothr.bootstrap().then(() => {
+      initCheckout();
+    });
+  } else {
+    console.warn('[Smoothr] bootstrap not available — skipping checkout init');
+  }
 });
