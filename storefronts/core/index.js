@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import supabase from '../../supabase/supabaseClient.js';
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
@@ -19,12 +19,6 @@ import { initCartBindings } from './cart/addToCart.js';
 import { renderCart } from './cart/renderCart.js';
 import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow/webflow-dom.js';
 import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
-
-// Initialize Supabase client using Vite env vars
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 // Load the store_settings JSON into window.SMOOTHR_CONFIG
 async function loadConfig(storeId) {
