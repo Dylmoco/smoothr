@@ -23,6 +23,14 @@ if (typeof globalThis.document === "undefined") {
     dispatchEvent: vi.fn(),
   };
 }
+// Stub the <script> tag dataset so loadConfig gets a storeId in tests
+if (typeof document !== 'undefined' && !document.currentScript) {
+  Object.defineProperty(document, 'currentScript', {
+    value: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
+    configurable: true,
+    writable: true
+  });
+}
 if (typeof globalThis.window.Smoothr === "undefined") {
   globalThis.window.Smoothr = {};
 }
