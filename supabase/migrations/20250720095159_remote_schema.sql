@@ -625,12 +625,14 @@ using ((customer_id = auth.uid()))
 with check ((customer_id = auth.uid()));
 
 
-create policy "Allow anon SELECT for public payment gateways"
+create policy "store_integrations_service_role_admin_select"
 on "public"."store_integrations"
 as permissive
 for select
-to anon
-using (((gateway = ANY (ARRAY['nmi'::text, 'stripe'::text])) AND (api_key IS NOT NULL)));
+to public
+using (((auth.role() = 'service_role') OR (EXISTS ( SELECT 1
+   FROM user_stores us
+  WHERE ((us.store_id = store_integrations.store_id) AND (us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
 
 
 create policy "stores_admin_access"
