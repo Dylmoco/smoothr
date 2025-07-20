@@ -1,3 +1,4 @@
+// For example `/api/checkout/nmi` resolves to this dynamic route.
 import type { NextApiRequest, NextApiResponse } from 'next';
 import '../../../../shared/init';
 import { handleCheckout } from 'shared/checkout/handleCheckout';
