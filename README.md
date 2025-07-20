@@ -99,10 +99,12 @@ Store integrations use a `gateway` column to specify the active payment provider
    responds with the Checkout Session URL.
 
 The SDK determines the active payment gateway by first checking
-`window.SMOOTHR_CONFIG.active_payment_gateway`. If absent, it loads the value
-from the store's `public_store_settings` table in Supabase using the configured
-`storeId`. The `[provider]` segment in the route should match this value and
-defaults to `stripe` when no configuration is found.
+`window.SMOOTHR_CONFIG.active_payment_gateway`. If that property is not
+defined, the script fetches the store's
+`public_store_settings.active_payment_gateway` from Supabase using the configured
+`storeId` and writes the result back to `window.SMOOTHR_CONFIG`. The
+`[provider]` segment in the route should match this value and defaults to
+`stripe` when no configuration is found.
 
 Payment gateway resolution is handled by `core/utils/resolveGateway()`. This
 function **throws an error** when no gateway is configured or when an
@@ -135,7 +137,7 @@ To enable Authorize.net create a row in the `store_integrations` table with
 ```
 
 Select Authorize.net by setting
-`store_settings.settings.active_payment_gateway` to `authorizeNet` (or override
+`public_store_settings.active_payment_gateway` to `authorizeNet` (or override
 it on the client with `window.SMOOTHR_CONFIG.active_payment_gateway`). Requests
 to `/api/checkout/[provider]` must use `authorizeNet` for the `[provider]`
 segment in order to succeed.
@@ -175,7 +177,7 @@ set to `nmi` and store both the API key and tokenization key under the
 ```
 
 Activate the gateway by setting
-`store_settings.settings.active_payment_gateway` to `nmi` (or override it on the
+`public_store_settings.active_payment_gateway` to `nmi` (or override it on the
 client via `window.SMOOTHR_CONFIG.active_payment_gateway`). Include NMI's
 `Collect.js` script on checkout pages. After the Smoothr checkout script loads,
 call `window.Smoothr.mountNMIFields()` to mount the card fields. The helper
@@ -215,7 +217,7 @@ the client ID – when creating and capturing orders.
 
 
 Activate the gateway by setting
-`store_settings.settings.active_payment_gateway` to `paypal` (or override it on
+`public_store_settings.active_payment_gateway` to `paypal` (or override it on
 the client via `window.SMOOTHR_CONFIG.active_payment_gateway`).
 
 ### DEDUPE_WINDOW_MS
