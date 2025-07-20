@@ -1,8 +1,5 @@
 import { getStoreIntegration } from '../getStoreIntegration';
 
-const envLoginId = process.env.AUTHNET_API_LOGIN_ID || '';
-const envTransactionKey = process.env.AUTHNET_TRANSACTION_KEY || '';
-
 const env = process.env.AUTHNET_ENV === 'production' ? 'production' : 'sandbox';
 const baseUrl =
   env === 'production'
