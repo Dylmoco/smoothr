@@ -27,6 +27,7 @@ describe('createOrder', () => {
 
     vi.mock('../../shared/supabase/serverClient.ts', () => ({
       default: { from: fromMock },
+      createServerSupabaseClient: () => ({ from: fromMock }),
     }));
 
     await loadModule();

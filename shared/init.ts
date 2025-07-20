@@ -1,4 +1,4 @@
-import supabase from './supabase/serverClient';
+import { createServerSupabaseClient } from './supabase/serverClient';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[generateOrderNumber]', ...args);
@@ -7,6 +7,8 @@ const err = (...args: any[]) => debug && console.error('[generateOrderNumber]', 
 if (!globalThis.generateOrderNumber) {
   globalThis.generateOrderNumber = async (storeId: string) => {
     log('CALLED — storeId:', storeId);
+
+    const supabase = createServerSupabaseClient();
 
     if (!storeId) {
       err('storeId is undefined or missing!');
