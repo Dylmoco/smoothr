@@ -37,8 +37,16 @@ export default async function handler(req, res) {
       .single();
 
     if (error) {
-      console.error('[API] Supabase error:', error.message, error.code, error.details, error.hint);
-      return res.status(500).json({ error: 'Failed to fetch key', details: error.message });
+      console.error(
+        '[Supabase ERROR] Failed to fetch key:',
+        error.message,
+        error.code,
+        error.details,
+        error.hint
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to fetch key', detail: error.message });
     }
 
     if (data && data.api_key) {
@@ -46,10 +54,10 @@ export default async function handler(req, res) {
       return res.status(200).json({ tokenization_key: data.api_key });
     }
 
-    console.error('[API] No key found for store:', storeId, 'provider:', provider, 'data:', data);
-    return res.status(404).json({ error: 'No key found', data: data });
+    console.error('[Supabase ERROR] No key found for store:', storeId, 'provider:', provider, 'data:', data);
+    return res.status(404).json({ error: 'No key found', detail: 'Missing integration key' });
   } catch (error) {
-    console.error('[API] Unexpected error:', error.message, error.stack);
-    return res.status(500).json({ error: 'Unexpected server error', details: error.message });
+    console.error('[Supabase ERROR] Unexpected error:', error.message, error.stack);
+    return res.status(500).json({ error: 'Unexpected server error', detail: error.message });
   }
 }

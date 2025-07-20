@@ -84,10 +84,17 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  const { data: storeMatch } = await supabase
+  const { data: storeMatch, error: storeErr } = await supabase
     .from('stores')
     .select('id')
     .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
+  if (storeErr) {
+    console.error('[Supabase ERROR] Store lookup failed:', storeErr.message);
+    res
+      .status(500)
+      .json({ error: 'Store lookup failed', detail: storeErr.message });
+    return;
+  }
 
   if (!storeMatch || storeMatch.length === 0) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
@@ -187,12 +194,18 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   let customer_profile_id: string | null = null;
-  const { data: profileData } = await supabase
+  const { data: profileData, error: profileErr } = await supabase
     .from('customer_payment_profiles')
     .select('profile_id')
     .eq('customer_id', customerId)
     .eq('gateway', 'nmi')
     .single();
+  if (profileErr) {
+    console.error('[Supabase ERROR] Profile lookup failed:', profileErr.message);
+    return res
+      .status(500)
+      .json({ error: 'Profile lookup failed', detail: profileErr.message });
+  }
   customer_profile_id = profileData?.profile_id || null;
 
 
@@ -245,7 +258,13 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       .select('*')
       .eq(discount_id ? 'id' : 'code', discount_id || discount_code)
       .maybeSingle();
-    if (discErr || !disc) {
+    if (discErr) {
+      console.error('[Supabase ERROR] Discount lookup failed:', discErr.message);
+      return res
+        .status(500)
+        .json({ error: 'Discount lookup failed', detail: discErr.message });
+    }
+    if (!disc) {
       warn('Discount lookup failed:', discErr?.message);
     } else {
       const now = Date.now();
@@ -253,10 +272,16 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       const startsOk = !disc.starts_at || new Date(disc.starts_at).getTime() <= now;
       const endsOk = !disc.expires_at || new Date(disc.expires_at).getTime() >= now;
       if (active && startsOk && endsOk) {
-        const { count: totalUses } = await supabase
+        const { count: totalUses, error: usesErr } = await supabase
           .from('discount_usages')
           .select('id', { head: true, count: 'exact' })
           .eq('discount_id', disc.id);
+        if (usesErr) {
+          console.error('[Supabase ERROR] Discount usage count failed:', usesErr.message);
+          return res
+            .status(500)
+            .json({ error: 'Discount usage lookup failed', detail: usesErr.message });
+        }
         if (
           disc.max_redemptions &&
           typeof totalUses === 'number' &&
@@ -266,11 +291,17 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         } else {
           let perCustomerOk = true;
           if (customerId && disc.limit_per_customer) {
-            const { count: custCount } = await supabase
+            const { count: custCount, error: custErr } = await supabase
               .from('discount_usages')
               .select('id', { head: true, count: 'exact' })
               .eq('discount_id', disc.id)
               .eq('customer_id', customerId);
+            if (custErr) {
+              console.error('[Supabase ERROR] Discount usage lookup failed:', custErr.message);
+              return res
+                .status(500)
+                .json({ error: 'Discount usage lookup failed', detail: custErr.message });
+            }
             if (
               typeof custCount === 'number' &&
               custCount >= disc.limit_per_customer
@@ -300,8 +331,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     .maybeSingle();
 
   if (settingsError) {
-    err('Store settings lookup failed:', settingsError.message);
-    res.status(500).json({ error: 'Failed to load store settings' });
+    console.error('[Supabase ERROR] Store settings lookup failed:', settingsError.message);
+    res
+      .status(500)
+      .json({ error: 'Failed to load store settings', detail: settingsError.message });
     return;
   }
 
@@ -360,13 +393,15 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       .eq('cart_meta_hash', cart_meta_hash)
       .order('created_at', { ascending: false })
       .limit(1);
-  
+
     if (lookupErr) {
-      err('Order deduplication check failed:', lookupErr.message);
-      res.status(500).json({ 
-        error: 'Order lookup failed',
-        user_message: 'Processing error. Please try again.'
-      });
+      console.error(
+        '[Supabase ERROR] Order deduplication check failed:',
+        lookupErr.message
+      );
+      res
+        .status(500)
+        .json({ error: 'Order lookup failed', detail: lookupErr.message });
       return;
     }
   
@@ -481,13 +516,22 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   if (provider === 'nmi' && providerResult.success && !customer_profile_id && providerResult.customer_vault_id) {
-    await supabase
+    const { error: vaultErr } = await supabase
       .from('customer_payment_profiles')
-      .upsert({
-        customer_id: customerId,
-        gateway: 'nmi',
-        profile_id: providerResult.customer_vault_id
-      }, { onConflict: 'customer_id, gateway' });
+      .upsert(
+        {
+          customer_id: customerId,
+          gateway: 'nmi',
+          profile_id: providerResult.customer_vault_id
+        },
+        { onConflict: 'customer_id, gateway' }
+      );
+    if (vaultErr) {
+      console.error('[Supabase ERROR] Customer profile upsert failed:', vaultErr.message);
+      return res
+        .status(500)
+        .json({ error: 'Customer profile upsert failed', detail: vaultErr.message });
+    }
   }
 
   const intent = providerResult?.intent ?? providerResult;
@@ -522,8 +566,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       .maybeSingle();
 
     if (lookupError) {
-      err('Order lookup failed:', lookupError.message);
-      res.status(500).json({ error: 'Order lookup failed' });
+      console.error('[Supabase ERROR] Order lookup failed:', lookupError.message);
+      res
+        .status(500)
+        .json({ error: 'Order lookup failed', detail: lookupError.message });
       return;
     }
 
@@ -563,8 +609,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         .select('id')
         .single();
       if (error) {
-        err('Failed to update order:', error.message);
-        return res.status(500).json({ error: 'Order update failed' });
+        console.error('[Supabase ERROR] Failed to update order:', error.message);
+        return res
+          .status(500)
+          .json({ error: 'Order update failed', detail: error.message });
       }
       updated = data;
     } catch (e: any) {
@@ -592,8 +640,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         .from('order_items')
         .insert(itemRows);
       if (itemsError) {
-        err('Failed to insert order items:', itemsError.message);
-        return res.status(500).json({ error: 'Failed to insert order items' });
+        console.error('[Supabase ERROR] Failed to insert order items:', itemsError.message);
+        return res
+          .status(500)
+          .json({ error: 'Failed to insert order items', detail: itemsError.message });
       }
     }
 
@@ -607,7 +657,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
           used_at: new Date().toISOString()
         });
       if (usageErr) {
-        warn('Failed to log discount usage:', usageErr.message);
+        console.error('[Supabase ERROR] Failed to log discount usage:', usageErr.message);
+        return res
+          .status(500)
+          .json({ error: 'Failed to log discount usage', detail: usageErr.message });
       }
     }
 
@@ -627,8 +680,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     .maybeSingle();
 
   if (storeError) {
-    err('Store lookup failed:', storeError.message);
-    res.status(500).json({ error: 'Failed to fetch store information' });
+    console.error('[Supabase ERROR] Store lookup failed:', storeError.message);
+    res
+      .status(500)
+      .json({ error: 'Failed to fetch store information', detail: storeError.message });
     return;
   }
 
@@ -693,13 +748,17 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       .select('id')
       .single();
     if (error) {
-      console.error('[handleCheckout] Supabase upsert error:', error);
-      return res.status(500).json({ error: 'Order insert failed' });
+      console.error('[Supabase ERROR] Order insert failed:', error.message);
+      return res
+        .status(500)
+        .json({ error: 'Order insert failed', detail: error.message });
     }
     orderData = data;
   } catch (e) {
-    console.error('[handleCheckout] Supabase upsert threw:', e.message || e);
-    return res.status(500).json({ error: 'Order insert failed' });
+    console.error('[Supabase ERROR] Supabase upsert threw:', e.message || e);
+    return res
+      .status(500)
+      .json({ error: 'Order insert failed', detail: e.message || String(e) });
   }
 
   log('createOrder result:', JSON.stringify({ data: orderData }, null, 2));
@@ -718,8 +777,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         .from('order_items')
         .insert(itemRows);
       if (itemsError) {
-        err('Failed to insert order items:', itemsError.message);
-        return res.status(500).json({ error: 'Failed to insert order items' });
+        console.error('[Supabase ERROR] Failed to insert order items:', itemsError.message);
+        return res
+          .status(500)
+          .json({ error: 'Failed to insert order items', detail: itemsError.message });
       }
     }
 
@@ -733,7 +794,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
           used_at: new Date().toISOString()
         });
       if (usageErr) {
-        warn('Failed to log discount usage:', usageErr.message);
+        console.error('[Supabase ERROR] Failed to log discount usage:', usageErr.message);
+        return res
+          .status(500)
+          .json({ error: 'Failed to log discount usage', detail: usageErr.message });
       }
     }
   }
