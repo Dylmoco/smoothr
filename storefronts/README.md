@@ -63,9 +63,9 @@ smoothr.orders.renderOrders();
 
 Define a global `SMOOTHR_CONFIG` before loading the SDK to set the base
 currency, provide custom exchange rates, or override the live rates endpoint.
-The SDK populates `window.SMOOTHR_CONFIG` from your store's
-`public_store_settings` table when it initializes, so defining the object lets
-you override any of those values at runtime.
+When the SDK initializes it merges settings from your store's
+`public_store_settings` table into the object, so values you define beforehand
+remain in place.
 
 ```html
 <script>
