@@ -181,6 +181,8 @@ and place your credentials in the `settings` JSON column:
   "tokenization_key": "<TOKENIZATION_KEY>"
 }
 ```
+The tokenization key is surfaced through the `public_store_integration_credentials`
+view so storefront scripts can fetch it anonymously.
 
 Enable the gateway via `public_store_settings.active_payment_gateway` or set
 `window.SMOOTHR_CONFIG.active_payment_gateway = 'nmi'` on the client. Include
