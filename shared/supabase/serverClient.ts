@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+console.log('[Smoothr] Loaded serverClient.ts from shared/supabase ✅');
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
