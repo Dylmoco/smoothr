@@ -96,6 +96,23 @@ $$;
 
 ALTER FUNCTION "public"."generate_order_number"("p_store_id" "uuid") OWNER TO "postgres";
 
+
+CREATE OR REPLACE FUNCTION "public"."get_public_tokenization_key"("input_store_id" "uuid", "input_gateway" "text") RETURNS "text"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select
+    settings ->> 'tokenization_key'
+  from store_integrations
+  where store_id = input_store_id
+    and gateway = input_gateway
+    and sandbox = false
+  limit 1;
+$$;
+
+
+ALTER FUNCTION "public"."get_public_tokenization_key"("input_store_id" "uuid", "input_gateway" "text") OWNER TO "postgres";
+
 SET default_tablespace = '';
 
 SET default_table_access_method = "heap";
@@ -285,6 +302,34 @@ ALTER TABLE ONLY "public"."orders" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "public"."orders" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."store_integrations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "store_id" "uuid" NOT NULL,
+    "gateway" "text" NOT NULL,
+    "api_key" "text" NOT NULL,
+    "settings" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "sandbox" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+ALTER TABLE ONLY "public"."store_integrations" FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."store_integrations" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "public"."public_store_integration_credentials" AS
+ SELECT "store_integrations"."store_id",
+    COALESCE("store_integrations"."gateway", ("store_integrations"."settings" ->> 'gateway'::"text")) AS "gateway",
+    ("store_integrations"."settings" ->> 'tokenization_key'::"text") AS "tokenization_key"
+   FROM "public"."store_integrations"
+  WHERE ("store_integrations"."sandbox" = false);
+
+
+ALTER TABLE "public"."public_store_integration_credentials" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."public_store_settings" (
     "store_id" "uuid" NOT NULL,
     "theme" "jsonb",
@@ -350,23 +395,6 @@ ALTER TABLE ONLY "public"."reviews" FORCE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."reviews" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."store_integrations" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "store_id" "uuid" NOT NULL,
-    "gateway" "text" NOT NULL,
-    "api_key" "text" NOT NULL,
-    "settings" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
-    "sandbox" boolean DEFAULT false NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
-);
-
-ALTER TABLE ONLY "public"."store_integrations" FORCE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."store_integrations" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."store_settings" (
@@ -805,6 +833,10 @@ CREATE POLICY "affiliates_admin_write" ON "public"."affiliates" USING ((EXISTS (
   WHERE (("us"."store_id" = "affiliates"."store_id") AND ("us"."customer_id" = "auth"."uid"()) AND ("us"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."user_stores" "us"
   WHERE (("us"."store_id" = "affiliates"."store_id") AND ("us"."customer_id" = "auth"."uid"()) AND ("us"."role" = 'admin'::"text")))));
+
+
+
+CREATE POLICY "anon can select store config" ON "public"."public_store_settings" FOR SELECT TO "anon" USING (true);
 
 
 
@@ -1381,6 +1413,10 @@ GRANT USAGE ON SCHEMA "public" TO "anon";
 
 
 
+GRANT ALL ON FUNCTION "public"."get_public_tokenization_key"("input_store_id" "uuid", "input_gateway" "text") TO "anon";
+
+
+
 
 
 
@@ -1443,6 +1479,19 @@ GRANT SELECT ON TABLE "public"."orders" TO "anon";
 
 
 
+GRANT SELECT ON TABLE "public"."store_integrations" TO "anon";
+
+
+
+GRANT SELECT ON TABLE "public"."public_store_integration_credentials" TO "anon";
+
+
+
+GRANT SELECT ON TABLE "public"."public_store_settings" TO "anon";
+GRANT SELECT ON TABLE "public"."public_store_settings" TO "authenticated";
+
+
+
 GRANT SELECT ON TABLE "public"."referrals" TO "anon";
 
 
@@ -1452,10 +1501,6 @@ GRANT SELECT ON TABLE "public"."returns" TO "anon";
 
 
 GRANT SELECT ON TABLE "public"."reviews" TO "anon";
-
-
-
-GRANT SELECT ON TABLE "public"."store_integrations" TO "anon";
 
 
 
