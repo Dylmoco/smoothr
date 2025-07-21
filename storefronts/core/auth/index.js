@@ -1,4 +1,4 @@
-import supabase from '../../../supabase/supabaseClient.js';
+import { supabase } from '../../../shared/supabase/serverClient';
 import {
   initAuth,
   initPasswordResetConfirmation,

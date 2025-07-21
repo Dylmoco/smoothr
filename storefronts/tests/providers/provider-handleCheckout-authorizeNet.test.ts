@@ -12,7 +12,7 @@ vi.mock('../../../smoothr/lib/findOrCreateCustomer.ts', () => {
   return { findOrCreateCustomer: vi.fn(async () => 'cust-1') };
 });
 
-vi.mock('../../../shared/supabase/serverClient.ts', () => {
+vi.mock('../../../shared/supabase/serverClient', () => {
   let storeFromCall = 0;
   let ordersCall = 0;
   const client = {
@@ -71,7 +71,7 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
       }
   };
   return {
-    default: client,
+    supabase: client,
     createServerSupabaseClient: () => client,
   };
 });

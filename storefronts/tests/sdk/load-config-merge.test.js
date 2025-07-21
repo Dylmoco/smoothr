@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-vi.mock('../../../supabase/supabaseClient.js', () => {
+vi.mock('../../../shared/supabase/serverClient', () => {
   const single = vi.fn(async () => ({ data: { foo: 'bar' }, error: null }));
   const eq = vi.fn(() => ({ single }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
-  return { default: { from } };
+  return { supabase: { from } };
 });
 
 beforeEach(() => {

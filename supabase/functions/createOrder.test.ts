@@ -25,8 +25,8 @@ describe('createOrder', () => {
 
     fromMock = vi.fn(() => ({ insert: insertMock }));
 
-    vi.mock('../../shared/supabase/serverClient.ts', () => ({
-      default: { from: fromMock },
+    vi.mock('../../shared/supabase/serverClient', () => ({
+      supabase: { from: fromMock },
       createServerSupabaseClient: () => ({ from: fromMock }),
     }));
 
