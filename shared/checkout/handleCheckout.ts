@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../supabase/serverClient';
+import supabase from '../supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import stripeProvider from './providers/stripe';
