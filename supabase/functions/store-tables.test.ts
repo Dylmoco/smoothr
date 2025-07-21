@@ -6,7 +6,9 @@ let settingsBuilder: any
 let integrationsBuilder: any
 
 async function loadClient() {
+
   supabase = (await import('../../shared/supabase/serverClient')).supabase
+
 }
 
 describe('store tables queries', () => {
