@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '../supabase/serverClient';
 export async function getStoreIntegration(storeId: string, integrationId: string) {
   if (!storeId || !integrationId) return null;
   const supabase = createServerSupabaseClient();
+  console.log('[STEP] Fetching store_integrations...');
   const { data, error } = await supabase
     .from('store_integrations')
     .select('api_key, settings')
