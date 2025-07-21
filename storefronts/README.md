@@ -181,14 +181,17 @@ and place your credentials in the `settings` JSON column:
   "tokenization_key": "<TOKENIZATION_KEY>"
 }
 ```
-The tokenization key can be fetched anonymously using the
-`public.get_public_tokenization_key` function:
+The tokenization key can be fetched anonymously from the
+`public_store_integration_credentials` view:
 
 ```js
-const { data: key } = await supabase.rpc('get_public_tokenization_key', {
-  store_id: '<store-id>',
-  gateway: 'nmi'
-});
+const { data } = await supabase
+  .from('public_store_integration_credentials')
+  .select('tokenization_key')
+  .eq('store_id', '<store-id>')
+  .eq('gateway', 'nmi')
+  .maybeSingle();
+const key = data?.tokenization_key;
 ```
 
 Enable the gateway via `public_store_settings.active_payment_gateway` or set
