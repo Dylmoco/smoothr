@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 let handleCheckout: any;
 
-vi.mock('../../../shared/supabase/serverClient.ts', () => {
+vi.mock('../../../shared/supabase/serverClient', () => {
   const client = {
     from: (table: string) => {
       if (table === 'stores') {
@@ -16,7 +16,7 @@ vi.mock('../../../shared/supabase/serverClient.ts', () => {
       return {};
     },
   };
-  return { default: client, createServerSupabaseClient: () => client };
+  return { supabase: client, createServerSupabaseClient: () => client };
 });
 
 async function loadModule() {
