@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../supabase/serverClient';
+import { supabase, testMarker } from '../supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import stripeProvider from './providers/stripe';
@@ -72,6 +72,7 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
 export async function handleCheckout({ req, res }: { req: NextApiRequest; res: NextApiResponse; }) {
   console.log('[handleCheckout] Invoked');
   console.log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
+  console.log('[handleCheckout] testMarker:', testMarker);
   console.log('[DEBUG] SERVICE ROLE LOADED?', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
   console.log('[DEBUG] SUPABASE_URL:', process.env.SUPABASE_URL);
   try {
