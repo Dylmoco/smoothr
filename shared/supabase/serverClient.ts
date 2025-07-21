@@ -9,17 +9,11 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-export function createServerSupabaseClient() {
-  return createClient(supabaseUrl, supabaseKey, {
-    global: {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  global: {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
     },
-  });
-}
-
-const supabase = createServerSupabaseClient();
-
-export default supabase;
+  },
+});
