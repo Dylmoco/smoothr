@@ -3,20 +3,17 @@ import supabase from '../../supabase/supabaseClient.js';
 export async function getPublicCredential(storeId, integrationId, gateway) {
   if (!storeId || !integrationId) return null;
   try {
-    // Special case for NMI tokenization key which is exposed via a public view
-    if ((integrationId === 'nmi' || gateway === 'nmi')) {
-      const { data, error } = await supabase
-        .from('public_store_integration_credentials')
-        .select('tokenization_key')
-        .eq('store_id', storeId)
-        .eq('gateway', gateway || integrationId)
-        .maybeSingle();
-
+    // Special case for NMI tokenization key exposed via a helper function
+    if (integrationId === 'nmi' || gateway === 'nmi') {
+      const { data, error } = await supabase.rpc('get_public_tokenization_key', {
+        store_id: storeId,
+        gateway: gateway || integrationId
+      });
       if (error) {
         console.warn('[Smoothr] Credential lookup failed:', error.message || error);
         return null;
       }
-      return data ? { api_key: data.tokenization_key } : null;
+      return data ? { tokenization_key: data } : null;
     }
 
     let query = supabase
