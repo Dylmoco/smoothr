@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase, testMarker } from '../supabase/serverClient.ts';
+import { supabase, testMarker } from '../supabase/serverClient';
 console.log('[handleCheckout] testMarker:', testMarker);
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
