@@ -1,4 +1,4 @@
-import supabase from '../../supabase/supabaseClient.js';
+import { supabase } from '../../shared/supabase/serverClient';
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';

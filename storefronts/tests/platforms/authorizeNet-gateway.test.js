@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-vi.mock('../../../supabase/supabaseClient.js', () => {
+vi.mock('../../../shared/supabase/serverClient.ts', () => {
   const maybeSingle = vi.fn(async () => ({
     data: { settings: { client_key: 'client', api_login_id: 'id' } },
     error: null
@@ -9,7 +9,7 @@ vi.mock('../../../supabase/supabaseClient.js', () => {
   const eq1 = vi.fn(() => ({ eq: eq2 }));
   const select = vi.fn(() => ({ eq: eq1 }));
   const from = vi.fn(() => ({ select }));
-  return { default: { from } };
+  return { supabase: { from } };
 });
 
 let createPaymentMethod;
