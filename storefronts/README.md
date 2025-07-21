@@ -28,6 +28,18 @@ NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL=your-redirect-url
 
 An `.env.example` file is included for reference.
 
+When the SDK loads it fetches your store settings from Supabase. Any
+`api_base` value returned is automatically mapped to the camel case
+`apiBase` property on `window.SMOOTHR_CONFIG`.
+
+```js
+// public_store_settings row
+{ "api_base": "https://example.com" }
+
+// after loadConfig runs
+window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
+```
+
 ## Core modules
 
 - abandoned-cart
