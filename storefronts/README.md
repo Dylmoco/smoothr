@@ -173,7 +173,9 @@ setting on the client by defining the following snippet before loading the SDK:
 
 A Network Merchants (NMI) integration is also supported. Create a new record in
 `store_integrations` with either `gateway` or `settings.gateway` set to `nmi`
-and place your credentials in the `settings` JSON column:
+and place your credentials in the `settings` JSON column. The
+`public_store_integration_credentials` view coalesces the `gateway` column with
+`settings.gateway` so either approach works:
 
 ```json
 {
