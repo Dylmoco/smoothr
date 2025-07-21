@@ -246,6 +246,27 @@ copies updated sources into `dist/gateways` so the published SDK includes the
 latest gateway logic. Commit both the source and corresponding `dist` files in
 the same change.
 
+### Local build
+
+Ensure **Node.js 20 or later** is installed. Before running the build delete
+any existing bundle and provide your Supabase credentials so the environment is
+clean:
+
+```bash
+rm -rf dist
+NEXT_PUBLIC_SUPABASE_URL=<project-url> \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key> \
+npm run build
+```
+
+If you modify files under `checkout/` also run:
+
+```bash
+npm run bundle:webflow-checkout
+```
+
+to regenerate `dist/platforms/webflow/checkout.js`.
+
 ## CI/CD
 
 The SDK is built and deployed automatically whenever code is pushed to the
