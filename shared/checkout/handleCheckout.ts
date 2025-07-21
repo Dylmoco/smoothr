@@ -87,6 +87,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
+  console.log('[STEP] Fetching stores...');
   const { data: storeMatch, error: storeErr } = await supabase
     .from('stores')
     .select('id')
@@ -189,6 +190,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   let customerId: string | null = null;
   try {
+    console.log('[STEP] Fetching customer...');
     customerId = await findOrCreateCustomer(supabase, store_id, email);
   } catch (error: any) {
     err('findOrCreateCustomer failed:', error?.message || error);
@@ -197,6 +199,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   let customer_profile_id: string | null = null;
+  console.log('[STEP] Fetching customer_payment_profiles...');
   const { data: profileData, error: profileErr } = await supabase
     .from('customer_payment_profiles')
     .select('profile_id')
@@ -256,6 +259,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   let discountRecord: any = null;
   if (discount_id || discount_code) {
+    console.log('[STEP] Fetching discounts...');
     const { data: disc, error: discErr } = await supabase
       .from('discounts')
       .select('*')
@@ -275,6 +279,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       const startsOk = !disc.starts_at || new Date(disc.starts_at).getTime() <= now;
       const endsOk = !disc.expires_at || new Date(disc.expires_at).getTime() >= now;
       if (active && startsOk && endsOk) {
+        console.log('[STEP] Counting discount usages...');
         const { count: totalUses, error: usesErr } = await supabase
           .from('discount_usages')
           .select('id', { head: true, count: 'exact' })
@@ -294,6 +299,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         } else {
           let perCustomerOk = true;
           if (customerId && disc.limit_per_customer) {
+            console.log('[STEP] Counting customer discount usages...');
             const { count: custCount, error: custErr } = await supabase
               .from('discount_usages')
               .select('id', { head: true, count: 'exact' })
@@ -327,6 +333,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     total = Math.max(0, total - amt);
   }
 
+  console.log('[STEP] Fetching store_settings...');
   const { data: storeSettings, error: settingsError } = await supabase
     .from('public_store_settings')
     .select('active_payment_gateway')
@@ -387,6 +394,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       });
     }
   
+    console.log('[STEP] Checking for duplicate orders...');
     const { data: existingOrders, error: lookupErr } = await supabase
       .from('orders')
       .select('id, created_at, status, payment_intent_id')
@@ -519,6 +527,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   if (provider === 'nmi' && providerResult.success && !customer_profile_id && providerResult.customer_vault_id) {
+    console.log('[STEP] Upserting customer_payment_profiles...');
     const { error: vaultErr } = await supabase
       .from('customer_payment_profiles')
       .upsert(
@@ -561,6 +570,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   if (provider === 'authorizeNet') {
     const orderNumber = payload.order_number!;
+    console.log('[STEP] Checking existing order for Authorize.Net...');
     const { data: existingOrder, error: lookupError } = await supabase
       .from('orders')
       .select('id')
@@ -604,6 +614,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
     let updated;
     try {
+      console.log('[STEP] Updating order (Authorize.Net)...');
       const { data, error } = await supabase
         .from('orders')
         .update(updatePayload)
@@ -639,6 +650,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }));
 
     if (itemRows.length) {
+      console.log('[STEP] Inserting order_items (Authorize.Net)...');
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(itemRows);
@@ -651,6 +663,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
 
     if (discountRecord) {
+      console.log('[STEP] Logging discount usage (Authorize.Net)...');
       const { error: usageErr } = await supabase
         .from('discount_usages')
         .insert({
@@ -676,6 +689,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     });
   }
 
+  console.log('[STEP] Fetching stores...');
   const { data: storeData, error: storeError } = await supabase
     .from('stores')
     .select('prefix, order_sequence')
@@ -745,6 +759,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   let orderData;
   try {
+    console.log('[STEP] Upserting order record...');
     const { data, error } = await supabase
       .from('orders')
       .upsert(orderPayload, { onConflict: 'order_number' })
@@ -776,6 +791,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }));
 
     if (itemRows.length) {
+      console.log('[STEP] Inserting order_items...');
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(itemRows);
@@ -788,6 +804,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
 
     if (discountRecord) {
+      console.log('[STEP] Logging discount usage...');
       const { error: usageErr } = await supabase
         .from('discount_usages')
         .insert({
