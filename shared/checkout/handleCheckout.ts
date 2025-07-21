@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '../supabase/serverClient';
+import { supabase } from '@/supabase/serverClient';
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import stripeProvider from './providers/stripe';
@@ -75,7 +75,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   console.log('[DEBUG] SERVICE ROLE LOADED?', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
   console.log('[DEBUG] SUPABASE_URL:', process.env.SUPABASE_URL);
   try {
-  const supabase = createServerSupabaseClient();
 
   const origin = req.headers.origin as string | undefined;
   if (!origin) {
