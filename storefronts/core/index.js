@@ -28,7 +28,10 @@ async function loadConfig(storeId) {
     .eq('store_id', storeId)
     .single();
   if (error) throw error;
-  window.SMOOTHR_CONFIG = data || {};
+  window.SMOOTHR_CONFIG = {
+    ...(window.SMOOTHR_CONFIG || {}),
+    ...(data || {})
+  };
   window.SMOOTHR_CONFIG.storeId = storeId;
 }
 
