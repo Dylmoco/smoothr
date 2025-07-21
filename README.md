@@ -73,6 +73,10 @@ manual build step is required.
 Use `npm run bundle:webflow-checkout` from the repository root to rebuild only
 the Webflow checkout script.
 
+During the build a helper script (`storefronts/scripts/check-sdk.js`) verifies
+that required exports exist and that no compiled file still contains
+`import.meta.env`. The build fails if any such reference is found.
+
 ## Checkout API
 
 The admin dashboard exposes two endpoints for initiating a checkout:
@@ -257,7 +261,8 @@ successful deployment with the commit hash and UTC timestamp.
 All pushes to the `main` branch trigger the workflow defined at
 `.github/workflows/build-and-deploy.yml`. The workflow uses Node.js 20,
 installs dependencies, runs tests, builds the storefront SDK, performs the
-postbuild check, and deploys `storefronts/dist` to Cloudflare Pages.
+postbuild check (including a scan for any `import.meta.env` references), and
+deploys `storefronts/dist` to Cloudflare Pages.
 
 To configure deployment secrets go to **Settings → Secrets and variables →
 Actions** in GitHub and add:

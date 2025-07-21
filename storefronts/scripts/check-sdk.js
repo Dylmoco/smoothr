@@ -67,3 +67,26 @@ if (nmiMissing.length) {
 
 log('nmi.js contains required exports.');
 
+const filesToScan = [
+  { path: sdkPath, name: 'smoothr-sdk.js' },
+  { path: checkoutPath, name: 'checkout.js' },
+  { path: stripePath, name: 'gateways/stripe.js' },
+  { path: nmiPath, name: 'gateways/nmi.js' },
+  { path: webflowCheckoutPath, name: 'platforms/webflow/checkout.js' },
+  { path: waitForElementPath, name: 'utils/waitForElement.js' },
+];
+
+const flagged = [];
+
+for (const file of filesToScan) {
+  const text = await readFile(file.path, 'utf8');
+  if (text.includes('import.meta.env')) flagged.push(file.name);
+}
+
+if (flagged.length) {
+  err(`import.meta.env found in: ${flagged.join(', ')}`);
+  process.exit(1);
+}
+
+log('No import.meta.env references detected.');
+
