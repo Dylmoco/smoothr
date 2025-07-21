@@ -32,6 +32,12 @@ async function loadConfig(storeId) {
     ...(window.SMOOTHR_CONFIG || {}),
     ...(data || {})
   };
+  if (
+    'api_base' in window.SMOOTHR_CONFIG &&
+    !window.SMOOTHR_CONFIG.apiBase
+  ) {
+    window.SMOOTHR_CONFIG.apiBase = window.SMOOTHR_CONFIG.api_base;
+  }
   window.SMOOTHR_CONFIG.storeId = storeId;
 }
 
