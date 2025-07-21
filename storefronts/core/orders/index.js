@@ -2,7 +2,7 @@
  * Handles order workflows and UI widgets for the storefront.
  */
 
-import supabase from '../../../supabase/supabaseClient.js';
+import { supabase } from '../../../shared/supabase/serverClient';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Orders]', ...args);

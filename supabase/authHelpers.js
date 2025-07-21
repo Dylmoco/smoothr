@@ -1,4 +1,4 @@
-import supabase from './supabaseClient.js';
+import { supabase } from '../shared/supabase/serverClient';
 
 const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
