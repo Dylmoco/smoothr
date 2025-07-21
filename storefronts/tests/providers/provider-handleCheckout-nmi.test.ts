@@ -90,7 +90,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
         return {};
       }
   };
-  return { supabase: client, createServerSupabaseClient: () => client };
+  return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
 });
 
 async function loadModule() {

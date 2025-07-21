@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/supabase/serverClient';
+import { supabase } from '../../shared/supabase/browserClient';
 
 const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const log = (...args: any[]) => debug && console.log('[Smoothr Discounts]', ...args);

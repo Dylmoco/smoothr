@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-vi.mock('../../../shared/supabase/serverClient', () => {
+vi.mock('../../../shared/supabase/browserClient', () => {
   
   const maybeSingle = vi.fn(async () => ({
     data: { settings: { client_key: 'client', api_login_id: 'id' } },

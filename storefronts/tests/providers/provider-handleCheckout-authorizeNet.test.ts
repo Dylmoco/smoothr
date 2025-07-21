@@ -73,6 +73,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
   return {
     supabase: client,
     createServerSupabaseClient: () => client,
+    testMarker: '✅ serverClient loaded'
   };
 });
 
