@@ -40,6 +40,8 @@ try {
     target: 'es2018',
     define: {
       'process.env.NODE_ENV': '"production"',
+      'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(supabaseUrl),
+      'process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),
       __NEXT_PUBLIC_SUPABASE_URL__: JSON.stringify(supabaseUrl),
       __NEXT_PUBLIC_SUPABASE_ANON_KEY__: JSON.stringify(supabaseAnonKey)
     }
