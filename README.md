@@ -167,8 +167,8 @@ override this global to customize how order numbers are produced.
 
 To enable NMI create a row in the `store_integrations` table with `gateway`
 set to `nmi` and store both the API key and tokenization key under the
-`settings` column. The tokenization key can be fetched anonymously via the
-`public.get_public_tokenization_key` function:
+`settings` column. The tokenization key is exposed anonymously through the
+`public_store_integration_credentials` view:
 
 ```json
 {
@@ -177,35 +177,16 @@ set to `nmi` and store both the API key and tokenization key under the
 }
 ```
 
-```sql
-create or replace function public.get_public_tokenization_key(
-  store_id uuid,
-  gateway text
-)
-returns text
-language sql
-security definer
-as $$
-  select settings ->> 'tokenization_key'
-  from public.store_integrations
-  where store_id = get_public_tokenization_key.store_id
-    and sandbox = false
-    and (
-      gateway = get_public_tokenization_key.gateway or
-      settings ->> 'gateway' = get_public_tokenization_key.gateway
-    )
-  limit 1;
-$$;
-grant execute on function public.get_public_tokenization_key(uuid, text) to anon;
-```
-
 Retrieve the key with Supabase:
 
 ```js
-const { data: key } = await supabase.rpc('get_public_tokenization_key', {
-  store_id: '<store-id>',
-  gateway: 'nmi'
-});
+const { data } = await supabase
+  .from('public_store_integration_credentials')
+  .select('tokenization_key')
+  .eq('store_id', '<store-id>')
+  .eq('gateway', 'nmi')
+  .maybeSingle();
+const key = data?.tokenization_key;
 ```
 
 Activate the gateway by setting
