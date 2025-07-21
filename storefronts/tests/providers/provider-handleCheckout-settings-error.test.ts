@@ -44,7 +44,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
       return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(async () => ({ data: null, error: null })) })) })) })) };
     }
   };
-  return { supabase: client, createServerSupabaseClient: () => client };
+  return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
 });
 
 async function loadModule() {

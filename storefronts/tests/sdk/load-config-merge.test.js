@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-vi.mock('../../../shared/supabase/serverClient', () => {
+vi.mock('../../../shared/supabase/browserClient', () => {
 
   const single = vi.fn(async () => ({ data: { foo: 'bar' }, error: null }));
   const eq = vi.fn(() => ({ single }));

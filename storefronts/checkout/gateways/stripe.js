@@ -1,5 +1,5 @@
 import forceStripeIframeStyle from './forceStripeIframeStyle.js';
-import { supabase } from '../../../shared/supabase/serverClient';
+import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 let fieldsMounted = false;
