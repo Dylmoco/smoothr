@@ -73,6 +73,7 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
 export async function handleCheckout({ req, res }: { req: NextApiRequest; res: NextApiResponse; }) {
   console.log('[handleCheckout] Invoked');
   console.log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
+  console.log('[handleCheckout] testMarker:', testMarker);
   console.log('[DEBUG] SERVICE ROLE LOADED?', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
   console.log('[DEBUG] SUPABASE_URL:', process.env.SUPABASE_URL);
   try {
