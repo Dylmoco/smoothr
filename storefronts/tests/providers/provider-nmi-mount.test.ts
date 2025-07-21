@@ -50,7 +50,7 @@ beforeEach(async () => {
     return HTMLElement.prototype.appendChild.call(document.head, el);
   });
 
-  getCredMock = vi.fn(async () => ({ settings: { tokenization_key: 'tok_key' } }));
+  getCredMock = vi.fn(async () => ({ tokenization_key: 'tok_key' }));
 
   vi.mock('../../checkout/getPublicCredential.js', () => ({
     getPublicCredential: getCredMock

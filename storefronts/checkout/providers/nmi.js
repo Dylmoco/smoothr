@@ -17,6 +17,8 @@ export async function resolveTokenizationKey() {
     const cred = await getPublicCredential(storeId, 'nmi', gateway);
     if (cred?.api_key) {
       cachedKey = cred.api_key;
+    } else if (cred?.tokenization_key) {
+      cachedKey = cred.tokenization_key;
     } else if (cred?.settings?.tokenization_key) {
       warn('tokenization_key is deprecated – update integration to use api_key');
       cachedKey = cred.settings.tokenization_key;

@@ -167,13 +167,22 @@ override this global to customize how order numbers are produced.
 
 To enable NMI create a row in the `store_integrations` table with `gateway`
 set to `nmi` and store both the API key and tokenization key under the
-`settings` column:
+`settings` column. The tokenization key is surfaced to anonymous storefronts
+via the `public_store_integration_credentials` view:
 
 ```json
 {
   "api_key": "<API_KEY>",
   "tokenization_key": "<TOKENIZATION_KEY>"
 }
+```
+
+```sql
+create or replace view public.public_store_integration_credentials as
+select store_id, gateway, settings ->> 'tokenization_key' as tokenization_key
+from public.store_integrations
+where sandbox = false;
+grant select on public.public_store_integration_credentials to anon;
 ```
 
 Activate the gateway by setting
