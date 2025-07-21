@@ -2,7 +2,7 @@
 create or replace view public.public_store_integration_credentials as
 select
   store_id,
-  gateway,
+  coalesce(gateway, settings ->> 'gateway') as gateway,
   settings ->> 'tokenization_key' as tokenization_key
 from
   public.store_integrations
