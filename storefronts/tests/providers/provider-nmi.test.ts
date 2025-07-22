@@ -71,4 +71,25 @@ describe('handleNmi', () => {
     const res = await handleNmi(basePayload);
     expect(res).toEqual({ success: false, error: 'Missing security key' });
   });
+
+  it('prefers customer_profile_id over token', async () => {
+    const res = await handleNmi({
+      ...basePayload,
+      payment_token: 'tok_x',
+      customer_profile_id: 'vault123'
+    });
+    expect(res.success).toBe(true);
+    const params = new URLSearchParams(fetchMock.mock.calls[0][1].body);
+    expect(params.get('customer_vault_id')).toBe('vault123');
+    expect(params.get('payment_token')).toBeNull();
+    expect(params.get('customer_vault')).toBeNull();
+  });
+
+  it('errors when token and vault id missing', async () => {
+    const res = await handleNmi({
+      ...basePayload,
+      payment_token: undefined as any
+    });
+    expect(res).toEqual({ success: false, error: 'Missing payment_token or vault_id' });
+  });
 });

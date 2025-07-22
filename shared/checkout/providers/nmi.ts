@@ -86,13 +86,11 @@ export default async function handleNmi(payload: NmiPayload) {
 
   if (payload.customer_profile_id) {
     params.append('customer_vault_id', payload.customer_profile_id);
-  } else {
+  } else if (payload.payment_token && payload.payment_token.trim()) {
     params.append('customer_vault', 'add_customer');
-    if (payload.payment_token && payload.payment_token.trim()) {
-      params.append('payment_token', payload.payment_token);
-    } else {
-      return { success: false, error: 'Missing payment_token for NMI sale' };
-    }
+    params.append('payment_token', payload.payment_token);
+  } else {
+    return { success: false, error: 'Missing payment_token or vault_id' };
   }
 
   // Add billing if provided, else use shipping
