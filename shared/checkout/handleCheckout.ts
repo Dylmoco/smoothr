@@ -87,6 +87,9 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
+  const payload = req.body as CheckoutPayload;
+  const { store_id } = payload;
+
   console.log('[STEP] Fetching store by ID...');
   const { data: storeMatch, error: storeErr } = await supabase
     .from('stores')
@@ -125,8 +128,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  const payload = req.body as CheckoutPayload;
-  if (!payload.store_id) {
+  if (!store_id) {
     warn('Missing store_id');
     res.status(400).json({ 
       error: 'Missing store_id',
@@ -154,7 +156,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     shipping,
     cart,
     currency,
-    store_id,
     description,
     discount_code,
     discount_id,
