@@ -72,7 +72,7 @@ describe('handleNmi', () => {
     expect(res).toEqual({ success: false, error: 'Missing security key' });
   });
 
-  it('prefers customer_profile_id over token', async () => {
+  it('prefers token over customer_profile_id', async () => {
     const res = await handleNmi({
       ...basePayload,
       payment_token: 'tok_x',
@@ -80,9 +80,9 @@ describe('handleNmi', () => {
     });
     expect(res.success).toBe(true);
     const params = new URLSearchParams(fetchMock.mock.calls[0][1].body);
-    expect(params.get('customer_vault_id')).toBe('vault123');
-    expect(params.get('payment_token')).toBeNull();
-    expect(params.get('customer_vault')).toBeNull();
+    expect(params.get('payment_token')).toBe('tok_x');
+    expect(params.get('customer_vault')).toBe('add_customer');
+    expect(params.get('customer_vault_id')).toBeNull();
   });
 
   it('errors when token and vault id missing', async () => {
