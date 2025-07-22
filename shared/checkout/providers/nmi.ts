@@ -109,7 +109,7 @@ export default async function handleNmi(payload: NmiPayload) {
   params.append('billing_zip', billAddr.postal_code);
   params.append('billing_country', billAddr.country);
 
-  // Add cart items as products (NMI supports multiple product lines)
+  // Add cart items as products (NMI supports multiple product lines))
   payload.cart.forEach((item, index) => {
     // Fallback to empty string so "undefined" isn't sent when product_id is missing
     params.append(`product[${index}][sku]`, item.product_id || '');
