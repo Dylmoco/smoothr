@@ -87,7 +87,7 @@ export default async function handleStripe(payload: StripePayload) {
       { idempotencyKey }
     );
     log('Stripe PaymentIntent created:', intent.id);
-    return { success: true, intent };
+    return { success: true, transaction_id: intent.id };
   } catch (err: any) {
     console.error('Stripe Error:', err);
     return { success: false, error: err?.message || 'Stripe checkout failed' };
