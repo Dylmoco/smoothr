@@ -35,7 +35,7 @@ interface NmiPayload {
     };
   };
   cart: Array<{
-    product_id: string;
+    product_id?: string;
     name: string;
     quantity: number;
     price: number;
@@ -106,7 +106,8 @@ export default async function handleNmi(payload: NmiPayload) {
 
   // Add cart items as products (NMI supports multiple product lines)
   payload.cart.forEach((item, index) => {
-    params.append(`product[${index}][sku]`, item.product_id);
+    // Fallback to empty string so "undefined" isn't sent when product_id is missing
+    params.append(`product[${index}][sku]`, item.product_id || '');
     params.append(`product[${index}][description]`, item.name);
     params.append(`product[${index}][qty]`, item.quantity.toString());
     params.append(`product[${index}][price]`, (item.price / 100).toFixed(2));
