@@ -119,13 +119,31 @@ export default async function handleNmi(payload: NmiPayload) {
     );
     const text = await res.text();
     log('NMI response:', text);
-    const data = new URLSearchParams(text);
-    const success = data.get('response') === '1';
+
+    // Parse the form encoded response into a plain object
+    const responseParams = new URLSearchParams(text);
+    const data: Record<string, string> = {};
+    responseParams.forEach((value, key) => {
+      data[key] = value;
+    });
+
+    const success = data.response === '1';
+
+    if (!success) {
+      return {
+        success: false,
+        error: data.responsetext || `NMI error (code ${data.response_code})`,
+        data,
+        transaction_id: null,
+        customer_vault_id: null
+      };
+    }
+
     return {
-      success,
+      success: true,
       data,
-      transaction_id: data.get('transactionid') ?? null,
-      customer_vault_id: data.get('customer_vault_id') ?? null // Capture for new vaults
+      transaction_id: data.transactionid ?? null,
+      customer_vault_id: data.customer_vault_id ?? null // Capture for new vaults
     };
   } catch (e: any) {
     err('NMI error:', e?.message || e);
