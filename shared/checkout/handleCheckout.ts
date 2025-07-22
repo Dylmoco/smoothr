@@ -723,15 +723,25 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  const nextSequence = Number(order_sequence) + 1;
   let orderNumber: string | undefined;
   try {
     orderNumber = await generateOrderNumber?.(store_id);
   } catch (e) {
     err('[generateOrderNumber] Failed to generate order number:', e.message || e);
   }
-  orderNumber =
-    orderNumber ?? `${prefix}-${String(nextSequence).padStart(4, '0')}`;
+  if (!orderNumber) {
+    const { data: generatedNumber, error: orderNumErr } = await supabase.rpc(
+      'next_order_number',
+      { store_id },
+    );
+    if (orderNumErr || !generatedNumber) {
+      return res.status(500).json({
+        error: 'Failed to generate order number',
+        detail: orderNumErr?.message,
+      });
+    }
+    orderNumber = generatedNumber as string;
+  }
 
   log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
 
