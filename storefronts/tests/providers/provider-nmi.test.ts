@@ -90,6 +90,11 @@ describe('handleNmi', () => {
       ...basePayload,
       payment_token: undefined as any
     });
-    expect(res).toEqual({ success: false, error: 'Missing payment_token or vault_id' });
+    expect(res).toEqual({
+      success: false,
+      error: 'Missing payment_token or customer_profile_id for NMI sale',
+      transaction_id: null,
+      customer_vault_id: null
+    });
   });
 });
