@@ -92,7 +92,7 @@ describe('handleNmi', () => {
     });
     expect(res).toEqual({
       success: false,
-      error: 'Missing payment_token or customer_profile_id for NMI sale',
+      error: 'Missing payment_token or customer_profile_id for NMI auth',
       transaction_id: null,
       customer_vault_id: null
     });
