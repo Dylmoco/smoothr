@@ -87,11 +87,12 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  console.log('[STEP] Fetching stores...');
+  console.log('[STEP] Fetching store by ID...');
   const { data: storeMatch, error: storeErr } = await supabase
     .from('stores')
     .select('id')
-    .or(`store_domain.eq.${origin},live_domain.eq.${origin}`);
+    .eq('id', store_id);
+  
   if (storeErr) {
     console.error('[Supabase ERROR] Store lookup failed:', storeErr.message);
     res
