@@ -84,18 +84,16 @@ export default async function handleNmi(payload: NmiPayload) {
     orderid: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`  // Unique ID for each payment
   });
 
+  // 🔐 Credential Routing Logic
   if (payload.customer_profile_id) {
+    // ✅ Use vault ID
     params.append('customer_vault_id', payload.customer_profile_id);
   } else if (payload.payment_token) {
+    // ✅ Use one-time token and vault if requested
     params.append('customer_vault', 'add_customer');
     params.append('payment_token', payload.payment_token);
   } else {
-    return {
-      success: false,
-      error: 'Missing payment_token or customer_profile_id for NMI auth',
-      transaction_id: null,
-      customer_vault_id: null
-    };
+    throw new Error('Missing payment credentials');
   }
 
   // Add billing if provided, else use shipping
@@ -117,6 +115,10 @@ export default async function handleNmi(payload: NmiPayload) {
   });
 
   try {
+    console.log(
+      '[NMI Checkout] Using credentials:',
+      payload.customer_profile_id ? 'vault' : payload.payment_token ? 'token' : 'none'
+    );
     log('NMI payload:', params.toString());
     const res = await fetch(
       'https://secure.networkmerchants.com/api/transact.php',
