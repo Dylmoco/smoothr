@@ -62,7 +62,7 @@ describe('handleStripe', () => {
     const intent = { id: 'pi_123' };
     createMock.mockResolvedValue(intent);
     const res = await handleStripe(basePayload);
-    expect(res).toEqual({ success: true, intent });
+    expect(res).toEqual({ success: true, transaction_id: 'pi_123' });
     expect(integrationMock).toHaveBeenCalledWith('store-1', 'stripe');
   });
 });

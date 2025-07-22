@@ -19,11 +19,11 @@ vi.mock('../../../shared/supabase/serverClient', () => {
       if (table === 'stores') {
         return {
           select: vi.fn(() => ({
-            or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
+            eq: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
           }))
         };
       }
-      if (table === 'public_store_settings') {
+      if (table === 'store_settings') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({

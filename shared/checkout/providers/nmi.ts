@@ -144,7 +144,6 @@ export default async function handleNmi(payload: NmiPayload) {
       return {
         success: false,
         error: data.responsetext || `NMI error (code ${data.response_code})`,
-        data,
         transaction_id: null,
         customer_vault_id: null
       };
@@ -152,9 +151,8 @@ export default async function handleNmi(payload: NmiPayload) {
 
     return {
       success: true,
-      data,
       transaction_id: data.transactionid ?? null,
-      customer_vault_id: data.customer_vault_id ?? null // Capture for new vaults
+      customer_vault_id: data.customer_vault_id ?? null
     };
   } catch (e: any) {
     err('NMI error:', e?.message || e);

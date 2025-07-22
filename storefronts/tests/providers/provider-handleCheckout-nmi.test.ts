@@ -11,7 +11,7 @@ vi.mock('../../../shared/checkout/providers/nmi.ts', () => {
   nmiMock = vi.fn(async () => ({
     success: true,
     transaction_id: 't123',
-    data: new URLSearchParams('response=1&transactionid=t123')
+    customer_vault_id: null
   }));
   return { default: nmiMock };
 });
@@ -28,7 +28,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
           if (storeFromCall === 1) {
             return {
               select: vi.fn(() => ({
-                or: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
+                eq: vi.fn(() => ({ data: [{ id: 'store-1' }], error: null }))
               }))
             };
           }
@@ -45,11 +45,11 @@ vi.mock('../../../shared/supabase/serverClient', () => {
             };
           }
         }
-        if (table === 'public_store_settings') {
+        if (table === 'store_settings') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async () => ({ data: { active_payment_gateway: 'nmi' }, error: null }))
+                maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'nmi' } }, error: null }))
               }))
             }))
           };

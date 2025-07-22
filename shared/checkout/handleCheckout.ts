@@ -3,11 +3,8 @@ import { supabase, testMarker } from '../supabase/serverClient';
 console.log('[handleCheckout] testMarker:', testMarker);
 import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
 import crypto from 'crypto';
-import stripeProvider from './providers/stripe';
-import authorizeNetProvider from './providers/authorizeNet';
-import paypalProvider from './providers/paypal';
-import nmiProvider from './providers/nmi';
-import segpayProvider from './providers/segpay';
+import { validateCheckoutPayload } from './utils/validateCheckoutPayload';
+import { dedupeOrders } from './utils/dedupeOrders';
 
 interface CheckoutPayload {
   order_number?: string;
@@ -163,33 +160,14 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   } = payload;
   let total = payload.total;
 
-  const missingFields = [] as any[];
-  if (!email) missingFields.push({ field: 'email', message: 'Email is required' });
-  if (!first_name) missingFields.push({ field: 'first_name', message: 'First name is required' });
-  if (!last_name) missingFields.push({ field: 'last_name', message: 'Last name is required' });
-  if (!shipping) missingFields.push({ field: 'shipping', message: 'Shipping information is required' });
-  if (!cart || !Array.isArray(cart) || cart.length === 0) {
-    missingFields.push({ field: 'cart', message: 'Cart cannot be empty' });
-  }
-  if (typeof total !== 'number' || total <= 0) {
-    missingFields.push({ field: 'total', message: 'Invalid order total' });
-  }
-  if (!currency) missingFields.push({ field: 'currency', message: 'Currency is required' });
-  if (!store_id) missingFields.push({ field: 'store_id', message: 'Store ID is required' });
-
-  if (missingFields.length > 0) {
-    warn('Missing required fields:', missingFields);
-    res.status(400).json({
-      error: 'Missing required fields',
-      missing_fields: missingFields,
-      user_message: 'Please fill in all required fields and try again.'
-    });
+  const validationError = validateCheckoutPayload(payload);
+  if (validationError) {
+    warn(validationError.error);
+    res.status(400).json(validationError);
     return;
   }
 
   log('[debug] Raw payment_method:', payment_method);
-
-
   let customerId: string | null = null;
   try {
     console.log('[STEP] Fetching customer...');
@@ -206,44 +184,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   const { name, address } = shipping;
   const { line1, line2, city, state, postal_code, country } = address || {};
 
-  const shippingErrors = [] as any[];
-  if (!name) shippingErrors.push({ field: 'shipping_name', message: 'Recipient name is required' });
-  if (!line1) shippingErrors.push({ field: 'ship_line1', message: 'Street address is required' });
-  if (!city) shippingErrors.push({ field: 'ship_city', message: 'City is required' });
-  if (!postal_code) shippingErrors.push({ field: 'ship_postal', message: 'Postal code is required' });
-  if (!state) shippingErrors.push({ field: 'ship_state', message: 'State is required' });
-  if (!country) shippingErrors.push({ field: 'ship_country', message: 'Country is required' });
-
-  if (shippingErrors.length > 0) {
-    warn('Invalid shipping details:', shippingErrors);
-    res.status(400).json({ 
-      error: 'Invalid shipping details',
-      shipping_errors: shippingErrors,
-      user_message: 'Please check your shipping information and try again.'
-    });
-    return;
-  }
-
-  // Billing validation
-  if (!same_billing) {
-    const billingErrors = [];
-    const billAddr: any = billing?.address || {};  // Use any to bypass TS
-    if (!billAddr.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
-    if (!billAddr.city) billingErrors.push({ field: 'bill_city', message: 'Billing city required' });
-    if (!billAddr.state) billingErrors.push({ field: 'bill_state', message: 'Billing state required' });
-    if (!billAddr.postal_code) billingErrors.push({ field: 'bill_postal', message: 'Billing postal required' });
-    if (!billAddr.country) billingErrors.push({ field: 'bill_country', message: 'Billing country required' });
-
-    if (billingErrors.length > 0) {
-      warn('Invalid billing details:', billingErrors);
-      res.status(400).json({ 
-        error: 'Invalid billing details',
-        billing_errors: billingErrors,
-        user_message: 'Please check your billing information and try again.'
-      });
-      return;
-    }
-  }
+  // validation handled by validateCheckoutPayload
 
   let discountRecord: any = null;
   if (discount_id || discount_code) {
@@ -323,8 +264,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   console.log('[STEP] Fetching store_settings...');
   const { data: storeSettings, error: settingsError } = await supabase
-    .from('public_store_settings')
-    .select('active_payment_gateway')
+    .from('store_settings')
+    .select('settings')
     .eq('store_id', store_id)
     .maybeSingle();
 
@@ -336,7 +277,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     return;
   }
 
-  const provider = (storeSettings?.active_payment_gateway || '') as string;
+  const provider = (storeSettings?.settings?.active_payment_gateway || '') as string;
   log('Selected provider:', provider);
 
   // Fetch customer payment profile using the selected provider
@@ -357,17 +298,13 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   customer_profile_id = profileRows?.[0]?.profile_id || null;
 
-  const providers: Record<string, any> = {
-    stripe: stripeProvider,
-    authorizeNet: authorizeNetProvider,
-    paypal: paypalProvider,
-    nmi: nmiProvider,
-    segpay: segpayProvider
-  };
-  const providerHandler = providers[provider];
-  if (!providerHandler) {
+  let providerHandler: any;
+  try {
+    const mod = await import(`./providers/${provider}.ts`);
+    providerHandler = mod.default;
+  } catch (e) {
     warn('Unknown provider:', provider);
-    res.status(400).json({ error: 'Unsupported payment provider' });
+    res.status(400).json({ error: 'Unsupported payment gateway' });
     return;
   }
 
@@ -394,50 +331,35 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       cart_meta_hash = hashCartMeta(email, total, cart);
     } catch (error) {
       err('[error] Failed to compute cart_meta_hash:', error.message || error);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'cart_meta_hash failed',
         user_message: 'Processing error. Please try again.'
       });
     }
-  
-    console.log('[STEP] Checking for duplicate orders...');
-    const { data: existingOrders, error: lookupErr } = await supabase
-      .from('orders')
-      .select('id, created_at, status, payment_intent_id')
-      .eq('store_id', store_id)
-      .eq('customer_id', customerId)
-      .eq('total_price', total)
-      .eq('cart_meta_hash', cart_meta_hash)
-      .order('created_at', { ascending: false })
-      .limit(1);
 
-    if (lookupErr) {
-      console.error(
-        '[Supabase ERROR] Order deduplication check failed:',
-        lookupErr.message
-      );
-      res
-        .status(500)
-        .json({ error: 'Order lookup failed', detail: lookupErr.message });
+    console.log('[STEP] Checking for duplicate orders...');
+    let existing: any = null;
+    try {
+      existing = await dedupeOrders(supabase, {
+        store_id,
+        customer_id: customerId,
+        total,
+        cart_meta_hash
+      });
+    } catch (e: any) {
+      console.error('[Supabase ERROR] Order deduplication check failed:', e.message);
+      res.status(500).json({ error: 'Order lookup failed', detail: e.message });
       return;
     }
-  
-    if (existingOrders && existingOrders.length > 0) {
-      const existing = existingOrders[0];
-      const ageMs = Date.now() - new Date(existing.created_at as string).getTime();
-      const dedupWindowMs = Number(process.env.DEDUPE_WINDOW_MS) || 30 * 1000;
-      console.log('[handleCheckout] Duplicate check: ageMs=', ageMs, 'status=', existing.status, 'payment_intent_id=', existing.payment_intent_id, 'dedupWindowMs=', dedupWindowMs);
-      if (existing.status === 'paid') {
-        // No block for completed payments, allow new order
-      } else if (existing.payment_intent_id) {
-        warn('Duplicate order in progress', { order_id: existing.id });
-        res.status(409).json({ 
-          error: 'Order processing in progress',
-          order_id: existing.id,
-          user_message: 'This order is currently being processed. Please wait a moment before trying again.'
-        });
-        return;
-      }
+
+    if (existing && existing.status !== 'paid' && existing.payment_intent_id) {
+      warn('Duplicate order in progress', { order_id: existing.id });
+      res.status(409).json({
+        error: 'Order processing in progress',
+        order_id: existing.id,
+        user_message: 'This order is currently being processed. Please wait a moment before trying again.'
+      });
+      return;
     }
   }
 
@@ -552,7 +474,6 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
   }
 
-  const intent = providerResult?.intent ?? providerResult;
   let transactionId: string | null = null;
   let paymentIntentId: string | null = null;
 
@@ -560,16 +481,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     const transId = providerResult?.data?.transactionResponse?.transId;
     transactionId = transId || null;
     paymentIntentId = transId || null;
-  } else if (provider === 'nmi') {
-    const transId =
-      providerResult?.transaction_id ??
-      (typeof providerResult?.data?.get === 'function'
-        ? providerResult.data.get('transactionid')
-        : undefined);
-    transactionId = transId || null;
-    paymentIntentId = transId || null;
   } else {
-    transactionId = intent?.id || null;
+    transactionId = providerResult.transaction_id || null;
     paymentIntentId = transactionId;
   }
 
@@ -747,11 +660,9 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   let orderPayload;
   try {
-    const providerIntent = providerResult?.intent ?? providerResult;
     const paymentConfirmed =
       (provider === 'authorizeNet' && providerResult?.success !== false) ||
-      (provider === 'stripe' && providerIntent?.status === 'succeeded') ||
-      (provider === 'nmi' && providerResult?.success === true);
+      providerResult?.success === true;
 
     orderPayload = {
       order_number: orderNumber,

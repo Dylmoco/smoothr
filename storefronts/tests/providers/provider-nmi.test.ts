@@ -45,8 +45,7 @@ describe('handleNmi', () => {
     const res = await handleNmi(basePayload);
     expect(res.success).toBe(true);
     expect(res.transaction_id).toBe('tx1');
-    expect(res.data).toBeInstanceOf(URLSearchParams);
-    expect(res.data.get('responsetext')).toBe('APPROVED OK');
+    expect(res.customer_vault_id).toBeNull();
     expect(integrationMock).toHaveBeenCalledWith('store-1', 'nmi');
     const body = fetchMock.mock.calls[0][1].body;
     const params = new URLSearchParams(body);
