@@ -233,7 +233,7 @@ function configureCollectJS() {
             name: `${firstName} ${lastName}`.trim(),
             address: { line1: billLine1, line2: billLine2, city: billCity, state: billState, postal_code: billPostal, country: billCountry }
           },
-          cart: items.map(item => ({ product_id: item.id, name: item.name, quantity: item.quantity, price: Math.round((item.price || 0) * 100) })),
+          cart: items.map(item => ({ product_id: item.product_id, name: item.name, quantity: item.quantity, price: Math.round((item.price || 0) * 100) })),
           total,
           currency,
           same_billing: sameBilling  // Added this flag for backend
