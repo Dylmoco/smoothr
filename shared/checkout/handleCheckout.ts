@@ -203,13 +203,14 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   let customer_profile_id: string | null = null;
   console.log('[STEP] Fetching customer_payment_profiles...');
   const { data: profileRows, error: profileErr } = await supabase
-  .from('customer_payment_profiles')
-  .select('profile_id')
-  .eq('customer_id', customerId)
-  .eq('gateway', provider)
-  .limit(1);
-
-const customer_profile_id = profileRows?.[0]?.profile_id || null;
+    .from('customer_payment_profiles')
+    .select('profile_id')
+    .eq('customer_id', customerId)
+    .eq('gateway', provider)
+    .limit(1);
+  
+  customer_profile_id = profileRows?.[0]?.profile_id || null;
+  
 
   if (profileErr) {
     console.error('[Supabase ERROR] Profile lookup failed:', profileErr.message);
