@@ -113,6 +113,7 @@ export default async function handleNmi(payload: NmiPayload) {
   });
 
   try {
+    log('NMI payload:', params.toString());
     const res = await fetch(
       'https://secure.networkmerchants.com/api/transact.php',
       {
