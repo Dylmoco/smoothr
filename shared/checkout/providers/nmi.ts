@@ -61,7 +61,7 @@ export default async function handleNmi(payload: NmiPayload) {
   // Prepare NMI params with full details
   const params = new URLSearchParams({
     security_key: securityKey,
-    type: 'sale',
+    type: 'auth',
     amount: (payload.amount / 100).toFixed(2),
     firstname: payload.first_name,
     lastname: payload.last_name,
@@ -92,7 +92,7 @@ export default async function handleNmi(payload: NmiPayload) {
   } else {
     return {
       success: false,
-      error: 'Missing payment_token or customer_profile_id for NMI sale',
+      error: 'Missing payment_token or customer_profile_id for NMI auth',
       transaction_id: null,
       customer_vault_id: null
     };
