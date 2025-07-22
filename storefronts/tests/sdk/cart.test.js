@@ -35,6 +35,14 @@ describe("cart module", () => {
     expect(events.length).toBe(2);
   });
 
+  it("persists product_id in storage", async () => {
+    const cart = await import("../../core/cart.js");
+    cart.addItem({ product_id: "7", name: "Widget", price: 200, quantity: 1 });
+    const stored = JSON.parse(store["smoothr_cart"]);
+    expect(stored.items[0].product_id).toBe("7");
+    expect(cart.getCart().items[0].product_id).toBe("7");
+  });
+
   it("updates quantity and calculates totals with discount", async () => {
     const cart = await import("../../core/cart.js");
     cart.addItem({ product_id: "1", name: "A", price: 100, quantity: 2 });
