@@ -86,15 +86,11 @@ describe('handleNmi', () => {
   });
 
   it('errors when token and vault id missing', async () => {
-    const res = await handleNmi({
-      ...basePayload,
-      payment_token: undefined as any
-    });
-    expect(res).toEqual({
-      success: false,
-      error: 'Missing payment_token or customer_profile_id for NMI auth',
-      transaction_id: null,
-      customer_vault_id: null
-    });
+    await expect(
+      handleNmi({
+        ...basePayload,
+        payment_token: undefined as any
+      })
+    ).rejects.toThrow('Missing payment credentials');
   });
 });
