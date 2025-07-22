@@ -768,7 +768,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     console.log('[STEP] Upserting order record...');
     const { data, error } = await supabase
       .from('orders')
-      .upsert(orderPayload, { onConflict: 'order_number' })
+      // Ensure upsert uses the composite unique constraint on (store_id, order_number)
+      .upsert(orderPayload, { onConflict: 'store_id,order_number' })
       .select('id')
       .single();
     if (error) {
