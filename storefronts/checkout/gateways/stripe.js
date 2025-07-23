@@ -9,21 +9,23 @@ function forceStripeIframeStyle(selector) {
   const interval = setInterval(() => {
     const container = document.querySelector(selector);
     const iframe = container?.querySelector('iframe');
-    if (iframe) {
+    if (iframe && container) {
+      iframe.style.position = 'absolute';
+      iframe.style.top = '0';
+      iframe.style.left = '0';
       iframe.style.width = '100%';
-      iframe.style.minWidth = '100%';
       iframe.style.height = container.offsetHeight + 'px';
+      iframe.style.border = 'none';
+      iframe.style.background = 'transparent';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
-      if (container) {
-        container.style.width = '100%';
-        container.style.minWidth = '100%';
-        if (
-          typeof window !== 'undefined' &&
-          window.getComputedStyle(container).position === 'static'
-        ) {
-          container.style.position = 'relative';
-        }
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'flex-start';
+      container.style.width = '100%';
+      container.style.minWidth = '100%';
+      if (window.getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
@@ -57,7 +59,7 @@ if (
   const style = document.createElement('style');
   style.id = 'smoothr-card-styles';
   style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;}\niframe[data-accept-id]{display:block!important;}';
   document.head.appendChild(style);
 }
 
@@ -136,6 +138,16 @@ export async function getElements() {
   return initPromise;
 }
 
+function loadGoogleFont(fontFamily) {
+  if (!fontFamily || document.querySelector(`link[href*="fonts.googleapis.com/css2?family=${fontFamily}"]`)) return;
+  const googleFontString = `${fontFamily}:wght@100;200;300;400;500;600;700;800;900&display=swap`;
+  const link = document.createElement('link');
+  link.href = `https://fonts.googleapis.com/css2?family=${googleFontString}`;
+  link.rel = 'stylesheet';
+  document.head.appendChild(link);
+  console.log('[Stripe] Loaded Google font:', googleFontString);
+}
+
 export async function mountCardFields() {
   if (mountPromise) return mountPromise;
   if (fieldsMounted) return;
@@ -193,6 +205,8 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
+      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -259,6 +273,8 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
+      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -324,6 +340,8 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
+      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
           backgroundColor: 'transparent',
