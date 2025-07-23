@@ -14,7 +14,16 @@ function forceStripeIframeStyle(selector) {
       iframe.style.top = '0';
       iframe.style.left = '0';
       iframe.style.width = '100%';
-      iframe.style.height = container.offsetHeight + 'px';
+      let height = container.offsetHeight;
+      if (height < 5) {
+        const scroll = container.scrollHeight;
+        if (scroll > height) height = scroll;
+        if (height < 5) {
+          const stored = parseFloat(container.style.minHeight);
+          if (!Number.isNaN(stored) && stored > 0) height = stored;
+        }
+      }
+      iframe.style.height = height + 'px';
       iframe.style.border = 'none';
       iframe.style.background = 'transparent';
       iframe.style.display = 'block';
@@ -27,7 +36,7 @@ function forceStripeIframeStyle(selector) {
       if (window.getComputedStyle(container).position === 'static') {
         container.style.position = 'relative';
       }
-      console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
+      log(`Forced iframe styles for ${selector}`);
       clearInterval(interval);
     } else if (++attempts >= 20) {
       clearInterval(interval);
@@ -59,7 +68,7 @@ if (
   const style = document.createElement('style');
   style.id = 'smoothr-card-styles';
   style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;}\niframe[data-accept-id]{display:block!important;}';
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;padding:0.25rem 0;}\niframe[data-accept-id]{display:block!important;}';
   document.head.appendChild(style);
 }
 
@@ -145,7 +154,7 @@ function loadGoogleFont(fontFamily) {
   link.href = `https://fonts.googleapis.com/css2?family=${googleFontString}`;
   link.rel = 'stylesheet';
   document.head.appendChild(link);
-  console.log('[Stripe] Loaded Google font:', googleFontString);
+  log('Loaded Google font:', googleFontString);
 }
 
 export async function mountCardFields() {
@@ -233,26 +242,33 @@ export async function mountCardFields() {
           color: '#fa755a'
         }
       };
-      console.log('[Stripe] cardNumber style', style);
+      log('cardNumber style', style);
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-number]');
+
       console.log('[Stripe] Mounted iframe');
       forceStripeIframeStyle('[data-smoothr-card-number]');
       if (placeholderEl) placeholderEl.style.display = 'none';
+
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-number] iframe');
         const width = iframe?.getBoundingClientRect().width;
-        console.log('[Stripe] iframe bbox', width);
+        log('iframe bbox', width);
         if (iframe && width < 10) {
-          console.warn('[Stripe] iframe dead → remounting now...');
+          warn('iframe dead → remounting now...');
           cardNumberElement?.unmount?.();
+          cardNumberElement?.destroy?.();
           cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
           cardNumberElement.mount('[data-smoothr-card-number]');
-          forceStripeIframeStyle('[data-smoothr-card-number]');
-          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (placeholderEl) {
+            placeholderEl.style.visibility = 'hidden';
+            forceStripeIframeStyle('[data-smoothr-card-number]');
+          } else {
+            forceStripeIframeStyle('[data-smoothr-card-number]');
+          }
         }
       }, 500);
-      forceStripeIframeStyle('[data-smoothr-card-number]');
+      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-number]');
       cardNumberElement = el;
     }
     const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
@@ -303,26 +319,33 @@ export async function mountCardFields() {
           color: '#fa755a'
         }
       };
-      console.log('[Stripe] cardExpiry style', style);
+      log('cardExpiry style', style);
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-expiry]');
+
       console.log('[Stripe] Mounted iframe');
       forceStripeIframeStyle('[data-smoothr-card-expiry]');
       if (placeholderEl) placeholderEl.style.display = 'none';
+
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
         const width = iframe?.getBoundingClientRect().width;
-        console.log('[Stripe] iframe bbox', width);
+        log('iframe bbox', width);
         if (iframe && width < 10) {
-          console.warn('[Stripe] iframe dead → remounting now...');
+          warn('iframe dead → remounting now...');
           el?.unmount?.();
+          el?.destroy?.();
           const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-expiry]');
-          forceStripeIframeStyle('[data-smoothr-card-expiry]');
-          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (placeholderEl) {
+            placeholderEl.style.visibility = 'hidden';
+            forceStripeIframeStyle('[data-smoothr-card-expiry]');
+          } else {
+            forceStripeIframeStyle('[data-smoothr-card-expiry]');
+          }
         }
       }, 500);
-      forceStripeIframeStyle('[data-smoothr-card-expiry]');
+      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-expiry]');
     }
     const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
     if (cvcTarget && !existingCvc) {
@@ -372,26 +395,33 @@ export async function mountCardFields() {
           color: '#fa755a'
         }
       };
-      console.log('[Stripe] cardCvc style', style);
+      log('cardCvc style', style);
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-cvc]');
+
       console.log('[Stripe] Mounted iframe');
       forceStripeIframeStyle('[data-smoothr-card-cvc]');
       if (placeholderEl) placeholderEl.style.display = 'none';
+
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
         const width = iframe?.getBoundingClientRect().width;
-        console.log('[Stripe] iframe bbox', width);
+        log('iframe bbox', width);
         if (iframe && width < 10) {
-          console.warn('[Stripe] iframe dead → remounting now...');
+          warn('iframe dead → remounting now...');
           el?.unmount?.();
+          el?.destroy?.();
           const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-cvc]');
-          forceStripeIframeStyle('[data-smoothr-card-cvc]');
-          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (placeholderEl) {
+            placeholderEl.style.visibility = 'hidden';
+            forceStripeIframeStyle('[data-smoothr-card-cvc]');
+          } else {
+            forceStripeIframeStyle('[data-smoothr-card-cvc]');
+          }
         }
       }, 500);
-      forceStripeIframeStyle('[data-smoothr-card-cvc]');
+      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-cvc]');
     }
 
     log('Mounted split fields');
