@@ -14,7 +14,16 @@ function forceStripeIframeStyle(selector) {
       iframe.style.top = '0';
       iframe.style.left = '0';
       iframe.style.width = '100%';
-      iframe.style.height = container.offsetHeight + 'px';
+      let height = container.offsetHeight;
+      if (height < 5) {
+        const scroll = container.scrollHeight;
+        if (scroll > height) height = scroll;
+        if (height < 5) {
+          const stored = parseFloat(container.style.minHeight);
+          if (!Number.isNaN(stored) && stored > 0) height = stored;
+        }
+      }
+      iframe.style.height = height + 'px';
       iframe.style.border = 'none';
       iframe.style.background = 'transparent';
       iframe.style.display = 'block';
