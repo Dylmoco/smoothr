@@ -19,6 +19,21 @@ export async function getPublicCredential(storeId, integrationId, gateway) {
       return data ? { tokenization_key: data.tokenization_key } : null;
     }
 
+    if (integrationId === 'stripe' || gateway === 'stripe') {
+      const match = gateway || integrationId;
+      const { data, error } = await supabase
+        .from('public_store_integration_credentials')
+        .select('api_key, settings')
+        .eq('store_id', storeId)
+        .or(`provider.eq.${match},gateway.eq.${match}`)
+        .maybeSingle();
+      if (error) {
+        console.warn('[Smoothr] Credential lookup failed:', error.message || error);
+        return null;
+      }
+      return data || null;
+    }
+
     let query = supabase
       .from('store_integrations')
       .select('api_key, settings')

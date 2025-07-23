@@ -85,14 +85,15 @@ async function resolveStripeKey() {
   let key;
   if (storeId) {
     try {
-      const cred = await getPublicCredential(storeId, 'stripe');
+      const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
       if (cred) {
-        key = cred.api_key || cred.settings?.public_key || '';
+        key =
+          cred.settings?.publishable_key ||
+          cred.settings?.api_key ||
+          cred.api_key ||
+          '';
         if (key) {
-          log(
-            'Loaded key from Supabase.' +
-              (cred.api_key ? 'store_integrations.api_key' : 'store_integrations.settings.public_key')
-          );
+          log('✅ Stripe key resolved, mounting gateway...');
         }
       }
     } catch (e) {
@@ -100,7 +101,8 @@ async function resolveStripeKey() {
     }
   }
   if (!key) {
-    throw new Error('❌ Stripe key not found — aborting Stripe mount.');
+    warn('❌ Stripe key not found — aborting Stripe mount.');
+    return null;
   }
   cachedKey = key;
   return key;
