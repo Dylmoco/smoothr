@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 let styleSpy = vi.fn();
-vi.mock("../../checkout/gateways/forceStripeIframeStyle.js", () => ({ default: (...args) => styleSpy(...args) }));
+let getCredMock;
+vi.mock('../../checkout/gateways/forceStripeIframeStyle.js', () => ({
+  default: (...args) => styleSpy(...args)
+}));
+vi.mock('../../checkout/getPublicCredential.js', () => ({
+  getPublicCredential: (...args) => getCredMock(...args)
+}));
 
 let domReadyCb;
 let cardNumberEl;
@@ -12,6 +18,7 @@ beforeEach(() => {
   vi.resetModules();
   styleSpy = vi.fn();
   domReadyCb = null;
+  getCredMock = vi.fn(async () => ({ settings: { publishable_key: 'pk_test' } }));
 
   cardNumberEl = { mount: vi.fn() };
   cardExpiryEl = { mount: vi.fn() };
@@ -46,7 +53,7 @@ beforeEach(() => {
 
   global.window = {
     SMOOTHR_CONFIG: {
-      stripeKey: 'pk_test',
+      storeId: 'store-1',
       active_payment_gateway: 'stripe'
     },
     Smoothr: { cart: { getCart: () => ({ items: [] }), getTotal: () => 0 } }
@@ -61,6 +68,8 @@ describe('stripe element mounting', () => {
     await mountCardFields();
     await vi.runAllTimersAsync();
     vi.useRealTimers();
+
+    expect(getCredMock).toHaveBeenCalledWith('store-1', 'stripe');
 
     expect(elementsCreate).toHaveBeenCalledWith(
       'cardNumber',
