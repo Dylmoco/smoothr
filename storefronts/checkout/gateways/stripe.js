@@ -242,6 +242,7 @@ export async function mountCardFields() {
         if (iframe && width < 10) {
           warn('iframe dead → remounting now...');
           cardNumberElement?.unmount?.();
+          cardNumberElement?.destroy?.();
           cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
           cardNumberElement.mount('[data-smoothr-card-number]');
           forceStripeIframeStyle('[data-smoothr-card-number]');
@@ -308,6 +309,7 @@ export async function mountCardFields() {
         if (iframe && width < 10) {
           warn('iframe dead → remounting now...');
           el?.unmount?.();
+          el?.destroy?.();
           const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-expiry]');
           forceStripeIframeStyle('[data-smoothr-card-expiry]');
@@ -373,6 +375,7 @@ export async function mountCardFields() {
         if (iframe && width < 10) {
           warn('iframe dead → remounting now...');
           el?.unmount?.();
+          el?.destroy?.();
           const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-cvc]');
           forceStripeIframeStyle('[data-smoothr-card-cvc]');
