@@ -115,7 +115,7 @@ function getStripeFieldCss(selector, placeholderSelector) {
         letterSpacing: fieldStyle.letterSpacing,
         textAlign: fieldStyle.textAlign,
         textShadow: fieldStyle.textShadow,
-        height: fieldStyle.height,
+        
         '::placeholder': {
           color: placeholderColor,
           fontFamily: placeholderStyle.fontFamily,
