@@ -4,20 +4,23 @@ function forceStripeIframeStyle(selector) {
   const interval = setInterval(() => {
     const container = document.querySelector(selector);
     const iframe = container?.querySelector('iframe');
-    if (iframe) {
+    if (iframe && container) {
+      iframe.style.position = 'absolute';
+      iframe.style.top = '0';
+      iframe.style.left = '0';
       iframe.style.width = '100%';
-      iframe.style.minWidth = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.background = 'transparent';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
-      if (container) {
-        container.style.width = '100%';
-        container.style.minWidth = '100%';
-        if (
-          typeof window !== 'undefined' &&
-          window.getComputedStyle(container).position === 'static'
-        ) {
-          container.style.position = 'relative';
-        }
+      container.style.width = '100%';
+      container.style.minWidth = '100%';
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'flex-start';
+      if (window.getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
@@ -51,7 +54,7 @@ if (
   const style = document.createElement('style');
   style.id = 'smoothr-card-styles';
   style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;}';
   document.head.appendChild(style);
 }
 
@@ -215,7 +218,6 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
             textAlign: placeholderStyle.textAlign
           }
         },
@@ -282,7 +284,6 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
             textAlign: placeholderStyle.textAlign
           }
         },
@@ -348,7 +349,6 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
             textAlign: placeholderStyle.textAlign
           }
         },
