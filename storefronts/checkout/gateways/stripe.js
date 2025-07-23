@@ -87,11 +87,7 @@ async function resolveStripeKey() {
     try {
       const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
       if (cred) {
-        key =
-          cred.settings?.publishable_key ||
-          cred.settings?.api_key ||
-          cred.api_key ||
-          '';
+        key = cred.publishable_key || '';
         if (key) {
           log('✅ Stripe key resolved, mounting gateway...');
         }

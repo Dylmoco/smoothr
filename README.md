@@ -180,7 +180,7 @@ the `publishable_key` and `secret_key` under the `settings` column:
 }
 ```
 
-The checkout SDK reads `settings.publishable_key` from the
+The checkout SDK reads `publishable_key` from the
 `public_store_integration_credentials` view when fetching configuration for a
 store. Activate the gateway by setting
 `public_store_settings.active_payment_gateway` to `stripe` (or override it on
