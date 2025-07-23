@@ -42,16 +42,10 @@ function forceStripeIframeStyle(selector) {
   }, 100);
 }
 
-/**
- * Safely convert RGB(A) to hex, fallback to original string.
- */
 function rgbToHexSafe(color) {
   try { return rgbToHex(color); } catch { return color; }
 }
 
-/**
- * Inject Google Font link for the specified family string.
- */
 function injectGoogleFont(family) {
   if (!family) return;
   const id = `stripe-font-${family}`;
@@ -63,10 +57,6 @@ function injectGoogleFont(family) {
   document.head.appendChild(link);
 }
 
-/**
- * Build Stripe style object by sniffing Webflow div + placeholder styles,
- * and inject matching Google font.
- */
 function getStripeFieldCss(targetSelector, placeholderSelector) {
   const targetEl = document.querySelector(targetSelector);
   const fieldStyle = targetEl ? window.getComputedStyle(targetEl) : {};
@@ -75,11 +65,8 @@ function getStripeFieldCss(targetSelector, placeholderSelector) {
     ? window.getComputedStyle(placeholderEl, placeholderEl.tagName === 'INPUT' ? '::placeholder' : undefined)
     : fieldStyle;
 
-  // Placeholder text
   const placeholderText = placeholderEl?.textContent?.trim() || '';
-  // Placeholder color hex
   const placeholderColorHex = rgbToHexSafe(placeholderStyle.color);
-  // Build Google font string
   const fontFamily = fieldStyle.fontFamily?.split(',')[0].replace(/"/g, '').trim() || '';
   const googleFontString = `${fontFamily}:100,200,300,400,500,600,700,800,900`;
   injectGoogleFont(googleFontString);
@@ -134,9 +121,6 @@ export async function getElements() {
   return { stripe, elements };
 }
 
-/**
- * Mount Stripe Elements for cardNumber, cardExpiry, and cardCvc once.
- */
 export async function mountCardFields() {
   if (mountPromise) return mountPromise;
   if (fieldsMounted) return;
@@ -154,8 +138,13 @@ export async function mountCardFields() {
 
     for (const { type, selector, placeholder } of mounts) {
       const target = document.querySelector(selector);
-      const existing = els.getElement ? els.getElement(type) : null;
-      if (!target || existing) continue;
+      const existingElement = els.getElement ? els.getElement(type) : null;
+      const localElement = type === 'cardNumber'
+        ? cardNumberElement
+        : type === 'cardExpiry'
+        ? cardExpiryElement
+        : cardCvcElement;
+      if (!target || existingElement || localElement) continue;
 
       await waitForInteractable(target);
       const { style, placeholderText } = getStripeFieldCss(selector, placeholder);
