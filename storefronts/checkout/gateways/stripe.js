@@ -199,13 +199,11 @@ export async function mountCardFields() {
       } else {
         placeholderStyle = fieldStyle;
       }
-      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
-      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
-      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
-      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
-      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
+        .split(',')[0]
+        .trim()
+        .replace(/"/g, '');
       loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
@@ -216,6 +214,7 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
+          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -225,7 +224,9 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            textAlign: placeholderStyle.textAlign
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign,
+            opacity: placeholderStyle.opacity
           }
         },
         invalid: {
@@ -236,6 +237,7 @@ export async function mountCardFields() {
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-number]');
       console.log('[Stripe] Mounted iframe');
+      forceStripeIframeStyle('[data-smoothr-card-number]');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-number] iframe');
@@ -267,13 +269,11 @@ export async function mountCardFields() {
       } else {
         placeholderStyle = fieldStyle;
       }
-      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
-      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
-      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
-      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
-      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
+        .split(',')[0]
+        .trim()
+        .replace(/"/g, '');
       loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
@@ -284,6 +284,7 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
+          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -293,7 +294,9 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            textAlign: placeholderStyle.textAlign
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign,
+            opacity: placeholderStyle.opacity
           }
         },
         invalid: {
@@ -304,6 +307,7 @@ export async function mountCardFields() {
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-expiry]');
       console.log('[Stripe] Mounted iframe');
+      forceStripeIframeStyle('[data-smoothr-card-expiry]');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
@@ -334,13 +338,11 @@ export async function mountCardFields() {
       } else {
         placeholderStyle = fieldStyle;
       }
-      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
-      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
-      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
-      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
-      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
+        .split(',')[0]
+        .trim()
+        .replace(/"/g, '');
       loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
@@ -351,6 +353,7 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
+          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -360,7 +363,9 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            textAlign: placeholderStyle.textAlign
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign,
+            opacity: placeholderStyle.opacity
           }
         },
         invalid: {
@@ -371,6 +376,7 @@ export async function mountCardFields() {
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-cvc]');
       console.log('[Stripe] Mounted iframe');
+      forceStripeIframeStyle('[data-smoothr-card-cvc]');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
