@@ -52,19 +52,25 @@ function forceStripeIframeStyle(selector) {
     const container = document.querySelector(selector);
     const iframe = container?.querySelector('iframe');
     if (iframe && container) {
-      const comp = window.getComputedStyle(container);
-      const heightValue = comp.height;
+      const heightValue = container.offsetHeight + 'px';
       // Apply container height to ensure visibility
       container.style.height = heightValue;
       Object.assign(iframe.style, {
         position:'absolute', top:'0', left:'0', width:'100%', height: heightValue,
         border:'none', background:'transparent', display:'block', opacity:'1'
       });
+      const pos = window.getComputedStyle(container).position;
       Object.assign(container.style, {
         width:'100%', minWidth:'100%', display:'flex', alignItems:'center', justifyContent:'flex-start',
-        position: comp.position==='static' ? 'relative' : comp.position
+        position: pos==='static' ? 'relative' : pos
       });
       clearInterval(interval);
+      console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
+    } else if (++attempts>=20) {
+      clearInterval(interval);
+    }
+  },100);
+}
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
     } else if (++attempts>=20) {
       clearInterval(interval);
