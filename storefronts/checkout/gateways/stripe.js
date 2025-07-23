@@ -9,7 +9,7 @@ function forceStripeIframeStyle(selector) {
       iframe.style.top = '0';
       iframe.style.left = '0';
       iframe.style.width = '100%';
-      iframe.style.height = '100%';
+      iframe.style.height = container.offsetHeight + 'px';
       iframe.style.border = 'none';
       iframe.style.background = 'transparent';
       iframe.style.display = 'block';
@@ -24,7 +24,7 @@ function forceStripeIframeStyle(selector) {
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
-    } else if (++attempts >= 20) {
+    } else if (++attempts >= 30) {
       clearInterval(interval);
     }
   }, 100);
@@ -40,6 +40,8 @@ let elements;
 let initPromise;
 let cachedKey;
 let cardNumberElement;
+let cardExpiryElement;
+let cardCvcElement;
 let mountPromise;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
@@ -226,8 +228,8 @@ export async function mountCardFields() {
         }
       };
       console.log('[Stripe] cardNumber style', style);
-      const el = elements.create('cardNumber', { style, placeholder: placeholderText });
-      el.mount('[data-smoothr-card-number]');
+      cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
+      cardNumberElement.mount('[data-smoothr-card-number]');
       console.log('[Stripe] Mounted iframe');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
@@ -244,7 +246,6 @@ export async function mountCardFields() {
         }
       }, 500);
       forceStripeIframeStyle('[data-smoothr-card-number]');
-      cardNumberElement = el;
     }
     const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
     if (expiryTarget && !existingExpiry) {
@@ -292,8 +293,8 @@ export async function mountCardFields() {
         }
       };
       console.log('[Stripe] cardExpiry style', style);
-      const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
-      el.mount('[data-smoothr-card-expiry]');
+      cardExpiryElement = elements.create('cardExpiry', { style, placeholder: placeholderText });
+      cardExpiryElement.mount('[data-smoothr-card-expiry]');
       console.log('[Stripe] Mounted iframe');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
@@ -302,9 +303,9 @@ export async function mountCardFields() {
         console.log('[Stripe] iframe bbox', width);
         if (iframe && width < 10) {
           console.warn('[Stripe] iframe dead → remounting now...');
-          el?.unmount?.();
-          const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
-          remount.mount('[data-smoothr-card-expiry]');
+          cardExpiryElement?.unmount?.();
+          cardExpiryElement = elements.create('cardExpiry', { style, placeholder: placeholderText });
+          cardExpiryElement.mount('[data-smoothr-card-expiry]');
           forceStripeIframeStyle('[data-smoothr-card-expiry]');
           if (placeholderEl) placeholderEl.style.display = 'none';
         }
@@ -357,8 +358,8 @@ export async function mountCardFields() {
         }
       };
       console.log('[Stripe] cardCvc style', style);
-      const el = elements.create('cardCvc', { style, placeholder: placeholderText });
-      el.mount('[data-smoothr-card-cvc]');
+      cardCvcElement = elements.create('cardCvc', { style, placeholder: placeholderText });
+      cardCvcElement.mount('[data-smoothr-card-cvc]');
       console.log('[Stripe] Mounted iframe');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
@@ -367,9 +368,9 @@ export async function mountCardFields() {
         console.log('[Stripe] iframe bbox', width);
         if (iframe && width < 10) {
           console.warn('[Stripe] iframe dead → remounting now...');
-          el?.unmount?.();
-          const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
-          remount.mount('[data-smoothr-card-cvc]');
+          cardCvcElement?.unmount?.();
+          cardCvcElement = elements.create('cardCvc', { style, placeholder: placeholderText });
+          cardCvcElement.mount('[data-smoothr-card-cvc]');
           forceStripeIframeStyle('[data-smoothr-card-cvc]');
           if (placeholderEl) placeholderEl.style.display = 'none';
         }
