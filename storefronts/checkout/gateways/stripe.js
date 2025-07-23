@@ -14,7 +14,7 @@ let cardExpiryElement;
 let cardCvcElement;
 
 /**
- * Convert an RGB(A) string to a hex color. Handles 'rgb(r, g, b)' format.
+ * Convert an RGB(A) string to hex. Ignores alpha.
  */
 function rgbToHex(rgb) {
   const nums = rgb.match(/\d+/g);
@@ -24,89 +24,90 @@ function rgbToHex(rgb) {
 }
 
 /**
- * Safely convert color to hex, fallback to original string.
+ * Safe hex conversion fallback.
  */
 function rgbToHexSafe(color) {
   try { return rgbToHex(color); } catch { return color; }
 }
 
 /**
- * Wait for element to be visible and clickable.
+ * Wait until element is visible and not focused.
  */
 async function waitForInteractable(el, timeout = 1500) {
   if (!el || typeof el.getBoundingClientRect !== 'function') return;
-  const attempts = Math.ceil(timeout/100);
-  for (let i=0; i<attempts; i++) {
-    if (el.offsetParent!==null && el.getBoundingClientRect().width>10 && document.activeElement!==el) return;
-    await new Promise(r=>setTimeout(r,100));
+  const attempts = Math.ceil(timeout / 100);
+  for (let i = 0; i < attempts; i++) {
+    if (el.offsetParent !== null && el.getBoundingClientRect().width > 10 && document.activeElement !== el) {
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
   }
 }
 
 /**
- * Force Stripe iframe and container to fill and display correctly.
+ * Force Stripe iframe to exactly fill its container.
  */
 function forceStripeIframeStyle(selector) {
-  if (typeof document==='undefined') return;
-  let attempts=0;
-  const interval = setInterval(()=>{
+  if (typeof document === 'undefined') return;
+  let attempts = 0;
+  const interval = setInterval(() => {
     const container = document.querySelector(selector);
     const iframe = container?.querySelector('iframe');
     if (iframe && container) {
-      const heightValue = container.offsetHeight + 'px';
-      // Apply container height to ensure visibility
-      container.style.height = heightValue;
-      Object.assign(iframe.style, {
-        position:'absolute', top:'0', left:'0', width:'100%', height: heightValue,
-        border:'none', background:'transparent', display:'block', opacity:'1'
-      });
-      const pos = window.getComputedStyle(container).position;
-      Object.assign(container.style, {
-        width:'100%', minWidth:'100%', display:'flex', alignItems:'center', justifyContent:'flex-start',
-        position: pos==='static' ? 'relative' : pos
-      });
+      const heightValue = `${container.offsetHeight}px`;
+      iframe.style.position = 'absolute';
+      iframe.style.top = '0';
+      iframe.style.left = '0';
+      iframe.style.width = '100%';
+      iframe.style.height = heightValue;
+      iframe.style.border = 'none';
+      iframe.style.background = 'transparent';
+      iframe.style.display = 'block';
+      iframe.style.opacity = '1';
+      const comp = window.getComputedStyle(container);
+      container.style.width = '100%';
+      container.style.minWidth = '100%';
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'flex-start';
+      container.style.position = comp.position === 'static' ? 'relative' : comp.position;
       clearInterval(interval);
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
-    } else if (++attempts>=20) {
+    } else if (++attempts >= 20) {
       clearInterval(interval);
     }
-  },100);
-}
-      console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
-    } else if (++attempts>=20) {
-      clearInterval(interval);
-    }
-  },100);
+  }, 100);
 }
 
 /**
- * Inject matching Google font from computed style.
+ * Inject Google Font based on computed font-family.
  */
 function injectGoogleFont(family) {
   if (!family) return;
   const id = `stripe-font-${family}`;
   if (document.getElementById(id)) return;
-  const link=document.createElement('link');
+  const link = document.createElement('link');
   link.id = id;
-  link.rel='stylesheet';
-  link.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`;
   document.head.appendChild(link);
 }
 
 /**
- * Sniff field & placeholder styles from Webflow divs.
+ * Sniff styles from Webflow container and placeholder.
  */
 function getStripeFieldCss(selector, placeholderSelector) {
   const target = document.querySelector(selector);
-  if (!target) return {style:{}, placeholderText:''};
+  if (!target) return { style: {}, placeholderText: '' };
   const fieldStyle = window.getComputedStyle(target);
   const placeholderEl = target.querySelector(placeholderSelector) || document.querySelector('[data-smoothr-email]');
   const placeholderStyle = placeholderEl
-    ? window.getComputedStyle(placeholderEl, placeholderEl.tagName==='INPUT'?'::placeholder':undefined)
+    ? window.getComputedStyle(placeholderEl, placeholderEl.tagName === 'INPUT' ? '::placeholder' : undefined)
     : fieldStyle;
+  const placeholderText = placeholderEl?.textContent.trim() || '';
 
-  const placeholderText = placeholderEl?.textContent.trim()||'';
   const placeholderColor = rgbToHexSafe(placeholderStyle.color);
-  const fontFamily = fieldStyle.fontFamily.split(',')[0].replace(/"/g,'').trim();
+  const fontFamily = fieldStyle.fontFamily.split(',')[0].replace(/"/g, '').trim();
   injectGoogleFont(`${fontFamily}:100,200,300,400,500,600,700,800,900`);
 
   return {
@@ -121,7 +122,6 @@ function getStripeFieldCss(selector, placeholderSelector) {
         letterSpacing: fieldStyle.letterSpacing,
         textAlign: fieldStyle.textAlign,
         textShadow: fieldStyle.textShadow,
-        
         '::placeholder': {
           color: placeholderColor,
           fontFamily: placeholderStyle.fontFamily,
@@ -142,7 +142,13 @@ async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
   const storeId = window.SMOOTHR_CONFIG?.storeId;
   if (!storeId) return null;
-  try { const cred = await getPublicCredential(storeId,'stripe','stripe'); cachedKey = cred?.publishable_key || null; return cachedKey; } catch { return null; }
+  try {
+    const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
+    cachedKey = cred?.publishable_key || null;
+    return cachedKey;
+  } catch {
+    return null;
+  }
 }
 
 export async function getElements() {
@@ -173,10 +179,6 @@ export async function mountCardFields() {
       const target = document.querySelector(selector);
       const existing = els.getElement ? els.getElement(type) : null;
       if (!target || existing) continue;
-      // ensure container has explicit height to mount Stripe iframe
-      const compStyle = window.getComputedStyle(target);
-      target.style.height = compStyle.height;
-      target.style.minHeight = compStyle.minHeight || compStyle.height;
 
       await waitForInteractable(target);
       const { style, placeholderText } = getStripeFieldCss(selector, placeholder);
