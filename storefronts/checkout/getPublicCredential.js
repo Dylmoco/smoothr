@@ -24,7 +24,7 @@ export async function getPublicCredential(storeId, integrationId, gateway) {
         .from('public_store_integration_credentials')
         .select('publishable_key')
         .eq('store_id', storeId)
-        .eq('provider', 'stripe')
+        .eq('gateway', 'stripe')
         .maybeSingle();
       if (error) {
         console.warn('[Smoothr] Credential lookup failed:', error.message || error);
