@@ -1,3 +1,8 @@
+function rgbToHex(rgb) {
+  const [r, g, b] = rgb.match(/\d+/g).map(Number);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 function forceStripeIframeStyle(selector) {
   if (typeof document === 'undefined') return;
   let attempts = 0;
@@ -7,6 +12,7 @@ function forceStripeIframeStyle(selector) {
     if (iframe) {
       iframe.style.width = '100%';
       iframe.style.minWidth = '100%';
+      iframe.style.height = container.offsetHeight + 'px';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
       if (container) {
@@ -196,7 +202,7 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
-      const placeholderColor = applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const placeholderColor = placeholderStyle.opacity === '1' ? rgbToHex(placeholderStyle.color) : applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -215,7 +221,6 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
             textAlign: placeholderStyle.textAlign
           }
         },
@@ -263,7 +268,7 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
-      const placeholderColor = applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const placeholderColor = placeholderStyle.opacity === '1' ? rgbToHex(placeholderStyle.color) : applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -282,7 +287,6 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
             textAlign: placeholderStyle.textAlign
           }
         },
@@ -329,7 +333,7 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
-      const placeholderColor = applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const placeholderColor = placeholderStyle.opacity === '1' ? rgbToHex(placeholderStyle.color) : applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -348,7 +352,6 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
             textAlign: placeholderStyle.textAlign
           }
         },
