@@ -23,7 +23,7 @@ export async function getPublicCredential(storeId, integrationId, gateway) {
       const match = gateway || integrationId;
       const { data, error } = await supabase
         .from('public_store_integration_credentials')
-        .select('api_key, settings')
+        .select('settings')
         .eq('store_id', storeId)
         .or(`provider.eq.${match},gateway.eq.${match}`)
         .maybeSingle();
