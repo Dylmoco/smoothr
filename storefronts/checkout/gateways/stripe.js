@@ -206,7 +206,6 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -274,7 +273,6 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -341,7 +339,6 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
