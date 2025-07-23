@@ -15,9 +15,7 @@ export const config = {
   },
 };
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY || "";
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
-const stripe = new Stripe(stripeSecret, { apiVersion: "2022-11-15" });
+let stripe: Stripe | null = null;
 
 async function readBuffer(readable: NodeJS.ReadableStream) {
   const chunks: Buffer[] = [];
@@ -39,6 +37,48 @@ export default async function handler(
     return;
   }
 
+  let stripeSecret = "";
+  let webhookSecret = "";
+  try {
+    const { data } = await supabase
+      .from("store_settings")
+      .select("settings")
+      .limit(1)
+      .maybeSingle();
+    stripeSecret = data?.settings?.stripe_secret_key || "";
+    webhookSecret = data?.settings?.stripe_webhook_secret || "";
+  } catch (e) {
+    err("Store settings lookup failed:", e);
+  }
+
+  if (!stripeSecret || !webhookSecret) {
+    try {
+      const { data } = await supabase
+        .from("store_integrations")
+        .select("api_key, settings")
+        .eq("gateway", "stripe")
+        .limit(1)
+        .maybeSingle();
+      if (!stripeSecret) {
+        stripeSecret = data?.settings?.secret_key || data?.api_key || "";
+      }
+      if (!webhookSecret) {
+        webhookSecret = data?.settings?.webhook_secret || "";
+      }
+    } catch (e) {
+      err("Store integration lookup failed:", e);
+    }
+  }
+
+  if (!stripeSecret) {
+    throw new Error("Stripe secret key not configured");
+  }
+  if (!webhookSecret) {
+    throw new Error("Stripe webhook secret not configured");
+  }
+
+  stripe = new Stripe(stripeSecret, { apiVersion: "2022-11-15" });
+
   // Add one more log here to catch unexpected crashes early
   log("✅ POST method received. Proceeding to read Stripe payload...");
 
@@ -53,7 +93,7 @@ export default async function handler(
     event = stripe.webhooks.constructEvent(
       buf,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET || "",
+      webhookSecret,
     );
     log("✅ Stripe event constructed:", event.type);
   } catch (err: any) {

@@ -100,7 +100,8 @@ Store integrations use a `gateway` column to specify the active payment provider
 
 2. `/api/create-checkout-session` – generates a Stripe Checkout Session.
    This endpoint sets `success_url` to `<origin>/checkout-success` and
-   responds with the Checkout Session URL.
+   responds with the Checkout Session URL. Include `store_id` in the request
+   body so the API can load your Stripe credentials from Supabase.
 
 The SDK determines the active payment gateway by first checking
 `window.SMOOTHR_CONFIG.active_payment_gateway`. If that property is not
