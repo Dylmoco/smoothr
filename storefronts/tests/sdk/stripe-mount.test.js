@@ -18,7 +18,7 @@ beforeEach(() => {
   vi.resetModules();
   styleSpy = vi.fn();
   domReadyCb = null;
-  getCredMock = vi.fn(async () => ({ settings: { publishable_key: 'pk_test' } }));
+  getCredMock = vi.fn(async () => ({ publishable_key: 'pk_test' }));
 
   cardNumberEl = { mount: vi.fn() };
   cardExpiryEl = { mount: vi.fn() };
@@ -69,7 +69,7 @@ describe('stripe element mounting', () => {
     await vi.runAllTimersAsync();
     vi.useRealTimers();
 
-    expect(getCredMock).toHaveBeenCalledWith('store-1', 'stripe');
+    expect(getCredMock).toHaveBeenCalledWith('store-1', 'stripe', 'stripe');
 
     expect(elementsCreate).toHaveBeenCalledWith(
       'cardNumber',

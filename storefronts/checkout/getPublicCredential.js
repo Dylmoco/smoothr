@@ -20,18 +20,22 @@ export async function getPublicCredential(storeId, integrationId, gateway) {
     }
 
     if (integrationId === 'stripe' || gateway === 'stripe') {
-      const match = gateway || integrationId;
       const { data, error } = await supabase
         .from('public_store_integration_credentials')
-        .select('settings')
+        .select('publishable_key')
         .eq('store_id', storeId)
-        .or(`provider.eq.${match},gateway.eq.${match}`)
+        .eq('provider', 'stripe')
         .maybeSingle();
       if (error) {
         console.warn('[Smoothr] Credential lookup failed:', error.message || error);
         return null;
       }
-      return data || null;
+      if (data?.publishable_key) {
+        console.log('[Smoothr] Loaded Stripe key from Supabase.');
+        return { publishable_key: data.publishable_key };
+      }
+      console.warn('[Smoothr] Stripe publishable key not found');
+      return null;
     }
 
     let query = supabase
