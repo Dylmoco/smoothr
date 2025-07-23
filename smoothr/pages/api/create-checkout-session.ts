@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-
-const stripeSecret = process.env.STRIPE_SECRET_KEY || '';
-const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
+import { createServerSupabaseClient } from 'shared/supabase/serverClient';
+import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[create-checkout]', ...args);
@@ -40,10 +39,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const { baseCurrency, cart } = req.body as {
+    const { baseCurrency, cart, store_id } = req.body as {
       baseCurrency: string;
       cart: CartItem[];
+      store_id?: string;
     };
+
+    if (!store_id) {
+      res.status(400).json({ error: 'store_id required' });
+      return;
+    }
+
+    const supabase = createServerSupabaseClient();
+    let stripeSecret = '';
+    try {
+      const { data } = await supabase
+        .from('store_settings')
+        .select('settings')
+        .eq('store_id', store_id)
+        .maybeSingle();
+      stripeSecret = data?.settings?.stripe_secret_key || '';
+    } catch (e) {
+      err('Store settings lookup failed:', e);
+    }
+
+    if (!stripeSecret.trim()) {
+      const integration = await getStoreIntegration(store_id, 'stripe');
+      stripeSecret =
+        integration?.settings?.secret_key || integration?.api_key || '';
+    }
+
+    if (!stripeSecret.trim()) {
+      throw new Error('Stripe secret key not configured for store');
+    }
+
+    const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' });
 
     const currency = baseCurrency?.toUpperCase();
     if (!currency || !SUPPORTED_CURRENCIES.has(currency)) {
