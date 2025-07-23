@@ -30,7 +30,7 @@ function rgbToHexSafe(color) {
 /**
  * Wait for an element to be visible and clickable.
  */
-export async function waitForInteractable(el, timeout = 1500) {
+async function waitForInteractable(el, timeout = 1500) {
   if (!el || typeof el.getBoundingClientRect !== 'function') return;
   const attempts = Math.ceil(timeout / 100);
   for (let i = 0; i < attempts; i++) {
