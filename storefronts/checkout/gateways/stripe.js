@@ -199,13 +199,11 @@ export async function mountCardFields() {
       } else {
         placeholderStyle = fieldStyle;
       }
-      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
-      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
-      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
-      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
-      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
+        .split(',')[0]
+        .trim()
+        .replace(/"/g, '');
       loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
@@ -216,6 +214,7 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
+          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -225,7 +224,9 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            textAlign: placeholderStyle.textAlign
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign,
+            opacity: placeholderStyle.opacity
           }
         },
         invalid: {
@@ -267,13 +268,11 @@ export async function mountCardFields() {
       } else {
         placeholderStyle = fieldStyle;
       }
-      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
-      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
-      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
-      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
-      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
+        .split(',')[0]
+        .trim()
+        .replace(/"/g, '');
       loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
@@ -284,6 +283,7 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
+          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -293,7 +293,9 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            textAlign: placeholderStyle.textAlign
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign,
+            opacity: placeholderStyle.opacity
           }
         },
         invalid: {
@@ -334,13 +336,11 @@ export async function mountCardFields() {
       } else {
         placeholderStyle = fieldStyle;
       }
-      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
-      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
-      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
-      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
-      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
       const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = placeholderStyle.fontFamily.split(',')[0].trim().replace(/"/g, '');
+      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
+        .split(',')[0]
+        .trim()
+        .replace(/"/g, '');
       loadGoogleFont(fontFamilyClean);
       const style = {
         base: {
@@ -351,6 +351,7 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
+          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -360,7 +361,9 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            textAlign: placeholderStyle.textAlign
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign,
+            opacity: placeholderStyle.opacity
           }
         },
         invalid: {
