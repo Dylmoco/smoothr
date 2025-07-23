@@ -3,7 +3,6 @@
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
-import { rgbToHex } from './nmi.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -13,6 +12,20 @@ let cachedKey;
 let cardNumberElement;
 let cardExpiryElement;
 let cardCvcElement;
+
+/**
+ * Convert an RGB(A) string to a hex color. Handles 'rgb(r, g, b)' format.
+ */
+function rgbToHex(rgb) {
+  const nums = rgb.match(/\d+/g);
+  if (!nums || nums.length < 3) return rgb;
+  const [r, g, b] = nums.map(Number);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+function rgbToHexSafe(color) {
+  try { return rgbToHex(color); } catch { return color; }
+}
 
 /**
  * Force Stripe iframe to exactly fill its container, mimicking NMI behavior.
@@ -40,10 +53,6 @@ function forceStripeIframeStyle(selector) {
       clearInterval(interval);
     }
   }, 100);
-}
-
-function rgbToHexSafe(color) {
-  try { return rgbToHex(color); } catch { return color; }
 }
 
 function injectGoogleFont(family) {
@@ -170,6 +179,25 @@ export function ready() {
   return !!stripe && !!cardNumberElement;
 }
 
+export async function getStoreSettings(storeId) {
+  if (!storeId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('public_store_settings')
+      .select('*')
+      .eq('store_id', storeId)
+      .maybeSingle();
+    if (error) {
+      console.warn('[Smoothr Stripe] Store settings fetch failed:', error.message);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.warn('[Smoothr Stripe] Store settings query error:', e.message);
+    return null;
+  }
+}
+
 export async function createPaymentMethod(billing_details) {
   if (!ready()) return { error: { message: 'Stripe not ready' } };
   const { stripe: inst } = await getElements();
@@ -183,5 +211,6 @@ export default {
   isMounted,
   ready,
   getElements,
+  getStoreSettings,
   createPaymentMethod
 };
