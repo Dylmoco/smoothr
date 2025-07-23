@@ -8,7 +8,7 @@ if (
   const style = document.createElement('style');
   style.id = 'smoothr-card-styles';
   style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;padding:0.25rem 0;}\niframe[data-accept-id]{display:block!important;}';
   document.head.appendChild(style);
 }
 

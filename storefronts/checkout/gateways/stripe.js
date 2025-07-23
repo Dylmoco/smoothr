@@ -59,7 +59,7 @@ if (
   const style = document.createElement('style');
   style.id = 'smoothr-card-styles';
   style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;}\niframe[data-accept-id]{display:block!important;}';
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:flex;position:relative;align-items:center;justify-content:flex-start;padding:0.25rem 0;}\niframe[data-accept-id]{display:block!important;}';
   document.head.appendChild(style);
 }
 
@@ -214,7 +214,6 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -224,9 +223,7 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign,
-            opacity: placeholderStyle.opacity
+            textAlign: placeholderStyle.textAlign
           }
         },
         invalid: {
@@ -283,7 +280,6 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -293,9 +289,7 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign,
-            opacity: placeholderStyle.opacity
+            textAlign: placeholderStyle.textAlign
           }
         },
         invalid: {
@@ -351,7 +345,6 @@ export async function mountCardFields() {
           fontStyle: fieldStyle.fontStyle,
           fontWeight: fieldStyle.fontWeight,
           letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
@@ -361,9 +354,7 @@ export async function mountCardFields() {
             fontStyle: placeholderStyle.fontStyle,
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign,
-            opacity: placeholderStyle.opacity
+            textAlign: placeholderStyle.textAlign
           }
         },
         invalid: {
