@@ -28,6 +28,26 @@ function rgbToHexSafe(color) {
 }
 
 /**
+ * Wait for an element to be visible and clickable.
+ */
+export async function waitForInteractable(el, timeout = 1500) {
+  if (!el || typeof el.getBoundingClientRect !== 'function') return;
+  const attempts = Math.ceil(timeout / 100);
+  for (let i = 0; i < attempts; i++) {
+    if (
+      el.offsetParent !== null &&
+      el.getBoundingClientRect().width > 10 &&
+      document.activeElement !== el
+    ) {
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+}(color) {
+  try { return rgbToHex(color); } catch { return color; }
+}
+
+/**
  * Force Stripe iframe to exactly fill its container, mimicking NMI behavior.
  */
 function forceStripeIframeStyle(selector) {
