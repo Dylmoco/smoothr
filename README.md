@@ -168,6 +168,24 @@ The `/api/checkout/[provider]` route imports `shared/init` so a global
 implementation reads the store prefix and order sequence from Supabase. You can
 override this global to customize how order numbers are produced.
 
+### Stripe Integration
+
+Create a `store_integrations` row with `gateway` set to `stripe` and store both
+the `publishable_key` and `secret_key` under the `settings` column:
+
+```json
+{
+  "publishable_key": "<PUBLISHABLE_KEY>",
+  "secret_key": "<SECRET_KEY>"
+}
+```
+
+The checkout SDK reads `settings.publishable_key` from the
+`public_store_integration_credentials` view when fetching configuration for a
+store. Activate the gateway by setting
+`public_store_settings.active_payment_gateway` to `stripe` (or override it on
+the client via `window.SMOOTHR_CONFIG.active_payment_gateway`).
+
 ### NMI Integration
 
 To enable NMI create a row in the `store_integrations` table with `gateway`
