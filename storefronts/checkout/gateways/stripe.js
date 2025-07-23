@@ -1,163 +1,143 @@
-// src/checkout/gateways/stripe.js
-
-import { supabase } from '../../../shared/supabase/browserClient';
-import { getPublicCredential } from '../getPublicCredential.js';
-import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
-
-let fieldsMounted = false;
-let mountPromise;
-let stripe;
-let elements;
-let cachedKey;
-let cardNumberElement;
-let cardExpiryElement;
-let cardCvcElement;
-
-/**
- * Convert an RGB(A) string to hex. Ignores alpha.
- */
-function rgbToHex(rgb) {
-  const nums = rgb.match(/\d+/g);
-  if (!nums || nums.length < 3) return rgb;
-  const [r, g, b] = nums.map(Number);
-  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-}
-
-/**
- * Safe hex conversion fallback.
- */
-function rgbToHexSafe(color) {
-  try { return rgbToHex(color); } catch { return color; }
-}
-
-/**
- * Wait until element is visible and not focused.
- */
-async function waitForInteractable(el, timeout = 1500) {
-  if (!el || typeof el.getBoundingClientRect !== 'function') return;
-  const attempts = Math.ceil(timeout / 100);
-  for (let i = 0; i < attempts; i++) {
-    if (el.offsetParent !== null && el.getBoundingClientRect().width > 10 && document.activeElement !== el) {
-      return;
-    }
-    await new Promise(r => setTimeout(r, 100));
-  }
-}
-
-/**
- * Force Stripe iframe to exactly fill its container.
- */
 function forceStripeIframeStyle(selector) {
   if (typeof document === 'undefined') return;
   let attempts = 0;
   const interval = setInterval(() => {
     const container = document.querySelector(selector);
     const iframe = container?.querySelector('iframe');
-    if (iframe && container) {
-      const heightValue = `${container.offsetHeight}px`;
-      iframe.style.position = 'absolute';
-      iframe.style.top = '0';
-      iframe.style.left = '0';
+    if (iframe) {
       iframe.style.width = '100%';
-      iframe.style.height = heightValue;
-      iframe.style.border = 'none';
-      iframe.style.background = 'transparent';
+      iframe.style.minWidth = '100%';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
-      const comp = window.getComputedStyle(container);
-      container.style.width = '100%';
-      container.style.minWidth = '100%';
-      container.style.display = 'flex';
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'flex-start';
-      container.style.position = comp.position === 'static' ? 'relative' : comp.position;
-      clearInterval(interval);
+      if (container) {
+        container.style.width = '100%';
+        container.style.minWidth = '100%';
+        if (
+          typeof window !== 'undefined' &&
+          window.getComputedStyle(container).position === 'static'
+        ) {
+          container.style.position = 'relative';
+        }
+      }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
+      clearInterval(interval);
     } else if (++attempts >= 20) {
       clearInterval(interval);
     }
   }, 100);
 }
 
-/**
- * Inject Google Font based on computed font-family.
- */
-function injectGoogleFont(family) {
-  if (!family) return;
-  const id = `stripe-font-${family}`;
-  if (document.getElementById(id)) return;
-  const link = document.createElement('link');
-  link.id = id;
-  link.rel = 'stylesheet';
-  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`;
-  document.head.appendChild(link);
+import { supabase } from '../../../shared/supabase/browserClient';
+import { getPublicCredential } from '../getPublicCredential.js';
+import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+let fieldsMounted = false;
+let mountAttempts = 0;
+let stripe;
+let elements;
+let initPromise;
+let cachedKey;
+let cardNumberElement;
+let mountPromise;
+
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
+
+if (
+  typeof document !== 'undefined' &&
+  typeof document.createElement === 'function' &&
+  !document.querySelector('#smoothr-card-styles')
+) {
+  const style = document.createElement('style');
+  style.id = 'smoothr-card-styles';
+  style.textContent =
+    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
+  document.head.appendChild(style);
 }
 
-/**
- * Sniff styles from Webflow container and placeholder.
- */
-function getStripeFieldCss(selector, placeholderSelector) {
-  const target = document.querySelector(selector);
-  if (!target) return { style: {}, placeholderText: '' };
-  const fieldStyle = window.getComputedStyle(target);
-  const placeholderEl = target.querySelector(placeholderSelector) || document.querySelector('[data-smoothr-email]');
-  const placeholderStyle = placeholderEl
-    ? window.getComputedStyle(placeholderEl, placeholderEl.tagName === 'INPUT' ? '::placeholder' : undefined)
-    : fieldStyle;
-  const placeholderText = placeholderEl?.textContent.trim() || '';
+export async function waitForVisible(el, timeout = 1000) {
+  if (!el || typeof el.getBoundingClientRect !== 'function') return;
+  log('Waiting for element to be visible', el);
+  for (let i = 0; i < 10; i++) {
+    if (el.getBoundingClientRect().width > 10) {
+      log('Element visible', el);
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  warn('Element still invisible after timeout', el);
+}
 
-  const placeholderColor = rgbToHexSafe(placeholderStyle.color);
-  const fontFamily = fieldStyle.fontFamily.split(',')[0].replace(/"/g, '').trim();
-  injectGoogleFont(`${fontFamily}:100,200,300,400,500,600,700,800,900`);
+export async function waitForInteractable(el, timeout = 1500) {
+  if (!el || typeof el.getBoundingClientRect !== 'function') return;
+  log('Waiting for mount target to be visible and clickable');
+  const attempts = Math.ceil(timeout / 100);
+  for (let i = 0; i < attempts; i++) {
+    if (
+      el.offsetParent !== null &&
+      el.getBoundingClientRect().width > 10 &&
+      document.activeElement !== el
+    ) {
+      log('Target ready → mounting...');
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  warn('Mount target not interactable after 1.5s');
+}
 
-  return {
-    style: {
-      base: {
-        backgroundColor: 'transparent',
-        color: fieldStyle.color,
-        fontFamily: fieldStyle.fontFamily,
-        fontSize: fieldStyle.fontSize,
-        fontStyle: fieldStyle.fontStyle,
-        fontWeight: fieldStyle.fontWeight,
-        letterSpacing: fieldStyle.letterSpacing,
-        textAlign: fieldStyle.textAlign,
-        textShadow: fieldStyle.textShadow,
-        '::placeholder': {
-          color: placeholderColor,
-          fontFamily: placeholderStyle.fontFamily,
-          fontSize: placeholderStyle.fontSize,
-          fontStyle: placeholderStyle.fontStyle,
-          fontWeight: placeholderStyle.fontWeight,
-          letterSpacing: placeholderStyle.letterSpacing,
-          textAlign: placeholderStyle.textAlign
-        }
-      },
-      invalid: { color: '#fa755a' }
-    },
-    placeholderText
-  };
+function applyOpacityToColor(color, opacity) {
+  const o = parseFloat(opacity);
+  if (o === 1) return color;
+  const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(,\s*([\d.]+))?\)/);
+  if (!match) return color;
+  let a = match[5] ? parseFloat(match[5]) : 1;
+  a *= o;
+  return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${a})`;
 }
 
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
   const storeId = window.SMOOTHR_CONFIG?.storeId;
-  if (!storeId) return null;
-  try {
-    const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
-    cachedKey = cred?.publishable_key || null;
-    return cachedKey;
-  } catch {
+  let key;
+  if (storeId) {
+    try {
+      const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
+      if (cred) {
+        key = cred.publishable_key || '';
+        if (key) {
+          log('✅ Stripe key resolved, mounting gateway...');
+        }
+      }
+    } catch (e) {
+      warn('Integration fetch error:', e?.message || e);
+    }
+  }
+  if (!key) {
+    warn('❌ Stripe key not found — aborting Stripe mount.');
     return null;
   }
+  cachedKey = key;
+  return key;
 }
 
 export async function getElements() {
-  if (stripe && elements) return { stripe, elements };
-  const key = await resolveStripeKey();
-  if (!key) return { stripe: null, elements: null };
-  stripe = Stripe(key);
-  elements = stripe.elements();
-  return { stripe, elements };
+  if (stripe && elements) {
+    return { stripe, elements };
+  }
+
+  if (!initPromise) {
+    initPromise = (async () => {
+      const stripeKey = await resolveStripeKey();
+      if (!stripeKey) return { stripe: null, elements: null };
+      log('Using Stripe key', stripeKey);
+      stripe = Stripe(stripeKey);
+      elements = stripe.elements();
+      return { stripe, elements };
+    })();
+  }
+
+  return initPromise;
 }
 
 export async function mountCardFields() {
@@ -165,39 +145,254 @@ export async function mountCardFields() {
   if (fieldsMounted) return;
 
   mountPromise = (async () => {
+    log('Mounting split fields');
+    const numberTarget = document.querySelector('[data-smoothr-card-number]');
+    const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
+    const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
+    const emailInput = document.querySelector('[data-smoothr-email]');
+
+    log('Targets found', {
+      number: !!numberTarget,
+      expiry: !!expiryTarget,
+      cvc: !!cvcTarget
+    });
+
+    if (!numberTarget && !expiryTarget && !cvcTarget) {
+      if (mountAttempts < 5) {
+        mountAttempts++;
+        mountPromise = null;
+        setTimeout(mountCardFields, 200);
+      } else {
+        warn('card fields not found');
+        mountPromise = null;
+      }
+      return;
+    }
+
     const { elements: els } = await getElements();
-    if (!els) return;
+    if (!els) {
+      mountPromise = null;
+      return;
+    }
+
     fieldsMounted = true;
 
-    const mounts = [
-      { type: 'cardNumber', selector: '[data-smoothr-card-number]', placeholder: '[data-smoothr-card-placeholder]' },
-      { type: 'cardExpiry', selector: '[data-smoothr-card-expiry]', placeholder: '[data-smoothr-expiry-placeholder]' },
-      { type: 'cardCvc', selector: '[data-smoothr-card-cvc]', placeholder: '[data-smoothr-cvv-placeholder]' }
-    ];
-
-    for (const { type, selector, placeholder } of mounts) {
-      const target = document.querySelector(selector);
-      const existing = els.getElement ? els.getElement(type) : null;
-      if (!target || existing) continue;
-
-      await waitForInteractable(target);
-      const { style, placeholderText } = getStripeFieldCss(selector, placeholder);
-      const element = els.create(type, { style, placeholder: placeholderText });
-      element.mount(selector);
-      forceStripeIframeStyle(selector);
-
-      if (type === 'cardNumber') cardNumberElement = element;
-      if (type === 'cardExpiry') cardExpiryElement = element;
-      if (type === 'cardCvc') cardCvcElement = element;
+    const existingNumber = els.getElement ? els.getElement('cardNumber') : null;
+    if (numberTarget && !existingNumber) {
+      await waitForInteractable(numberTarget);
+      const placeholderEl = numberTarget.querySelector('[data-smoothr-card-placeholder]');
+      const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'Card Number';
+      const fieldStyle = window.getComputedStyle(numberTarget);
+      let placeholderStyle;
+      if (placeholderEl) {
+        placeholderStyle = window.getComputedStyle(placeholderEl);
+      } else if (emailInput) {
+        placeholderStyle = window.getComputedStyle(emailInput, '::placeholder');
+      } else {
+        placeholderStyle = fieldStyle;
+      }
+      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
+      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
+      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
+      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
+      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
+      const placeholderColor = applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const style = {
+        base: {
+          backgroundColor: 'transparent',
+          color: fieldStyle.color,
+          fontFamily: fieldStyle.fontFamily,
+          fontSize: fieldStyle.fontSize,
+          fontStyle: fieldStyle.fontStyle,
+          fontWeight: fieldStyle.fontWeight,
+          letterSpacing: fieldStyle.letterSpacing,
+          textAlign: fieldStyle.textAlign,
+          textShadow: fieldStyle.textShadow,
+          '::placeholder': {
+            color: placeholderColor,
+            fontFamily: placeholderStyle.fontFamily,
+            fontSize: placeholderStyle.fontSize,
+            fontStyle: placeholderStyle.fontStyle,
+            fontWeight: placeholderStyle.fontWeight,
+            letterSpacing: placeholderStyle.letterSpacing,
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign
+          }
+        },
+        invalid: {
+          color: '#fa755a'
+        }
+      };
+      console.log('[Stripe] cardNumber style', style);
+      const el = elements.create('cardNumber', { style, placeholder: placeholderText });
+      el.mount('[data-smoothr-card-number]');
+      console.log('[Stripe] Mounted iframe');
+      if (placeholderEl) placeholderEl.style.display = 'none';
+      setTimeout(() => {
+        const iframe = document.querySelector('[data-smoothr-card-number] iframe');
+        const width = iframe?.getBoundingClientRect().width;
+        console.log('[Stripe] iframe bbox', width);
+        if (iframe && width < 10) {
+          console.warn('[Stripe] iframe dead → remounting now...');
+          cardNumberElement?.unmount?.();
+          cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
+          cardNumberElement.mount('[data-smoothr-card-number]');
+          forceStripeIframeStyle('[data-smoothr-card-number]');
+          if (placeholderEl) placeholderEl.style.display = 'none';
+        }
+      }, 500);
+      forceStripeIframeStyle('[data-smoothr-card-number]');
+      cardNumberElement = el;
     }
+    const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
+    if (expiryTarget && !existingExpiry) {
+      await waitForInteractable(expiryTarget);
+      const placeholderEl = expiryTarget.querySelector('[data-smoothr-expiry-placeholder]');
+      const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'MM/YY';
+      const fieldStyle = window.getComputedStyle(expiryTarget);
+      let placeholderStyle;
+      if (placeholderEl) {
+        placeholderStyle = window.getComputedStyle(placeholderEl);
+      } else if (emailInput) {
+        placeholderStyle = window.getComputedStyle(emailInput, '::placeholder');
+      } else {
+        placeholderStyle = fieldStyle;
+      }
+      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
+      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
+      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
+      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
+      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
+      const placeholderColor = applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const style = {
+        base: {
+          backgroundColor: 'transparent',
+          color: fieldStyle.color,
+          fontFamily: fieldStyle.fontFamily,
+          fontSize: fieldStyle.fontSize,
+          fontStyle: fieldStyle.fontStyle,
+          fontWeight: fieldStyle.fontWeight,
+          letterSpacing: fieldStyle.letterSpacing,
+          textAlign: fieldStyle.textAlign,
+          textShadow: fieldStyle.textShadow,
+          '::placeholder': {
+            color: placeholderColor,
+            fontFamily: placeholderStyle.fontFamily,
+            fontSize: placeholderStyle.fontSize,
+            fontStyle: placeholderStyle.fontStyle,
+            fontWeight: placeholderStyle.fontWeight,
+            letterSpacing: placeholderStyle.letterSpacing,
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign
+          }
+        },
+        invalid: {
+          color: '#fa755a'
+        }
+      };
+      console.log('[Stripe] cardExpiry style', style);
+      const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
+      el.mount('[data-smoothr-card-expiry]');
+      console.log('[Stripe] Mounted iframe');
+      if (placeholderEl) placeholderEl.style.display = 'none';
+      setTimeout(() => {
+        const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
+        const width = iframe?.getBoundingClientRect().width;
+        console.log('[Stripe] iframe bbox', width);
+        if (iframe && width < 10) {
+          console.warn('[Stripe] iframe dead → remounting now...');
+          el?.unmount?.();
+          const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
+          remount.mount('[data-smoothr-card-expiry]');
+          forceStripeIframeStyle('[data-smoothr-card-expiry]');
+          if (placeholderEl) placeholderEl.style.display = 'none';
+        }
+      }, 500);
+      forceStripeIframeStyle('[data-smoothr-card-expiry]');
+    }
+    const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
+    if (cvcTarget && !existingCvc) {
+      await waitForInteractable(cvcTarget);
+      const placeholderEl = cvcTarget.querySelector('[data-smoothr-cvv-placeholder]');
+      const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'CVC';
+      const fieldStyle = window.getComputedStyle(cvcTarget);
+      let placeholderStyle;
+      if (placeholderEl) {
+        placeholderStyle = window.getComputedStyle(placeholderEl);
+      } else if (emailInput) {
+        placeholderStyle = window.getComputedStyle(emailInput, '::placeholder');
+      } else {
+        placeholderStyle = fieldStyle;
+      }
+      console.log('[Stripe] Placeholder color:', placeholderStyle.color);
+      console.log('[Stripe] Placeholder font-family:', placeholderStyle.fontFamily);
+      console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
+      console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
+      console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
+      const placeholderColor = applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const style = {
+        base: {
+          backgroundColor: 'transparent',
+          color: fieldStyle.color,
+          fontFamily: fieldStyle.fontFamily,
+          fontSize: fieldStyle.fontSize,
+          fontStyle: fieldStyle.fontStyle,
+          fontWeight: fieldStyle.fontWeight,
+          letterSpacing: fieldStyle.letterSpacing,
+          textAlign: fieldStyle.textAlign,
+          textShadow: fieldStyle.textShadow,
+          '::placeholder': {
+            color: placeholderColor,
+            fontFamily: placeholderStyle.fontFamily,
+            fontSize: placeholderStyle.fontSize,
+            fontStyle: placeholderStyle.fontStyle,
+            fontWeight: placeholderStyle.fontWeight,
+            letterSpacing: placeholderStyle.letterSpacing,
+            lineHeight: placeholderStyle.lineHeight,
+            textAlign: placeholderStyle.textAlign
+          }
+        },
+        invalid: {
+          color: '#fa755a'
+        }
+      };
+      console.log('[Stripe] cardCvc style', style);
+      const el = elements.create('cardCvc', { style, placeholder: placeholderText });
+      el.mount('[data-smoothr-card-cvc]');
+      console.log('[Stripe] Mounted iframe');
+      if (placeholderEl) placeholderEl.style.display = 'none';
+      setTimeout(() => {
+        const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
+        const width = iframe?.getBoundingClientRect().width;
+        console.log('[Stripe] iframe bbox', width);
+        if (iframe && width < 10) {
+          console.warn('[Stripe] iframe dead → remounting now...');
+          el?.unmount?.();
+          const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
+          remount.mount('[data-smoothr-card-cvc]');
+          forceStripeIframeStyle('[data-smoothr-card-cvc]');
+          if (placeholderEl) placeholderEl.style.display = 'none';
+        }
+      }, 500);
+      forceStripeIframeStyle('[data-smoothr-card-cvc]');
+    }
+
+    log('Mounted split fields');
   })();
 
-  mountPromise = mountPromise.finally(() => { mountPromise = null; });
+  mountPromise = mountPromise.finally(() => {
+    mountPromise = null;
+  });
   return mountPromise;
 }
 
-export function isMounted() { return fieldsMounted; }
-export function ready() { return !!stripe && !!cardNumberElement; }
+export function isMounted() {
+  return fieldsMounted;
+}
+
+export function ready() {
+  return !!stripe && !!cardNumberElement;
+}
 
 export async function getStoreSettings(storeId) {
   if (!storeId) return null;
@@ -207,18 +402,48 @@ export async function getStoreSettings(storeId) {
       .select('*')
       .eq('store_id', storeId)
       .maybeSingle();
-    return error ? null : data;
-  } catch {
+    if (error) {
+      warn('Store settings lookup failed:', error.message || error);
+      return null;
+    }
+    return data || null;
+  } catch (e) {
+    warn('Store settings fetch error:', e?.message || e);
     return null;
   }
 }
 
 export async function createPaymentMethod(billing_details) {
-  if (!ready()) return { error: { message: 'Stripe not ready' } };
-  const { stripe: inst } = await getElements();
-  if (!inst) return { error: { message: 'Stripe not ready' } };
-  const res = await inst.createPaymentMethod({ type: 'card', card: cardNumberElement, billing_details });
-  return { error: res.error || null, payment_method: res.paymentMethod || null };
+  if (!ready()) {
+    return { error: { message: 'Stripe not ready' } };
+  }
+
+  const { stripe: stripeInstance, elements: els } = await getElements();
+  if (!stripeInstance || !els) {
+    return { error: { message: 'Stripe not ready' } };
+  }
+
+  const card =
+    cardNumberElement ||
+    (typeof els.getElement === 'function' ? els.getElement('cardNumber') : null);
+  const res = await stripeInstance.createPaymentMethod({
+    type: 'card',
+    card,
+    billing_details
+  });
+  return {
+    error: res.error || null,
+    payment_method: res.paymentMethod || null
+  };
 }
 
-export default { mountCardFields, isMounted, ready, getElements, getStoreSettings, createPaymentMethod };
+export default {
+  mountCardFields,
+  isMounted,
+  ready,
+  getStoreSettings,
+  getElements,
+  createPaymentMethod,
+  waitForVisible,
+  waitForInteractable
+};
