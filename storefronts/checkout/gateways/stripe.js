@@ -234,8 +234,7 @@ export async function mountCardFields() {
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
             lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign,
-            opacity: placeholderStyle.opacity
+            textAlign: placeholderStyle.textAlign
           }
         },
         invalid: {
@@ -246,7 +245,7 @@ export async function mountCardFields() {
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-number]');
 
-      console.log('[Stripe] Mounted iframe');
+      log('Mounted iframe');
       forceStripeIframeStyle('[data-smoothr-card-number]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
@@ -311,8 +310,7 @@ export async function mountCardFields() {
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
             lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign,
-            opacity: placeholderStyle.opacity
+            textAlign: placeholderStyle.textAlign
           }
         },
         invalid: {
@@ -323,7 +321,7 @@ export async function mountCardFields() {
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-expiry]');
 
-      console.log('[Stripe] Mounted iframe');
+      log('Mounted iframe');
       forceStripeIframeStyle('[data-smoothr-card-expiry]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
@@ -387,8 +385,7 @@ export async function mountCardFields() {
             fontWeight: placeholderStyle.fontWeight,
             letterSpacing: placeholderStyle.letterSpacing,
             lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign,
-            opacity: placeholderStyle.opacity
+            textAlign: placeholderStyle.textAlign
           }
         },
         invalid: {
@@ -399,7 +396,7 @@ export async function mountCardFields() {
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-cvc]');
 
-      console.log('[Stripe] Mounted iframe');
+      log('Mounted iframe');
       forceStripeIframeStyle('[data-smoothr-card-cvc]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
