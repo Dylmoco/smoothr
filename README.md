@@ -247,6 +247,11 @@ window with the `DEDUPE_WINDOW_MS` environment variable. It defaults to 30
 seconds. Setting a lower value or `0` disables server-side duplicate
 suppression.
 
+### CORS_ORIGIN
+
+API routes use this variable for CORS headers. Set it to the allowed
+origin URL. When unset, `*` is used.
+
 ## Checkout flow
 
 All gateways now delegate post-success behavior to `handleSuccessRedirect()` in utils.
