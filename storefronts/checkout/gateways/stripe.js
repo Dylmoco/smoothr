@@ -92,16 +92,6 @@ export async function waitForInteractable(el, timeout = 1500) {
   warn('Mount target not interactable after 1.5s');
 }
 
-function applyOpacityToColor(color, opacity) {
-  const o = parseFloat(opacity);
-  if (o === 1) return color;
-  const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(,\s*([\d.]+))?\)/);
-  if (!match) return color;
-  let a = match[5] ? parseFloat(match[5]) : 1;
-  a *= o;
-  return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${a})`;
-}
-
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
   const storeId = window.SMOOTHR_CONFIG?.storeId;
@@ -202,7 +192,7 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
-      const placeholderColor = placeholderStyle.opacity === '1' ? rgbToHex(placeholderStyle.color) : applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const placeholderColorHex = rgbToHex(placeholderStyle.color);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -215,7 +205,7 @@ export async function mountCardFields() {
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
-            color: placeholderColor,
+            color: placeholderColorHex,
             fontFamily: placeholderStyle.fontFamily,
             fontSize: placeholderStyle.fontSize,
             fontStyle: placeholderStyle.fontStyle,
@@ -268,7 +258,7 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
-      const placeholderColor = placeholderStyle.opacity === '1' ? rgbToHex(placeholderStyle.color) : applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const placeholderColorHex = rgbToHex(placeholderStyle.color);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -281,7 +271,7 @@ export async function mountCardFields() {
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
-            color: placeholderColor,
+            color: placeholderColorHex,
             fontFamily: placeholderStyle.fontFamily,
             fontSize: placeholderStyle.fontSize,
             fontStyle: placeholderStyle.fontStyle,
@@ -333,7 +323,7 @@ export async function mountCardFields() {
       console.log('[Stripe] Placeholder font-size:', placeholderStyle.fontSize);
       console.log('[Stripe] Placeholder opacity:', placeholderStyle.opacity);
       console.log('[Stripe] Placeholder font-weight:', placeholderStyle.fontWeight);
-      const placeholderColor = placeholderStyle.opacity === '1' ? rgbToHex(placeholderStyle.color) : applyOpacityToColor(placeholderStyle.color, placeholderStyle.opacity);
+      const placeholderColorHex = rgbToHex(placeholderStyle.color);
       const style = {
         base: {
           backgroundColor: 'transparent',
@@ -346,7 +336,7 @@ export async function mountCardFields() {
           textAlign: fieldStyle.textAlign,
           textShadow: fieldStyle.textShadow,
           '::placeholder': {
-            color: placeholderColor,
+            color: placeholderColorHex,
             fontFamily: placeholderStyle.fontFamily,
             fontSize: placeholderStyle.fontSize,
             fontStyle: placeholderStyle.fontStyle,
