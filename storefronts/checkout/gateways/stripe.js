@@ -234,7 +234,12 @@ export async function mountCardFields() {
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-number]');
       log('Mounted iframe');
-      if (placeholderEl) placeholderEl.style.display = 'none';
+      if (placeholderEl) {
+        const phHeight = placeholderEl.offsetHeight;
+        numberTarget.style.minHeight = phHeight + 'px';
+        placeholderEl.style.visibility = 'hidden';
+        forceStripeIframeStyle('[data-smoothr-card-number]');
+      }
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-number] iframe');
         const width = iframe?.getBoundingClientRect().width;
@@ -245,11 +250,15 @@ export async function mountCardFields() {
           cardNumberElement?.destroy?.();
           cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
           cardNumberElement.mount('[data-smoothr-card-number]');
-          forceStripeIframeStyle('[data-smoothr-card-number]');
-          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (placeholderEl) {
+            placeholderEl.style.visibility = 'hidden';
+            forceStripeIframeStyle('[data-smoothr-card-number]');
+          } else {
+            forceStripeIframeStyle('[data-smoothr-card-number]');
+          }
         }
       }, 500);
-      forceStripeIframeStyle('[data-smoothr-card-number]');
+      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-number]');
       cardNumberElement = el;
     }
     const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
@@ -301,7 +310,12 @@ export async function mountCardFields() {
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-expiry]');
       log('Mounted iframe');
-      if (placeholderEl) placeholderEl.style.display = 'none';
+      if (placeholderEl) {
+        const phHeight = placeholderEl.offsetHeight;
+        expiryTarget.style.minHeight = phHeight + 'px';
+        placeholderEl.style.visibility = 'hidden';
+        forceStripeIframeStyle('[data-smoothr-card-expiry]');
+      }
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
         const width = iframe?.getBoundingClientRect().width;
@@ -312,11 +326,15 @@ export async function mountCardFields() {
           el?.destroy?.();
           const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-expiry]');
-          forceStripeIframeStyle('[data-smoothr-card-expiry]');
-          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (placeholderEl) {
+            placeholderEl.style.visibility = 'hidden';
+            forceStripeIframeStyle('[data-smoothr-card-expiry]');
+          } else {
+            forceStripeIframeStyle('[data-smoothr-card-expiry]');
+          }
         }
       }, 500);
-      forceStripeIframeStyle('[data-smoothr-card-expiry]');
+      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-expiry]');
     }
     const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
     if (cvcTarget && !existingCvc) {
@@ -367,7 +385,12 @@ export async function mountCardFields() {
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-cvc]');
       log('Mounted iframe');
-      if (placeholderEl) placeholderEl.style.display = 'none';
+      if (placeholderEl) {
+        const phHeight = placeholderEl.offsetHeight;
+        cvcTarget.style.minHeight = phHeight + 'px';
+        placeholderEl.style.visibility = 'hidden';
+        forceStripeIframeStyle('[data-smoothr-card-cvc]');
+      }
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
         const width = iframe?.getBoundingClientRect().width;
@@ -378,11 +401,15 @@ export async function mountCardFields() {
           el?.destroy?.();
           const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-cvc]');
-          forceStripeIframeStyle('[data-smoothr-card-cvc]');
-          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (placeholderEl) {
+            placeholderEl.style.visibility = 'hidden';
+            forceStripeIframeStyle('[data-smoothr-card-cvc]');
+          } else {
+            forceStripeIframeStyle('[data-smoothr-card-cvc]');
+          }
         }
       }, 500);
-      forceStripeIframeStyle('[data-smoothr-card-cvc]');
+      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-cvc]');
     }
 
     log('Mounted split fields');
