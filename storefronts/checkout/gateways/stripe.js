@@ -167,6 +167,10 @@ export async function mountCardFields() {
       const target = document.querySelector(selector);
       const existing = els.getElement ? els.getElement(type) : null;
       if (!target || existing) continue;
+      // ensure container has explicit height to mount Stripe iframe
+      const compStyle = window.getComputedStyle(target);
+      target.style.height = compStyle.height;
+      target.style.minHeight = compStyle.minHeight || compStyle.height;
 
       await waitForInteractable(target);
       const { style, placeholderText } = getStripeFieldCss(selector, placeholder);
