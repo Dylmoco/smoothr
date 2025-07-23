@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import crypto from 'crypto';
 import { getStoreIntegration } from '../getStoreIntegration';
+import { createServerSupabaseClient } from '../../supabase/serverClient';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout Stripe]', ...args);
@@ -31,15 +32,41 @@ interface StripePayload {
 }
 
 export default async function handleStripe(payload: StripePayload) {
-  const integration = await getStoreIntegration(payload.store_id, 'stripe');
-  const stripeSecret =
-    integration?.settings?.secret_key ||
-    integration?.api_key ||
-    '';
+  const supabase = createServerSupabaseClient();
+  let stripeSecret = '';
+
+  try {
+    const { data, error } = await supabase
+      .from('store_settings')
+      .select('settings')
+      .eq('store_id', payload.store_id)
+      .maybeSingle();
+    if (error) {
+      console.warn('[Checkout Stripe] Store settings error:', error.message);
+    }
+    stripeSecret = data?.settings?.stripe_secret_key || '';
+  } catch (e) {
+    console.warn('[Checkout Stripe] Store settings lookup failed:', e);
+  }
+
+  if (!stripeSecret.trim()) {
+    const integration = await getStoreIntegration(payload.store_id, 'stripe');
+    stripeSecret =
+      integration?.settings?.secret_key ||
+      integration?.api_key ||
+      '';
+  }
+
   if (!stripeSecret.trim()) {
     err('Missing Stripe credentials');
-    return { success: false, error: 'Missing credentials' };
+    return {
+      success: false,
+      transaction_id: null,
+      customer_vault_id: null,
+      error: 'Missing credentials'
+    };
   }
+
   if (stripeSecret.startsWith('pk_')) {
     console.warn('[Checkout Stripe] Using publishable key on server');
   }
@@ -60,7 +87,12 @@ export default async function handleStripe(payload: StripePayload) {
     !country
   ) {
     err('Missing required fields');
-    return { success: false, error: 'Missing required fields' };
+    return {
+      success: false,
+      transaction_id: null,
+      customer_vault_id: null,
+      error: 'Missing required fields'
+    };
   }
 
   try {
@@ -87,9 +119,19 @@ export default async function handleStripe(payload: StripePayload) {
       { idempotencyKey }
     );
     log('Stripe PaymentIntent created:', intent.id);
-    return { success: true, transaction_id: intent.id };
+    return {
+      success: true,
+      transaction_id: intent.id,
+      customer_vault_id: null,
+      error: null
+    };
   } catch (err: any) {
     console.error('Stripe Error:', err);
-    return { success: false, error: err?.message || 'Stripe checkout failed' };
+    return {
+      success: false,
+      transaction_id: null,
+      customer_vault_id: null,
+      error: err?.message || 'Stripe checkout failed'
+    };
   }
 }
