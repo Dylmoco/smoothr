@@ -43,8 +43,6 @@ export async function waitForInteractable(el, timeout = 1500) {
     }
     await new Promise(r => setTimeout(r, 100));
   }
-}(color) {
-  try { return rgbToHex(color); } catch { return color; }
 }
 
 /**
