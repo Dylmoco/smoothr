@@ -27,7 +27,7 @@ function forceStripeIframeStyle(selector) {
       if (window.getComputedStyle(container).position === 'static') {
         container.style.position = 'relative';
       }
-      console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
+      log(`Forced iframe styles for ${selector}`);
       clearInterval(interval);
     } else if (++attempts >= 20) {
       clearInterval(interval);
@@ -145,7 +145,7 @@ function loadGoogleFont(fontFamily) {
   link.href = `https://fonts.googleapis.com/css2?family=${googleFontString}`;
   link.rel = 'stylesheet';
   document.head.appendChild(link);
-  console.log('[Stripe] Loaded Google font:', googleFontString);
+  log('Loaded Google font:', googleFontString);
 }
 
 export async function mountCardFields() {
@@ -233,17 +233,17 @@ export async function mountCardFields() {
           color: '#fa755a'
         }
       };
-      console.log('[Stripe] cardNumber style', style);
+      log('cardNumber style', style);
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-number]');
-      console.log('[Stripe] Mounted iframe');
+      log('Mounted iframe');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-number] iframe');
         const width = iframe?.getBoundingClientRect().width;
-        console.log('[Stripe] iframe bbox', width);
+        log('iframe bbox', width);
         if (iframe && width < 10) {
-          console.warn('[Stripe] iframe dead → remounting now...');
+          warn('iframe dead → remounting now...');
           cardNumberElement?.unmount?.();
           cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
           cardNumberElement.mount('[data-smoothr-card-number]');
@@ -302,17 +302,17 @@ export async function mountCardFields() {
           color: '#fa755a'
         }
       };
-      console.log('[Stripe] cardExpiry style', style);
+      log('cardExpiry style', style);
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-expiry]');
-      console.log('[Stripe] Mounted iframe');
+      log('Mounted iframe');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
         const width = iframe?.getBoundingClientRect().width;
-        console.log('[Stripe] iframe bbox', width);
+        log('iframe bbox', width);
         if (iframe && width < 10) {
-          console.warn('[Stripe] iframe dead → remounting now...');
+          warn('iframe dead → remounting now...');
           el?.unmount?.();
           const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-expiry]');
@@ -370,17 +370,17 @@ export async function mountCardFields() {
           color: '#fa755a'
         }
       };
-      console.log('[Stripe] cardCvc style', style);
+      log('cardCvc style', style);
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-cvc]');
-      console.log('[Stripe] Mounted iframe');
+      log('Mounted iframe');
       if (placeholderEl) placeholderEl.style.display = 'none';
       setTimeout(() => {
         const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
         const width = iframe?.getBoundingClientRect().width;
-        console.log('[Stripe] iframe bbox', width);
+        log('iframe bbox', width);
         if (iframe && width < 10) {
-          console.warn('[Stripe] iframe dead → remounting now...');
+          warn('iframe dead → remounting now...');
           el?.unmount?.();
           const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
           remount.mount('[data-smoothr-card-cvc]');
