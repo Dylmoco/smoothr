@@ -36,7 +36,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              eq: vi.fn(() => ({ single: vi.fn(async () => ({ data: null, error: null })) }))
+              eq: vi.fn(() => ({ limit: vi.fn(async () => ({ data: [], error: null })) }))
             }))
           }))
         };
