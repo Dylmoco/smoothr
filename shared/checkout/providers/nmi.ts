@@ -58,6 +58,26 @@ export default async function handleNmi(payload: NmiPayload) {
     return { success: false, error: 'Missing security key' };
   }
 
+  // Default objects so property lookups don't explode
+  const shipping = payload.shipping || {} as any;
+  const shipAddr = shipping.address || {} as any;
+
+  if (!payload.payment_token && !payload.customer_profile_id) {
+    console.log('[NMI Checkout] Using credentials: none');
+    throw new Error('Missing payment credentials');
+  }
+
+  if (
+    !shipAddr.line1 ||
+    !shipAddr.city ||
+    !shipAddr.state ||
+    !shipAddr.postal_code ||
+    !shipAddr.country
+  ) {
+    err('Missing required address fields');
+    throw new Error('Missing payment credentials');
+  }
+
   // Prepare NMI params with full details
   const params = new URLSearchParams({
     security_key: securityKey,
@@ -66,21 +86,21 @@ export default async function handleNmi(payload: NmiPayload) {
     firstname: payload.first_name,
     lastname: payload.last_name,
     email: payload.email,
-    address1: payload.shipping.address.line1,
-    address2: payload.shipping.address.line2 || '',
-    city: payload.shipping.address.city,
-    state: payload.shipping.address.state,
-    zip: payload.shipping.address.postal_code,
-    country: payload.shipping.address.country,
+    address1: shipAddr.line1,
+    address2: shipAddr.line2 || '',
+    city: shipAddr.city,
+    state: shipAddr.state,
+    zip: shipAddr.postal_code,
+    country: shipAddr.country,
     currency_code: payload.currency,
     shipping_firstname: payload.first_name,
     shipping_lastname: payload.last_name,
-    shipping_address1: payload.shipping.address.line1,
-    shipping_address2: payload.shipping.address.line2 || '',
-    shipping_city: payload.shipping.address.city,
-    shipping_state: payload.shipping.address.state,
-    shipping_zip: payload.shipping.address.postal_code,
-    shipping_country: payload.shipping.address.country,
+    shipping_address1: shipAddr.line1,
+    shipping_address2: shipAddr.line2 || '',
+    shipping_city: shipAddr.city,
+    shipping_state: shipAddr.state,
+    shipping_zip: shipAddr.postal_code,
+    shipping_country: shipAddr.country,
     orderid: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`  // Unique ID for each payment
   });
 
@@ -101,7 +121,7 @@ export default async function handleNmi(payload: NmiPayload) {
   }
 
   // Add billing if provided, else use shipping
-  const billAddr = payload.billing?.address || payload.shipping.address;
+  const billAddr = payload.billing?.address || shipAddr;
   params.append('billing_address1', billAddr.line1);
   params.append('billing_address2', billAddr.line2 || '');
   params.append('billing_city', billAddr.city);
