@@ -1,48 +1,5 @@
-function rgbToHex(rgb) {
-  const [r, g, b] = rgb.match(/\d+/g).map(Number);
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-function forceStripeIframeStyle(selector) {
-  if (typeof document === 'undefined') return;
-  let attempts = 0;
-  const interval = setInterval(() => {
-    const container = document.querySelector(selector);
-    const iframe = container?.querySelector('iframe');
-    if (iframe && container) {
-      iframe.style.position = 'absolute';
-      iframe.style.top = '0';
-      iframe.style.left = '0';
-      iframe.style.width = '100%';
-      let height = container.offsetHeight;
-      if (height < 5) {
-        const scroll = container.scrollHeight;
-        if (scroll > height) height = scroll;
-        if (height < 5) {
-          const stored = parseFloat(container.style.minHeight);
-          if (!Number.isNaN(stored) && stored > 0) height = stored;
-        }
-      }
-      iframe.style.height = height + 'px';
-      iframe.style.border = 'none';
-      iframe.style.background = 'transparent';
-      iframe.style.display = 'block';
-      iframe.style.opacity = '1';
-      container.style.display = 'flex';
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'flex-start';
-      container.style.width = '100%';
-      container.style.minWidth = '100%';
-      if (window.getComputedStyle(container).position === 'static') {
-        container.style.position = 'relative';
-      }
-      log(`Forced iframe styles for ${selector}`);
-      clearInterval(interval);
-    } else if (++attempts >= 20) {
-      clearInterval(interval);
-    }
-  }, 100);
-}
+import forceStripeIframeStyle from '../../../utils/iframeStyles.js';
+import { buildStripeElementStyle } from '../../core/payments/stripeStyle.js';
 
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
@@ -147,15 +104,6 @@ export async function getElements() {
   return initPromise;
 }
 
-function loadGoogleFont(fontFamily) {
-  if (!fontFamily || document.querySelector(`link[href*="fonts.googleapis.com/css2?family=${fontFamily}"]`)) return;
-  const googleFontString = `${fontFamily}:wght@100;200;300;400;500;600;700;800;900&display=swap`;
-  const link = document.createElement('link');
-  link.href = `https://fonts.googleapis.com/css2?family=${googleFontString}`;
-  link.rel = 'stylesheet';
-  document.head.appendChild(link);
-  log('Loaded Google font:', googleFontString);
-}
 
 export async function mountCardFields() {
   if (mountPromise) return mountPromise;
@@ -199,48 +147,11 @@ export async function mountCardFields() {
       await waitForInteractable(numberTarget);
       const placeholderEl = numberTarget.querySelector('[data-smoothr-card-placeholder]');
       const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'Card Number';
-      const fieldStyle = window.getComputedStyle(numberTarget);
-      let placeholderStyle;
-      if (placeholderEl) {
-        placeholderStyle = window.getComputedStyle(placeholderEl);
-      } else if (emailInput) {
-        placeholderStyle = window.getComputedStyle(emailInput, '::placeholder');
-      } else {
-        placeholderStyle = fieldStyle;
-      }
-      const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
-        .split(',')[0]
-        .trim()
-        .replace(/"/g, '');
-      loadGoogleFont(fontFamilyClean);
-      const style = {
-        base: {
-          backgroundColor: 'transparent',
-          color: fieldStyle.color,
-          fontFamily: fieldStyle.fontFamily,
-          fontSize: fieldStyle.fontSize,
-          fontStyle: fieldStyle.fontStyle,
-          fontWeight: fieldStyle.fontWeight,
-          letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
-          textAlign: fieldStyle.textAlign,
-          textShadow: fieldStyle.textShadow,
-          '::placeholder': {
-            color: placeholderColorHex,
-            fontFamily: placeholderStyle.fontFamily,
-            fontSize: placeholderStyle.fontSize,
-            fontStyle: placeholderStyle.fontStyle,
-            fontWeight: placeholderStyle.fontWeight,
-            letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign
-          }
-        },
-        invalid: {
-          color: '#fa755a'
-        }
-      };
+      const style = buildStripeElementStyle(
+        numberTarget,
+        '[data-smoothr-card-placeholder]',
+        'Card Number'
+      );
       log('cardNumber style', style);
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-number]');
@@ -275,48 +186,11 @@ export async function mountCardFields() {
       await waitForInteractable(expiryTarget);
       const placeholderEl = expiryTarget.querySelector('[data-smoothr-expiry-placeholder]');
       const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'MM/YY';
-      const fieldStyle = window.getComputedStyle(expiryTarget);
-      let placeholderStyle;
-      if (placeholderEl) {
-        placeholderStyle = window.getComputedStyle(placeholderEl);
-      } else if (emailInput) {
-        placeholderStyle = window.getComputedStyle(emailInput, '::placeholder');
-      } else {
-        placeholderStyle = fieldStyle;
-      }
-      const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
-        .split(',')[0]
-        .trim()
-        .replace(/"/g, '');
-      loadGoogleFont(fontFamilyClean);
-      const style = {
-        base: {
-          backgroundColor: 'transparent',
-          color: fieldStyle.color,
-          fontFamily: fieldStyle.fontFamily,
-          fontSize: fieldStyle.fontSize,
-          fontStyle: fieldStyle.fontStyle,
-          fontWeight: fieldStyle.fontWeight,
-          letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
-          textAlign: fieldStyle.textAlign,
-          textShadow: fieldStyle.textShadow,
-          '::placeholder': {
-            color: placeholderColorHex,
-            fontFamily: placeholderStyle.fontFamily,
-            fontSize: placeholderStyle.fontSize,
-            fontStyle: placeholderStyle.fontStyle,
-            fontWeight: placeholderStyle.fontWeight,
-            letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign
-          }
-        },
-        invalid: {
-          color: '#fa755a'
-        }
-      };
+      const style = buildStripeElementStyle(
+        expiryTarget,
+        '[data-smoothr-expiry-placeholder]',
+        'MM/YY'
+      );
       log('cardExpiry style', style);
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-expiry]');
@@ -350,48 +224,11 @@ export async function mountCardFields() {
       await waitForInteractable(cvcTarget);
       const placeholderEl = cvcTarget.querySelector('[data-smoothr-cvv-placeholder]');
       const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'CVC';
-      const fieldStyle = window.getComputedStyle(cvcTarget);
-      let placeholderStyle;
-      if (placeholderEl) {
-        placeholderStyle = window.getComputedStyle(placeholderEl);
-      } else if (emailInput) {
-        placeholderStyle = window.getComputedStyle(emailInput, '::placeholder');
-      } else {
-        placeholderStyle = fieldStyle;
-      }
-      const placeholderColorHex = rgbToHex(placeholderStyle.color);
-      const fontFamilyClean = (placeholderStyle.fontFamily || fieldStyle.fontFamily)
-        .split(',')[0]
-        .trim()
-        .replace(/"/g, '');
-      loadGoogleFont(fontFamilyClean);
-      const style = {
-        base: {
-          backgroundColor: 'transparent',
-          color: fieldStyle.color,
-          fontFamily: fieldStyle.fontFamily,
-          fontSize: fieldStyle.fontSize,
-          fontStyle: fieldStyle.fontStyle,
-          fontWeight: fieldStyle.fontWeight,
-          letterSpacing: fieldStyle.letterSpacing,
-          lineHeight: fieldStyle.lineHeight,
-          textAlign: fieldStyle.textAlign,
-          textShadow: fieldStyle.textShadow,
-          '::placeholder': {
-            color: placeholderColorHex,
-            fontFamily: placeholderStyle.fontFamily,
-            fontSize: placeholderStyle.fontSize,
-            fontStyle: placeholderStyle.fontStyle,
-            fontWeight: placeholderStyle.fontWeight,
-            letterSpacing: placeholderStyle.letterSpacing,
-            lineHeight: placeholderStyle.lineHeight,
-            textAlign: placeholderStyle.textAlign
-          }
-        },
-        invalid: {
-          color: '#fa755a'
-        }
-      };
+      const style = buildStripeElementStyle(
+        cvcTarget,
+        '[data-smoothr-cvv-placeholder]',
+        'CVC'
+      );
       log('cardCvc style', style);
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       el.mount('[data-smoothr-card-cvc]');
