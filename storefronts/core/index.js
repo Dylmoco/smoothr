@@ -82,6 +82,9 @@ export default Smoothr;
 
 // Bootstrap SDK: load config and then initialize everything
 (async function initSmoothr() {
+  if (typeof globalThis.setSelectedCurrency !== 'function') {
+    globalThis.setSelectedCurrency = () => {};
+  }
   const currentScript =
     document.currentScript ||
     document.querySelector('script[src*="smoothr-sdk"][data-store-id]');
