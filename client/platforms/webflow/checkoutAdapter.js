@@ -21,7 +21,9 @@ loadCSS('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTe
 loadScript('https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js', () => {
   loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js', () => {
     loadScript('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js', () => {
-      document.addEventListener('DOMContentLoaded', initializePickers);
+      const runInit = () => initializePickers();
+      if (document.readyState !== 'loading') runInit();
+      else document.addEventListener('DOMContentLoaded', runInit);
     });
   });
 });
