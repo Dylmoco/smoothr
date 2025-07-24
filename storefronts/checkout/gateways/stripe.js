@@ -8,6 +8,7 @@ import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
+const coreLog = (...args) => debug && console.log('[Smoothr Stripe][Core]', ...args);
 
 log('[Smoothr Stripe] checkout gateway module loaded');
 
@@ -111,28 +112,34 @@ export async function getElements() {
 
 
 export async function mountCardFields() {
-  log('→ mountCardFields invoked');
-  if (mountPromise) return mountPromise;
+  coreLog('mountCardFields invoked');
+  if (mountPromise) {
+    coreLog('mountPromise exists → returning existing promise');
+    return mountPromise;
+  }
   if (fieldsMounted) return;
 
   mountPromise = (async () => {
-    log('Mounting split fields');
+    coreLog('Mounting split fields');
 
     const numSel = '[data-smoothr-card-number]';
+    coreLog('querySelector', numSel);
     const numberTarget = document.querySelector(numSel);
-    log(numSel, numberTarget);
+    coreLog('→', numberTarget);
 
     const expSel = '[data-smoothr-card-expiry]';
+    coreLog('querySelector', expSel);
     const expiryTarget = document.querySelector(expSel);
-    log(expSel, expiryTarget);
+    coreLog('→', expiryTarget);
 
     const cvcSel = '[data-smoothr-card-cvc]';
+    coreLog('querySelector', cvcSel);
     const cvcTarget = document.querySelector(cvcSel);
-    log(cvcSel, cvcTarget);
+    coreLog('→', cvcTarget);
 
     const emailInput = document.querySelector('[data-smoothr-email]');
 
-    log('Targets found', {
+    coreLog('Targets found', {
       number: !!numberTarget,
       expiry: !!expiryTarget,
       cvc: !!cvcTarget
@@ -163,10 +170,11 @@ export async function mountCardFields() {
         'Card Number'
       );
       log('cardNumber style', style);
+      coreLog('Creating cardNumber element');
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
+      coreLog('Mounting cardNumber element');
       el.mount('[data-smoothr-card-number]');
-
-      log('Mounted iframe');
+      coreLog('Mounted cardNumber element');
       forceStripeIframeStyle('[data-smoothr-card-number]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
@@ -202,10 +210,11 @@ export async function mountCardFields() {
         'MM/YY'
       );
       log('cardExpiry style', style);
+      coreLog('Creating cardExpiry element');
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
+      coreLog('Mounting cardExpiry element');
       el.mount('[data-smoothr-card-expiry]');
-
-      log('Mounted iframe');
+      coreLog('Mounted cardExpiry element');
       forceStripeIframeStyle('[data-smoothr-card-expiry]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
@@ -240,10 +249,11 @@ export async function mountCardFields() {
         'CVC'
       );
       log('cardCvc style', style);
+      coreLog('Creating cardCvc element');
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
+      coreLog('Mounting cardCvc element');
       el.mount('[data-smoothr-card-cvc]');
-
-      log('Mounted iframe');
+      coreLog('Mounted cardCvc element');
       forceStripeIframeStyle('[data-smoothr-card-cvc]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
@@ -268,7 +278,7 @@ export async function mountCardFields() {
       if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-cvc]');
     }
 
-    log('Mounted split fields');
+    coreLog('Mounted split fields');
   })();
 
   mountPromise = mountPromise.finally(() => {
