@@ -63,6 +63,12 @@ export async function waitForInteractable(el, timeout = 1500) {
 
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
+  const directKey = window.SMOOTHR_CONFIG?.stripeKey;
+  if (directKey) {
+    cachedKey = directKey;
+    return directKey;
+  }
+
   const storeId = window.SMOOTHR_CONFIG?.storeId;
   let key;
   if (storeId) {
