@@ -11,7 +11,9 @@ export default function forceStripeIframeStyle(selector) {
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
       if (cs) {
-        iframe.style.height = cs.height || '100%';
+        const h = cs.height;
+        const height = h && h !== 'auto' && h !== '0px' ? h : '100%';
+        iframe.style.height = height;
         if (cs.minHeight && cs.minHeight !== '0px') iframe.style.minHeight = cs.minHeight;
         if (cs.maxHeight && cs.maxHeight !== 'none') iframe.style.maxHeight = cs.maxHeight;
       } else {
@@ -21,7 +23,9 @@ export default function forceStripeIframeStyle(selector) {
         container.style.width = '100%';
         container.style.minWidth = '100%';
         if (cs) {
-          container.style.height = cs.height;
+          const h = cs.height;
+          const height = h && h !== 'auto' && h !== '0px' ? h : '100%';
+          container.style.height = height;
           if (cs.minHeight && cs.minHeight !== '0px') container.style.minHeight = cs.minHeight;
           if (cs.maxHeight && cs.maxHeight !== 'none') container.style.maxHeight = cs.maxHeight;
         }
@@ -32,7 +36,9 @@ export default function forceStripeIframeStyle(selector) {
           container.style.position = 'relative';
         }
       }
-      console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
+      if (window.SMOOTHR_CONFIG?.debug) {
+        console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
+      }
       clearInterval(interval);
     } else if (++attempts >= 20) {
       clearInterval(interval);
