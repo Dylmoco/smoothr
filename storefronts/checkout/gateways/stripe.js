@@ -2,6 +2,7 @@ import forceStripeIframeStyle from './forceStripeIframeStyle.js';
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+import buildStripeElementStyle from '../../core/payments/stripeStyle.js';
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -59,25 +60,6 @@ export async function waitForInteractable(el, timeout = 1500) {
 }
 
 
-function elementStyleFromContainer(el) {
-  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return {};
-  const cs = window.getComputedStyle(el);
-  const style = {
-    base: {
-      fontSize: cs.fontSize,
-      color: cs.color,
-      fontFamily: cs.fontFamily,
-      backgroundColor: cs.backgroundColor,
-      borderColor: cs.borderColor,
-      borderWidth: cs.borderWidth,
-      borderStyle: cs.borderStyle,
-      borderRadius: cs.borderRadius,
-      padding: cs.padding
-    }
-  };
-  console.log('[Stripe] element style from container', style);
-  return style;
-}
 
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
@@ -162,7 +144,7 @@ export async function mountCardFields() {
   const existingNumber = els.getElement ? els.getElement('cardNumber') : null;
   if (numberTarget && !existingNumber) {
     await waitForInteractable(numberTarget);
-    const numStyle = elementStyleFromContainer(numberTarget);
+    const numStyle = buildStripeElementStyle(numberTarget);
     console.log('[Stripe] cardNumber style', numStyle);
     const el = elements.create('cardNumber', { style: numStyle });
     el.mount('[data-smoothr-card-number]');
@@ -185,7 +167,7 @@ export async function mountCardFields() {
   const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
   if (expiryTarget && !existingExpiry) {
     await waitForInteractable(expiryTarget);
-    const expiryStyle = elementStyleFromContainer(expiryTarget);
+    const expiryStyle = buildStripeElementStyle(expiryTarget);
     console.log('[Stripe] cardExpiry style', expiryStyle);
     const el = elements.create('cardExpiry', { style: expiryStyle });
     el.mount('[data-smoothr-card-expiry]');
@@ -207,7 +189,7 @@ export async function mountCardFields() {
   const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
   if (cvcTarget && !existingCvc) {
     await waitForInteractable(cvcTarget);
-    const cvcStyle = elementStyleFromContainer(cvcTarget);
+    const cvcStyle = buildStripeElementStyle(cvcTarget);
     console.log('[Stripe] cardCvc style', cvcStyle);
     const el = elements.create('cardCvc', { style: cvcStyle });
     el.mount('[data-smoothr-card-cvc]');
