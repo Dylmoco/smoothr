@@ -54,6 +54,15 @@ vi.mock('../../../shared/supabase/serverClient', () => {
             }))
           };
         }
+        if (table === 'customer_payment_profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({ limit: vi.fn(async () => ({ data: [], error: null })) }))
+              }))
+            }))
+          };
+        }
         if (table === 'orders') {
           ordersCall++;
           if (ordersCall === 1) {

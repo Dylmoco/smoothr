@@ -14,20 +14,46 @@ vi.mock('../../../smoothr/lib/findOrCreateCustomer.ts', () => {
 });
 
 vi.mock('../../../shared/supabase/serverClient', () => {
+  let storeFromCall = 0;
   const client = {
     from: (table: string) => {
         if (table === 'stores') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
-            }))
-          };
+          storeFromCall++;
+          if (storeFromCall === 1) {
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
+              }))
+            };
+          }
+          if (storeFromCall === 2) {
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(async () => ({
+                    data: { prefix: 'ST', order_sequence: 1 },
+                    error: null
+                  }))
+                }))
+              }))
+            };
+          }
+          return {};
         }
         if (table === 'store_settings') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'nmi' } }, error: null }))
+              }))
+            }))
+          };
+        }
+        if (table === 'customer_payment_profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({ limit: vi.fn(async () => ({ data: [], error: null })) }))
               }))
             }))
           };
