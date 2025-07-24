@@ -136,6 +136,10 @@ the SDK listens for the `submit` event so clicks on child elements won't start
 checkout. Avoid adding the attribute to generic containers to prevent unwanted
 triggers.
 
+Set `window.SMOOTHR_CONFIG.basicStripeStyle = true` before loading the SDK to
+skip Smoothr's computed styling. Elements mount without the `style` option and
+no iframe adjustments are applied.
+
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
 active payment gateway. This single endpoint handles all providers. `initCheckout` chooses the gateway by reading
 `window.SMOOTHR_CONFIG.active_payment_gateway`. When the property isn't defined,
