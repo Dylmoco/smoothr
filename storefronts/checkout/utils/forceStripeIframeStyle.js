@@ -11,20 +11,37 @@ export default function forceStripeIframeStyle(selector) {
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
       if (cs) {
+
+        const rectHeight = container.getBoundingClientRect().height;
         const h = cs.height;
-        const height = h && h !== 'auto' && h !== '0px' ? h : '100%';
+        const height =
+          h && h !== 'auto' && h !== '0px'
+            ? h
+            : rectHeight
+            ? `${rectHeight}px`
+            : '100%';
+
         iframe.style.height = height;
         if (cs.minHeight && cs.minHeight !== '0px') iframe.style.minHeight = cs.minHeight;
         if (cs.maxHeight && cs.maxHeight !== 'none') iframe.style.maxHeight = cs.maxHeight;
       } else {
-        iframe.style.height = '100%';
+        const rectHeight = container.getBoundingClientRect().height;
+        iframe.style.height = rectHeight ? `${rectHeight}px` : '100%';
       }
       if (container) {
         container.style.width = '100%';
         container.style.minWidth = '100%';
         if (cs) {
+
+          const rectHeight = container.getBoundingClientRect().height;
           const h = cs.height;
-          const height = h && h !== 'auto' && h !== '0px' ? h : '100%';
+          const height =
+            h && h !== 'auto' && h !== '0px'
+              ? h
+              : rectHeight
+              ? `${rectHeight}px`
+              : '100%';
+
           container.style.height = height;
           if (cs.minHeight && cs.minHeight !== '0px') container.style.minHeight = cs.minHeight;
           if (cs.maxHeight && cs.maxHeight !== 'none') container.style.maxHeight = cs.maxHeight;
