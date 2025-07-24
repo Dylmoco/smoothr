@@ -18,6 +18,7 @@ if (typeof globalThis.window.removeEventListener === "undefined") {
 if (typeof globalThis.document === "undefined") {
   globalThis.document = {
     addEventListener: vi.fn(),
+    querySelector: vi.fn(() => null),
     querySelectorAll: vi.fn(() => []),
     body: {},
     dispatchEvent: vi.fn(),
