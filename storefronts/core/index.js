@@ -107,8 +107,12 @@ export default Smoothr;
 
   if (!storeId) {
     // Ensure global config exists for tests and non-SDK modules
-    if (typeof window !== 'undefined' && !window.SMOOTHR_CONFIG) {
-      window.SMOOTHR_CONFIG = {};
+    if (typeof window !== 'undefined') {
+      window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
+      if (window.SMOOTHR_CONFIG.baseCurrency)
+        currency.setBaseCurrency(window.SMOOTHR_CONFIG.baseCurrency);
+      if (window.SMOOTHR_CONFIG.rates)
+        currency.updateRates(window.SMOOTHR_CONFIG.rates);
     }
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
       return;
@@ -119,8 +123,15 @@ export default Smoothr;
   try {
     await loadConfig(storeId);
   } catch (err) {
+    if (typeof window !== 'undefined') {
+      window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
+      if (window.SMOOTHR_CONFIG.baseCurrency)
+        currency.setBaseCurrency(window.SMOOTHR_CONFIG.baseCurrency);
+      if (window.SMOOTHR_CONFIG.rates)
+        currency.updateRates(window.SMOOTHR_CONFIG.rates);
+    }
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-      // noop
+      return;
     } else {
       throw err;
     }
