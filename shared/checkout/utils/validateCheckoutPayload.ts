@@ -62,6 +62,7 @@ export function validateCheckoutPayload(payload: CheckoutPayload): ValidationErr
     billing,
     same_billing
   } = payload;
+  const sameBilling = same_billing !== false;
 
   const missingFields: Array<{ field: string; message: string }> = [];
   if (!email) missingFields.push({ field: 'email', message: 'Email is required' });
@@ -104,7 +105,7 @@ export function validateCheckoutPayload(payload: CheckoutPayload): ValidationErr
     };
   }
 
-  if (!same_billing) {
+  if (!sameBilling) {
     const billingErrors: Array<{ field: string; message: string }> = [];
     const billAddr: any = billing?.address || {};
     if (!billAddr.line1) billingErrors.push({ field: 'bill_line1', message: 'Billing street required' });
