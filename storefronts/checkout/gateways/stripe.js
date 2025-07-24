@@ -65,6 +65,16 @@ export async function waitForInteractable(el, timeout = 1500) {
   warn('Mount target not interactable after 1.5s');
 }
 
+export async function waitForShim(container, timeout = 1000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const shim = container.querySelector('input.__PrivateStripeElement-input');
+    if (shim) return shim;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return null;
+}
+
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
   const storeId = window.SMOOTHR_CONFIG?.storeId;
@@ -178,10 +188,8 @@ export async function mountCardFields(opts = {}) {
       const el = elements.create('cardNumber', opts);
       coreLog('Mounting cardNumber element');
       el.mount('[data-smoothr-card-number]');
-      // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
-      const shimNumber = document.querySelector(
-        '[data-smoothr-card-number] input.__PrivateStripeElement-input'
-      );
+      // Poll for the hidden shim and mark it inert so it never grabs focus
+      const shimNumber = await waitForShim(numberTarget);
       if (shimNumber) {
         shimNumber.removeAttribute('aria-hidden');
         shimNumber.setAttribute('inert', '');
@@ -234,10 +242,8 @@ export async function mountCardFields(opts = {}) {
       const el = elements.create('cardExpiry', opts);
       coreLog('Mounting cardExpiry element');
       el.mount('[data-smoothr-card-expiry]');
-      // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
-      const shimExpiry = document.querySelector(
-        '[data-smoothr-card-expiry] input.__PrivateStripeElement-input'
-      );
+      // Poll for the hidden shim and mark it inert so it never grabs focus
+      const shimExpiry = await waitForShim(expiryTarget);
       if (shimExpiry) {
         shimExpiry.removeAttribute('aria-hidden');
         shimExpiry.setAttribute('inert', '');
@@ -289,10 +295,8 @@ export async function mountCardFields(opts = {}) {
       const el = elements.create('cardCvc', opts);
       coreLog('Mounting cardCvc element');
       el.mount('[data-smoothr-card-cvc]');
-      // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
-      const shimCvc = document.querySelector(
-        '[data-smoothr-card-cvc] input.__PrivateStripeElement-input'
-      );
+      // Poll for the hidden shim and mark it inert so it never grabs focus
+      const shimCvc = await waitForShim(cvcTarget);
       if (shimCvc) {
         shimCvc.removeAttribute('aria-hidden');
         shimCvc.setAttribute('inert', '');
@@ -393,5 +397,6 @@ export default {
   getElements,
   createPaymentMethod,
   waitForVisible,
-  waitForInteractable
+  waitForInteractable,
+  waitForShim
 };

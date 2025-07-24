@@ -13,6 +13,9 @@ let cardNumberEl;
 let cardExpiryEl;
 let cardCvcEl;
 let elementsCreate;
+let numberContainer;
+let expiryContainer;
+let cvcContainer;
 
 beforeEach(() => {
   vi.resetModules();
@@ -34,14 +37,17 @@ beforeEach(() => {
   global.Stripe = vi.fn(() => ({ elements: vi.fn(() => ({ create: elementsCreate })) }));
 
   const block = { querySelector: vi.fn(() => null), dataset: {} };
+  numberContainer = { querySelector: vi.fn(() => null) };
+  expiryContainer = { querySelector: vi.fn(() => null) };
+  cvcContainer = { querySelector: vi.fn(() => null) };
 
   global.document = {
     querySelector: vi.fn(sel => {
       const map = {
         '[data-smoothr-pay]': block,
-        '[data-smoothr-card-number]': {},
-        '[data-smoothr-card-expiry]': {},
-        '[data-smoothr-card-cvc]': {},
+        '[data-smoothr-card-number]': numberContainer,
+        '[data-smoothr-card-expiry]': expiryContainer,
+        '[data-smoothr-card-cvc]': cvcContainer,
         '#smoothr-checkout-theme': null
       };
       return map[sel] || null;
@@ -126,6 +132,41 @@ describe('stripe element mounting', () => {
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]');
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
+  });
+
+  it('removes aria-hidden when shim inputs appear', async () => {
+    const shimNum = { removeAttribute: vi.fn(), setAttribute: vi.fn() };
+    const shimExp = { removeAttribute: vi.fn(), setAttribute: vi.fn() };
+    const shimCvc = { removeAttribute: vi.fn(), setAttribute: vi.fn() };
+    let ready = false;
+    numberContainer.querySelector.mockImplementation(sel => {
+      if (sel === 'input.__PrivateStripeElement-input') return ready ? shimNum : null;
+      return null;
+    });
+    expiryContainer.querySelector.mockImplementation(sel => {
+      if (sel === 'input.__PrivateStripeElement-input') return ready ? shimExp : null;
+      return null;
+    });
+    cvcContainer.querySelector.mockImplementation(sel => {
+      if (sel === 'input.__PrivateStripeElement-input') return ready ? shimCvc : null;
+      return null;
+    });
+
+    vi.useFakeTimers();
+    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    const p = mountCardFields();
+    vi.advanceTimersByTime(50); // first poll
+    ready = true;
+    await vi.runAllTimersAsync();
+    await p;
+    vi.useRealTimers();
+
+    expect(shimNum.removeAttribute).toHaveBeenCalledWith('aria-hidden');
+    expect(shimExp.removeAttribute).toHaveBeenCalledWith('aria-hidden');
+    expect(shimCvc.removeAttribute).toHaveBeenCalledWith('aria-hidden');
+    expect(shimNum.setAttribute).toHaveBeenCalledWith('inert', '');
+    expect(shimExp.setAttribute).toHaveBeenCalledWith('inert', '');
+    expect(shimCvc.setAttribute).toHaveBeenCalledWith('inert', '');
   });
 
   it('waitForVisible resolves when width becomes visible', async () => {
