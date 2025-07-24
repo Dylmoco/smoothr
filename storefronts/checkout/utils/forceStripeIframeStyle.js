@@ -4,54 +4,27 @@ export default function forceStripeIframeStyle(selector) {
   const interval = setInterval(() => {
     const container = document.querySelector(selector);
     const iframe = container?.querySelector('iframe');
-    if (iframe) {
-      const cs = container ? window.getComputedStyle(container) : null;
+    if (iframe && container) {
       iframe.style.width = '100%';
       iframe.style.minWidth = '100%';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
-      if (cs) {
 
-        const rectHeight = container.getBoundingClientRect().height;
-        const h = cs.height;
-        const height =
-          h && h !== 'auto' && h !== '0px'
-            ? h
-            : rectHeight
-            ? `${rectHeight}px`
-            : '100%';
+      // Measure the real box height (includes padding)
+      const fullHeight = container.scrollHeight;
+      // Enforce container height
+      container.style.height = `${fullHeight}px`;
+      container.style.minHeight = `${fullHeight}px`;
+      // Make the iframe fill it
+      iframe.style.height = '100%';
 
-        iframe.style.height = height;
-        if (cs.minHeight && cs.minHeight !== '0px') iframe.style.minHeight = cs.minHeight;
-        if (cs.maxHeight && cs.maxHeight !== 'none') iframe.style.maxHeight = cs.maxHeight;
-      } else {
-        const rectHeight = container.getBoundingClientRect().height;
-        iframe.style.height = rectHeight ? `${rectHeight}px` : '100%';
-      }
-      if (container) {
-        container.style.width = '100%';
-        container.style.minWidth = '100%';
-        if (cs) {
-
-          const rectHeight = container.getBoundingClientRect().height;
-          const h = cs.height;
-          const height =
-            h && h !== 'auto' && h !== '0px'
-              ? h
-              : rectHeight
-              ? `${rectHeight}px`
-              : '100%';
-
-          container.style.height = height;
-          if (cs.minHeight && cs.minHeight !== '0px') container.style.minHeight = cs.minHeight;
-          if (cs.maxHeight && cs.maxHeight !== 'none') container.style.maxHeight = cs.maxHeight;
-        }
-        if (
-          typeof window !== 'undefined' &&
-          window.getComputedStyle(container).position === 'static'
-        ) {
-          container.style.position = 'relative';
-        }
+      container.style.width = '100%';
+      container.style.minWidth = '100%';
+      if (
+        typeof window !== 'undefined' &&
+        window.getComputedStyle(container).position === 'static'
+      ) {
+        container.style.position = 'relative';
       }
       if (window.SMOOTHR_CONFIG?.debug) {
         console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);

@@ -41,41 +41,19 @@ function forceStripeIframeStyle(selector) {
     var _a4;
     const container = document.querySelector(selector);
     const iframe = container == null ? void 0 : container.querySelector("iframe");
-    if (iframe) {
-      const cs = container ? window.getComputedStyle(container) : null;
+    if (iframe && container) {
       iframe.style.width = "100%";
       iframe.style.minWidth = "100%";
       iframe.style.display = "block";
       iframe.style.opacity = "1";
-      if (cs) {
-        const rectHeight = container.getBoundingClientRect().height;
-        const h = cs.height;
-        const height = h && h !== "auto" && h !== "0px" ? h : rectHeight ? `${rectHeight}px` : "100%";
-        iframe.style.height = height;
-        if (cs.minHeight && cs.minHeight !== "0px")
-          iframe.style.minHeight = cs.minHeight;
-        if (cs.maxHeight && cs.maxHeight !== "none")
-          iframe.style.maxHeight = cs.maxHeight;
-      } else {
-        const rectHeight = container.getBoundingClientRect().height;
-        iframe.style.height = rectHeight ? `${rectHeight}px` : "100%";
-      }
-      if (container) {
-        container.style.width = "100%";
-        container.style.minWidth = "100%";
-        if (cs) {
-          const rectHeight = container.getBoundingClientRect().height;
-          const h = cs.height;
-          const height = h && h !== "auto" && h !== "0px" ? h : rectHeight ? `${rectHeight}px` : "100%";
-          container.style.height = height;
-          if (cs.minHeight && cs.minHeight !== "0px")
-            container.style.minHeight = cs.minHeight;
-          if (cs.maxHeight && cs.maxHeight !== "none")
-            container.style.maxHeight = cs.maxHeight;
-        }
-        if (typeof window !== "undefined" && window.getComputedStyle(container).position === "static") {
-          container.style.position = "relative";
-        }
+      const fullHeight = container.scrollHeight;
+      container.style.height = `${fullHeight}px`;
+      container.style.minHeight = `${fullHeight}px`;
+      iframe.style.height = "100%";
+      container.style.width = "100%";
+      container.style.minWidth = "100%";
+      if (typeof window !== "undefined" && window.getComputedStyle(container).position === "static") {
+        container.style.position = "relative";
       }
       if ((_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.debug) {
         console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
