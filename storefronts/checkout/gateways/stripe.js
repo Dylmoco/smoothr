@@ -15,7 +15,6 @@ log('[Smoothr Stripe] checkout gateway module loaded');
 log('[Smoothr Stripe] checkout gateway loaded');
 
 let fieldsMounted = false;
-let mountAttempts = 0;
 let stripe;
 let elements;
 let initPromise;
@@ -136,8 +135,6 @@ export async function mountCardFields() {
     coreLog('querySelector', cvcSel);
     const cvcTarget = document.querySelector(cvcSel);
     coreLog('→', cvcTarget);
-
-    const emailInput = document.querySelector('[data-smoothr-email]');
 
     coreLog('Targets found', {
       number: !!numberTarget,
