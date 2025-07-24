@@ -23,7 +23,8 @@ beforeEach(() => {
   global.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
-    querySelector: vi.fn(() => null)
+    querySelector: vi.fn(() => null),
+    currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } }
   };
   global.localStorage = {
     getItem: vi.fn(),
