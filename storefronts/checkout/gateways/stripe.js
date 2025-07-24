@@ -110,13 +110,15 @@ export async function getElements() {
 }
 
 
-export async function mountCardFields() {
+export async function mountCardFields(opts = {}) {
   coreLog('mountCardFields invoked');
   if (mountPromise) {
     coreLog('mountPromise exists → returning existing promise');
     return mountPromise;
   }
   if (fieldsMounted) return;
+
+  const { basic = window.SMOOTHR_CONFIG?.basicStripeStyle } = opts;
 
   mountPromise = (async () => {
     coreLog('Mounting split fields');
@@ -161,14 +163,19 @@ export async function mountCardFields() {
       await waitForInteractable(numberTarget);
       const placeholderEl = numberTarget.querySelector('[data-smoothr-card-placeholder]');
       const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'Card Number';
-      const style = buildStripeElementStyle(
-        numberTarget,
-        '[data-smoothr-card-placeholder]',
-        'Card Number'
-      );
-      log('cardNumber style', style);
+      let style;
+      let opts = { placeholder: placeholderText };
+      if (!basic) {
+        style = buildStripeElementStyle(
+          numberTarget,
+          '[data-smoothr-card-placeholder]',
+          'Card Number'
+        );
+        opts.style = style;
+        log('cardNumber style', style);
+      }
       coreLog('Creating cardNumber element');
-      const el = elements.create('cardNumber', { style, placeholder: placeholderText });
+      const el = elements.create('cardNumber', opts);
       coreLog('Mounting cardNumber element');
       el.mount('[data-smoothr-card-number]');
       // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
@@ -180,7 +187,7 @@ export async function mountCardFields() {
         shimNumber.setAttribute('inert', '');
       }
       coreLog('Mounted cardNumber element');
-      forceStripeIframeStyle('[data-smoothr-card-number]');
+      if (!basic) forceStripeIframeStyle('[data-smoothr-card-number]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
       setTimeout(() => {
@@ -191,17 +198,20 @@ export async function mountCardFields() {
           warn('iframe dead → remounting now...');
           cardNumberElement?.unmount?.();
           cardNumberElement?.destroy?.();
-          cardNumberElement = elements.create('cardNumber', { style, placeholder: placeholderText });
+          cardNumberElement = elements.create(
+            'cardNumber',
+            basic ? { placeholder: placeholderText } : { style, placeholder: placeholderText }
+          );
           cardNumberElement.mount('[data-smoothr-card-number]');
           if (placeholderEl) {
             placeholderEl.style.visibility = 'hidden';
-            forceStripeIframeStyle('[data-smoothr-card-number]');
+            if (!basic) forceStripeIframeStyle('[data-smoothr-card-number]');
           } else {
-            forceStripeIframeStyle('[data-smoothr-card-number]');
+            if (!basic) forceStripeIframeStyle('[data-smoothr-card-number]');
           }
         }
       }, 500);
-      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-number]');
+      if (!basic && !placeholderEl) forceStripeIframeStyle('[data-smoothr-card-number]');
       cardNumberElement = el;
     }
     const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
@@ -209,14 +219,19 @@ export async function mountCardFields() {
       await waitForInteractable(expiryTarget);
       const placeholderEl = expiryTarget.querySelector('[data-smoothr-expiry-placeholder]');
       const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'MM/YY';
-      const style = buildStripeElementStyle(
-        expiryTarget,
-        '[data-smoothr-expiry-placeholder]',
-        'MM/YY'
-      );
-      log('cardExpiry style', style);
+      let style;
+      let opts = { placeholder: placeholderText };
+      if (!basic) {
+        style = buildStripeElementStyle(
+          expiryTarget,
+          '[data-smoothr-expiry-placeholder]',
+          'MM/YY'
+        );
+        opts.style = style;
+        log('cardExpiry style', style);
+      }
       coreLog('Creating cardExpiry element');
-      const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
+      const el = elements.create('cardExpiry', opts);
       coreLog('Mounting cardExpiry element');
       el.mount('[data-smoothr-card-expiry]');
       // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
@@ -228,7 +243,7 @@ export async function mountCardFields() {
         shimExpiry.setAttribute('inert', '');
       }
       coreLog('Mounted cardExpiry element');
-      forceStripeIframeStyle('[data-smoothr-card-expiry]');
+      if (!basic) forceStripeIframeStyle('[data-smoothr-card-expiry]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
       setTimeout(() => {
@@ -239,31 +254,39 @@ export async function mountCardFields() {
           warn('iframe dead → remounting now...');
           el?.unmount?.();
           el?.destroy?.();
-          const remount = elements.create('cardExpiry', { style, placeholder: placeholderText });
+          const remount = elements.create(
+            'cardExpiry',
+            basic ? { placeholder: placeholderText } : { style, placeholder: placeholderText }
+          );
           remount.mount('[data-smoothr-card-expiry]');
           if (placeholderEl) {
             placeholderEl.style.visibility = 'hidden';
-            forceStripeIframeStyle('[data-smoothr-card-expiry]');
+            if (!basic) forceStripeIframeStyle('[data-smoothr-card-expiry]');
           } else {
-            forceStripeIframeStyle('[data-smoothr-card-expiry]');
+            if (!basic) forceStripeIframeStyle('[data-smoothr-card-expiry]');
           }
         }
       }, 500);
-      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-expiry]');
+      if (!basic && !placeholderEl) forceStripeIframeStyle('[data-smoothr-card-expiry]');
     }
     const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
     if (cvcTarget && !existingCvc) {
       await waitForInteractable(cvcTarget);
       const placeholderEl = cvcTarget.querySelector('[data-smoothr-cvv-placeholder]');
       const placeholderText = placeholderEl ? placeholderEl.textContent.trim() : 'CVC';
-      const style = buildStripeElementStyle(
-        cvcTarget,
-        '[data-smoothr-cvv-placeholder]',
-        'CVC'
-      );
-      log('cardCvc style', style);
+      let style;
+      let opts = { placeholder: placeholderText };
+      if (!basic) {
+        style = buildStripeElementStyle(
+          cvcTarget,
+          '[data-smoothr-cvv-placeholder]',
+          'CVC'
+        );
+        opts.style = style;
+        log('cardCvc style', style);
+      }
       coreLog('Creating cardCvc element');
-      const el = elements.create('cardCvc', { style, placeholder: placeholderText });
+      const el = elements.create('cardCvc', opts);
       coreLog('Mounting cardCvc element');
       el.mount('[data-smoothr-card-cvc]');
       // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
@@ -275,7 +298,7 @@ export async function mountCardFields() {
         shimCvc.setAttribute('inert', '');
       }
       coreLog('Mounted cardCvc element');
-      forceStripeIframeStyle('[data-smoothr-card-cvc]');
+      if (!basic) forceStripeIframeStyle('[data-smoothr-card-cvc]');
       if (placeholderEl) placeholderEl.style.display = 'none';
 
       setTimeout(() => {
@@ -286,17 +309,20 @@ export async function mountCardFields() {
           warn('iframe dead → remounting now...');
           el?.unmount?.();
           el?.destroy?.();
-          const remount = elements.create('cardCvc', { style, placeholder: placeholderText });
+          const remount = elements.create(
+            'cardCvc',
+            basic ? { placeholder: placeholderText } : { style, placeholder: placeholderText }
+          );
           remount.mount('[data-smoothr-card-cvc]');
           if (placeholderEl) {
             placeholderEl.style.visibility = 'hidden';
-            forceStripeIframeStyle('[data-smoothr-card-cvc]');
+            if (!basic) forceStripeIframeStyle('[data-smoothr-card-cvc]');
           } else {
-            forceStripeIframeStyle('[data-smoothr-card-cvc]');
+            if (!basic) forceStripeIframeStyle('[data-smoothr-card-cvc]');
           }
         }
       }, 500);
-      if (!placeholderEl) forceStripeIframeStyle('[data-smoothr-card-cvc]');
+      if (!basic && !placeholderEl) forceStripeIframeStyle('[data-smoothr-card-cvc]');
     }
 
     coreLog('Mounted split fields');

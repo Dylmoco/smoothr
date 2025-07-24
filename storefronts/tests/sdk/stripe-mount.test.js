@@ -89,6 +89,20 @@ describe('stripe element mounting', () => {
     expect(cardCvcEl.mount).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
   });
 
+  it('mounts when basicStripeStyle flag is set', async () => {
+    window.SMOOTHR_CONFIG.basicStripeStyle = true;
+    vi.useFakeTimers();
+    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    await mountCardFields();
+    await vi.runAllTimersAsync();
+    vi.useRealTimers();
+
+    expect(elementsCreate).toHaveBeenCalledWith('cardNumber', { placeholder: 'Card Number' });
+    expect(elementsCreate).toHaveBeenCalledWith('cardExpiry', { placeholder: 'MM/YY' });
+    expect(elementsCreate).toHaveBeenCalledWith('cardCvc', { placeholder: 'CVC' });
+    expect(styleSpy).not.toHaveBeenCalled();
+  });
+
   it('logs a warning when targets are missing', async () => {
     global.document.querySelector.mockImplementation(() => null);
     global.window.SMOOTHR_CONFIG.debug = true;
