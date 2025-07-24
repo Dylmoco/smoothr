@@ -59,7 +59,8 @@ vi.mock('../../../shared/supabase/serverClient', () => {
           };
         }
         return {};
-      }
+      },
+    rpc: vi.fn(() => Promise.resolve({ data: 'ST-0001', error: null }))
   };
   return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
 });

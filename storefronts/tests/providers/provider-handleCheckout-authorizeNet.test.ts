@@ -89,7 +89,8 @@ vi.mock('../../../shared/supabase/serverClient', () => {
           return { insert: vi.fn().mockResolvedValue({ error: null }) };
         }
         return {};
-      }
+      },
+    rpc: vi.fn(() => Promise.resolve({ data: 'ST-0001', error: null }))
   };
   return {
     supabase: client,
