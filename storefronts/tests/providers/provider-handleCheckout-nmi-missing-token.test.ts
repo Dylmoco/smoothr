@@ -75,7 +75,7 @@ describe('handleCheckout nmi missing token', () => {
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'payment_token is required' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'payment_token or customer_profile_id is required' });
     expect(nmiMock).not.toHaveBeenCalled();
   });
 });

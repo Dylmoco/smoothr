@@ -13,6 +13,12 @@ beforeEach(() => {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
   };
+  global.document = {
+    addEventListener: vi.fn(),
+    querySelectorAll: vi.fn(() => []),
+    querySelector: vi.fn(() => null),
+    currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
+  };
 });
 
 describe("global smoothr alias", () => {
