@@ -59,6 +59,10 @@ export async function initCheckout(config) {
   const gateway = (await loader()).default;
   log(`Using gateway: ${provider}`);
 
+  // Hook our gateway onto the existing global namespace for easy manual calls
+  window.SMOOTHR = window.SMOOTHR || {};
+  window.SMOOTHR.gateway = gateway;
+
   // assign gateway methods to global namespace
   window.Smoothr = window.Smoothr || window.smoothr || {};
   window.smoothr = window.Smoothr;
