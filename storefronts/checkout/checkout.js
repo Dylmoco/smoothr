@@ -1,6 +1,8 @@
 // checkout.js
 
 if (
+  typeof window !== 'undefined' &&
+  !window.SMOOTHR_CONFIG?.basicStripeStyle &&
   typeof document !== 'undefined' &&
   typeof document.createElement === 'function' &&
   !document.querySelector('#smoothr-card-styles')
