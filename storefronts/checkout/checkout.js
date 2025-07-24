@@ -103,7 +103,7 @@ export async function initCheckout(config) {
     return;
   }
 
-  const isForm = checkoutEl.tagName.toLowerCase() === 'form';
+  const isForm = (checkoutEl.tagName || '').toLowerCase() === 'form';
   const eventName = isForm ? 'submit' : 'click';
 
   payButtons.forEach(btn => {
