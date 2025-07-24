@@ -32,10 +32,9 @@ jobs:
         run: node scripts/bundle-webflow-checkout.js
 
       # ← Insert this block
-      - name: Verify Webflow bundle is up-to-date
-        working-directory: storefronts
+      -      - name: Verify Webflow bundle is up-to-date
         run: |
-          git diff --quiet dist/platforms/webflow/checkout.js \
+          git diff --quiet storefronts/dist/platforms/webflow/checkout.js \
             || (echo "❌ storefronts/dist/platforms/webflow/checkout.js is stale. Please re-run npm run bundle:webflow-checkout and commit the changes." && exit 1)
 
       - name: Postbuild check
