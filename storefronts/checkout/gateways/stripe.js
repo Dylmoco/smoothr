@@ -106,14 +106,25 @@ export async function getElements() {
 
 
 export async function mountCardFields() {
+  log('→ mountCardFields invoked');
   if (mountPromise) return mountPromise;
   if (fieldsMounted) return;
 
   mountPromise = (async () => {
     log('Mounting split fields');
-    const numberTarget = document.querySelector('[data-smoothr-card-number]');
-    const expiryTarget = document.querySelector('[data-smoothr-card-expiry]');
-    const cvcTarget = document.querySelector('[data-smoothr-card-cvc]');
+
+    const numSel = '[data-smoothr-card-number]';
+    const numberTarget = document.querySelector(numSel);
+    log(numSel, numberTarget);
+
+    const expSel = '[data-smoothr-card-expiry]';
+    const expiryTarget = document.querySelector(expSel);
+    log(expSel, expiryTarget);
+
+    const cvcSel = '[data-smoothr-card-cvc]';
+    const cvcTarget = document.querySelector(cvcSel);
+    log(cvcSel, cvcTarget);
+
     const emailInput = document.querySelector('[data-smoothr-email]');
 
     log('Targets found', {
@@ -123,14 +134,8 @@ export async function mountCardFields() {
     });
 
     if (!numberTarget && !expiryTarget && !cvcTarget) {
-      if (mountAttempts < 5) {
-        mountAttempts++;
-        mountPromise = null;
-        setTimeout(mountCardFields, 200);
-      } else {
-        warn('card fields not found');
-        mountPromise = null;
-      }
+      warn('No stripe containers found—aborting mount');
+      mountPromise = null;
       return;
     }
 
