@@ -9505,7 +9505,7 @@ async function initCheckout(config) {
     log4("Skipping shared click binding for NMI");
     return;
   }
-  const isForm = checkoutEl.tagName.toLowerCase() === "form";
+  const isForm = (checkoutEl.tagName || "").toLowerCase() === "form";
   const eventName = isForm ? "submit" : "click";
   payButtons.forEach((btn) => {
     btn.addEventListener(eventName, async (e) => {
