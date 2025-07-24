@@ -171,6 +171,14 @@ export async function mountCardFields() {
       const el = elements.create('cardNumber', { style, placeholder: placeholderText });
       coreLog('Mounting cardNumber element');
       el.mount('[data-smoothr-card-number]');
+      // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
+      const shimNumber = document.querySelector(
+        '[data-smoothr-card-number] input.__PrivateStripeElement-input'
+      );
+      if (shimNumber) {
+        shimNumber.removeAttribute('aria-hidden');
+        shimNumber.setAttribute('inert', '');
+      }
       coreLog('Mounted cardNumber element');
       forceStripeIframeStyle('[data-smoothr-card-number]');
       if (placeholderEl) placeholderEl.style.display = 'none';
@@ -211,6 +219,14 @@ export async function mountCardFields() {
       const el = elements.create('cardExpiry', { style, placeholder: placeholderText });
       coreLog('Mounting cardExpiry element');
       el.mount('[data-smoothr-card-expiry]');
+      // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
+      const shimExpiry = document.querySelector(
+        '[data-smoothr-card-expiry] input.__PrivateStripeElement-input'
+      );
+      if (shimExpiry) {
+        shimExpiry.removeAttribute('aria-hidden');
+        shimExpiry.setAttribute('inert', '');
+      }
       coreLog('Mounted cardExpiry element');
       forceStripeIframeStyle('[data-smoothr-card-expiry]');
       if (placeholderEl) placeholderEl.style.display = 'none';
@@ -250,6 +266,14 @@ export async function mountCardFields() {
       const el = elements.create('cardCvc', { style, placeholder: placeholderText });
       coreLog('Mounting cardCvc element');
       el.mount('[data-smoothr-card-cvc]');
+      // Remove aria-hidden from the hidden shim and mark it inert so it never grabs focus
+      const shimCvc = document.querySelector(
+        '[data-smoothr-card-cvc] input.__PrivateStripeElement-input'
+      );
+      if (shimCvc) {
+        shimCvc.removeAttribute('aria-hidden');
+        shimCvc.setAttribute('inert', '');
+      }
       coreLog('Mounted cardCvc element');
       forceStripeIframeStyle('[data-smoothr-card-cvc]');
       if (placeholderEl) placeholderEl.style.display = 'none';
