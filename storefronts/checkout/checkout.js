@@ -85,7 +85,11 @@ export async function initCheckout(config) {
   let attempts = 0;
   while (attempts < 2 && !gateway.isMounted()) {
     try {
-      await gateway.mountCardFields();
+      await new Promise((resolve, reject) => {
+        window.requestAnimationFrame(() => {
+          gateway.mountCardFields().then(resolve).catch(reject);
+        });
+      });
     } catch (e) {
       warn('Mount failed:', e.message);
     }
