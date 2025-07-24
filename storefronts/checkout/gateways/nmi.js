@@ -42,6 +42,11 @@ export async function mountCardFields() {
   return configPromise
 }
 
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {}
+  window.Smoothr.mountNMIFields = mountCardFields
+}
+
 /**
  * Inject CollectJS and configure
  */
