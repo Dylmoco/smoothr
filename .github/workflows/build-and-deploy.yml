@@ -7,9 +7,6 @@ on:
 permissions:
   contents: write
 
-# environment:
-#   name: production
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -43,6 +40,12 @@ jobs:
       - name: Bundle Webflow checkout
         working-directory: storefronts
         run: node scripts/bundle-webflow-checkout.js
+
+      - name: Verify Webflow bundle is up-to-date
+        working-directory: storefronts
+        run: |
+          git diff --quiet dist/platforms/webflow/checkout.js \
+            || (echo "❌ storefronts/dist/platforms/webflow/checkout.js is stale. Please re-run npm run bundle:webflow-checkout and commit the changes." && exit 1)
 
       - name: Postbuild check
         working-directory: storefronts
