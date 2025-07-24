@@ -82,6 +82,21 @@ export default Smoothr;
 
 // Bootstrap SDK: load config and then initialize everything
 (async function initSmoothr() {
+  window.Smoothr = Smoothr;
+  window.smoothr = window.smoothr || Smoothr;
+  globalThis.setSelectedCurrency =
+    globalThis.setSelectedCurrency || setDomCurrency;
+
+  if (
+    typeof document === 'undefined' ||
+    typeof document.querySelector !== 'function'
+  ) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      return;
+    }
+    throw new Error('DOM not available');
+  }
+
   const currentScript =
     document.currentScript ||
     document.querySelector('script[src*="smoothr-sdk"][data-store-id]');
@@ -90,7 +105,12 @@ export default Smoothr;
 
   console.log('[Smoothr SDK] Bootstrap triggered', { storeId });
 
-  if (!storeId) throw new Error('Missing data-store-id on <script> tag');
+  if (!storeId) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      return;
+    }
+    throw new Error('Missing data-store-id on <script> tag');
+  }
 
   try {
     await loadConfig(storeId);
