@@ -116,6 +116,7 @@ export default Smoothr;
     if (
       typeof document !== 'undefined' &&
       typeof document.createElement === 'function' &&
+      !window.SMOOTHR_CONFIG?.basicStripeStyle &&
       !document.querySelector('#smoothr-card-styles')
     ) {
       const style = document.createElement('style');
