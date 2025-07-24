@@ -25,6 +25,11 @@ beforeEach(() => {
     querySelectorAll: vi.fn(() => []),
     querySelector: vi.fn(() => null),
   };
+  Object.defineProperty(global.document, 'currentScript', {
+    value: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
+    writable: true,
+    configurable: true,
+  });
   global.localStorage = {
     getItem: vi.fn(),
     setItem: vi.fn(),
