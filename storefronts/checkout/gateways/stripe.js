@@ -4,6 +4,13 @@ import { buildStripeElementStyle } from '../../core/payments/stripeStyle.js';
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+
+const debug = window.SMOOTHR_CONFIG?.debug;
+const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
+
+log('[Smoothr Stripe] checkout gateway loaded');
+
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -12,10 +19,6 @@ let initPromise;
 let cachedKey;
 let cardNumberElement;
 let mountPromise;
-
-const debug = window.SMOOTHR_CONFIG?.debug;
-const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
-const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
 if (
   typeof document !== 'undefined' &&
