@@ -39,13 +39,22 @@ export { initCheckout };
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 window.SMOOTHR_CONFIG.platform = 'webflow-ecom';
 
+let waitForStoreIdTimer;
+const clearWaitForStoreId = () => {
+  if (waitForStoreIdTimer) {
+    clearTimeout(waitForStoreIdTimer);
+    waitForStoreIdTimer = undefined;
+  }
+};
+
 const waitForStoreId = () => {
   if (window.SMOOTHR_CONFIG?.storeId) {
     console.log('[Smoothr] initCheckout ready — mounting');
+    clearWaitForStoreId();
     initCheckout();
   } else {
     console.log('[Smoothr] Waiting for storeId...');
-    setTimeout(waitForStoreId, 50);
+    waitForStoreIdTimer = setTimeout(waitForStoreId, 50);
   }
 };
 
@@ -54,3 +63,5 @@ window.addEventListener('smoothr:ready', waitForStoreId);
 
 // ✅ Also run it immediately in case SDK already fired
 waitForStoreId();
+
+window.addEventListener('unload', clearWaitForStoreId);

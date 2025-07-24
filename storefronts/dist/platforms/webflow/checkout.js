@@ -16,9 +16,9 @@ var __export = (target, all) => {
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    for (let key2 of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key2) && key2 !== except)
+        __defProp(to, key2, { get: () => from[key2], enumerable: !(desc = __getOwnPropDesc(from, key2)) || desc.enumerable });
   }
   return to;
 };
@@ -201,8 +201,8 @@ var init_FunctionsClient = __esm({
       });
     };
     FunctionsClient = class {
-      constructor(url, { headers = {}, customFetch, region = FunctionRegion.Any } = {}) {
-        this.url = url;
+      constructor(url2, { headers = {}, customFetch, region = FunctionRegion.Any } = {}) {
+        this.url = url2;
         this.headers = headers;
         this.region = region;
         this.fetch = resolveFetch(customFetch);
@@ -219,13 +219,13 @@ var init_FunctionsClient = __esm({
        * @param functionName - The name of the Function to invoke.
        * @param options - Options for invoking the Function.
        */
-      invoke(functionName, options = {}) {
+      invoke(functionName, options2 = {}) {
         var _a4;
         return __awaiter(this, void 0, void 0, function* () {
           try {
-            const { headers, method, body: functionArgs } = options;
+            const { headers, method, body: functionArgs } = options2;
             let _headers = {};
-            let { region } = options;
+            let { region } = options2;
             if (!region) {
               region = this.region;
             }
@@ -571,9 +571,9 @@ var require_PostgrestTransformBuilder = __commonJS({
        * instead
        */
       order(column, { ascending = true, nullsFirst, foreignTable, referencedTable = foreignTable } = {}) {
-        const key = referencedTable ? `${referencedTable}.order` : "order";
-        const existingOrder = this.url.searchParams.get(key);
-        this.url.searchParams.set(key, `${existingOrder ? `${existingOrder},` : ""}${column}.${ascending ? "asc" : "desc"}${nullsFirst === void 0 ? "" : nullsFirst ? ".nullsfirst" : ".nullslast"}`);
+        const key2 = referencedTable ? `${referencedTable}.order` : "order";
+        const existingOrder = this.url.searchParams.get(key2);
+        this.url.searchParams.set(key2, `${existingOrder ? `${existingOrder},` : ""}${column}.${ascending ? "asc" : "desc"}${nullsFirst === void 0 ? "" : nullsFirst ? ".nullsfirst" : ".nullslast"}`);
         return this;
       }
       /**
@@ -587,8 +587,8 @@ var require_PostgrestTransformBuilder = __commonJS({
        * instead
        */
       limit(count, { foreignTable, referencedTable = foreignTable } = {}) {
-        const key = typeof referencedTable === "undefined" ? "limit" : `${referencedTable}.limit`;
-        this.url.searchParams.set(key, `${count}`);
+        const key2 = typeof referencedTable === "undefined" ? "limit" : `${referencedTable}.limit`;
+        this.url.searchParams.set(key2, `${count}`);
         return this;
       }
       /**
@@ -688,7 +688,7 @@ var require_PostgrestTransformBuilder = __commonJS({
        */
       explain({ analyze = false, verbose = false, settings = false, buffers = false, wal = false, format = "text" } = {}) {
         var _a4;
-        const options = [
+        const options2 = [
           analyze ? "analyze" : null,
           verbose ? "verbose" : null,
           settings ? "settings" : null,
@@ -696,7 +696,7 @@ var require_PostgrestTransformBuilder = __commonJS({
           wal ? "wal" : null
         ].filter(Boolean).join("|");
         const forMediatype = (_a4 = this.headers["Accept"]) !== null && _a4 !== void 0 ? _a4 : "application/json";
-        this.headers["Accept"] = `application/vnd.pgrst.plan+${format}; for="${forMediatype}"; options=${options};`;
+        this.headers["Accept"] = `application/vnd.pgrst.plan+${format}; for="${forMediatype}"; options=${options2};`;
         if (format === "json")
           return this;
         else
@@ -1070,8 +1070,8 @@ var require_PostgrestFilterBuilder = __commonJS({
        * @param options.foreignTable - Deprecated, use `referencedTable` instead
        */
       or(filters, { foreignTable, referencedTable = foreignTable } = {}) {
-        const key = referencedTable ? `${referencedTable}.or` : "or";
-        this.url.searchParams.append(key, `(${filters})`);
+        const key2 = referencedTable ? `${referencedTable}.or` : "or";
+        this.url.searchParams.append(key2, `(${filters})`);
         return this;
       }
       /**
@@ -1106,8 +1106,8 @@ var require_PostgrestQueryBuilder = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     var PostgrestFilterBuilder_1 = __importDefault(require_PostgrestFilterBuilder());
     var PostgrestQueryBuilder2 = class {
-      constructor(url, { headers = {}, schema, fetch: fetch3 }) {
-        this.url = url;
+      constructor(url2, { headers = {}, schema, fetch: fetch3 }) {
+        this.url = url2;
         this.headers = headers;
         this.schema = schema;
         this.fetch = fetch3;
@@ -1411,8 +1411,8 @@ var require_PostgrestClient = __commonJS({
        * @param options.schema - Postgres schema to switch to
        * @param options.fetch - Custom fetch
        */
-      constructor(url, { headers = {}, schema, fetch: fetch3 } = {}) {
-        this.url = url;
+      constructor(url2, { headers = {}, schema, fetch: fetch3 } = {}) {
+        this.url = url2;
         this.headers = Object.assign(Object.assign({}, constants_1.DEFAULT_HEADERS), headers);
         this.schemaName = schema;
         this.fetch = fetch3;
@@ -1423,8 +1423,8 @@ var require_PostgrestClient = __commonJS({
        * @param relation - The table or view name to query
        */
       from(relation) {
-        const url = new URL(`${this.url}/${relation}`);
-        return new PostgrestQueryBuilder_1.default(url, {
+        const url2 = new URL(`${this.url}/${relation}`);
+        return new PostgrestQueryBuilder_1.default(url2, {
           headers: Object.assign({}, this.headers),
           schema: this.schemaName,
           fetch: this.fetch
@@ -1469,12 +1469,12 @@ var require_PostgrestClient = __commonJS({
        */
       rpc(fn, args = {}, { head: head2 = false, get: get2 = false, count } = {}) {
         let method;
-        const url = new URL(`${this.url}/rpc/${fn}`);
+        const url2 = new URL(`${this.url}/rpc/${fn}`);
         let body;
         if (head2 || get2) {
           method = head2 ? "HEAD" : "GET";
           Object.entries(args).filter(([_, value]) => value !== void 0).map(([name, value]) => [name, Array.isArray(value) ? `{${value.join(",")}}` : `${value}`]).forEach(([name, value]) => {
-            url.searchParams.append(name, value);
+            url2.searchParams.append(name, value);
           });
         } else {
           method = "POST";
@@ -1486,7 +1486,7 @@ var require_PostgrestClient = __commonJS({
         }
         return new PostgrestFilterBuilder_1.default({
           method,
-          url,
+          url: url2,
           headers,
           schema: this.schemaName,
           body,
@@ -1718,9 +1718,9 @@ var init_transformers = __esm({
       PostgresTypes2["tsrange"] = "tsrange";
       PostgresTypes2["tstzrange"] = "tstzrange";
     })(PostgresTypes || (PostgresTypes = {}));
-    convertChangeData = (columns, record, options = {}) => {
+    convertChangeData = (columns, record, options2 = {}) => {
       var _a4;
-      const skipTypes = (_a4 = options.skipTypes) !== null && _a4 !== void 0 ? _a4 : [];
+      const skipTypes = (_a4 = options2.skipTypes) !== null && _a4 !== void 0 ? _a4 : [];
       return Object.keys(record).reduce((acc, rec_key) => {
         acc[rec_key] = convertColumn(rec_key, columns, record, skipTypes);
         return acc;
@@ -1833,10 +1833,10 @@ var init_transformers = __esm({
       return value;
     };
     httpEndpointURL = (socketUrl) => {
-      let url = socketUrl;
-      url = url.replace(/^ws/i, "http");
-      url = url.replace(/(\/socket\/websocket|\/socket|\/websocket)\/?$/i, "");
-      return url.replace(/\/+$/, "");
+      let url2 = socketUrl;
+      url2 = url2.replace(/^ws/i, "http");
+      url2 = url2.replace(/(\/socket\/websocket|\/socket|\/websocket)\/?$/i, "");
+      return url2.replace(/\/+$/, "");
     };
   }
 });
@@ -1999,18 +1999,18 @@ var init_RealtimePresence = __esm({
             onSync();
           }
         });
-        this.onJoin((key, currentPresences, newPresences) => {
+        this.onJoin((key2, currentPresences, newPresences) => {
           this.channel._trigger("presence", {
             event: "join",
-            key,
+            key: key2,
             currentPresences,
             newPresences
           });
         });
-        this.onLeave((key, currentPresences, leftPresences) => {
+        this.onLeave((key2, currentPresences, leftPresences) => {
           this.channel._trigger("presence", {
             event: "leave",
-            key,
+            key: key2,
             currentPresences,
             leftPresences
           });
@@ -2034,26 +2034,26 @@ var init_RealtimePresence = __esm({
         const transformedState = this.transformState(newState);
         const joins = {};
         const leaves = {};
-        this.map(state, (key, presences) => {
-          if (!transformedState[key]) {
-            leaves[key] = presences;
+        this.map(state, (key2, presences) => {
+          if (!transformedState[key2]) {
+            leaves[key2] = presences;
           }
         });
-        this.map(transformedState, (key, newPresences) => {
-          const currentPresences = state[key];
+        this.map(transformedState, (key2, newPresences) => {
+          const currentPresences = state[key2];
           if (currentPresences) {
             const newPresenceRefs = newPresences.map((m) => m.presence_ref);
             const curPresenceRefs = currentPresences.map((m) => m.presence_ref);
             const joinedPresences = newPresences.filter((m) => curPresenceRefs.indexOf(m.presence_ref) < 0);
             const leftPresences = currentPresences.filter((m) => newPresenceRefs.indexOf(m.presence_ref) < 0);
             if (joinedPresences.length > 0) {
-              joins[key] = joinedPresences;
+              joins[key2] = joinedPresences;
             }
             if (leftPresences.length > 0) {
-              leaves[key] = leftPresences;
+              leaves[key2] = leftPresences;
             }
           } else {
-            joins[key] = newPresences;
+            joins[key2] = newPresences;
           }
         });
         return this.syncDiff(state, { joins, leaves }, onJoin, onLeave);
@@ -2081,33 +2081,33 @@ var init_RealtimePresence = __esm({
           onLeave = () => {
           };
         }
-        this.map(joins, (key, newPresences) => {
+        this.map(joins, (key2, newPresences) => {
           var _a4;
-          const currentPresences = (_a4 = state[key]) !== null && _a4 !== void 0 ? _a4 : [];
-          state[key] = this.cloneDeep(newPresences);
+          const currentPresences = (_a4 = state[key2]) !== null && _a4 !== void 0 ? _a4 : [];
+          state[key2] = this.cloneDeep(newPresences);
           if (currentPresences.length > 0) {
-            const joinedPresenceRefs = state[key].map((m) => m.presence_ref);
+            const joinedPresenceRefs = state[key2].map((m) => m.presence_ref);
             const curPresences = currentPresences.filter((m) => joinedPresenceRefs.indexOf(m.presence_ref) < 0);
-            state[key].unshift(...curPresences);
+            state[key2].unshift(...curPresences);
           }
-          onJoin(key, currentPresences, newPresences);
+          onJoin(key2, currentPresences, newPresences);
         });
-        this.map(leaves, (key, leftPresences) => {
-          let currentPresences = state[key];
+        this.map(leaves, (key2, leftPresences) => {
+          let currentPresences = state[key2];
           if (!currentPresences)
             return;
           const presenceRefsToRemove = leftPresences.map((m) => m.presence_ref);
           currentPresences = currentPresences.filter((m) => presenceRefsToRemove.indexOf(m.presence_ref) < 0);
-          state[key] = currentPresences;
-          onLeave(key, currentPresences, leftPresences);
+          state[key2] = currentPresences;
+          onLeave(key2, currentPresences, leftPresences);
           if (currentPresences.length === 0)
-            delete state[key];
+            delete state[key2];
         });
         return state;
       }
       /** @internal */
       static map(obj, func) {
-        return Object.getOwnPropertyNames(obj).map((key) => func(key, obj[key]));
+        return Object.getOwnPropertyNames(obj).map((key2) => func(key2, obj[key2]));
       }
       /**
        * Remove 'metas' key
@@ -2134,17 +2134,17 @@ var init_RealtimePresence = __esm({
        */
       static transformState(state) {
         state = this.cloneDeep(state);
-        return Object.getOwnPropertyNames(state).reduce((newState, key) => {
-          const presences = state[key];
+        return Object.getOwnPropertyNames(state).reduce((newState, key2) => {
+          const presences = state[key2];
           if ("metas" in presences) {
-            newState[key] = presences.metas.map((presence) => {
+            newState[key2] = presences.metas.map((presence) => {
               presence["presence_ref"] = presence["phx_ref"];
               delete presence["phx_ref"];
               delete presence["phx_ref_prev"];
               return presence;
             });
           } else {
-            newState[key] = presences;
+            newState[key2] = presences;
           }
           return newState;
         }, {});
@@ -2350,7 +2350,7 @@ var init_RealtimeChannel = __esm({
         if (!this._canPush() && args.type === "broadcast") {
           const { event, payload: endpoint_payload } = args;
           const authorization = this.socket.accessTokenValue ? `Bearer ${this.socket.accessTokenValue}` : "";
-          const options = {
+          const options2 = {
             method: "POST",
             headers: {
               Authorization: authorization,
@@ -2369,7 +2369,7 @@ var init_RealtimeChannel = __esm({
             })
           };
           try {
-            const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a4 = opts.timeout) !== null && _a4 !== void 0 ? _a4 : this.timeout);
+            const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options2, (_a4 = opts.timeout) !== null && _a4 !== void 0 ? _a4 : this.timeout);
             await ((_b = response.body) === null || _b === void 0 ? void 0 : _b.cancel());
             return response.ok ? "ok" : "error";
           } catch (error) {
@@ -2439,10 +2439,10 @@ var init_RealtimeChannel = __esm({
         this.joinPush.destroy();
       }
       /** @internal */
-      async _fetchWithTimeout(url, options, timeout) {
+      async _fetchWithTimeout(url2, options2, timeout) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
-        const response = await this.socket.fetch(url, Object.assign(Object.assign({}, options), { signal: controller.signal }));
+        const response = await this.socket.fetch(url2, Object.assign(Object.assign({}, options2), { signal: controller.signal }));
         clearTimeout(id);
         return response;
       }
@@ -2682,7 +2682,7 @@ var init_RealtimeClient = __esm({
        * @param options.worker Use Web Worker to set a side flow. Defaults to false.
        * @param options.workerUrl The URL of the worker script. Defaults to https://realtime.supabase.com/worker.js that includes a heartbeat event call to keep the connection alive.
        */
-      constructor(endPoint, options) {
+      constructor(endPoint, options2) {
         var _a4;
         this.accessTokenValue = null;
         this.apiKey = null;
@@ -2721,50 +2721,50 @@ var init_RealtimeClient = __esm({
         };
         this.endPoint = `${endPoint}/${TRANSPORTS.websocket}`;
         this.httpEndpoint = httpEndpointURL(endPoint);
-        if (options === null || options === void 0 ? void 0 : options.transport) {
-          this.transport = options.transport;
+        if (options2 === null || options2 === void 0 ? void 0 : options2.transport) {
+          this.transport = options2.transport;
         } else {
           this.transport = null;
         }
-        if (options === null || options === void 0 ? void 0 : options.params)
-          this.params = options.params;
-        if (options === null || options === void 0 ? void 0 : options.headers)
-          this.headers = Object.assign(Object.assign({}, this.headers), options.headers);
-        if (options === null || options === void 0 ? void 0 : options.timeout)
-          this.timeout = options.timeout;
-        if (options === null || options === void 0 ? void 0 : options.logger)
-          this.logger = options.logger;
-        if ((options === null || options === void 0 ? void 0 : options.logLevel) || (options === null || options === void 0 ? void 0 : options.log_level)) {
-          this.logLevel = options.logLevel || options.log_level;
+        if (options2 === null || options2 === void 0 ? void 0 : options2.params)
+          this.params = options2.params;
+        if (options2 === null || options2 === void 0 ? void 0 : options2.headers)
+          this.headers = Object.assign(Object.assign({}, this.headers), options2.headers);
+        if (options2 === null || options2 === void 0 ? void 0 : options2.timeout)
+          this.timeout = options2.timeout;
+        if (options2 === null || options2 === void 0 ? void 0 : options2.logger)
+          this.logger = options2.logger;
+        if ((options2 === null || options2 === void 0 ? void 0 : options2.logLevel) || (options2 === null || options2 === void 0 ? void 0 : options2.log_level)) {
+          this.logLevel = options2.logLevel || options2.log_level;
           this.params = Object.assign(Object.assign({}, this.params), { log_level: this.logLevel });
         }
-        if (options === null || options === void 0 ? void 0 : options.heartbeatIntervalMs)
-          this.heartbeatIntervalMs = options.heartbeatIntervalMs;
-        const accessTokenValue = (_a4 = options === null || options === void 0 ? void 0 : options.params) === null || _a4 === void 0 ? void 0 : _a4.apikey;
+        if (options2 === null || options2 === void 0 ? void 0 : options2.heartbeatIntervalMs)
+          this.heartbeatIntervalMs = options2.heartbeatIntervalMs;
+        const accessTokenValue = (_a4 = options2 === null || options2 === void 0 ? void 0 : options2.params) === null || _a4 === void 0 ? void 0 : _a4.apikey;
         if (accessTokenValue) {
           this.accessTokenValue = accessTokenValue;
           this.apiKey = accessTokenValue;
         }
-        this.reconnectAfterMs = (options === null || options === void 0 ? void 0 : options.reconnectAfterMs) ? options.reconnectAfterMs : (tries) => {
+        this.reconnectAfterMs = (options2 === null || options2 === void 0 ? void 0 : options2.reconnectAfterMs) ? options2.reconnectAfterMs : (tries) => {
           return [1e3, 2e3, 5e3, 1e4][tries - 1] || 1e4;
         };
-        this.encode = (options === null || options === void 0 ? void 0 : options.encode) ? options.encode : (payload, callback) => {
+        this.encode = (options2 === null || options2 === void 0 ? void 0 : options2.encode) ? options2.encode : (payload, callback) => {
           return callback(JSON.stringify(payload));
         };
-        this.decode = (options === null || options === void 0 ? void 0 : options.decode) ? options.decode : this.serializer.decode.bind(this.serializer);
+        this.decode = (options2 === null || options2 === void 0 ? void 0 : options2.decode) ? options2.decode : this.serializer.decode.bind(this.serializer);
         this.reconnectTimer = new Timer(async () => {
           this.disconnect();
           this.connect();
         }, this.reconnectAfterMs);
-        this.fetch = this._resolveFetch(options === null || options === void 0 ? void 0 : options.fetch);
-        if (options === null || options === void 0 ? void 0 : options.worker) {
+        this.fetch = this._resolveFetch(options2 === null || options2 === void 0 ? void 0 : options2.fetch);
+        if (options2 === null || options2 === void 0 ? void 0 : options2.worker) {
           if (typeof window !== "undefined" && !window.Worker) {
             throw new Error("Web Worker is not supported");
           }
-          this.worker = (options === null || options === void 0 ? void 0 : options.worker) || false;
-          this.workerUrl = options === null || options === void 0 ? void 0 : options.workerUrl;
+          this.worker = (options2 === null || options2 === void 0 ? void 0 : options2.worker) || false;
+          this.workerUrl = options2 === null || options2 === void 0 ? void 0 : options2.workerUrl;
         }
-        this.accessToken = (options === null || options === void 0 ? void 0 : options.accessToken) || null;
+        this.accessToken = (options2 === null || options2 === void 0 ? void 0 : options2.accessToken) || null;
       }
       /**
        * Connects the socket, unless already connected.
@@ -3089,18 +3089,18 @@ var init_RealtimeClient = __esm({
         this.channels.forEach((channel) => channel._trigger(CHANNEL_EVENTS.error));
       }
       /** @internal */
-      _appendParams(url, params) {
+      _appendParams(url2, params) {
         if (Object.keys(params).length === 0) {
-          return url;
+          return url2;
         }
-        const prefix = url.match(/\?/) ? "&" : "?";
+        const prefix = url2.match(/\?/) ? "&" : "?";
         const query = new URLSearchParams(params);
-        return `${url}${prefix}${query}`;
+        return `${url2}${prefix}${query}`;
       }
-      _workerObjectUrl(url) {
+      _workerObjectUrl(url2) {
         let result_url;
-        if (url) {
-          result_url = url;
+        if (url2) {
+          result_url = url2;
         } else {
           const blob = new Blob([WORKER_SCRIPT], { type: "application/javascript" });
           result_url = URL.createObjectURL(blob);
@@ -3109,7 +3109,7 @@ var init_RealtimeClient = __esm({
       }
     };
     WSWebSocketDummy = class {
-      constructor(address, _protocols, options) {
+      constructor(address, _protocols, options2) {
         this.binaryType = "arraybuffer";
         this.onclose = () => {
         };
@@ -3124,7 +3124,7 @@ var init_RealtimeClient = __esm({
         };
         this.url = null;
         this.url = address;
-        this.close = options.close;
+        this.close = options2.close;
       }
     };
   }
@@ -3232,8 +3232,8 @@ var init_helpers = __esm({
         return item;
       }
       const result = {};
-      Object.entries(item).forEach(([key, value]) => {
-        const newKey = key.replace(/([-_][a-z])/gi, (c) => c.toUpperCase().replace(/[-_]/g, ""));
+      Object.entries(item).forEach(([key2, value]) => {
+        const newKey = key2.replace(/([-_][a-z])/gi, (c) => c.toUpperCase().replace(/[-_]/g, ""));
         result[newKey] = recursiveToCamel(value);
       });
       return result;
@@ -3242,42 +3242,42 @@ var init_helpers = __esm({
 });
 
 // node_modules/@supabase/storage-js/dist/module/lib/fetch.js
-function _handleRequest(fetcher, method, url, options, parameters, body) {
+function _handleRequest(fetcher, method, url2, options2, parameters, body) {
   return __awaiter3(this, void 0, void 0, function* () {
     return new Promise((resolve, reject) => {
-      fetcher(url, _getRequestParams(method, options, parameters, body)).then((result) => {
+      fetcher(url2, _getRequestParams(method, options2, parameters, body)).then((result) => {
         if (!result.ok)
           throw result;
-        if (options === null || options === void 0 ? void 0 : options.noResolveJson)
+        if (options2 === null || options2 === void 0 ? void 0 : options2.noResolveJson)
           return result;
         return result.json();
-      }).then((data) => resolve(data)).catch((error) => handleError(error, reject, options));
+      }).then((data) => resolve(data)).catch((error) => handleError(error, reject, options2));
     });
   });
 }
-function get(fetcher, url, options, parameters) {
+function get(fetcher, url2, options2, parameters) {
   return __awaiter3(this, void 0, void 0, function* () {
-    return _handleRequest(fetcher, "GET", url, options, parameters);
+    return _handleRequest(fetcher, "GET", url2, options2, parameters);
   });
 }
-function post(fetcher, url, body, options, parameters) {
+function post(fetcher, url2, body, options2, parameters) {
   return __awaiter3(this, void 0, void 0, function* () {
-    return _handleRequest(fetcher, "POST", url, options, parameters, body);
+    return _handleRequest(fetcher, "POST", url2, options2, parameters, body);
   });
 }
-function put(fetcher, url, body, options, parameters) {
+function put(fetcher, url2, body, options2, parameters) {
   return __awaiter3(this, void 0, void 0, function* () {
-    return _handleRequest(fetcher, "PUT", url, options, parameters, body);
+    return _handleRequest(fetcher, "PUT", url2, options2, parameters, body);
   });
 }
-function head(fetcher, url, options, parameters) {
+function head(fetcher, url2, options2, parameters) {
   return __awaiter3(this, void 0, void 0, function* () {
-    return _handleRequest(fetcher, "HEAD", url, Object.assign(Object.assign({}, options), { noResolveJson: true }), parameters);
+    return _handleRequest(fetcher, "HEAD", url2, Object.assign(Object.assign({}, options2), { noResolveJson: true }), parameters);
   });
 }
-function remove(fetcher, url, body, options, parameters) {
+function remove(fetcher, url2, body, options2, parameters) {
   return __awaiter3(this, void 0, void 0, function* () {
-    return _handleRequest(fetcher, "DELETE", url, options, parameters, body);
+    return _handleRequest(fetcher, "DELETE", url2, options2, parameters, body);
   });
 }
 var __awaiter3, _getErrorMessage, handleError, _getRequestParams;
@@ -3313,9 +3313,9 @@ var init_fetch = __esm({
       });
     };
     _getErrorMessage = (err) => err.msg || err.message || err.error_description || err.error || JSON.stringify(err);
-    handleError = (error, reject, options) => __awaiter3(void 0, void 0, void 0, function* () {
+    handleError = (error, reject, options2) => __awaiter3(void 0, void 0, void 0, function* () {
       const Res = yield resolveResponse();
-      if (error instanceof Res && !(options === null || options === void 0 ? void 0 : options.noResolveJson)) {
+      if (error instanceof Res && !(options2 === null || options2 === void 0 ? void 0 : options2.noResolveJson)) {
         error.json().then((err) => {
           reject(new StorageApiError(_getErrorMessage(err), error.status || 500));
         }).catch((err) => {
@@ -3325,12 +3325,12 @@ var init_fetch = __esm({
         reject(new StorageUnknownError(_getErrorMessage(error), error));
       }
     });
-    _getRequestParams = (method, options, parameters, body) => {
-      const params = { method, headers: (options === null || options === void 0 ? void 0 : options.headers) || {} };
+    _getRequestParams = (method, options2, parameters, body) => {
+      const params = { method, headers: (options2 === null || options2 === void 0 ? void 0 : options2.headers) || {} };
       if (method === "GET") {
         return params;
       }
-      params.headers = Object.assign({ "Content-Type": "application/json" }, options === null || options === void 0 ? void 0 : options.headers);
+      params.headers = Object.assign({ "Content-Type": "application/json" }, options2 === null || options2 === void 0 ? void 0 : options2.headers);
       if (body) {
         params.body = JSON.stringify(body);
       }
@@ -3387,8 +3387,8 @@ var init_StorageFileApi = __esm({
       upsert: false
     };
     StorageFileApi = class {
-      constructor(url, headers = {}, bucketId, fetch3) {
-        this.url = url;
+      constructor(url2, headers = {}, bucketId, fetch3) {
+        this.url = url2;
         this.headers = headers;
         this.bucketId = bucketId;
         this.fetch = resolveFetch2(fetch3);
@@ -3404,26 +3404,26 @@ var init_StorageFileApi = __esm({
         return __awaiter4(this, void 0, void 0, function* () {
           try {
             let body;
-            const options = Object.assign(Object.assign({}, DEFAULT_FILE_OPTIONS), fileOptions);
-            let headers = Object.assign(Object.assign({}, this.headers), method === "POST" && { "x-upsert": String(options.upsert) });
-            const metadata = options.metadata;
+            const options2 = Object.assign(Object.assign({}, DEFAULT_FILE_OPTIONS), fileOptions);
+            let headers = Object.assign(Object.assign({}, this.headers), method === "POST" && { "x-upsert": String(options2.upsert) });
+            const metadata = options2.metadata;
             if (typeof Blob !== "undefined" && fileBody instanceof Blob) {
               body = new FormData();
-              body.append("cacheControl", options.cacheControl);
+              body.append("cacheControl", options2.cacheControl);
               if (metadata) {
                 body.append("metadata", this.encodeMetadata(metadata));
               }
               body.append("", fileBody);
             } else if (typeof FormData !== "undefined" && fileBody instanceof FormData) {
               body = fileBody;
-              body.append("cacheControl", options.cacheControl);
+              body.append("cacheControl", options2.cacheControl);
               if (metadata) {
                 body.append("metadata", this.encodeMetadata(metadata));
               }
             } else {
               body = fileBody;
-              headers["cache-control"] = `max-age=${options.cacheControl}`;
-              headers["content-type"] = options.contentType;
+              headers["cache-control"] = `max-age=${options2.cacheControl}`;
+              headers["content-type"] = options2.contentType;
               if (metadata) {
                 headers["x-metadata"] = this.toBase64(this.encodeMetadata(metadata));
               }
@@ -3433,7 +3433,7 @@ var init_StorageFileApi = __esm({
             }
             const cleanPath = this._removeEmptyFolders(path);
             const _path = this._getFinalPath(cleanPath);
-            const res = yield this.fetch(`${this.url}/object/${_path}`, Object.assign({ method, body, headers }, (options === null || options === void 0 ? void 0 : options.duplex) ? { duplex: options.duplex } : {}));
+            const res = yield this.fetch(`${this.url}/object/${_path}`, Object.assign({ method, body, headers }, (options2 === null || options2 === void 0 ? void 0 : options2.duplex) ? { duplex: options2.duplex } : {}));
             const data = yield res.json();
             if (res.ok) {
               return {
@@ -3473,25 +3473,25 @@ var init_StorageFileApi = __esm({
         return __awaiter4(this, void 0, void 0, function* () {
           const cleanPath = this._removeEmptyFolders(path);
           const _path = this._getFinalPath(cleanPath);
-          const url = new URL(this.url + `/object/upload/sign/${_path}`);
-          url.searchParams.set("token", token);
+          const url2 = new URL(this.url + `/object/upload/sign/${_path}`);
+          url2.searchParams.set("token", token);
           try {
             let body;
-            const options = Object.assign({ upsert: DEFAULT_FILE_OPTIONS.upsert }, fileOptions);
-            const headers = Object.assign(Object.assign({}, this.headers), { "x-upsert": String(options.upsert) });
+            const options2 = Object.assign({ upsert: DEFAULT_FILE_OPTIONS.upsert }, fileOptions);
+            const headers = Object.assign(Object.assign({}, this.headers), { "x-upsert": String(options2.upsert) });
             if (typeof Blob !== "undefined" && fileBody instanceof Blob) {
               body = new FormData();
-              body.append("cacheControl", options.cacheControl);
+              body.append("cacheControl", options2.cacheControl);
               body.append("", fileBody);
             } else if (typeof FormData !== "undefined" && fileBody instanceof FormData) {
               body = fileBody;
-              body.append("cacheControl", options.cacheControl);
+              body.append("cacheControl", options2.cacheControl);
             } else {
               body = fileBody;
-              headers["cache-control"] = `max-age=${options.cacheControl}`;
-              headers["content-type"] = options.contentType;
+              headers["cache-control"] = `max-age=${options2.cacheControl}`;
+              headers["content-type"] = options2.contentType;
             }
-            const res = yield this.fetch(url.toString(), {
+            const res = yield this.fetch(url2.toString(), {
               method: "PUT",
               body,
               headers
@@ -3521,21 +3521,21 @@ var init_StorageFileApi = __esm({
        * @param path The file path, including the current file name. For example `folder/image.png`.
        * @param options.upsert If set to true, allows the file to be overwritten if it already exists.
        */
-      createSignedUploadUrl(path, options) {
+      createSignedUploadUrl(path, options2) {
         return __awaiter4(this, void 0, void 0, function* () {
           try {
             let _path = this._getFinalPath(path);
             const headers = Object.assign({}, this.headers);
-            if (options === null || options === void 0 ? void 0 : options.upsert) {
+            if (options2 === null || options2 === void 0 ? void 0 : options2.upsert) {
               headers["x-upsert"] = "true";
             }
             const data = yield post(this.fetch, `${this.url}/object/upload/sign/${_path}`, {}, { headers });
-            const url = new URL(this.url + data.url);
-            const token = url.searchParams.get("token");
+            const url2 = new URL(this.url + data.url);
+            const token = url2.searchParams.get("token");
             if (!token) {
               throw new StorageError("No token returned by API");
             }
-            return { data: { signedUrl: url.toString(), path, token }, error: null };
+            return { data: { signedUrl: url2.toString(), path, token }, error: null };
           } catch (error) {
             if (isStorageError(error)) {
               return { data: null, error };
@@ -3562,14 +3562,14 @@ var init_StorageFileApi = __esm({
        * @param toPath The new file path, including the new file name. For example `folder/image-new.png`.
        * @param options The destination options.
        */
-      move(fromPath, toPath, options) {
+      move(fromPath, toPath, options2) {
         return __awaiter4(this, void 0, void 0, function* () {
           try {
             const data = yield post(this.fetch, `${this.url}/object/move`, {
               bucketId: this.bucketId,
               sourceKey: fromPath,
               destinationKey: toPath,
-              destinationBucket: options === null || options === void 0 ? void 0 : options.destinationBucket
+              destinationBucket: options2 === null || options2 === void 0 ? void 0 : options2.destinationBucket
             }, { headers: this.headers });
             return { data, error: null };
           } catch (error) {
@@ -3587,14 +3587,14 @@ var init_StorageFileApi = __esm({
        * @param toPath The new file path, including the new file name. For example `folder/image-copy.png`.
        * @param options The destination options.
        */
-      copy(fromPath, toPath, options) {
+      copy(fromPath, toPath, options2) {
         return __awaiter4(this, void 0, void 0, function* () {
           try {
             const data = yield post(this.fetch, `${this.url}/object/copy`, {
               bucketId: this.bucketId,
               sourceKey: fromPath,
               destinationKey: toPath,
-              destinationBucket: options === null || options === void 0 ? void 0 : options.destinationBucket
+              destinationBucket: options2 === null || options2 === void 0 ? void 0 : options2.destinationBucket
             }, { headers: this.headers });
             return { data: { path: data.Key }, error: null };
           } catch (error) {
@@ -3613,12 +3613,12 @@ var init_StorageFileApi = __esm({
        * @param options.download triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
        * @param options.transform Transform the asset before serving it to the client.
        */
-      createSignedUrl(path, expiresIn, options) {
+      createSignedUrl(path, expiresIn, options2) {
         return __awaiter4(this, void 0, void 0, function* () {
           try {
             let _path = this._getFinalPath(path);
-            let data = yield post(this.fetch, `${this.url}/object/sign/${_path}`, Object.assign({ expiresIn }, (options === null || options === void 0 ? void 0 : options.transform) ? { transform: options.transform } : {}), { headers: this.headers });
-            const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `&download=${options.download === true ? "" : options.download}` : "";
+            let data = yield post(this.fetch, `${this.url}/object/sign/${_path}`, Object.assign({ expiresIn }, (options2 === null || options2 === void 0 ? void 0 : options2.transform) ? { transform: options2.transform } : {}), { headers: this.headers });
+            const downloadQueryParam = (options2 === null || options2 === void 0 ? void 0 : options2.download) ? `&download=${options2.download === true ? "" : options2.download}` : "";
             const signedUrl = encodeURI(`${this.url}${data.signedURL}${downloadQueryParam}`);
             data = { signedUrl };
             return { data, error: null };
@@ -3637,11 +3637,11 @@ var init_StorageFileApi = __esm({
        * @param expiresIn The number of seconds until the signed URLs expire. For example, `60` for URLs which are valid for one minute.
        * @param options.download triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
        */
-      createSignedUrls(paths, expiresIn, options) {
+      createSignedUrls(paths, expiresIn, options2) {
         return __awaiter4(this, void 0, void 0, function* () {
           try {
             const data = yield post(this.fetch, `${this.url}/object/sign/${this.bucketId}`, { expiresIn, paths }, { headers: this.headers });
-            const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `&download=${options.download === true ? "" : options.download}` : "";
+            const downloadQueryParam = (options2 === null || options2 === void 0 ? void 0 : options2.download) ? `&download=${options2.download === true ? "" : options2.download}` : "";
             return {
               data: data.map((datum) => Object.assign(Object.assign({}, datum), { signedUrl: datum.signedURL ? encodeURI(`${this.url}${datum.signedURL}${downloadQueryParam}`) : null })),
               error: null
@@ -3660,11 +3660,11 @@ var init_StorageFileApi = __esm({
        * @param path The full path and file name of the file to be downloaded. For example `folder/image.png`.
        * @param options.transform Transform the asset before serving it to the client.
        */
-      download(path, options) {
+      download(path, options2) {
         return __awaiter4(this, void 0, void 0, function* () {
-          const wantsTransformation = typeof (options === null || options === void 0 ? void 0 : options.transform) !== "undefined";
+          const wantsTransformation = typeof (options2 === null || options2 === void 0 ? void 0 : options2.transform) !== "undefined";
           const renderPath = wantsTransformation ? "render/image/authenticated" : "object";
-          const transformationQuery = this.transformOptsToQueryString((options === null || options === void 0 ? void 0 : options.transform) || {});
+          const transformationQuery = this.transformOptsToQueryString((options2 === null || options2 === void 0 ? void 0 : options2.transform) || {});
           const queryString = transformationQuery ? `?${transformationQuery}` : "";
           try {
             const _path = this._getFinalPath(path);
@@ -3733,16 +3733,16 @@ var init_StorageFileApi = __esm({
        * @param options.download Triggers the file as a download if set to true. Set this parameter as the name of the file if you want to trigger the download with a different filename.
        * @param options.transform Transform the asset before serving it to the client.
        */
-      getPublicUrl(path, options) {
+      getPublicUrl(path, options2) {
         const _path = this._getFinalPath(path);
         const _queryString = [];
-        const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `download=${options.download === true ? "" : options.download}` : "";
+        const downloadQueryParam = (options2 === null || options2 === void 0 ? void 0 : options2.download) ? `download=${options2.download === true ? "" : options2.download}` : "";
         if (downloadQueryParam !== "") {
           _queryString.push(downloadQueryParam);
         }
-        const wantsTransformation = typeof (options === null || options === void 0 ? void 0 : options.transform) !== "undefined";
+        const wantsTransformation = typeof (options2 === null || options2 === void 0 ? void 0 : options2.transform) !== "undefined";
         const renderPath = wantsTransformation ? "render/image" : "object";
-        const transformationQuery = this.transformOptsToQueryString((options === null || options === void 0 ? void 0 : options.transform) || {});
+        const transformationQuery = this.transformOptsToQueryString((options2 === null || options2 === void 0 ? void 0 : options2.transform) || {});
         if (transformationQuery !== "") {
           _queryString.push(transformationQuery);
         }
@@ -3835,10 +3835,10 @@ var init_StorageFileApi = __esm({
        * Lists all the files within a bucket.
        * @param path The folder path.
        */
-      list(path, options, parameters) {
+      list(path, options2, parameters) {
         return __awaiter4(this, void 0, void 0, function* () {
           try {
-            const body = Object.assign(Object.assign(Object.assign({}, DEFAULT_SEARCH_OPTIONS), options), { prefix: path || "" });
+            const body = Object.assign(Object.assign(Object.assign({}, DEFAULT_SEARCH_OPTIONS), options2), { prefix: path || "" });
             const data = yield post(this.fetch, `${this.url}/object/list/${this.bucketId}`, body, { headers: this.headers }, parameters);
             return { data, error: null };
           } catch (error) {
@@ -3940,8 +3940,8 @@ var init_StorageBucketApi = __esm({
       });
     };
     StorageBucketApi = class {
-      constructor(url, headers = {}, fetch3) {
-        this.url = url;
+      constructor(url2, headers = {}, fetch3) {
+        this.url = url2;
         this.headers = Object.assign(Object.assign({}, DEFAULT_HEADERS2), headers);
         this.fetch = resolveFetch2(fetch3);
       }
@@ -3992,7 +3992,7 @@ var init_StorageBucketApi = __esm({
        * Each mime type specified can be a wildcard, e.g. image/*, or a specific mime type, e.g. image/png.
        * @returns newly created bucket id
        */
-      createBucket(id, options = {
+      createBucket(id, options2 = {
         public: false
       }) {
         return __awaiter5(this, void 0, void 0, function* () {
@@ -4000,9 +4000,9 @@ var init_StorageBucketApi = __esm({
             const data = yield post(this.fetch, `${this.url}/bucket`, {
               id,
               name: id,
-              public: options.public,
-              file_size_limit: options.fileSizeLimit,
-              allowed_mime_types: options.allowedMimeTypes
+              public: options2.public,
+              file_size_limit: options2.fileSizeLimit,
+              allowed_mime_types: options2.allowedMimeTypes
             }, { headers: this.headers });
             return { data, error: null };
           } catch (error) {
@@ -4025,15 +4025,15 @@ var init_StorageBucketApi = __esm({
        * The default value is null, which allows files with all mime types to be uploaded.
        * Each mime type specified can be a wildcard, e.g. image/*, or a specific mime type, e.g. image/png.
        */
-      updateBucket(id, options) {
+      updateBucket(id, options2) {
         return __awaiter5(this, void 0, void 0, function* () {
           try {
             const data = yield put(this.fetch, `${this.url}/bucket/${id}`, {
               id,
               name: id,
-              public: options.public,
-              file_size_limit: options.fileSizeLimit,
-              allowed_mime_types: options.allowedMimeTypes
+              public: options2.public,
+              file_size_limit: options2.fileSizeLimit,
+              allowed_mime_types: options2.allowedMimeTypes
             }, { headers: this.headers });
             return { data, error: null };
           } catch (error) {
@@ -4092,8 +4092,8 @@ var init_StorageClient = __esm({
     init_StorageFileApi();
     init_StorageBucketApi();
     StorageClient = class extends StorageBucketApi {
-      constructor(url, headers = {}, fetch3) {
-        super(url, headers, fetch3);
+      constructor(url2, headers = {}, fetch3) {
+        super(url2, headers, fetch3);
       }
       /**
        * Perform file operation in a bucket.
@@ -4231,12 +4231,12 @@ var init_fetch2 = __esm({
 });
 
 // node_modules/@supabase/supabase-js/dist/module/lib/helpers.js
-function ensureTrailingSlash(url) {
-  return url.endsWith("/") ? url : url + "/";
+function ensureTrailingSlash(url2) {
+  return url2.endsWith("/") ? url2 : url2 + "/";
 }
-function applySettingDefaults(options, defaults) {
+function applySettingDefaults(options2, defaults) {
   var _a4, _b;
-  const { db: dbOptions, auth: authOptions, realtime: realtimeOptions, global: globalOptions } = options;
+  const { db: dbOptions, auth: authOptions, realtime: realtimeOptions, global: globalOptions } = options2;
   const { db: DEFAULT_DB_OPTIONS2, auth: DEFAULT_AUTH_OPTIONS2, realtime: DEFAULT_REALTIME_OPTIONS2, global: DEFAULT_GLOBAL_OPTIONS2 } = defaults;
   const result = {
     db: Object.assign(Object.assign({}, DEFAULT_DB_OPTIONS2), dbOptions),
@@ -4247,8 +4247,8 @@ function applySettingDefaults(options, defaults) {
       return "";
     })
   };
-  if (options.accessToken) {
-    result.accessToken = options.accessToken;
+  if (options2.accessToken) {
+    result.accessToken = options2.accessToken;
   } else {
     delete result.accessToken;
   }
@@ -4612,18 +4612,18 @@ function uuid() {
 }
 function parseParametersFromURL(href) {
   const result = {};
-  const url = new URL(href);
-  if (url.hash && url.hash[0] === "#") {
+  const url2 = new URL(href);
+  if (url2.hash && url2.hash[0] === "#") {
     try {
-      const hashSearchParams = new URLSearchParams(url.hash.substring(1));
-      hashSearchParams.forEach((value, key) => {
-        result[key] = value;
+      const hashSearchParams = new URLSearchParams(url2.hash.substring(1));
+      hashSearchParams.forEach((value, key2) => {
+        result[key2] = value;
       });
     } catch (e) {
     }
   }
-  url.searchParams.forEach((value, key) => {
-    result[key] = value;
+  url2.searchParams.forEach((value, key2) => {
+    result[key2] = value;
   });
   return result;
 }
@@ -4818,11 +4818,11 @@ var init_helpers3 = __esm({
     looksLikeFetchResponse = (maybeResponse) => {
       return typeof maybeResponse === "object" && maybeResponse !== null && "status" in maybeResponse && "ok" in maybeResponse && "json" in maybeResponse && typeof maybeResponse.json === "function";
     };
-    setItemAsync = async (storage, key, data) => {
-      await storage.setItem(key, JSON.stringify(data));
+    setItemAsync = async (storage, key2, data) => {
+      await storage.setItem(key2, JSON.stringify(data));
     };
-    getItemAsync = async (storage, key) => {
-      const value = await storage.getItem(key);
+    getItemAsync = async (storage, key2) => {
+      const value = await storage.getItem(key2);
       if (!value) {
         return null;
       }
@@ -4832,8 +4832,8 @@ var init_helpers3 = __esm({
         return value;
       }
     };
-    removeItemAsync = async (storage, key) => {
-      await storage.removeItem(key);
+    removeItemAsync = async (storage, key2) => {
+      await storage.removeItem(key2);
     };
     Deferred = class _Deferred {
       constructor() {
@@ -4884,31 +4884,31 @@ async function handleError2(error) {
   }
   throw new AuthApiError(_getErrorMessage2(data), error.status || 500, errorCode);
 }
-async function _request(fetcher, method, url, options) {
+async function _request(fetcher, method, url2, options2) {
   var _a4;
-  const headers = Object.assign({}, options === null || options === void 0 ? void 0 : options.headers);
+  const headers = Object.assign({}, options2 === null || options2 === void 0 ? void 0 : options2.headers);
   if (!headers[API_VERSION_HEADER_NAME]) {
     headers[API_VERSION_HEADER_NAME] = API_VERSIONS["2024-01-01"].name;
   }
-  if (options === null || options === void 0 ? void 0 : options.jwt) {
-    headers["Authorization"] = `Bearer ${options.jwt}`;
+  if (options2 === null || options2 === void 0 ? void 0 : options2.jwt) {
+    headers["Authorization"] = `Bearer ${options2.jwt}`;
   }
-  const qs = (_a4 = options === null || options === void 0 ? void 0 : options.query) !== null && _a4 !== void 0 ? _a4 : {};
-  if (options === null || options === void 0 ? void 0 : options.redirectTo) {
-    qs["redirect_to"] = options.redirectTo;
+  const qs = (_a4 = options2 === null || options2 === void 0 ? void 0 : options2.query) !== null && _a4 !== void 0 ? _a4 : {};
+  if (options2 === null || options2 === void 0 ? void 0 : options2.redirectTo) {
+    qs["redirect_to"] = options2.redirectTo;
   }
   const queryString = Object.keys(qs).length ? "?" + new URLSearchParams(qs).toString() : "";
-  const data = await _handleRequest2(fetcher, method, url + queryString, {
+  const data = await _handleRequest2(fetcher, method, url2 + queryString, {
     headers,
-    noResolveJson: options === null || options === void 0 ? void 0 : options.noResolveJson
-  }, {}, options === null || options === void 0 ? void 0 : options.body);
-  return (options === null || options === void 0 ? void 0 : options.xform) ? options === null || options === void 0 ? void 0 : options.xform(data) : { data: Object.assign({}, data), error: null };
+    noResolveJson: options2 === null || options2 === void 0 ? void 0 : options2.noResolveJson
+  }, {}, options2 === null || options2 === void 0 ? void 0 : options2.body);
+  return (options2 === null || options2 === void 0 ? void 0 : options2.xform) ? options2 === null || options2 === void 0 ? void 0 : options2.xform(data) : { data: Object.assign({}, data), error: null };
 }
-async function _handleRequest2(fetcher, method, url, options, parameters, body) {
-  const requestParams = _getRequestParams2(method, options, parameters, body);
+async function _handleRequest2(fetcher, method, url2, options2, parameters, body) {
+  const requestParams = _getRequestParams2(method, options2, parameters, body);
   let result;
   try {
-    result = await fetcher(url, Object.assign({}, requestParams));
+    result = await fetcher(url2, Object.assign({}, requestParams));
   } catch (e) {
     console.error(e);
     throw new AuthRetryableFetchError(_getErrorMessage2(e), 0);
@@ -4916,7 +4916,7 @@ async function _handleRequest2(fetcher, method, url, options, parameters, body) 
   if (!result.ok) {
     await handleError2(result);
   }
-  if (options === null || options === void 0 ? void 0 : options.noResolveJson) {
+  if (options2 === null || options2 === void 0 ? void 0 : options2.noResolveJson) {
     return result;
   }
   try {
@@ -4996,12 +4996,12 @@ var init_fetch3 = __esm({
     };
     _getErrorMessage2 = (err) => err.msg || err.message || err.error_description || err.error || JSON.stringify(err);
     NETWORK_ERROR_CODES = [502, 503, 504];
-    _getRequestParams2 = (method, options, parameters, body) => {
-      const params = { method, headers: (options === null || options === void 0 ? void 0 : options.headers) || {} };
+    _getRequestParams2 = (method, options2, parameters, body) => {
+      const params = { method, headers: (options2 === null || options2 === void 0 ? void 0 : options2.headers) || {} };
       if (method === "GET") {
         return params;
       }
-      params.headers = Object.assign({ "Content-Type": "application/json;charset=UTF-8" }, options === null || options === void 0 ? void 0 : options.headers);
+      params.headers = Object.assign({ "Content-Type": "application/json;charset=UTF-8" }, options2 === null || options2 === void 0 ? void 0 : options2.headers);
       params.body = JSON.stringify(body);
       return Object.assign(Object.assign({}, params), parameters);
     };
@@ -5037,8 +5037,8 @@ var init_GoTrueAdminApi = __esm({
       return t;
     };
     GoTrueAdminApi = class {
-      constructor({ url = "", headers = {}, fetch: fetch3 }) {
-        this.url = url;
+      constructor({ url: url2 = "", headers = {}, fetch: fetch3 }) {
+        this.url = url2;
         this.headers = headers;
         this.fetch = resolveFetch4(fetch3);
         this.mfa = {
@@ -5074,12 +5074,12 @@ var init_GoTrueAdminApi = __esm({
        * @param email The email address of the user.
        * @param options Additional options to be included when inviting.
        */
-      async inviteUserByEmail(email, options = {}) {
+      async inviteUserByEmail(email, options2 = {}) {
         try {
           return await _request(this.fetch, "POST", `${this.url}/invite`, {
-            body: { email, data: options.data },
+            body: { email, data: options2.data },
             headers: this.headers,
-            redirectTo: options.redirectTo,
+            redirectTo: options2.redirectTo,
             xform: _userResponse
           });
         } catch (error) {
@@ -5098,8 +5098,8 @@ var init_GoTrueAdminApi = __esm({
        */
       async generateLink(params) {
         try {
-          const { options } = params, rest = __rest2(params, ["options"]);
-          const body = Object.assign(Object.assign({}, rest), options);
+          const { options: options2 } = params, rest = __rest2(params, ["options"]);
+          const body = Object.assign(Object.assign({}, rest), options2);
           if ("newEmail" in rest) {
             body.new_email = rest === null || rest === void 0 ? void 0 : rest.newEmail;
             delete body["newEmail"];
@@ -5108,7 +5108,7 @@ var init_GoTrueAdminApi = __esm({
             body,
             headers: this.headers,
             xform: _generateLinkResponse,
-            redirectTo: options === null || options === void 0 ? void 0 : options.redirectTo
+            redirectTo: options2 === null || options2 === void 0 ? void 0 : options2.redirectTo
           });
         } catch (error) {
           if (isAuthError(error)) {
@@ -5290,14 +5290,14 @@ var init_GoTrueAdminApi = __esm({
 // node_modules/@supabase/auth-js/dist/module/lib/local-storage.js
 function memoryLocalStorageAdapter(store = {}) {
   return {
-    getItem: (key) => {
-      return store[key] || null;
+    getItem: (key2) => {
+      return store[key2] || null;
     },
-    setItem: (key, value) => {
-      store[key] = value;
+    setItem: (key2, value) => {
+      store[key2] = value;
     },
-    removeItem: (key) => {
-      delete store[key];
+    removeItem: (key2) => {
+      delete store[key2];
     }
   };
 }
@@ -5306,23 +5306,23 @@ var init_local_storage = __esm({
   "node_modules/@supabase/auth-js/dist/module/lib/local-storage.js"() {
     init_helpers3();
     localStorageAdapter = {
-      getItem: (key) => {
+      getItem: (key2) => {
         if (!supportsLocalStorage()) {
           return null;
         }
-        return globalThis.localStorage.getItem(key);
+        return globalThis.localStorage.getItem(key2);
       },
-      setItem: (key, value) => {
+      setItem: (key2, value) => {
         if (!supportsLocalStorage()) {
           return;
         }
-        globalThis.localStorage.setItem(key, value);
+        globalThis.localStorage.setItem(key2, value);
       },
-      removeItem: (key) => {
+      removeItem: (key2) => {
         if (!supportsLocalStorage()) {
           return;
         }
-        globalThis.localStorage.removeItem(key);
+        globalThis.localStorage.removeItem(key2);
       }
     };
   }
@@ -5459,7 +5459,7 @@ var init_GoTrueClient = __esm({
       /**
        * Create a new client for use in the browser.
        */
-      constructor(options) {
+      constructor(options2) {
         var _a4, _b;
         this.memoryStorage = null;
         this.stateChangeEmitters = /* @__PURE__ */ new Map();
@@ -5479,7 +5479,7 @@ var init_GoTrueClient = __esm({
         if (this.instanceID > 0 && isBrowser()) {
           console.warn("Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.");
         }
-        const settings = Object.assign(Object.assign({}, DEFAULT_OPTIONS), options);
+        const settings = Object.assign(Object.assign({}, DEFAULT_OPTIONS), options2);
         this.logDebugMessages = !!settings.debug;
         if (typeof settings.debug === "function") {
           this.logger = settings.debug;
@@ -5671,7 +5671,7 @@ var init_GoTrueClient = __esm({
         try {
           let res;
           if ("email" in credentials) {
-            const { email, password, options } = credentials;
+            const { email, password, options: options2 } = credentials;
             let codeChallenge = null;
             let codeChallengeMethod = null;
             if (this.flowType === "pkce") {
@@ -5680,27 +5680,27 @@ var init_GoTrueClient = __esm({
             }
             res = await _request(this.fetch, "POST", `${this.url}/signup`, {
               headers: this.headers,
-              redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo,
+              redirectTo: options2 === null || options2 === void 0 ? void 0 : options2.emailRedirectTo,
               body: {
                 email,
                 password,
-                data: (_a4 = options === null || options === void 0 ? void 0 : options.data) !== null && _a4 !== void 0 ? _a4 : {},
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
+                data: (_a4 = options2 === null || options2 === void 0 ? void 0 : options2.data) !== null && _a4 !== void 0 ? _a4 : {},
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken },
                 code_challenge: codeChallenge,
                 code_challenge_method: codeChallengeMethod
               },
               xform: _sessionResponse
             });
           } else if ("phone" in credentials) {
-            const { phone, password, options } = credentials;
+            const { phone, password, options: options2 } = credentials;
             res = await _request(this.fetch, "POST", `${this.url}/signup`, {
               headers: this.headers,
               body: {
                 phone,
                 password,
-                data: (_b = options === null || options === void 0 ? void 0 : options.data) !== null && _b !== void 0 ? _b : {},
-                channel: (_c = options === null || options === void 0 ? void 0 : options.channel) !== null && _c !== void 0 ? _c : "sms",
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+                data: (_b = options2 === null || options2 === void 0 ? void 0 : options2.data) !== null && _b !== void 0 ? _b : {},
+                channel: (_c = options2 === null || options2 === void 0 ? void 0 : options2.channel) !== null && _c !== void 0 ? _c : "sms",
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken }
               },
               xform: _sessionResponse
             });
@@ -5737,24 +5737,24 @@ var init_GoTrueClient = __esm({
         try {
           let res;
           if ("email" in credentials) {
-            const { email, password, options } = credentials;
+            const { email, password, options: options2 } = credentials;
             res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=password`, {
               headers: this.headers,
               body: {
                 email,
                 password,
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken }
               },
               xform: _sessionResponsePassword
             });
           } else if ("phone" in credentials) {
-            const { phone, password, options } = credentials;
+            const { phone, password, options: options2 } = credentials;
             res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=password`, {
               headers: this.headers,
               body: {
                 phone,
                 password,
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken }
               },
               xform: _sessionResponsePassword
             });
@@ -5823,10 +5823,10 @@ var init_GoTrueClient = __esm({
           message = credentials.message;
           signature = credentials.signature;
         } else {
-          const { chain, wallet, statement, options } = credentials;
+          const { chain, wallet, statement, options: options2 } = credentials;
           let resolvedWallet;
           if (!isBrowser()) {
-            if (typeof wallet !== "object" || !(options === null || options === void 0 ? void 0 : options.url)) {
+            if (typeof wallet !== "object" || !(options2 === null || options2 === void 0 ? void 0 : options2.url)) {
               throw new Error("@supabase/auth-js: Both wallet and url must be specified in non-browser environments.");
             }
             resolvedWallet = wallet;
@@ -5840,13 +5840,13 @@ var init_GoTrueClient = __esm({
               throw new Error(`@supabase/auth-js: No compatible Solana wallet interface on the window object (window.solana) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'solana', wallet: resolvedUserWallet }) instead.`);
             }
           }
-          const url = new URL((_a4 = options === null || options === void 0 ? void 0 : options.url) !== null && _a4 !== void 0 ? _a4 : window.location.href);
+          const url2 = new URL((_a4 = options2 === null || options2 === void 0 ? void 0 : options2.url) !== null && _a4 !== void 0 ? _a4 : window.location.href);
           if ("signIn" in resolvedWallet && resolvedWallet.signIn) {
-            const output = await resolvedWallet.signIn(Object.assign(Object.assign(Object.assign({ issuedAt: (/* @__PURE__ */ new Date()).toISOString() }, options === null || options === void 0 ? void 0 : options.signInWithSolana), {
+            const output = await resolvedWallet.signIn(Object.assign(Object.assign(Object.assign({ issuedAt: (/* @__PURE__ */ new Date()).toISOString() }, options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana), {
               // non-overridable properties
               version: "1",
-              domain: url.host,
-              uri: url.href
+              domain: url2.host,
+              uri: url2.href
             }), statement ? { statement } : null));
             let outputToProcess;
             if (Array.isArray(output) && output[0] && typeof output[0] === "object") {
@@ -5867,20 +5867,20 @@ var init_GoTrueClient = __esm({
               throw new Error("@supabase/auth-js: Wallet does not have a compatible signMessage() and publicKey.toBase58() API");
             }
             message = [
-              `${url.host} wants you to sign in with your Solana account:`,
+              `${url2.host} wants you to sign in with your Solana account:`,
               resolvedWallet.publicKey.toBase58(),
               ...statement ? ["", statement, ""] : [""],
               "Version: 1",
-              `URI: ${url.href}`,
-              `Issued At: ${(_c = (_b = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _b === void 0 ? void 0 : _b.issuedAt) !== null && _c !== void 0 ? _c : (/* @__PURE__ */ new Date()).toISOString()}`,
-              ...((_d = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _d === void 0 ? void 0 : _d.notBefore) ? [`Not Before: ${options.signInWithSolana.notBefore}`] : [],
-              ...((_e = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _e === void 0 ? void 0 : _e.expirationTime) ? [`Expiration Time: ${options.signInWithSolana.expirationTime}`] : [],
-              ...((_f = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _f === void 0 ? void 0 : _f.chainId) ? [`Chain ID: ${options.signInWithSolana.chainId}`] : [],
-              ...((_g = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _g === void 0 ? void 0 : _g.nonce) ? [`Nonce: ${options.signInWithSolana.nonce}`] : [],
-              ...((_h = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _h === void 0 ? void 0 : _h.requestId) ? [`Request ID: ${options.signInWithSolana.requestId}`] : [],
-              ...((_k = (_j = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _j === void 0 ? void 0 : _j.resources) === null || _k === void 0 ? void 0 : _k.length) ? [
+              `URI: ${url2.href}`,
+              `Issued At: ${(_c = (_b = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _b === void 0 ? void 0 : _b.issuedAt) !== null && _c !== void 0 ? _c : (/* @__PURE__ */ new Date()).toISOString()}`,
+              ...((_d = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _d === void 0 ? void 0 : _d.notBefore) ? [`Not Before: ${options2.signInWithSolana.notBefore}`] : [],
+              ...((_e = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _e === void 0 ? void 0 : _e.expirationTime) ? [`Expiration Time: ${options2.signInWithSolana.expirationTime}`] : [],
+              ...((_f = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _f === void 0 ? void 0 : _f.chainId) ? [`Chain ID: ${options2.signInWithSolana.chainId}`] : [],
+              ...((_g = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _g === void 0 ? void 0 : _g.nonce) ? [`Nonce: ${options2.signInWithSolana.nonce}`] : [],
+              ...((_h = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _h === void 0 ? void 0 : _h.requestId) ? [`Request ID: ${options2.signInWithSolana.requestId}`] : [],
+              ...((_k = (_j = options2 === null || options2 === void 0 ? void 0 : options2.signInWithSolana) === null || _j === void 0 ? void 0 : _j.resources) === null || _k === void 0 ? void 0 : _k.length) ? [
                 "Resources",
-                ...options.signInWithSolana.resources.map((resource) => `- ${resource}`)
+                ...options2.signInWithSolana.resources.map((resource) => `- ${resource}`)
               ] : []
             ].join("\n");
             const maybeSignature = await resolvedWallet.signMessage(new TextEncoder().encode(message), "utf8");
@@ -5957,7 +5957,7 @@ var init_GoTrueClient = __esm({
        */
       async signInWithIdToken(credentials) {
         try {
-          const { options, provider, token, access_token, nonce } = credentials;
+          const { options: options2, provider, token, access_token, nonce } = credentials;
           const res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=id_token`, {
             headers: this.headers,
             body: {
@@ -5965,7 +5965,7 @@ var init_GoTrueClient = __esm({
               id_token: token,
               access_token,
               nonce,
-              gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+              gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken }
             },
             xform: _sessionResponse
           });
@@ -6011,7 +6011,7 @@ var init_GoTrueClient = __esm({
         var _a4, _b, _c, _d, _e;
         try {
           if ("email" in credentials) {
-            const { email, options } = credentials;
+            const { email, options: options2 } = credentials;
             let codeChallenge = null;
             let codeChallengeMethod = null;
             if (this.flowType === "pkce") {
@@ -6022,26 +6022,26 @@ var init_GoTrueClient = __esm({
               headers: this.headers,
               body: {
                 email,
-                data: (_a4 = options === null || options === void 0 ? void 0 : options.data) !== null && _a4 !== void 0 ? _a4 : {},
-                create_user: (_b = options === null || options === void 0 ? void 0 : options.shouldCreateUser) !== null && _b !== void 0 ? _b : true,
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
+                data: (_a4 = options2 === null || options2 === void 0 ? void 0 : options2.data) !== null && _a4 !== void 0 ? _a4 : {},
+                create_user: (_b = options2 === null || options2 === void 0 ? void 0 : options2.shouldCreateUser) !== null && _b !== void 0 ? _b : true,
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken },
                 code_challenge: codeChallenge,
                 code_challenge_method: codeChallengeMethod
               },
-              redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo
+              redirectTo: options2 === null || options2 === void 0 ? void 0 : options2.emailRedirectTo
             });
             return { data: { user: null, session: null }, error };
           }
           if ("phone" in credentials) {
-            const { phone, options } = credentials;
+            const { phone, options: options2 } = credentials;
             const { data, error } = await _request(this.fetch, "POST", `${this.url}/otp`, {
               headers: this.headers,
               body: {
                 phone,
-                data: (_c = options === null || options === void 0 ? void 0 : options.data) !== null && _c !== void 0 ? _c : {},
-                create_user: (_d = options === null || options === void 0 ? void 0 : options.shouldCreateUser) !== null && _d !== void 0 ? _d : true,
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
-                channel: (_e = options === null || options === void 0 ? void 0 : options.channel) !== null && _e !== void 0 ? _e : "sms"
+                data: (_c = options2 === null || options2 === void 0 ? void 0 : options2.data) !== null && _c !== void 0 ? _c : {},
+                create_user: (_d = options2 === null || options2 === void 0 ? void 0 : options2.shouldCreateUser) !== null && _d !== void 0 ? _d : true,
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken },
+                channel: (_e = options2 === null || options2 === void 0 ? void 0 : options2.channel) !== null && _e !== void 0 ? _e : "sms"
               }
             });
             return { data: { user: null, session: null, messageId: data === null || data === void 0 ? void 0 : data.message_id }, error };
@@ -6165,25 +6165,25 @@ var init_GoTrueClient = __esm({
         try {
           const endpoint = `${this.url}/resend`;
           if ("email" in credentials) {
-            const { email, type, options } = credentials;
+            const { email, type, options: options2 } = credentials;
             const { error } = await _request(this.fetch, "POST", endpoint, {
               headers: this.headers,
               body: {
                 email,
                 type,
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken }
               },
-              redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo
+              redirectTo: options2 === null || options2 === void 0 ? void 0 : options2.emailRedirectTo
             });
             return { data: { user: null, session: null }, error };
           } else if ("phone" in credentials) {
-            const { phone, type, options } = credentials;
+            const { phone, type, options: options2 } = credentials;
             const { data, error } = await _request(this.fetch, "POST", endpoint, {
               headers: this.headers,
               body: {
                 phone,
                 type,
-                gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+                gotrue_meta_security: { captcha_token: options2 === null || options2 === void 0 ? void 0 : options2.captchaToken }
               }
             });
             return { data: { user: null, session: null, messageId: data === null || data === void 0 ? void 0 : data.message_id }, error };
@@ -6386,13 +6386,13 @@ var init_GoTrueClient = __esm({
       /**
        * Updates user data for a logged in user.
        */
-      async updateUser(attributes, options = {}) {
+      async updateUser(attributes, options2 = {}) {
         await this.initializePromise;
         return await this._acquireLock(-1, async () => {
-          return await this._updateUser(attributes, options);
+          return await this._updateUser(attributes, options2);
         });
       }
-      async _updateUser(attributes, options = {}) {
+      async _updateUser(attributes, options2 = {}) {
         try {
           return await this._useSession(async (result) => {
             const { data: sessionData, error: sessionError } = result;
@@ -6411,7 +6411,7 @@ var init_GoTrueClient = __esm({
             }
             const { data, error: userError } = await _request(this.fetch, "PUT", `${this.url}/user`, {
               headers: this.headers,
-              redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo,
+              redirectTo: options2 === null || options2 === void 0 ? void 0 : options2.emailRedirectTo,
               body: Object.assign(Object.assign({}, attributes), { code_challenge: codeChallenge, code_challenge_method: codeChallengeMethod }),
               jwt: session.access_token,
               xform: _userResponse
@@ -6563,9 +6563,9 @@ var init_GoTrueClient = __esm({
             const { data: data2, error: error2 } = await this._exchangeCodeForSession(params.code);
             if (error2)
               throw error2;
-            const url = new URL(window.location.href);
-            url.searchParams.delete("code");
-            window.history.replaceState(window.history.state, "", url.toString());
+            const url2 = new URL(window.location.href);
+            url2.searchParams.delete("code");
+            window.history.replaceState(window.history.state, "", url2.toString());
             return { data: { session: data2.session, redirectType: null }, error: null };
           }
           const { provider_token, provider_refresh_token, access_token, refresh_token, expires_in, expires_at, token_type } = params;
@@ -6632,10 +6632,10 @@ var init_GoTrueClient = __esm({
        *
        * If using `others` scope, no `SIGNED_OUT` event is fired!
        */
-      async signOut(options = { scope: "global" }) {
+      async signOut(options2 = { scope: "global" }) {
         await this.initializePromise;
         return await this._acquireLock(-1, async () => {
-          return await this._signOut(options);
+          return await this._signOut(options2);
         });
       }
       async _signOut({ scope } = { scope: "global" }) {
@@ -6708,7 +6708,7 @@ var init_GoTrueClient = __esm({
        * @param options.redirectTo The URL to send the user to after they click the password reset link.
        * @param options.captchaToken Verification token received when the user completes the captcha on the site.
        */
-      async resetPasswordForEmail(email, options = {}) {
+      async resetPasswordForEmail(email, options2 = {}) {
         let codeChallenge = null;
         let codeChallengeMethod = null;
         if (this.flowType === "pkce") {
@@ -6726,10 +6726,10 @@ var init_GoTrueClient = __esm({
               email,
               code_challenge: codeChallenge,
               code_challenge_method: codeChallengeMethod,
-              gotrue_meta_security: { captcha_token: options.captchaToken }
+              gotrue_meta_security: { captcha_token: options2.captchaToken }
             },
             headers: this.headers,
-            redirectTo: options.redirectTo
+            redirectTo: options2.redirectTo
           });
         } catch (error) {
           if (isAuthError(error)) {
@@ -6767,13 +6767,13 @@ var init_GoTrueClient = __esm({
             const { data: data2, error: error2 } = result;
             if (error2)
               throw error2;
-            const url = await this._getUrlForProvider(`${this.url}/user/identities/authorize`, credentials.provider, {
+            const url2 = await this._getUrlForProvider(`${this.url}/user/identities/authorize`, credentials.provider, {
               redirectTo: (_a5 = credentials.options) === null || _a5 === void 0 ? void 0 : _a5.redirectTo,
               scopes: (_b = credentials.options) === null || _b === void 0 ? void 0 : _b.scopes,
               queryParams: (_c = credentials.options) === null || _c === void 0 ? void 0 : _c.queryParams,
               skipBrowserRedirect: true
             });
-            return await _request(this.fetch, "GET", url, {
+            return await _request(this.fetch, "GET", url2, {
               headers: this.headers,
               jwt: (_e = (_d = data2.session) === null || _d === void 0 ? void 0 : _d.access_token) !== null && _e !== void 0 ? _e : void 0
             });
@@ -6852,17 +6852,17 @@ var init_GoTrueClient = __esm({
         const isValidSession = typeof maybeSession === "object" && maybeSession !== null && "access_token" in maybeSession && "refresh_token" in maybeSession && "expires_at" in maybeSession;
         return isValidSession;
       }
-      async _handleProviderSignIn(provider, options) {
-        const url = await this._getUrlForProvider(`${this.url}/authorize`, provider, {
-          redirectTo: options.redirectTo,
-          scopes: options.scopes,
-          queryParams: options.queryParams
+      async _handleProviderSignIn(provider, options2) {
+        const url2 = await this._getUrlForProvider(`${this.url}/authorize`, provider, {
+          redirectTo: options2.redirectTo,
+          scopes: options2.scopes,
+          queryParams: options2.queryParams
         });
-        this._debug("#_handleProviderSignIn()", "provider", provider, "options", options, "url", url);
-        if (isBrowser() && !options.skipBrowserRedirect) {
-          window.location.assign(url);
+        this._debug("#_handleProviderSignIn()", "provider", provider, "options", options2, "url", url2);
+        if (isBrowser() && !options2.skipBrowserRedirect) {
+          window.location.assign(url2);
         }
-        return { data: { provider, url }, error: null };
+        return { data: { provider, url: url2 }, error: null };
       }
       /**
        * Recovers the session from LocalStorage and refreshes the token
@@ -7162,13 +7162,13 @@ var init_GoTrueClient = __esm({
        * @param options.scopes A space-separated list of scopes granted to the OAuth application.
        * @param options.queryParams An object of key-value pairs containing query parameters granted to the OAuth application.
        */
-      async _getUrlForProvider(url, provider, options) {
+      async _getUrlForProvider(url2, provider, options2) {
         const urlParams = [`provider=${encodeURIComponent(provider)}`];
-        if (options === null || options === void 0 ? void 0 : options.redirectTo) {
-          urlParams.push(`redirect_to=${encodeURIComponent(options.redirectTo)}`);
+        if (options2 === null || options2 === void 0 ? void 0 : options2.redirectTo) {
+          urlParams.push(`redirect_to=${encodeURIComponent(options2.redirectTo)}`);
         }
-        if (options === null || options === void 0 ? void 0 : options.scopes) {
-          urlParams.push(`scopes=${encodeURIComponent(options.scopes)}`);
+        if (options2 === null || options2 === void 0 ? void 0 : options2.scopes) {
+          urlParams.push(`scopes=${encodeURIComponent(options2.scopes)}`);
         }
         if (this.flowType === "pkce") {
           const [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
@@ -7178,14 +7178,14 @@ var init_GoTrueClient = __esm({
           });
           urlParams.push(flowParams.toString());
         }
-        if (options === null || options === void 0 ? void 0 : options.queryParams) {
-          const query = new URLSearchParams(options.queryParams);
+        if (options2 === null || options2 === void 0 ? void 0 : options2.queryParams) {
+          const query = new URLSearchParams(options2.queryParams);
           urlParams.push(query.toString());
         }
-        if (options === null || options === void 0 ? void 0 : options.skipBrowserRedirect) {
-          urlParams.push(`skip_http_redirect=${options.skipBrowserRedirect}`);
+        if (options2 === null || options2 === void 0 ? void 0 : options2.skipBrowserRedirect) {
+          urlParams.push(`skip_http_redirect=${options2.skipBrowserRedirect}`);
         }
-        return `${url}?${urlParams.join("&")}`;
+        return `${url2}?${urlParams.join("&")}`;
       }
       async _unenroll(params) {
         try {
@@ -7363,11 +7363,11 @@ var init_GoTrueClient = __esm({
         });
       }
       async fetchJwk(kid, jwks = { keys: [] }) {
-        let jwk = jwks.keys.find((key) => key.kid === kid);
+        let jwk = jwks.keys.find((key2) => key2.kid === kid);
         if (jwk) {
           return jwk;
         }
-        jwk = this.jwks.keys.find((key) => key.kid === kid);
+        jwk = this.jwks.keys.find((key2) => key2.kid === kid);
         if (jwk && this.jwks_cached_at + JWKS_TTL > Date.now()) {
           return jwk;
         }
@@ -7382,7 +7382,7 @@ var init_GoTrueClient = __esm({
         }
         this.jwks = data;
         this.jwks_cached_at = Date.now();
-        jwk = data.keys.find((key) => key.kid === kid);
+        jwk = data.keys.find((key2) => key2.kid === kid);
         if (!jwk) {
           throw new AuthInvalidJwtError("No matching signing key found in JWKS");
         }
@@ -7483,8 +7483,8 @@ var init_SupabaseAuthClient = __esm({
   "node_modules/@supabase/supabase-js/dist/module/lib/SupabaseAuthClient.js"() {
     init_module4();
     SupabaseAuthClient = class extends AuthClient_default {
-      constructor(options) {
-        super(options);
+      constructor(options2) {
+        super(options2);
       }
     };
   }
@@ -7542,7 +7542,7 @@ var init_SupabaseClient = __esm({
        * @param options.global.fetch A custom fetch implementation.
        * @param options.global.headers Any additional headers to send with each network request.
        */
-      constructor(supabaseUrl, supabaseKey, options) {
+      constructor(supabaseUrl, supabaseKey, options2) {
         var _a4, _b, _c;
         this.supabaseUrl = supabaseUrl;
         this.supabaseKey = supabaseKey;
@@ -7564,7 +7564,7 @@ var init_SupabaseClient = __esm({
           auth: Object.assign(Object.assign({}, DEFAULT_AUTH_OPTIONS), { storageKey: defaultStorageKey }),
           global: DEFAULT_GLOBAL_OPTIONS
         };
-        const settings = applySettingDefaults(options !== null && options !== void 0 ? options : {}, DEFAULTS);
+        const settings = applySettingDefaults(options2 !== null && options2 !== void 0 ? options2 : {}, DEFAULTS);
         this.storageKey = (_a4 = settings.auth.storageKey) !== null && _a4 !== void 0 ? _a4 : "";
         this.headers = (_b = settings.global.headers) !== null && _b !== void 0 ? _b : {};
         if (!settings.accessToken) {
@@ -7646,8 +7646,8 @@ var init_SupabaseClient = __esm({
        * `"estimated"`: Uses exact count for low numbers and planned count for high
        * numbers.
        */
-      rpc(fn, args = {}, options = {}) {
-        return this.rest.rpc(fn, args, options);
+      rpc(fn, args = {}, options2 = {}) {
+        return this.rest.rpc(fn, args, options2);
       }
       /**
        * Creates a Realtime channel with Broadcast, Presence, and Postgres Changes.
@@ -7712,8 +7712,8 @@ var init_SupabaseClient = __esm({
           hasCustomAuthorizationHeader: "Authorization" in this.headers
         });
       }
-      _initRealtimeClient(options) {
-        return new RealtimeClient(this.realtimeUrl.href, Object.assign(Object.assign({}, options), { params: Object.assign({ apikey: this.supabaseKey }, options === null || options === void 0 ? void 0 : options.params) }));
+      _initRealtimeClient(options2) {
+        return new RealtimeClient(this.realtimeUrl.href, Object.assign(Object.assign({}, options2), { params: Object.assign({ apikey: this.supabaseKey }, options2 === null || options2 === void 0 ? void 0 : options2.params) }));
       }
       _listenForAuthEvents() {
         let data = this.auth.onAuthStateChange((event, session) => {
@@ -7743,21 +7743,21 @@ var init_module5 = __esm({
     init_module4();
     init_wrapper();
     init_module2();
-    createClient = (supabaseUrl, supabaseKey, options) => {
-      return new SupabaseClient(supabaseUrl, supabaseKey, options);
+    createClient = (supabaseUrl, supabaseKey, options2) => {
+      return new SupabaseClient(supabaseUrl, supabaseKey, options2);
     };
   }
 });
 
 // shared/supabase/browserClient.ts
-var supabase;
+var url, key, options, supabase;
 var init_browserClient = __esm({
   "shared/supabase/browserClient.ts"() {
     init_module5();
-    supabase = createClient(
-      "https://lpuqrzvokroazwlricgn.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU"
-    );
+    url = "https://lpuqrzvokroazwlricgn.supabase.co";
+    key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU";
+    options = false ? { auth: { autoRefreshToken: false, persistSession: false } } : {};
+    supabase = createClient(url, key, options);
   }
 });
 
@@ -7873,13 +7873,13 @@ function buildStripeElementStyle(el) {
     "textAlign",
     "textShadow"
   ];
-  Object.keys(style.base).forEach((key) => {
-    if (!allowed.includes(key))
-      delete style.base[key];
+  Object.keys(style.base).forEach((key2) => {
+    if (!allowed.includes(key2))
+      delete style.base[key2];
   });
-  Object.keys(style["::placeholder"]).forEach((key) => {
-    if (!allowed.includes(key))
-      delete style["::placeholder"][key];
+  Object.keys(style["::placeholder"]).forEach((key2) => {
+    if (!allowed.includes(key2))
+      delete style["::placeholder"][key2];
   });
   return style;
 }
@@ -7933,13 +7933,13 @@ async function resolveStripeKey() {
   if (cachedKey)
     return cachedKey;
   const storeId = (_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.storeId;
-  let key;
+  let key2;
   if (storeId) {
     try {
       const cred = await getPublicCredential(storeId, "stripe", "stripe");
       if (cred) {
-        key = cred.publishable_key || "";
-        if (key) {
+        key2 = cred.publishable_key || "";
+        if (key2) {
           log("\u2705 Stripe key resolved, mounting gateway...");
         }
       }
@@ -7947,12 +7947,12 @@ async function resolveStripeKey() {
       warn("Integration fetch error:", (e == null ? void 0 : e.message) || e);
     }
   }
-  if (!key) {
+  if (!key2) {
     warn("\u274C Stripe key not found \u2014 aborting Stripe mount.");
     return null;
   }
-  cachedKey = key;
-  return key;
+  cachedKey = key2;
+  return key2;
 }
 async function getElements() {
   if (stripe && elements) {
@@ -8887,7 +8887,14 @@ __export(nmi_exports, {
   ready: () => ready4
 });
 function rgbToHex(rgb) {
-  const [r, g, b] = rgb.match(/\d+/g).map(Number);
+  if (typeof rgb !== "string")
+    return rgb;
+  const match = rgb.match(/\d+/g);
+  if (!match || match.length !== 3)
+    return rgb;
+  const [r, g, b] = match.map(Number);
+  if ([r, g, b].some((n) => Number.isNaN(n)))
+    return rgb;
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 async function mountCardFields4() {
@@ -9152,6 +9159,10 @@ var init_nmi2 = __esm({
     isConfigured = false;
     isLocked = false;
     isSubmitting2 = false;
+    if (typeof window !== "undefined") {
+      window.Smoothr = window.Smoothr || {};
+      window.Smoothr.mountNMIFields = mountCardFields4;
+    }
     mountNMI = mountCardFields4;
     nmi_default = { mountCardFields: mountCardFields4, isMounted: isMounted4, ready: ready4, createPaymentMethod: createPaymentMethod4 };
     if (typeof window !== "undefined") {
@@ -9767,18 +9778,27 @@ function handleCheckoutSuccess(resp) {
 })();
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 window.SMOOTHR_CONFIG.platform = "webflow-ecom";
+var waitForStoreIdTimer;
+var clearWaitForStoreId = () => {
+  if (waitForStoreIdTimer) {
+    clearTimeout(waitForStoreIdTimer);
+    waitForStoreIdTimer = void 0;
+  }
+};
 var waitForStoreId = () => {
   var _a4;
   if ((_a4 = window.SMOOTHR_CONFIG) == null ? void 0 : _a4.storeId) {
     console.log("[Smoothr] initCheckout ready \u2014 mounting");
+    clearWaitForStoreId();
     initCheckout();
   } else {
     console.log("[Smoothr] Waiting for storeId...");
-    setTimeout(waitForStoreId, 50);
+    waitForStoreIdTimer = setTimeout(waitForStoreId, 50);
   }
 };
 window.addEventListener("smoothr:ready", waitForStoreId);
 waitForStoreId();
+window.addEventListener("unload", clearWaitForStoreId);
 export {
   initCheckout
 };
