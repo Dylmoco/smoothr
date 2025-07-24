@@ -9,6 +9,8 @@ const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
+log('[Smoothr Stripe] checkout gateway module loaded');
+
 log('[Smoothr Stripe] checkout gateway loaded');
 
 let fieldsMounted = false;

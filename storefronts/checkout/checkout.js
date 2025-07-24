@@ -81,24 +81,18 @@ export async function initCheckout(config) {
   if (!emailField) emailField = await select('[data-smoothr-email]');
   const totalEl = await select('[data-smoothr-total]');
 
-  // attempt to mount card fields (for non-NMI gateways too)
-  let attempts = 0;
-  while (attempts < 2 && !gateway.isMounted()) {
-    try {
-      await new Promise((resolve, reject) => {
-        window.requestAnimationFrame(() => {
-          gateway.mountCardFields().then(resolve).catch(reject);
-        });
+  // attempt to mount card fields once on init
+  window.requestAnimationFrame(() => {
+    console.log('[Smoothr Stripe] scheduling mountCardFields on load');
+    gateway
+      .mountCardFields()
+      .then(() => {
+        console.log('[Smoothr Stripe] mountCardFields complete');
+      })
+      .catch(err => {
+        console.warn('[Smoothr Stripe] mountCardFields failed:', err);
       });
-    } catch (e) {
-      warn('Mount failed:', e.message);
-    }
-    attempts++;
-  }
-  if (!gateway.isMounted()) {
-    warn('Gateway mount failed');
-    return;
-  }
+  });
   bindCardInputs();
 
   // NMI handles its own click flow
