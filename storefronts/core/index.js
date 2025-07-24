@@ -106,6 +106,10 @@ export default Smoothr;
   console.log('[Smoothr SDK] Bootstrap triggered', { storeId });
 
   if (!storeId) {
+    // Ensure global config exists for tests and non-SDK modules
+    if (typeof window !== 'undefined' && !window.SMOOTHR_CONFIG) {
+      window.SMOOTHR_CONFIG = {};
+    }
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
       return;
     }

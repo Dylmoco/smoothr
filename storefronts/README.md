@@ -40,6 +40,11 @@ When the SDK loads it fetches your store settings from Supabase. Any
 window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 ```
 
+If the SDK loads without a `data-store-id` attribute—such as when running
+tests—it exits early after creating an empty `window.SMOOTHR_CONFIG` object if
+one was not already defined. This ensures modules can run in isolation without
+errors during setup.
+
 ## Core modules
 
 - abandoned-cart
