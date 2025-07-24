@@ -84,9 +84,7 @@ export function initNMI(tokenKey) {
     'text-align': divStyle.textAlign,
     'text-shadow': divStyle.textShadow,
     'width': '100%',
-    'height': divStyle.height,
-    'min-height': divStyle.minHeight,
-    'max-height': divStyle.maxHeight,
+    'height': '100%',
     'box-sizing': 'border-box',
     'padding-top': divStyle.paddingTop,
     'padding-right': divStyle.paddingRight,
@@ -171,7 +169,7 @@ function configureCollectJS() {
           iframe.style.top        = '0'
           iframe.style.left       = '0'
           iframe.style.width      = '100%'
-          iframe.style.height     = cardNumberDiv.offsetHeight + 'px'
+          iframe.style.height     = '100%'
           iframe.style.border     = 'none'
           iframe.style.background = 'transparent'
         })
