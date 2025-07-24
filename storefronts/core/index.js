@@ -121,7 +121,7 @@ export default Smoothr;
       const style = document.createElement('style');
       style.id = 'smoothr-card-styles';
       style.textContent =
-        '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
+        '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}\n[data-smoothr-card-number] iframe,\n[data-smoothr-card-expiry] iframe,\n[data-smoothr-card-cvc] iframe{width:100%!important;height:100%!important;}';
       document.head.appendChild(style);
     }
 
