@@ -26,6 +26,18 @@ vi.mock('../../../shared/supabase/serverClient', () => {
               }))
             };
           }
+          if (storeFromCall === 2) {
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(async () => ({
+                    data: { prefix: 'ST', order_sequence: 1 },
+                    error: null
+                  }))
+                }))
+              }))
+            };
+          }
           return {};
         }
         if (table === 'store_settings') {
@@ -33,6 +45,15 @@ vi.mock('../../../shared/supabase/serverClient', () => {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'authorizeNet' } }, error: null }))
+              }))
+            }))
+          };
+        }
+        if (table === 'customer_payment_profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({ limit: vi.fn(async () => ({ data: [], error: null })) }))
               }))
             }))
           };
