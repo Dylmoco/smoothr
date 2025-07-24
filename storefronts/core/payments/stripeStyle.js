@@ -30,7 +30,6 @@ export function buildStripeElementStyle(targetEl, placeholderSelector, defaultPl
       fontStyle: fieldStyle.fontStyle,
       fontWeight: fieldStyle.fontWeight,
       letterSpacing: fieldStyle.letterSpacing,
-      lineHeight: fieldStyle.lineHeight,
       textAlign: fieldStyle.textAlign,
       textShadow: fieldStyle.textShadow,
       '::placeholder': {
@@ -40,7 +39,6 @@ export function buildStripeElementStyle(targetEl, placeholderSelector, defaultPl
         fontStyle: placeholderStyle.fontStyle,
         fontWeight: placeholderStyle.fontWeight,
         letterSpacing: placeholderStyle.letterSpacing,
-        lineHeight: placeholderStyle.lineHeight,
         textAlign: placeholderStyle.textAlign
       }
     },
