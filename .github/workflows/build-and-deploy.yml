@@ -4,7 +4,8 @@ jobs:
     environment:
       name: production
     env:
-      …  
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,8 +32,7 @@ jobs:
         working-directory: storefronts
         run: node scripts/bundle-webflow-checkout.js
 
-      # ← Insert this block
-      -      - name: Verify Webflow bundle is up-to-date
+      - name: Verify Webflow bundle is up-to-date
         run: |
           git diff --quiet storefronts/dist/platforms/webflow/checkout.js \
             || (echo "❌ storefronts/dist/platforms/webflow/checkout.js is stale. Please re-run npm run bundle:webflow-checkout and commit the changes." && exit 1)
