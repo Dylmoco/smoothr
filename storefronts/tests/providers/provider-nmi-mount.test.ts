@@ -8,6 +8,7 @@ let scriptPromise: Promise<any>;
 let mountCallback: Function | null = null;
 
 beforeEach(async () => {
+  vi.useFakeTimers();
   vi.resetModules();
   document.body.innerHTML = '';
   document.head.innerHTML = '';
@@ -83,6 +84,7 @@ describe('mountNMI', () => {
 
   it('loads tokenization key and injects script', async () => {
     await triggerMount();
+    await vi.runAllTimersAsync();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
     const script = await scriptPromise;
     expect(script.getAttribute('data-tokenization-key')).toBe('tok_key');
@@ -90,6 +92,7 @@ describe('mountNMI', () => {
 
   it('reports ready when CollectJS is configured', async () => {
     await triggerMount();
+    await vi.runAllTimersAsync();
     expect(ready()).toBe(true);
   });
 });
