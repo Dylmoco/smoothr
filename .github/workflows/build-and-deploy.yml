@@ -68,7 +68,7 @@ jobs:
         if: success()
         run: |
           echo "- ${{ github.sha }} – $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> DEPLOY_LOG.md
-          git add DEPLOY_LOG.md
+          git add -f DEPLOY_LOG.md
           git commit -m "chore: update DEPLOY_LOG [skip ci]"
           git push
         env:
