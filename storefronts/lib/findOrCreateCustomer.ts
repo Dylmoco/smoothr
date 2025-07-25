@@ -1,3 +1,4 @@
-export async function findOrCreateCustomer() {
-  return { id: 'mock_customer' };
-}
+export const findOrCreateCustomer = async (_payload: any) => {
+  // Only for tests – return a predictable ID
+  return { id: 'test_customer_id' };
+};
