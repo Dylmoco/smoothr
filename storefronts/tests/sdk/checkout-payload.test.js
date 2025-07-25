@@ -152,7 +152,7 @@ describe('checkout payload', () => {
     if (clickHandler) {
       expect(typeof clickHandler.handleEvent).toBe('function');
     } else {
-      expect(clickHandler).not.toBeNull(); // prevent null failure
+      expect(clickHandler).not.toBeNull();
     }
     await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
     await flushPromises();
