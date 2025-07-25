@@ -4,12 +4,26 @@ let mountNMI: any;
 let ready: any;
 let getCredMock: any;
 let appendChildSpy: any;
+let getComputedStyleSpy: any;
 let scriptPromise: Promise<any>;
 let mountCallback: Function | null = null;
 
 beforeEach(async () => {
   vi.useFakeTimers();
   vi.resetModules();
+  getComputedStyleSpy = vi
+    .spyOn(window, 'getComputedStyle')
+    .mockReturnValue({
+      fontFamily: 'Arial',
+      fontWeight: '400',
+      color: '#000',
+      fontSize: '16px',
+      fontStyle: 'normal',
+      letterSpacing: '0px',
+      lineHeight: 'normal',
+      textAlign: 'left',
+      opacity: '1'
+    } as any);
   document.body.innerHTML = '';
   document.head.innerHTML = '';
   const wrapper = document.createElement('div');
@@ -66,6 +80,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   appendChildSpy?.mockRestore();
+  getComputedStyleSpy?.mockRestore();
   window.CollectJS = undefined as any;
   Object.defineProperty(document, 'readyState', {
     configurable: true,
