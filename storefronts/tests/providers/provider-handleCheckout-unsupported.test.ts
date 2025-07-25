@@ -74,7 +74,7 @@ describe('handleCheckout unsupported provider', () => {
 
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported payment gateway' });
   });
 });

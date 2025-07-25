@@ -100,7 +100,8 @@ describe('handleCheckout authorizeNet', () => {
         total: 100,
         currency: 'USD',
         store_id: 'store-1',
-        order_number: 'ST-0001'
+        order_number: 'ST-0001',
+        same_billing: true
       }
     } as any;
 

@@ -6,7 +6,8 @@ vi.mock("../../core/auth/index.js", () => ({
   user: null,
   $$typeof: Symbol.for('react.test.json'),
   type: 'module',
-  props: {}
+  props: {},
+  children: []
 }));
 
 beforeEach(() => {

@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+vi.mock('../../core/auth/index.js', () => ({
+  initAuth: vi.fn(),
+  user: null,
+  $$typeof: Symbol.for('react.test.json'),
+  type: 'module',
+  props: {},
+  children: []
+}));
 vi.mock('../../../shared/supabase/browserClient', () => {
 
   const single = vi.fn(async () => ({ data: { api_base: 'https://example.com' }, error: null }));
