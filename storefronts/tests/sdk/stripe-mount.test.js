@@ -66,7 +66,7 @@ describe('stripe element mounting', () => {
   it('mounts each field to its container', async () => {
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
     await mountCardFields();
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(500);
     vi.useRealTimers();
 
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'stripe', 'stripe');
@@ -95,7 +95,7 @@ describe('stripe element mounting', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
     await mountCardFields();
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(1000);
     expect(warnSpy).toHaveBeenCalled();
     vi.useRealTimers();
     warnSpy.mockRestore();
@@ -104,7 +104,7 @@ describe('stripe element mounting', () => {
   it('enforces iframe styles after mount', async () => {
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
     const p = mountCardFields();
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(500);
     await p;
     vi.useRealTimers();
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]');
