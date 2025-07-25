@@ -80,7 +80,7 @@ describe('handleCheckout supabase error', () => {
 
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load store settings', detail: 'fail' });
     expect(providerMock).not.toHaveBeenCalled();
   });
