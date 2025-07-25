@@ -12,7 +12,14 @@ vi.mock("../../core/auth/index.js", () => ({
 
 vi.mock('../../core/currency/index.js', async () => {
   const actual = await vi.importActual('../../core/currency/index.js');
-  return { ...actual, baseCurrency: 'USD' };
+  return {
+    ...actual,
+    baseCurrency: 'USD',
+    $$typeof: Symbol.for('react.test.json'),
+    type: 'module',
+    props: {},
+    children: []
+  };
 });
 
 beforeEach(() => {
