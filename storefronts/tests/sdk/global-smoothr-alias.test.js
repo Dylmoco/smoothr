@@ -5,6 +5,7 @@ vi.mock("../../core/auth/index.js", () => ({
   initAuth: vi.fn(),
   user: null,
   $$typeof: Symbol.for('react.test.json'),
+  type: 'module'
 }));
 
 beforeEach(() => {
