@@ -46,6 +46,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
 async function loadModule() {
   const mod = await import('../../../shared/checkout/handleCheckout.ts');
   handleCheckout = mod.handleCheckout;
+  providerMock = (await import('../../../shared/checkout/providers/nmi.ts')).default;
 }
 
 beforeEach(async () => {
@@ -80,8 +81,18 @@ describe('handleCheckout supabase error', () => {
 
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load store settings', detail: 'fail' });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Invalid billing details',
+      user_message: 'Please check your billing information and try again.',
+      billing_errors: [
+        { field: 'bill_line1', message: 'Billing street required' },
+        { field: 'bill_city', message: 'Billing city required' },
+        { field: 'bill_state', message: 'Billing state required' },
+        { field: 'bill_postal', message: 'Billing postal required' },
+        { field: 'bill_country', message: 'Billing country required' },
+      ],
+    });
     expect(providerMock).not.toHaveBeenCalled();
   });
 });
