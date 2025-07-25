@@ -19,7 +19,8 @@ async function loadModule() {
 const basePayload = {
   amount: 100,
   payment_token: 'tok_test',
-  store_id: 'store-1'
+  store_id: 'store-1',
+  cart: []
 };
 
 beforeEach(async () => {
