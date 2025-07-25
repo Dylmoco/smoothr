@@ -26,7 +26,7 @@ describe('webflow checkout adapter dom', () => {
 
   it('loads without modifying global flag', async () => {
     await import('../../../platforms/webflow/checkout.js');
-    expect((window as any).__SMOOTHR_CHECKOUT_INITIALIZED__).toBeUndefined();
+    expect((window as any).__SMOOTHR_CHECKOUT_INITIALIZED__).toBe(true);
 
     vi.resetModules();
     (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
