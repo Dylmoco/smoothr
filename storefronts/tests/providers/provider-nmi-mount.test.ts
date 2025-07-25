@@ -14,7 +14,7 @@ beforeEach(async () => {
   getComputedStyleSpy = vi
     .spyOn(window, 'getComputedStyle')
     .mockReturnValue({
-      fontFamily: 'Arial',
+      fontFamily: 'Arial, sans-serif',
       fontWeight: '400',
       color: '#000',
       fontSize: '16px',
