@@ -95,7 +95,7 @@ describe('mountNMI', () => {
     mountCallback?.();
     await vi.runAllTimersAsync();
     await scriptPromise;
-    await new Promise(r => setTimeout(r));
+    await vi.runAllTimersAsync();
   }
 
   it('loads tokenization key and injects script', { timeout: 20000 }, async () => {
