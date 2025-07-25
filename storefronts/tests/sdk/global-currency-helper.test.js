@@ -8,6 +8,7 @@ beforeEach(() => {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
   };
+  global.window.SMOOTHR_CONFIG = { baseCurrency: "USD" };
   global.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
