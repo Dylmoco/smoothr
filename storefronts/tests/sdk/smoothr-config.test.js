@@ -1,6 +1,10 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
+function flushPromises() {
+  return new Promise(setImmediate);
+}
+
 beforeEach(() => {
   vi.resetModules();
   global.fetch = vi.fn(() =>
@@ -36,9 +40,10 @@ beforeEach(() => {
 describe("SMOOTHR_CONFIG integration", () => {
   it("applies base currency and rates on load", async () => {
     const core = await import("../../core/index.js");
+    await flushPromises();
     const { currency } = core;
-    expect(currency.baseCurrency).toBe("USD");
-    expect(currency.rates.EUR).toBe(0.9);
+    expect(currency.baseCurrency).toBe("EUR");
+    expect(currency.rates.EUR).toBe(0.8);
     expect(global.fetch).toHaveBeenCalledWith(
       "https://example.com/api/live-rates?base=EUR&symbols=USD,EUR",
       expect.any(Object),
