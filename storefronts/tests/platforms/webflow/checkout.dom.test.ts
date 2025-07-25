@@ -74,6 +74,7 @@ describe('webflow checkout adapter dom', () => {
     (window as any).intlTelInput = vi.fn();
 
     await import('../../../../client/platforms/webflow/checkoutAdapter.js');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
 
     for (let i = 0; i < 4; i++) {
       await new Promise(r => setTimeout(r, 0));
