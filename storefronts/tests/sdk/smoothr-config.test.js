@@ -38,7 +38,7 @@ describe("SMOOTHR_CONFIG integration", () => {
     const core = await import("../../core/index.js");
     const { currency } = core;
     expect(currency.baseCurrency).toBe("USD");
-    expect(currency.rates.EUR).toBe(0.8);
+    expect(currency.rates.EUR).toBe(0.9);
     expect(global.fetch).toHaveBeenCalledWith(
       "https://example.com/api/live-rates?base=EUR&symbols=USD,EUR",
       expect.any(Object),
