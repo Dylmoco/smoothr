@@ -124,7 +124,7 @@ describe('stripe element mounting', () => {
     expect(resolved).toBe(false);
     await vi.advanceTimersByTimeAsync(100);
     width = 20;
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(1000);
     await p;
     expect(resolved).toBe(true);
     vi.useRealTimers();
@@ -153,8 +153,7 @@ describe('stripe element mounting', () => {
     width = 20;
     await vi.advanceTimersByTimeAsync(100); // width ok but offsetParent null
     offset = {};
-    await vi.advanceTimersByTimeAsync(100); // now interactable
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(1000); // now interactable
     await p;
     expect(resolved).toBe(true);
     vi.useRealTimers();

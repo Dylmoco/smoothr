@@ -10,6 +10,33 @@ vi.mock("../../core/auth/index.js", () => ({
   children: []
 }));
 
+// Mock remaining core modules to simple objects so import succeeds
+const dummy = {
+  $$typeof: Symbol.for('react.test.json'),
+  type: 'module',
+  props: {},
+  children: []
+};
+vi.mock('../../core/abandoned-cart/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/affiliates/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/analytics/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/dashboard/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/discounts/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/cart.js', () => ({
+  default: { addItem: vi.fn(), ...dummy },
+  addItem: vi.fn(),
+  ...dummy,
+}));
+vi.mock('../../core/orders/index.js', () => ({
+  default: { renderOrders: vi.fn(), fetchOrderHistory: vi.fn(), ...dummy },
+  renderOrders: vi.fn(),
+  fetchOrderHistory: vi.fn(),
+  ...dummy,
+}));
+vi.mock('../../core/returns/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/reviews/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../core/subscriptions/index.js', () => ({ default: dummy, ...dummy }));
+
 vi.mock('../../core/currency/index.js', async () => {
   const actual = await vi.importActual('../../core/currency/index.js');
   return {
@@ -31,6 +58,7 @@ beforeEach(() => {
     location: { origin: "", href: "", hostname: "" },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
+    SMOOTHR_CONFIG: { baseCurrency: 'USD' },
   };
   global.document = {
     addEventListener: vi.fn(),
@@ -43,6 +71,7 @@ beforeEach(() => {
 describe("global smoothr alias", () => {
   it("sets window.smoothr referencing the Smoothr object", async () => {
     const core = await import("../../core/index.js");
+    await new Promise(setImmediate);
     expect(global.window.Smoothr).toBe(core.default);
     expect(global.window.smoothr).toBe(core.default);
     expect(typeof global.window.smoothr.orders.renderOrders).toBe("function");
