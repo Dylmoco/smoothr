@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 const originalFetch = global.fetch;
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.resetModules();
   document.body.innerHTML = `
     <div>
@@ -13,9 +14,12 @@ beforeEach(() => {
     </div>
   `;
   delete (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__;
+  (window as any).SMOOTHR_CONFIG.active_payment_gateway = 'stripe';
 });
 
 afterEach(() => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   global.fetch = originalFetch;
   (global as any).window.fetch = originalFetch;
@@ -73,12 +77,12 @@ describe('webflow checkout adapter dom', () => {
     (window as any).Choices = vi.fn();
     (window as any).intlTelInput = vi.fn();
 
+    vi.useFakeTimers();
     await import('../../../../client/platforms/webflow/checkoutAdapter.js');
+    await vi.runAllTimersAsync();
     document.dispatchEvent(new Event('DOMContentLoaded'));
-
-    for (let i = 0; i < 4; i++) {
-      await new Promise(r => setTimeout(r, 0));
-    }
+    await vi.runAllTimersAsync();
+    vi.useRealTimers();
 
     expect(fetchMock).toHaveBeenCalled();
     expect((window as any).Choices).toHaveBeenCalledTimes(3);
