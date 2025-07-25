@@ -3,10 +3,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 let handleCheckout: any;
 
-vi.mock('../../../smoothr/lib/findOrCreateCustomer.ts', () => {
-  return { findOrCreateCustomer: vi.fn(async () => 'cust-1') };
-});
-
 vi.mock('../../../shared/supabase/serverClient', () => {
   const client = {
     from: (table: string) => {
