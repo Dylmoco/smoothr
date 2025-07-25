@@ -1,6 +1,11 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
+vi.mock("../../core/currency/index.js", async () => {
+  const actual = await vi.importActual("../../core/currency/index.js");
+  return { ...actual, baseCurrency: "USD" };
+});
+
 beforeEach(() => {
   vi.resetModules();
   global.window = {

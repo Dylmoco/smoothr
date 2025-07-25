@@ -120,9 +120,9 @@ describe('stripe element mounting', () => {
     const p = waitForVisible(el, 1000).then(() => {
       resolved = true;
     });
-    vi.advanceTimersByTime(100);
+    await vi.advanceTimersByTimeAsync(100);
     expect(resolved).toBe(false);
-    vi.advanceTimersByTime(100);
+    await vi.advanceTimersByTimeAsync(100);
     width = 20;
     await vi.runAllTimersAsync();
     await p;
@@ -149,11 +149,11 @@ describe('stripe element mounting', () => {
     const p = waitForInteractable(el, 500).then(() => {
       resolved = true;
     });
-    vi.advanceTimersByTime(100); // not interactable
+    await vi.advanceTimersByTimeAsync(100); // not interactable
     width = 20;
-    vi.advanceTimersByTime(100); // width ok but offsetParent null
+    await vi.advanceTimersByTimeAsync(100); // width ok but offsetParent null
     offset = {};
-    vi.advanceTimersByTime(100); // now interactable
+    await vi.advanceTimersByTimeAsync(100); // now interactable
     await vi.runAllTimersAsync();
     await p;
     expect(resolved).toBe(true);

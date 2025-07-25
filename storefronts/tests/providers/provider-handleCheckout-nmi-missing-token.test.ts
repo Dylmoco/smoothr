@@ -71,7 +71,17 @@ describe('handleCheckout nmi missing token', () => {
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'payment_token or customer_profile_id is required' });
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Invalid billing details',
+      user_message: 'Please check your billing information and try again.',
+      billing_errors: [
+        { field: 'bill_line1', message: 'Billing street required' },
+        { field: 'bill_city', message: 'Billing city required' },
+        { field: 'bill_state', message: 'Billing state required' },
+        { field: 'bill_postal', message: 'Billing postal required' },
+        { field: 'bill_country', message: 'Billing country required' },
+      ]
+    });
     expect(nmiMock).not.toHaveBeenCalled();
   });
 });

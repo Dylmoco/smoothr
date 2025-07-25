@@ -92,6 +92,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
 async function loadModule() {
   const mod = await import('../../../shared/checkout/handleCheckout.ts');
   handleCheckout = mod.handleCheckout;
+  nmiMock = (await import('../../../shared/checkout/providers/nmi.ts')).default;
 }
 
 beforeEach(async () => {
