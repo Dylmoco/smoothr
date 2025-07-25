@@ -15,6 +15,7 @@ let cardCvcEl;
 let elementsCreate;
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.resetModules();
   styleSpy = vi.fn();
   domReadyCb = null;
@@ -63,7 +64,6 @@ beforeEach(() => {
 
 describe('stripe element mounting', () => {
   it('mounts each field to its container', async () => {
-    vi.useFakeTimers();
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
     await mountCardFields();
     await vi.runAllTimersAsync();
@@ -93,17 +93,15 @@ describe('stripe element mounting', () => {
     global.document.querySelector.mockImplementation(() => null);
     global.window.SMOOTHR_CONFIG.debug = true;
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.useFakeTimers();
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
     await mountCardFields();
-    for (let i = 0; i < 5; i++) vi.runOnlyPendingTimers();
+    await vi.runAllTimersAsync();
     expect(warnSpy).toHaveBeenCalled();
     vi.useRealTimers();
     warnSpy.mockRestore();
   });
 
   it('enforces iframe styles after mount', async () => {
-    vi.useFakeTimers();
     const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
     const p = mountCardFields();
     await vi.runAllTimersAsync();
@@ -118,7 +116,6 @@ describe('stripe element mounting', () => {
     const { waitForVisible } = await import('../../checkout/gateways/stripe.js');
     let width = 0;
     const el = { getBoundingClientRect: vi.fn(() => ({ width })) };
-    vi.useFakeTimers();
     let resolved = false;
     const p = waitForVisible(el, 1000).then(() => {
       resolved = true;
@@ -148,7 +145,6 @@ describe('stripe element mounting', () => {
       configurable: true,
       get: () => active
     });
-    vi.useFakeTimers();
     let resolved = false;
     const p = waitForInteractable(el, 500).then(() => {
       resolved = true;
