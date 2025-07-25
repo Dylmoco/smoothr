@@ -149,7 +149,7 @@ describe('checkout payload', () => {
     await flushPromises();
 
 
-    expect(typeof clickHandler).toBe('function');
+    expect(typeof clickHandler.handleEvent).toBe('function');
     await clickHandler({ preventDefault: vi.fn(), stopPropagation: vi.fn() });
     await flushPromises();
 
