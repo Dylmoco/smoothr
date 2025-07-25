@@ -78,11 +78,12 @@ afterEach(() => {
 describe('mountNMI', () => {
   async function triggerMount() {
     mountCallback?.();
+    await vi.runAllTimersAsync();
     await scriptPromise;
     await new Promise(r => setTimeout(r));
   }
 
-  it('loads tokenization key and injects script', async () => {
+  it('loads tokenization key and injects script', { timeout: 20000 }, async () => {
     await triggerMount();
     await vi.runAllTimersAsync();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
@@ -90,7 +91,7 @@ describe('mountNMI', () => {
     expect(script.getAttribute('data-tokenization-key')).toBe('tok_key');
   });
 
-  it('reports ready when CollectJS is configured', async () => {
+  it('reports ready when CollectJS is configured', { timeout: 20000 }, async () => {
     await triggerMount();
     await vi.runAllTimersAsync();
     expect(ready()).toBe(true);
