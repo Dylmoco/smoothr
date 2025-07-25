@@ -1,7 +1,11 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../../core/auth/index.js", () => ({ initAuth: vi.fn(), user: null }));
+vi.mock("../../core/auth/index.js", () => ({
+  initAuth: vi.fn(),
+  user: null,
+  $$typeof: Symbol.for('react.test.json'),
+}));
 
 beforeEach(() => {
   vi.resetModules();
