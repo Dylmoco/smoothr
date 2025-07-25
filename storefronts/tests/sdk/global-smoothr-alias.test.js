@@ -10,6 +10,11 @@ vi.mock("../../core/auth/index.js", () => ({
   children: []
 }));
 
+vi.mock('../../core/currency/index.js', async () => {
+  const actual = await vi.importActual('../../core/currency/index.js');
+  return { ...actual, baseCurrency: 'USD' };
+});
+
 beforeEach(() => {
   vi.resetModules();
   global.fetch = vi.fn(() =>
