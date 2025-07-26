@@ -86,19 +86,18 @@ export function initAuthorizeStyles() {
     placeholderColor = placeholderCs.color || '#aab7c4';  
     placeholderFontWeight = placeholderCs.fontWeight || 'normal';  
   }  
-  const placeholderStyle = document.createElement('style');  
-  placeholderStyle.textContent = `  
-    .smoothr-accept-field::placeholder {  
-      color: ${placeholderColor};  
-      font-weight: ${placeholderFontWeight};  
-    }  
-    .smoothr-accept-field:focus {  
-      outline: none;  
-      border: none;  
-    }  
-  `;  
-  document.head.appendChild(placeholderStyle);  
-}  
+  const placeholderStyle = document.createElement('style');
+  placeholderStyle.textContent = `
+    .smoothr-accept-field::placeholder {
+      color: ${placeholderColor};
+      font-weight: ${placeholderFontWeight};
+    }
+    .smoothr-accept-field:focus {
+      outline: none;
+    }
+  `;
+  document.head.appendChild(placeholderStyle);
+}
 
 export function getFonts() {  
   const sourceEl = document.querySelector('[data-smoothr-email]') || document.querySelector('[data-smoothr-card-number]');  
@@ -122,9 +121,8 @@ export function elementStyleFromContainer(el) {
     fontFamily: cs.fontFamily,  
     fontWeight: cs.fontWeight,  
     lineHeight: cs.lineHeight,  
-    backgroundColor: cs.backgroundColor,  
-    border: 'none',  
-    padding: cs.padding,  
+    backgroundColor: cs.backgroundColor,
+    padding: cs.padding,
     margin: '0',  
     width: '100%',  
     height: '100%',  
