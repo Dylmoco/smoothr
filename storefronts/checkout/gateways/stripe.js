@@ -1,4 +1,4 @@
-import forceStripeIframeStyle from './forceStripeIframeStyle.js';
+import forceStripeIframeStyle, { elementStyleFromContainer, getFonts, initStripeStyles } from './forceStripeIframeStyle.js';
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
@@ -15,17 +15,7 @@ const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
-if (
-  typeof document !== 'undefined' &&
-  typeof document.createElement === 'function' &&
-  !document.querySelector('#smoothr-card-styles')
-) {
-  const style = document.createElement('style');
-  style.id = 'smoothr-card-styles';
-  style.textContent =
-    '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
-  document.head.appendChild(style);
-}
+initStripeStyles();
 
 export async function waitForVisible(el, timeout = 1000) {
   if (!el || typeof el.getBoundingClientRect !== 'function') return;
@@ -56,39 +46,6 @@ export async function waitForInteractable(el, timeout = 1500) {
     await new Promise(r => setTimeout(r, 100));
   }
   warn('Mount target not interactable after 1.5s');
-}
-
-
-function elementStyleFromContainer(el) {
-  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return {};
-  const cs = window.getComputedStyle(el);
-  const style = {
-    base: {
-      fontSize: cs.fontSize,
-      color: cs.color,
-      fontFamily: cs.fontFamily,
-      fontWeight: cs.fontWeight,
-      lineHeight: cs.height // Set to container height to force full input height
-    }
-  };
-
-  // Pull placeholder styles from the email input
-  const emailEl = document.querySelector('[data-smoothr-email]');
-  if (emailEl) {
-    const placeholderCs = window.getComputedStyle(emailEl, '::placeholder');
-    style.base['::placeholder'] = {
-      color: placeholderCs.color || '#aab7c4', // Fallback to Stripe default
-      fontWeight: placeholderCs.fontWeight || cs.fontWeight
-    };
-  } else {
-    style.base['::placeholder'] = {
-      color: '#aab7c4', // Default if no email input found
-      fontWeight: cs.fontWeight
-    };
-  }
-
-  console.log('[Stripe] element style from container', style);
-  return style;
 }
 
 async function resolveStripeKey() {
@@ -128,16 +85,7 @@ export async function getElements() {
       log('Using Stripe key', stripeKey);
       stripe = Stripe(stripeKey);
 
-      // Detect font from email input or fallback to card number container
-      const sourceEl = document.querySelector('[data-smoothr-email]') || document.querySelector('[data-smoothr-card-number]');
-      let fonts = [];
-      if (sourceEl) {
-        const cs = window.getComputedStyle(sourceEl);
-        const fontFamily = cs.fontFamily.split(',')[0].trim().replace(/"/g, '');
-        const googleFontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@100;200;300;400;500;600;700;800;900&display=swap`;
-        console.log('[Stripe] Loading Google Font:', googleFontUrl);
-        fonts = [{ cssSrc: googleFontUrl }];
-      }
+      const fonts = getFonts();
 
       elements = stripe.elements({ fonts });
       return { stripe, elements };
