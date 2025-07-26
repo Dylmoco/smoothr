@@ -91,6 +91,16 @@ export function initAuthorizeStyles() {
       color: ${placeholderColor};
       font-weight: ${placeholderFontWeight};
     }
+    .smoothr-accept-field:focus {
+      outline: none;
+      border: none;
+    }
+    [data-smoothr-card-number]:focus-within,
+    [data-smoothr-card-expiry]:focus-within,
+    [data-smoothr-card-cvc]:focus-within {
+      outline: 2px solid orange; /* Adjust color/thickness as needed */
+      border-radius: inherit;
+    }
   `;
   document.head.appendChild(placeholderStyle);
 }
