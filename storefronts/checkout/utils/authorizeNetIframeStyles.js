@@ -99,7 +99,7 @@ export function initAuthorizeStyles() {
     [data-smoothr-card-number]:focus-within,  
     [data-smoothr-card-expiry]:focus-within,  
     [data-smoothr-card-cvc]:focus-within {  
-      box-shadow: 0 0 0 1px orange !important; /* Thinner focus border */  
+      box-shadow: 0 0 0 1px orange; /* Thinner focus border */  
       border-radius: inherit !important;  
     }  
   `;  
