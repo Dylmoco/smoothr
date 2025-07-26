@@ -7,6 +7,9 @@ export default function forceStripeIframeStyle(selector) {
     if (iframe) {
       iframe.style.width = '100%';
       iframe.style.minWidth = '100%';
+      iframe.style.height = '100%';
+      iframe.style.minHeight = '100%';
+      iframe.style.boxSizing = 'border-box';
       iframe.style.display = 'block';
       iframe.style.opacity = '1';
       if (container) {
