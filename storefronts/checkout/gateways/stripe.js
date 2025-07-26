@@ -1,4 +1,4 @@
-import forceStripeIframeStyle, { elementStyleFromContainer, getFonts, initStripeStyles } from './forceStripeIframeStyle.js';
+import forceStripeIframeStyle, { elementStyleFromContainer, getFonts, initStripeStyles } from '../utils/forceStripeIframeStyle.js';
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
