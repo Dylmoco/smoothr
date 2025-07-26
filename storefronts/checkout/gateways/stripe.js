@@ -3,6 +3,7 @@ import forceStripeIframeStyle, {
   getFonts,
   initStripeStyles
 } from '../utils/stripeIframeStyles.js';
+
 import { supabase } from '../../../shared/supabase/browserClient';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';

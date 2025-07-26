@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 let styleSpy = vi.fn();
 let getCredMock;
+
 vi.mock('../../checkout/utils/stripeIframeStyles.js', () => ({
+
   default: (...args) => styleSpy(...args),
   initStripeStyles: vi.fn(),
   getFonts: vi.fn(() => []),
