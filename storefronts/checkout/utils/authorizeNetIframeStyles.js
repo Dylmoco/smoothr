@@ -1,5 +1,3 @@
-import computedInputStyle from './computedInputStyle.js';
-
 let iframeStylesApplied = false;
 
 export function forceAuthorizeIframeStyle(selector) {
@@ -77,6 +75,24 @@ export function initAuthorizeStyles() {
       '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
     document.head.appendChild(style);
   }
+
+  // Add placeholder styles
+  const emailEl = document.querySelector('[data-smoothr-email]');
+  let placeholderColor = '#aab7c4';
+  let placeholderFontWeight = 'normal';
+  if (emailEl) {
+    const placeholderCs = window.getComputedStyle(emailEl, '::placeholder');
+    placeholderColor = placeholderCs.color || '#aab7c4';
+    placeholderFontWeight = placeholderCs.fontWeight || 'normal';
+  }
+  const placeholderStyle = document.createElement('style');
+  placeholderStyle.textContent = `
+    .smoothr-accept-field::placeholder {
+      color: ${placeholderColor};
+      font-weight: ${placeholderFontWeight};
+    }
+  `;
+  document.head.appendChild(placeholderStyle);
 }
 
 export function getFonts() {
@@ -96,29 +112,19 @@ export function elementStyleFromContainer(el) {
   if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return {};
   const cs = window.getComputedStyle(el);
   const style = {
-    base: {
-      fontSize: cs.fontSize,
-      color: cs.color,
-      fontFamily: cs.fontFamily,
-      fontWeight: cs.fontWeight,
-      lineHeight: cs.height // Set to container height to force full input height
-    }
+    fontSize: cs.fontSize,
+    color: cs.color,
+    fontFamily: cs.fontFamily,
+    fontWeight: cs.fontWeight,
+    lineHeight: cs.lineHeight,
+    backgroundColor: cs.backgroundColor,
+    border: 'none',
+    padding: '0',
+    margin: '0',
+    width: '100%',
+    height: '100%',
+    boxSizing: 'border-box'
   };
-
-  // Pull placeholder styles from the email input
-  const emailEl = document.querySelector('[data-smoothr-email]');
-  if (emailEl) {
-    const placeholderCs = window.getComputedStyle(emailEl, '::placeholder');
-    style.base['::placeholder'] = {
-      color: placeholderCs.color || '#aab7c4', // Fallback to Stripe default
-      fontWeight: placeholderCs.fontWeight || cs.fontWeight
-    };
-  } else {
-    style.base['::placeholder'] = {
-      color: '#aab7c4', // Default if no email input found
-      fontWeight: cs.fontWeight
-    };
-  }
 
   console.log('[AuthorizeNet] element style from container', style);
   return style;
@@ -128,6 +134,14 @@ export function getAuthorizeNetStyles(num, exp, cvc) {
   const numStyle = elementStyleFromContainer(num);
   const expStyle = elementStyleFromContainer(exp);
   const cvcStyle = elementStyleFromContainer(cvc);
+
+  const numInput = num?.querySelector('input');
+  const expInput = exp?.querySelector('input');
+  const cvcInput = cvc?.querySelector('input');
+
+  if (numInput) Object.assign(numInput.style, numStyle);
+  if (expInput) Object.assign(expInput.style, expStyle);
+  if (cvcInput) Object.assign(cvcInput.style, cvcStyle);
 
   console.log('[Authorize.Net] cardNumber style', numStyle);
   console.log('[Authorize.Net] cardExpiry style', expStyle);

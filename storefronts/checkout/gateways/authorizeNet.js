@@ -2,7 +2,8 @@ import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import {
   applyAcceptIframeStyles,
-  getAuthorizeNetStyles
+  getAuthorizeNetStyles,
+  initAuthorizeStyles
 } from '../utils/authorizeNetIframeStyles.js';
 
 let fieldsMounted = false;
@@ -181,35 +182,7 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
-    const { numStyle, expStyle, cvcStyle } = getAuthorizeNetStyles(num, exp, cvc);
-
-    const config = {
-      paymentFields: {
-        cardNumber: {
-          selector: '[data-smoothr-card-number] input',
-          placeholder: 'Card number',
-          style: numStyle
-        },
-        expiry: {
-          selector: '[data-smoothr-card-expiry] input',
-          placeholder: 'MM/YY',
-          style: expStyle
-        },
-        cvv: {
-          selector: '[data-smoothr-card-cvc] input',
-          placeholder: 'CVC',
-          style: cvcStyle
-        }
-      }
-    };
-
-    log('Configuring Accept.js fields', config);
-    if (window.Accept && typeof window.Accept.configure === 'function') {
-      window.Accept.configure(config);
-      console.log('[Authorize.Net] Accept.configure called with', config);
-    } else {
-      warn('Accept.configure not available');
-    }
+    getAuthorizeNetStyles(num, exp, cvc);
 
     authorizeNetReady = true;
     updateDebug();
