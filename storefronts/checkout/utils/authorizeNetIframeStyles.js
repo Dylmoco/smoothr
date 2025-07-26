@@ -72,7 +72,7 @@ export function initAuthorizeStyles() {
     const style = document.createElement('style');
     style.id = 'smoothr-card-styles';
     style.textContent =
-      '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;}\niframe[data-accept-id]{display:block!important;}';
+      '[data-smoothr-card-number],\n[data-smoothr-card-expiry],\n[data-smoothr-card-cvc]{display:block;position:relative;padding:0 !important;}\niframe[data-accept-id]{display:block!important;}';
     document.head.appendChild(style);
   }
 
@@ -129,7 +129,7 @@ export function elementStyleFromContainer(el) {
     lineHeight: cs.lineHeight,
     backgroundColor: cs.backgroundColor,
     border: 'none',
-    padding: '0',
+    padding: cs.padding,
     margin: '0',
     width: '100%',
     height: '100%',
