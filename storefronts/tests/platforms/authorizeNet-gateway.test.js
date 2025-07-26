@@ -6,8 +6,8 @@ vi.mock('../../checkout/utils/authorizeNetIframeStyles.js', async () => {
   const actual = await vi.importActual('../../checkout/utils/authorizeNetIframeStyles.js');
   return {
     ...actual,
-    forceAuthorizeIframeStyle: (...args) => styleSpy(...args),
-    applyAcceptIframeStyles: () => {
+    forceAuthorizeInputStyle: (...args) => styleSpy(...args),
+    applyAcceptStyles: () => {
       ['[data-smoothr-card-number]', '[data-smoothr-card-expiry]', '[data-smoothr-card-cvc]'].forEach(s => styleSpy(s));
     }
   };
@@ -53,6 +53,11 @@ beforeEach(async () => {
   last.value = 'Doe';
   document.body.appendChild(last);
 
+  const email = document.createElement('input');
+  email.setAttribute('data-smoothr-email', '');
+  email.className = 'email-field';
+  document.body.appendChild(email);
+
   const mod = await import('../../checkout/gateways/authorizeNet.js');
   createPaymentMethod = mod.createPaymentMethod;
   mountCardFields = mod.mountCardFields;
@@ -95,13 +100,19 @@ afterEach(() => {
 });
 
 describe('authorizeNet mountCardFields', () => {
-  it('configures Accept.js with computed styles', async () => {
+  it('injects inputs inheriting styles and classes', async () => {
     await mountCardFields();
-    expect(window.Accept.configure).toHaveBeenCalled();
-    const config = window.Accept.configure.mock.calls[0][0];
-    expect(config.paymentFields.cardNumber.style).toEqual(computedStyle);
-    expect(config.paymentFields.expiry.style).toEqual(computedStyle);
-    expect(config.paymentFields.cvv.style).toEqual(computedStyle);
+    expect(window.Accept.configure).not.toHaveBeenCalled();
+    const numInput = document.querySelector('[data-smoothr-card-number] input');
+    const expInput = document.querySelector('[data-smoothr-card-expiry] input');
+    const cvcInput = document.querySelector('[data-smoothr-card-cvc] input');
+
+    [numInput, expInput, cvcInput].forEach(input => {
+      expect(input).toBeTruthy();
+      expect(input.classList.contains('smoothr-accept-field')).toBe(true);
+      expect(input.classList.contains('email-field')).toBe(true);
+      expect(input.style.fontSize).toBe('16px');
+    });
   });
 
   it('forces iframe styles after mount', async () => {
