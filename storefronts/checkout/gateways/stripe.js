@@ -67,9 +67,26 @@ function elementStyleFromContainer(el) {
       fontSize: cs.fontSize,
       color: cs.color,
       fontFamily: cs.fontFamily,
+      fontWeight: cs.fontWeight,
       lineHeight: cs.height // Set to container height to force full input height
     }
   };
+
+  // Pull placeholder styles from the email input
+  const emailEl = document.querySelector('[data-smoothr-email]');
+  if (emailEl) {
+    const placeholderCs = window.getComputedStyle(emailEl, '::placeholder');
+    style.base['::placeholder'] = {
+      color: placeholderCs.color || '#aab7c4', // Fallback to Stripe default
+      fontWeight: placeholderCs.fontWeight || cs.fontWeight
+    };
+  } else {
+    style.base['::placeholder'] = {
+      color: '#aab7c4', // Default if no email input found
+      fontWeight: cs.fontWeight
+    };
+  }
+
   console.log('[Stripe] element style from container', style);
   return style;
 }
