@@ -98,8 +98,8 @@ export function initAuthorizeStyles() {
     [data-smoothr-card-number]:focus-within,  
     [data-smoothr-card-expiry]:focus-within,  
     [data-smoothr-card-cvc]:focus-within {  
-      outline: 2px solid orange; /* Adjust color/thickness as needed */  
-      border-radius: inherit;  
+      box-shadow: 0 0 0 2px orange !important; /* Use box-shadow for rounded focus */  
+      border-radius: inherit !important;  
     }  
   `;  
   document.head.appendChild(placeholderStyle);  
