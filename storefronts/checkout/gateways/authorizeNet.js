@@ -1,6 +1,9 @@
 import { getPublicCredential } from '../getPublicCredential.js';
-import computedInputStyle from '../utils/computedInputStyle.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+import {
+  applyAcceptIframeStyles,
+  getAuthorizeNetStyles
+} from '../utils/authorizeNetIframeStyles.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -11,8 +14,6 @@ let scriptPromise;
 let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
-let iframeStylesApplied = false;
-
 let debugInitialized = false;
 
 function getReadinessState() {
@@ -60,36 +61,6 @@ function checkAcceptFieldPresence() {
     '[data-smoothr-card-cvc] input[data-accept-name="cvv"]'
   );
   return !!num && !!exp && !!cvc;
-}
-
-function applyAcceptIframeStyles() {
-  if (iframeStylesApplied || typeof document === 'undefined') return;
-  let attempts = 0;
-  const interval = setInterval(() => {
-    const frames = [
-      ['[data-smoothr-card-number] input', 'iframe[data-accept-id][name=cardNumber]'],
-      ['[data-smoothr-card-expiry] input', 'iframe[data-accept-id][name=expiry]'],
-      ['[data-smoothr-card-cvc] input', 'iframe[data-accept-id][name=cvv]']
-    ];
-    let styled = 0;
-    frames.forEach(([inputSel, frameSel]) => {
-      const input = document.querySelector(inputSel);
-      const frame = document.querySelector(frameSel);
-      if (input && frame && !frame.dataset.smoothrStyled) {
-        const cs = window.getComputedStyle(input);
-        for (const prop of cs) {
-          frame.style[prop] = cs.getPropertyValue(prop);
-        }
-        frame.dataset.smoothrStyled = 'true';
-        console.log(`[Smoothr AuthorizeNet] Applied inline styles to ${frameSel}`);
-      }
-      if (frame?.dataset.smoothrStyled) styled++;
-    });
-    if (styled === frames.length || ++attempts >= 20) {
-      iframeStylesApplied = styled === frames.length;
-      clearInterval(interval);
-    }
-  }, 100);
 }
 
 
@@ -210,20 +181,7 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
-    const numStyle = computedInputStyle(num);
-    const expStyle = computedInputStyle(exp);
-    const cvcStyle = computedInputStyle(cvc);
-
-    const numInput = num.querySelector('input');
-    const expInput = exp.querySelector('input');
-    const cvcInput = cvc.querySelector('input');
-
-    if (numInput) Object.assign(numInput.style, numStyle.input);
-    if (expInput) Object.assign(expInput.style, expStyle.input);
-    if (cvcInput) Object.assign(cvcInput.style, cvcStyle.input);
-    console.log('[Authorize.Net] cardNumber style', numStyle);
-    console.log('[Authorize.Net] cardExpiry style', expStyle);
-    console.log('[Authorize.Net] cardCVC style', cvcStyle);
+    const { numStyle, expStyle, cvcStyle } = getAuthorizeNetStyles(num, exp, cvc);
 
     const config = {
       paymentFields: {
