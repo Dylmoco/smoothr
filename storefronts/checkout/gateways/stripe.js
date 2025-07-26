@@ -67,12 +67,7 @@ function elementStyleFromContainer(el) {
       fontSize: cs.fontSize,
       color: cs.color,
       fontFamily: cs.fontFamily,
-      backgroundColor: cs.backgroundColor,
-      borderColor: cs.borderColor,
-      borderWidth: cs.borderWidth,
-      borderStyle: cs.borderStyle,
-      borderRadius: cs.borderRadius,
-      padding: cs.padding
+      lineHeight: cs.height // Set to container height to force full input height
     }
   };
   console.log('[Stripe] element style from container', style);
