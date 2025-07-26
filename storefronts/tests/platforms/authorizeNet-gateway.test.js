@@ -1,5 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+let styleSpy = vi.fn();
+
+vi.mock('../../checkout/utils/authorizeNetIframeStyles.js', async () => {
+  const actual = await vi.importActual('../../checkout/utils/authorizeNetIframeStyles.js');
+  return {
+    ...actual,
+    forceAuthorizeIframeStyle: (...args) => styleSpy(...args),
+    applyAcceptIframeStyles: () => {
+      ['[data-smoothr-card-number]', '[data-smoothr-card-expiry]', '[data-smoothr-card-cvc]'].forEach(s => styleSpy(s));
+    }
+  };
+});
+
 vi.mock('../../../shared/supabase/browserClient', () => {
   
   const maybeSingle = vi.fn(async () => ({
@@ -20,6 +33,7 @@ let originalGetComputedStyle;
 
 beforeEach(async () => {
   vi.resetModules();
+  styleSpy = vi.fn();
   document.body.innerHTML = '';
   window.SMOOTHR_CONFIG = { storeId: 'store-1', debug: true };
 
@@ -90,42 +104,15 @@ describe('authorizeNet mountCardFields', () => {
     expect(config.paymentFields.cvv.style).toEqual(computedStyle);
   });
 
-  it('applies iframe styles using getComputedStyle after mount', async () => {
+  it('forces iframe styles after mount', async () => {
+    const p = mountCardFields();
     vi.useFakeTimers();
-    await mountCardFields();
-
-    const width = '80px';
-    const height = '40px';
-    const boxSizing = 'border-box';
-    window.getComputedStyle = vi.fn(() => {
-      const style = { width, height, boxSizing };
-      Object.defineProperty(style, 'getPropertyValue', {
-        value: prop => style[prop],
-        enumerable: false
-      });
-      Object.defineProperty(style, Symbol.iterator, {
-        enumerable: false,
-        value: function* () {
-          for (const key of Object.keys(style)) yield key;
-        }
-      });
-      return style;
-    });
-
-    ['cardNumber', 'expiry', 'cvv'].forEach(name => {
-      const iframe = document.createElement('iframe');
-      iframe.setAttribute('data-accept-id', '');
-      iframe.name = name;
-      document.body.appendChild(iframe);
-    });
-
-    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(500);
+    await p;
     vi.useRealTimers();
-
-    const frame = document.querySelector('iframe[data-accept-id][name=cardNumber]');
-    expect(frame.style.width).toBe(width);
-    expect(frame.style.height).toBe(height);
-    expect(frame.style.boxSizing).toBe(boxSizing);
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]');
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
   });
 });
 

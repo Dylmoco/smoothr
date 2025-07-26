@@ -2,34 +2,47 @@ import computedInputStyle from './computedInputStyle.js';
 
 let iframeStylesApplied = false;
 
-export function applyAcceptIframeStyles() {
-  if (iframeStylesApplied || typeof document === 'undefined') return;
+export function forceAuthorizeIframeStyle(selector) {
+  if (typeof document === 'undefined') return;
   let attempts = 0;
   const interval = setInterval(() => {
-    const frames = [
-      ['[data-smoothr-card-number] input', 'iframe[data-accept-id][name=cardNumber]'],
-      ['[data-smoothr-card-expiry] input', 'iframe[data-accept-id][name=expiry]'],
-      ['[data-smoothr-card-cvc] input', 'iframe[data-accept-id][name=cvv]']
-    ];
-    let styled = 0;
-    frames.forEach(([inputSel, frameSel]) => {
-      const input = document.querySelector(inputSel);
-      const frame = document.querySelector(frameSel);
-      if (input && frame && !frame.dataset.smoothrStyled) {
-        const cs = window.getComputedStyle(input);
-        for (const prop of cs) {
-          frame.style[prop] = cs.getPropertyValue(prop);
+    const container = document.querySelector(selector);
+    const iframe = container?.querySelector('iframe');
+    if (iframe) {
+      iframe.style.width = '100%';
+      iframe.style.minWidth = '100%';
+      iframe.style.height = '100%';
+      iframe.style.minHeight = '100%';
+      iframe.style.boxSizing = 'border-box';
+      iframe.style.display = 'block';
+      iframe.style.opacity = '1';
+      if (container) {
+        container.style.width = '100%';
+        container.style.minWidth = '100%';
+        if (
+          typeof window !== 'undefined' &&
+          window.getComputedStyle(container).position === 'static'
+        ) {
+          container.style.position = 'relative';
         }
-        frame.dataset.smoothrStyled = 'true';
-        console.log(`[Smoothr AuthorizeNet] Applied inline styles to ${frameSel}`);
       }
-      if (frame?.dataset.smoothrStyled) styled++;
-    });
-    if (styled === frames.length || ++attempts >= 20) {
-      iframeStylesApplied = styled === frames.length;
+      console.log(`[Smoothr AuthorizeNet] Forced iframe styles for ${selector}`);
+      clearInterval(interval);
+    } else if (++attempts >= 20) {
       clearInterval(interval);
     }
   }, 100);
+}
+
+export function applyAcceptIframeStyles() {
+  if (iframeStylesApplied || typeof document === 'undefined') return;
+  const selectors = [
+    '[data-smoothr-card-number]',
+    '[data-smoothr-card-expiry]',
+    '[data-smoothr-card-cvc]'
+  ];
+  selectors.forEach(forceAuthorizeIframeStyle);
+  iframeStylesApplied = true;
 }
 
 export function getAuthorizeNetStyles(num, exp, cvc) {
