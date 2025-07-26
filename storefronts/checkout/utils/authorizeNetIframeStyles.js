@@ -1,17 +1,17 @@
 let iframeStylesApplied = false;  
 
-export function forceAuthorizeIframeStyle(selector) {  
+export function forceAuthorizeInputStyle(selector) {  
   if (typeof document === 'undefined') return;  
   const container = document.querySelector(selector);  
   if (!container) return;  
 
-  // Use MutationObserver to detect iframe addition  
+  // Use MutationObserver to detect input addition  
   const observer = new MutationObserver((mutations) => {  
     for (const mutation of mutations) {  
       if (mutation.type === 'childList') {  
-        const iframe = container.querySelector('iframe');  
-        if (iframe) {  
-          applyStylesToIframe(container, iframe);  
+        const input = container.querySelector('input');  
+        if (input) {  
+          applyStylesToInput(container, input);  
           observer.disconnect(); // Stop observing once applied  
           return;  
         }  
@@ -24,9 +24,9 @@ export function forceAuthorizeIframeStyle(selector) {
   // Fallback interval in case observer misses it  
   let attempts = 0;  
   const interval = setInterval(() => {  
-    const iframe = container?.querySelector('iframe');  
-    if (iframe) {  
-      applyStylesToIframe(container, iframe);  
+    const input = container?.querySelector('input');  
+    if (input) {  
+      applyStylesToInput(container, input);  
       clearInterval(interval);  
       observer.disconnect();  
     } else if (++attempts >= 20) {  
@@ -36,20 +36,20 @@ export function forceAuthorizeIframeStyle(selector) {
   }, 100);  
 }  
 
-function applyStylesToIframe(container, iframe) {  
-  iframe.style.width = '100%';  
-  iframe.style.minWidth = '100%';  
-  iframe.style.height = '100%';  
-  iframe.style.minHeight = '100%';  
-  iframe.style.boxSizing = 'border-box';  
-  iframe.style.display = 'block';  
-  iframe.style.opacity = '1';  
+function applyStylesToInput(container, input) {  
+  input.style.width = '100%';  
+  input.style.minWidth = '100%';  
+  input.style.height = '100%';  
+  input.style.minHeight = '100%';  
+  input.style.boxSizing = 'border-box';  
+  input.style.display = 'block';  
+  input.style.opacity = '1';  
   container.style.width = '100%';  
   container.style.minWidth = '100%';  
   if (window.getComputedStyle(container).position === 'static') {  
     container.style.position = 'relative';  
   }  
-  console.log(`[Smoothr AuthorizeNet] Forced iframe styles for ${container.getAttribute('data-smoothr-card-number') || container.getAttribute('data-smoothr-card-expiry') || container.getAttribute('data-smoothr-card-cvc')}`);  
+  console.log(`[Smoothr AuthorizeNet] Forced input styles for ${container.getAttribute('data-smoothr-card-number') || container.getAttribute('data-smoothr-card-expiry') || container.getAttribute('data-smoothr-card-cvc')}`);  
 }  
 
 export function applyAcceptIframeStyles() {  
@@ -59,7 +59,7 @@ export function applyAcceptIframeStyles() {
     '[data-smoothr-card-expiry]',  
     '[data-smoothr-card-cvc]'  
   ];  
-  selectors.forEach(forceAuthorizeIframeStyle);  
+  selectors.forEach(forceAuthorizeInputStyle);  
   iframeStylesApplied = true;  
 }  
 
@@ -98,8 +98,8 @@ export function initAuthorizeStyles() {
     [data-smoothr-card-number]:focus-within,  
     [data-smoothr-card-expiry]:focus-within,  
     [data-smoothr-card-cvc]:focus-within {  
-      box-shadow: 0 0 0 2px orange !important; /* Use box-shadow for rounded focus */  
-      border-radius: inherit !important;  
+      box-shadow: 0 0 0 2px orange; /* Adjust color/thickness as needed */  
+      border-radius: inherit;  
     }  
   `;  
   document.head.appendChild(placeholderStyle);  
