@@ -149,6 +149,17 @@ export function getAuthorizeNetStyles(num, exp, cvc) {
   if (expInput) Object.assign(expInput.style, expStyle);  
   if (cvcInput) Object.assign(cvcInput.style, cvcStyle);  
 
+  // Copy classes from email input to card inputs for inherited styles  
+  const emailEl = document.querySelector('[data-smoothr-email]');  
+  if (emailEl) {  
+    const emailClasses = emailEl.className.split(' ');  
+    [numInput, expInput, cvcInput].forEach(input => {  
+      if (input) {  
+        emailClasses.forEach(cls => input.classList.add(cls));  
+      }  
+    });  
+  }  
+
   console.log('[Authorize.Net] cardNumber style', numStyle);  
   console.log('[Authorize.Net] cardExpiry style', expStyle);  
   console.log('[Authorize.Net] cardCVC style', cvcStyle);  
