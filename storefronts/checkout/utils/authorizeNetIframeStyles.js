@@ -12,7 +12,7 @@ export function forceAuthorizeInputStyle(selector) {
         const input = container.querySelector('input');  
         if (input) {  
           applyStylesToInput(container, input);  
-          observer.disconnect(); // Stop observing once applied  
+          observer.disconnect();  
           return;  
         }  
       }  
@@ -21,7 +21,7 @@ export function forceAuthorizeInputStyle(selector) {
 
   observer.observe(container, { childList: true, subtree: true });  
 
-  // Fallback interval in case observer misses it  
+  // Fallback interval  
   let attempts = 0;  
   const interval = setInterval(() => {  
     const input = container?.querySelector('input');  
