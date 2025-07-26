@@ -133,7 +133,8 @@ export function elementStyleFromContainer(el) {
     margin: '0',  
     width: '100%',  
     height: '100%',  
-    boxSizing: 'border-box'  
+    boxSizing: 'border-box',  
+    borderRadius: cs.borderRadius  
   };  
 
   console.log('[AuthorizeNet] element style from container', style);  
