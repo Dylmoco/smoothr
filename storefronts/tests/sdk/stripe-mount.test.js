@@ -1,8 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 let styleSpy = vi.fn();
 let getCredMock;
-vi.mock('../../checkout/gateways/forceStripeIframeStyle.js', () => ({
-  default: (...args) => styleSpy(...args)
+vi.mock('../../checkout/utils/forceStripeIframeStyle.js', () => ({
+  default: (...args) => styleSpy(...args),
+  initStripeStyles: vi.fn(),
+  getFonts: vi.fn(() => []),
+  elementStyleFromContainer: vi.fn(() => ({}))
 }));
 vi.mock('../../checkout/getPublicCredential.js', () => ({
   getPublicCredential: (...args) => getCredMock(...args)
