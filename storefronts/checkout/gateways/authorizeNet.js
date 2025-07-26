@@ -1,7 +1,7 @@
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import {
-  applyAcceptIframeStyles,
+  applyAcceptStyles,
   getAuthorizeNetStyles,
   initAuthorizeStyles
 } from '../utils/authorizeNetIframeStyles.js';
@@ -201,7 +201,7 @@ export async function mountCardFields() {
     }
 
     fieldsMounted = true;
-    applyAcceptIframeStyles();
+    applyAcceptStyles();
     updateDebug();
     log('Card fields mounted');
   })();
