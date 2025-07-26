@@ -182,6 +182,7 @@ export async function mountCardFields() {
       cvc.appendChild(input);
     }
 
+    initAuthorizeStyles();
     getAuthorizeNetStyles(num, exp, cvc);
 
     authorizeNetReady = true;
