@@ -88,6 +88,7 @@ export function initAuthorizeStyles() {
   }  
   const placeholderStyle = document.createElement('style');
   placeholderStyle.textContent = `
+
     .smoothr-accept-field::placeholder {
       color: ${placeholderColor};
       font-weight: ${placeholderFontWeight};
