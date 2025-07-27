@@ -21,7 +21,9 @@ export default function forceStripeIframeStyle(selector, element = null) {
         ) {
           container.style.position = 'relative';
         }
+
         applyFocusStyles(iframe, container, element);
+
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
@@ -90,7 +92,9 @@ export function elementStyleFromContainer(el) {
   return style;
 }
 
+
 function applyFocusStyles(iframe, container, element) {
+
   const emailEl = document.querySelector('[data-smoothr-email]');
   if (!emailEl || !container || typeof window.getComputedStyle !== 'function') return;
 
@@ -120,6 +124,7 @@ function applyFocusStyles(iframe, container, element) {
     if (previous !== emailEl) emailEl.blur();
   }
 
+
   const onFocus = () => {
     container.style.border = focusBorder || blurBorder || '1px solid transparent';
     container.style.boxShadow = focusBoxShadow || blurBoxShadow || 'none';
@@ -139,4 +144,5 @@ function applyFocusStyles(iframe, container, element) {
     iframe.addEventListener('focus', onFocus);
     iframe.addEventListener('blur', onBlur);
   }
+
 }
