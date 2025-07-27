@@ -153,10 +153,10 @@ export async function mountCardFields() {
         cardNumberElement?.unmount?.();
         cardNumberElement = elements.create('cardNumber', { style: numStyle });
         cardNumberElement.mount('[data-smoothr-card-number]');
-        forceStripeIframeStyle('[data-smoothr-card-number]');
+        forceStripeIframeStyle('[data-smoothr-card-number]', cardNumberElement);
       }
     }, 500);
-    forceStripeIframeStyle('[data-smoothr-card-number]');
+    forceStripeIframeStyle('[data-smoothr-card-number]', el);
     cardNumberElement = el;
   }
   const existingExpiry = els.getElement ? els.getElement('cardExpiry') : null;
@@ -176,10 +176,10 @@ export async function mountCardFields() {
         el?.unmount?.();
         const remount = elements.create('cardExpiry', { style: expiryStyle });
         remount.mount('[data-smoothr-card-expiry]');
-        forceStripeIframeStyle('[data-smoothr-card-expiry]');
+        forceStripeIframeStyle('[data-smoothr-card-expiry]', remount);
       }
     }, 500);
-    forceStripeIframeStyle('[data-smoothr-card-expiry]');
+    forceStripeIframeStyle('[data-smoothr-card-expiry]', el);
   }
   const existingCvc = els.getElement ? els.getElement('cardCvc') : null;
   if (cvcTarget && !existingCvc) {
@@ -198,10 +198,10 @@ export async function mountCardFields() {
         el?.unmount?.();
         const remount = elements.create('cardCvc', { style: cvcStyle });
         remount.mount('[data-smoothr-card-cvc]');
-        forceStripeIframeStyle('[data-smoothr-card-cvc]');
+        forceStripeIframeStyle('[data-smoothr-card-cvc]', remount);
       }
     }, 500);
-    forceStripeIframeStyle('[data-smoothr-card-cvc]');
+    forceStripeIframeStyle('[data-smoothr-card-cvc]', el);
   }
 
   log('Mounted split fields');

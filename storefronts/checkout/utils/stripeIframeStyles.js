@@ -1,4 +1,4 @@
-export default function forceStripeIframeStyle(selector) {
+export default function forceStripeIframeStyle(selector, element = null) {
   if (typeof document === 'undefined') return;
   let attempts = 0;
   const interval = setInterval(() => {
@@ -21,6 +21,7 @@ export default function forceStripeIframeStyle(selector) {
         ) {
           container.style.position = 'relative';
         }
+        applyFocusStyles(iframe, container, element);
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
@@ -87,4 +88,55 @@ export function elementStyleFromContainer(el) {
 
   console.log('[Stripe] element style from container', style);
   return style;
+}
+
+function applyFocusStyles(iframe, container, element) {
+  const emailEl = document.querySelector('[data-smoothr-email]');
+  if (!emailEl || !container || typeof window.getComputedStyle !== 'function') return;
+
+  let focusBorder = '';
+  let focusBoxShadow = '';
+  let focusRadius = '';
+  let blurBorder = '';
+  let blurBoxShadow = '';
+  let blurRadius = '';
+
+  const previous = document.activeElement;
+  const blurCs = window.getComputedStyle(emailEl);
+  blurBorder = blurCs.border;
+  blurBoxShadow = blurCs.boxShadow;
+  blurRadius = blurCs.borderRadius;
+
+  try {
+    emailEl.focus();
+    const cs = window.getComputedStyle(emailEl);
+    focusBorder = cs.border;
+    focusBoxShadow = cs.boxShadow;
+    focusRadius = cs.borderRadius;
+  } catch (_) {
+    // noop
+  } finally {
+    previous?.focus?.();
+    if (previous !== emailEl) emailEl.blur();
+  }
+
+  const onFocus = () => {
+    container.style.border = focusBorder || blurBorder || '1px solid transparent';
+    container.style.boxShadow = focusBoxShadow || blurBoxShadow || 'none';
+    container.style.borderRadius = focusRadius || blurRadius || '';
+  };
+
+  const onBlur = () => {
+    container.style.border = blurBorder || 'none';
+    container.style.boxShadow = blurBoxShadow || 'none';
+    container.style.borderRadius = blurRadius || '';
+  };
+
+  if (element && typeof element.on === 'function') {
+    element.on('focus', onFocus);
+    element.on('blur', onBlur);
+  } else {
+    iframe.addEventListener('focus', onFocus);
+    iframe.addEventListener('blur', onBlur);
+  }
 }
