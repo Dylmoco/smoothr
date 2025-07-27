@@ -100,6 +100,7 @@ export default function styleNmiIframes(cardNumberDiv, placeholders = []) {
     blurBorder = blurCs.border;
     blurBoxShadow = blurCs.boxShadow;
     blurRadius = blurCs.borderRadius;
+
     try {
       emailEl.focus();
       const cs = window.getComputedStyle(emailEl);
@@ -130,17 +131,22 @@ export default function styleNmiIframes(cardNumberDiv, placeholders = []) {
 
     iframe.addEventListener('focus', () => {
       if (container) {
+
         container.style.border = focusBorder || blurBorder || '1px solid transparent';
         container.style.boxShadow = focusBoxShadow || blurBoxShadow || 'none';
         container.style.borderRadius = focusRadius || blurRadius || '';
+
+
       }
     });
 
     iframe.addEventListener('blur', () => {
       if (container) {
+
         container.style.border = blurBorder || 'none';
         container.style.boxShadow = blurBoxShadow || 'none';
         container.style.borderRadius = blurRadius || '';
+
       }
     });
   });
