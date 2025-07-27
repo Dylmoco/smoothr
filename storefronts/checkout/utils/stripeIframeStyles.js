@@ -1,4 +1,4 @@
-export default function forceStripeIframeStyle(selector) {
+export default function forceStripeIframeStyle(selector, element = null) {
   if (typeof document === 'undefined') return;
   let attempts = 0;
   const interval = setInterval(() => {
@@ -21,7 +21,9 @@ export default function forceStripeIframeStyle(selector) {
         ) {
           container.style.position = 'relative';
         }
-        applyFocusStyles(iframe, container);
+
+        applyFocusStyles(iframe, container, element);
+
       }
       console.log(`[Smoothr Stripe] Forced iframe styles for ${selector}`);
       clearInterval(interval);
@@ -90,7 +92,9 @@ export function elementStyleFromContainer(el) {
   return style;
 }
 
-function applyFocusStyles(iframe, container) {
+
+function applyFocusStyles(iframe, container, element) {
+
   const emailEl = document.querySelector('[data-smoothr-email]');
   if (!emailEl || !container || typeof window.getComputedStyle !== 'function') return;
 
@@ -120,15 +124,25 @@ function applyFocusStyles(iframe, container) {
     if (previous !== emailEl) emailEl.blur();
   }
 
-  iframe.addEventListener('focus', () => {
+
+  const onFocus = () => {
     container.style.border = focusBorder || blurBorder || '1px solid transparent';
     container.style.boxShadow = focusBoxShadow || blurBoxShadow || 'none';
     container.style.borderRadius = focusRadius || blurRadius || '';
-  });
+  };
 
-  iframe.addEventListener('blur', () => {
+  const onBlur = () => {
     container.style.border = blurBorder || 'none';
     container.style.boxShadow = blurBoxShadow || 'none';
     container.style.borderRadius = blurRadius || '';
-  });
+  };
+
+  if (element && typeof element.on === 'function') {
+    element.on('focus', onFocus);
+    element.on('blur', onBlur);
+  } else {
+    iframe.addEventListener('focus', onFocus);
+    iframe.addEventListener('blur', onBlur);
+  }
+
 }

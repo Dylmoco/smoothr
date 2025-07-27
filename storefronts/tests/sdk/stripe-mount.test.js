@@ -112,9 +112,9 @@ describe('stripe element mounting', () => {
     await vi.advanceTimersByTimeAsync(500);
     await p;
     vi.useRealTimers();
-    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]');
-    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]');
-    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]');
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]', cardNumberEl);
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]', cardExpiryEl);
+    expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]', cardCvcEl);
   });
 
   it('waitForVisible resolves when width becomes visible', async () => {
