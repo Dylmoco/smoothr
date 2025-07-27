@@ -85,7 +85,37 @@ export function getNmiStyles() {
 
 export default function styleNmiIframes(cardNumberDiv, placeholders = []) {
   const iframes = document.querySelectorAll('iframe[id^="CollectJS"]');
+
+  const emailEl = document.querySelector('[data-smoothr-email]');
+  let focusBorder = '';
+  let focusBoxShadow = '';
+  let focusRadius = '';
+  let blurBorder = '';
+  let blurBoxShadow = '';
+  let blurRadius = '';
+
+  if (emailEl && typeof window.getComputedStyle === 'function') {
+    const previous = document.activeElement;
+    const blurCs = window.getComputedStyle(emailEl);
+    blurBorder = blurCs.border;
+    blurBoxShadow = blurCs.boxShadow;
+    blurRadius = blurCs.borderRadius;
+    try {
+      emailEl.focus();
+      const cs = window.getComputedStyle(emailEl);
+      focusBorder = cs.border;
+      focusBoxShadow = cs.boxShadow;
+      focusRadius = cs.borderRadius;
+    } catch (_) {
+      // noop
+    } finally {
+      previous?.focus?.();
+      if (previous !== emailEl) emailEl.blur();
+    }
+  }
+
   iframes.forEach(iframe => {
+    const container = iframe.parentElement;
     iframe.style.position = 'absolute';
     iframe.style.top = '0';
     iframe.style.left = '0';
@@ -93,6 +123,27 @@ export default function styleNmiIframes(cardNumberDiv, placeholders = []) {
     iframe.style.height = cardNumberDiv.offsetHeight + 'px';
     iframe.style.border = 'none';
     iframe.style.background = 'transparent';
+
+    if (container && window.getComputedStyle(container).position === 'static') {
+      container.style.position = 'relative';
+    }
+
+    iframe.addEventListener('focus', () => {
+      if (container) {
+        container.style.border = focusBorder || blurBorder || '1px solid transparent';
+        container.style.boxShadow = focusBoxShadow || blurBoxShadow || 'none';
+        container.style.borderRadius = focusRadius || blurRadius || '';
+      }
+    });
+
+    iframe.addEventListener('blur', () => {
+      if (container) {
+        container.style.border = blurBorder || 'none';
+        container.style.boxShadow = blurBoxShadow || 'none';
+        container.style.borderRadius = blurRadius || '';
+      }
+    });
   });
+
   placeholders.forEach(el => el && (el.style.display = 'none'));
 }
