@@ -90,9 +90,17 @@ export default function styleNmiIframes(cardNumberDiv, placeholders = []) {
   let focusBorder = '';
   let focusBoxShadow = '';
   let focusRadius = '';
+  let blurBorder = '';
+  let blurBoxShadow = '';
+  let blurRadius = '';
 
   if (emailEl && typeof window.getComputedStyle === 'function') {
     const previous = document.activeElement;
+    const blurCs = window.getComputedStyle(emailEl);
+    blurBorder = blurCs.border;
+    blurBoxShadow = blurCs.boxShadow;
+    blurRadius = blurCs.borderRadius;
+
     try {
       emailEl.focus();
       const cs = window.getComputedStyle(emailEl);
@@ -123,16 +131,22 @@ export default function styleNmiIframes(cardNumberDiv, placeholders = []) {
 
     iframe.addEventListener('focus', () => {
       if (container) {
-        container.style.border = focusBorder || '1px solid transparent';
-        container.style.boxShadow = focusBoxShadow || 'none';
-        container.style.borderRadius = focusRadius || '';
+
+        container.style.border = focusBorder || blurBorder || '1px solid transparent';
+        container.style.boxShadow = focusBoxShadow || blurBoxShadow || 'none';
+        container.style.borderRadius = focusRadius || blurRadius || '';
+
+
       }
     });
 
     iframe.addEventListener('blur', () => {
       if (container) {
-        container.style.border = 'none';
-        container.style.boxShadow = 'none';
+
+        container.style.border = blurBorder || 'none';
+        container.style.boxShadow = blurBoxShadow || 'none';
+        container.style.borderRadius = blurRadius || '';
+
       }
     });
   });
