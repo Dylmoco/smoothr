@@ -219,49 +219,53 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
       supabase.auth.setSession({ access_token, refresh_token });
     }
     document
-      .querySelectorAll('form[data-smoothr="password-reset-confirm"]')
-      .forEach(form => {
+      .querySelectorAll('[data-smoothr="password-reset-confirm"]')
+      .forEach(trigger => {
+        const form =
+          trigger.closest?.('[data-smoothr="auth-form"]') ||
+          findMessageContainer(trigger, '[data-smoothr="auth-form"]');
+        if (!form) return;
         const passwordInput = form.querySelector('[data-smoothr="password"]');
         if (passwordInput && passwordInput.addEventListener) {
           passwordInput.addEventListener('input', () => {
             updateStrengthMeter(form, passwordInput.value);
           });
         }
-        form.addEventListener && form.addEventListener('submit', async evt => {
-          evt.preventDefault();
-          const confirmInput = form.querySelector('[data-smoothr="password-confirm"]');
-          const password = passwordInput?.value || '';
-          const confirm = confirmInput?.value || '';
-          if (passwordStrength(password) < 3) {
-            showError(form, 'Weak password', passwordInput, form);
-            return;
-          }
-          if (password !== confirm) {
-            showError(form, 'Passwords do not match', confirmInput, form);
-            return;
-          }
-          const submitBtn = form.querySelector('[type="submit"]');
-          setLoading(submitBtn, true);
-          try {
-            const { data, error } = await supabase.auth.updateUser({ password });
-            if (error) {
-              showError(form, error.message || 'Password update failed', submitBtn, form);
-            } else {
-              if (typeof window !== 'undefined') {
-                window.smoothr = window.smoothr || {};
-                window.smoothr.auth = { user: data.user || null };
-              }
-              showSuccess(form, 'Password updated', form);
-              setTimeout(() => {
-                window.location.href = redirectTo;
-              }, 1000);
+        trigger.addEventListener &&
+          trigger.addEventListener('click', async evt => {
+            evt.preventDefault();
+            const confirmInput = form.querySelector('[data-smoothr="password-confirm"]');
+            const password = passwordInput?.value || '';
+            const confirm = confirmInput?.value || '';
+            if (passwordStrength(password) < 3) {
+              showError(form, 'Weak password', passwordInput, trigger);
+              return;
             }
-          } catch (err) {
-            showError(form, err.message || 'Password update failed', submitBtn, form);
-          } finally {
-            setLoading(submitBtn, false);
-          }
-        });
+            if (password !== confirm) {
+              showError(form, 'Passwords do not match', confirmInput, trigger);
+              return;
+            }
+            setLoading(trigger, true);
+            try {
+              const { data, error } = await supabase.auth.updateUser({ password });
+              if (error) {
+                showError(form, error.message || 'Password update failed', trigger, trigger);
+              } else {
+                if (typeof window !== 'undefined') {
+                  window.smoothr = window.smoothr || {};
+                  window.smoothr.auth = { user: data.user || null };
+                }
+                showSuccess(form, 'Password updated', trigger);
+                setTimeout(() => {
+                  window.location.href = redirectTo;
+                }, 1000);
+              }
+            } catch (err) {
+              showError(form, err.message || 'Password update failed', trigger, trigger);
+            } finally {
+              setLoading(trigger, false);
+            }
+          });
       });
   });
 }
