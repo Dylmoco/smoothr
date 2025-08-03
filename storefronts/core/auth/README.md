@@ -48,14 +48,14 @@ Markup example:
 
 ```html
 <form data-smoothr="login-form">
-  <input type="email" data-smoothr-input="email" />
-  <input type="password" data-smoothr-input="password" />
+  <input type="email" data-smoothr="email" />
+  <input type="password" data-smoothr="password" />
   <div data-smoothr="login">Sign In</div>
 </form>
 <form data-smoothr="signup">
-  <input type="email" data-smoothr-input="email" />
-  <input type="password" data-smoothr-input="password" />
-  <input type="password" data-smoothr-input="password-confirm" />
+  <input type="email" data-smoothr="email" />
+  <input type="password" data-smoothr="password" />
+  <input type="password" data-smoothr="password-confirm" />
   <div data-smoothr-password-strength></div>
   <div data-smoothr-error hidden></div>
   <div data-smoothr-success hidden></div>
@@ -115,8 +115,8 @@ container. The SDK automatically attaches handlers on page load and uses a
 
 ```html
 <form data-smoothr="password-reset-confirm">
-  <input type="password" data-smoothr-input="password" />
-  <input type="password" data-smoothr-input="password-confirm" />
+  <input type="password" data-smoothr="password" />
+  <input type="password" data-smoothr="password-confirm" />
   <button type="submit">Set new password</button>
 </form>
 ```
@@ -179,7 +179,7 @@ NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
 
 ```html
 <form data-smoothr="password-reset">
-  <input type="email" data-smoothr-input="email" />
+  <input type="email" data-smoothr="email" />
   <button type="submit">Send reset link</button>
 </form>
 ```
@@ -188,8 +188,8 @@ NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
 
 ```html
 <form data-smoothr="password-reset-confirm">
-  <input type="password" data-smoothr-input="password" />
-  <input type="password" data-smoothr-input="password-confirm" />
+  <input type="password" data-smoothr="password" />
+  <input type="password" data-smoothr="password-confirm" />
   <button type="submit">Set new password</button>
 </form>
 <script type="module">

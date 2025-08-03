@@ -50,9 +50,9 @@ describe("login form", () => {
         if (ev === "submit") submitHandler = cb;
       }),
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr-input="email"]')
+        if (sel === '[data-smoothr="email"]')
           return { value: emailValue };
-        if (sel === '[data-smoothr-input="password"]')
+        if (sel === '[data-smoothr="password"]')
           return { value: passwordValue };
         if (sel === '[data-smoothr="login"]') return btn;
         return null;

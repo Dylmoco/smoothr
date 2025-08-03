@@ -85,8 +85,8 @@ describe("dynamic DOM bindings", () => {
     const passwordInput = { value: "Password1" };
     const form = {
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr-input="email"]') return emailInput;
-        if (sel === '[data-smoothr-input="password"]') return passwordInput;
+        if (sel === '[data-smoothr="email"]') return emailInput;
+        if (sel === '[data-smoothr="password"]') return passwordInput;
         return null;
       }),
     };
@@ -126,9 +126,9 @@ describe("dynamic DOM bindings", () => {
     const confirmInput = { value: "Password1" };
     const form = {
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr-input="email"]') return emailInput;
-        if (sel === '[data-smoothr-input="password"]') return passwordInput;
-        if (sel === '[data-smoothr-input="password-confirm"]')
+        if (sel === '[data-smoothr="email"]') return emailInput;
+        if (sel === '[data-smoothr="password"]') return passwordInput;
+        if (sel === '[data-smoothr="password-confirm"]')
           return confirmInput;
         if (sel === '[type="submit"]') return {};
         return null;
@@ -232,7 +232,7 @@ describe("dynamic DOM bindings", () => {
     };
     const form = {
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr-input="email"]') return emailInput;
+        if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === "[data-smoothr-success]") return successEl;
         if (sel === "[data-smoothr-error]") return errorEl;
         if (sel === '[type="submit"]') return {};

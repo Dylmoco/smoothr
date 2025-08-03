@@ -57,7 +57,7 @@ describe("password reset request", () => {
         if (ev === "submit") submitHandler = cb;
       }),
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr-input="email"]')
+        if (sel === '[data-smoothr="email"]')
           return { value: emailValue };
         return null;
       }),

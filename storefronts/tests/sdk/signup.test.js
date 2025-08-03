@@ -54,11 +54,11 @@ describe("signup flow", () => {
         if (ev === "submit") submitHandler = cb;
       }),
       querySelector: vi.fn((selector) => {
-        if (selector === '[data-smoothr-input="email"]')
+        if (selector === '[data-smoothr="email"]')
           return { value: emailValue };
-        if (selector === '[data-smoothr-input="password"]')
+        if (selector === '[data-smoothr="password"]')
           return { value: passwordValue };
-        if (selector === '[data-smoothr-input="password-confirm"]')
+        if (selector === '[data-smoothr="password-confirm"]')
           return { value: confirmValue };
         return null;
       }),
