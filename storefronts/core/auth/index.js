@@ -57,8 +57,8 @@ function bindAuthElements(root = document) {
           evt.preventDefault();
           const targetForm = form;
           if (!targetForm) return;
-          const email = targetForm.querySelector('[data-smoothr-input="email"]');
-          const passwordInput = targetForm.querySelector('[data-smoothr-input="password"]');
+          const email = targetForm.querySelector('[data-smoothr="email"]');
+          const passwordInput = targetForm.querySelector('[data-smoothr="password"]');
           const emailVal = email?.value || '';
           const password = passwordInput?.value || '';
           if (!isValidEmail(emailVal)) {
@@ -104,7 +104,7 @@ function bindAuthElements(root = document) {
       }
       case 'signup': {
         if (form) {
-          const passwordInput = form.querySelector('[data-smoothr-input="password"]');
+          const passwordInput = form.querySelector('[data-smoothr="password"]');
           if (passwordInput && passwordInput.addEventListener) {
             passwordInput.addEventListener('input', () => {
               updateStrengthMeter(form, passwordInput.value);
@@ -115,9 +115,9 @@ function bindAuthElements(root = document) {
           evt.preventDefault();
           const targetForm = form;
           if (!targetForm) return;
-          const emailInput = targetForm.querySelector('[data-smoothr-input="email"]');
-          const passwordInput = targetForm.querySelector('[data-smoothr-input="password"]');
-          const confirmInput = targetForm.querySelector('[data-smoothr-input="password-confirm"]');
+          const emailInput = targetForm.querySelector('[data-smoothr="email"]');
+          const passwordInput = targetForm.querySelector('[data-smoothr="password"]');
+          const confirmInput = targetForm.querySelector('[data-smoothr="password-confirm"]');
           const email = emailInput?.value || '';
           const password = passwordInput?.value || '';
           const confirm = confirmInput?.value || '';
@@ -164,7 +164,7 @@ function bindAuthElements(root = document) {
           evt.preventDefault();
           const targetForm = form;
           if (!targetForm) return;
-          const emailInput = targetForm.querySelector('[data-smoothr-input="email"]');
+          const emailInput = targetForm.querySelector('[data-smoothr="email"]');
           const email = emailInput?.value || '';
           if (!isValidEmail(email)) {
             showError(targetForm, 'Enter a valid email address', emailInput, el);
