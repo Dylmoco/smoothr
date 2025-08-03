@@ -83,7 +83,7 @@ describe("login form", () => {
       }),
       querySelectorAll: vi.fn((sel) => {
         if (sel.includes('[data-smoothr="login"]')) return [btn];
-        if (sel.includes('form[data-smoothr="login-form"]')) return [form];
+        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
       dispatchEvent: vi.fn(),

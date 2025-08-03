@@ -32,7 +32,7 @@ function bindAuthElements(root = document) {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
 
-    const form = el.closest('[data-smoothr="login-form"]');
+    const form = el.closest('[data-smoothr="auth-form"]');
     if (form && !form.dataset?.smoothrBoundLoginSubmit) {
       safeSetDataset(form, 'smoothrBoundLoginSubmit', '1');
       form.addEventListener &&
