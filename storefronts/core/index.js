@@ -11,7 +11,7 @@ import * as orders from './orders/index.js';
 import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
-import * as auth from './auth/index.js';
+import auth from './auth/index.js';
 import * as stripeGateway from '../checkout/gateways/stripe.js';
 
 import { fetchExchangeRates } from './currency/live-rates.js';
@@ -161,7 +161,6 @@ export default Smoothr;
     }
 
     window.Smoothr = Smoothr;
-    window.smoothr = window.smoothr || Smoothr;
     window.smoothr = window.smoothr || {};
     window.smoothr.auth = auth;
     window.smoothr.supabase = supabase;
@@ -183,7 +182,7 @@ export default Smoothr;
       initCartBindings();
     });
 
-    Promise.resolve(auth.initAuth()).then(() => {
+    auth.initAuth().then(() => {
       if (window.smoothr?.auth?.user?.value) {
         orders.renderOrders();
       }
