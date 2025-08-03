@@ -47,7 +47,7 @@ initAuth();
 Markup example:
 
 ```html
-<form data-smoothr="login-form">
+<form data-smoothr="auth-form">
   <input type="email" data-smoothr="email" />
   <input type="password" data-smoothr="password" />
   <div data-smoothr="login">Sign In</div>
