@@ -311,6 +311,27 @@ function bindAuthElements(root = document) {
       }
     }
   });
+
+  document.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
+    if (el.dataset.smoothrBoundAuth) return;
+    safeSetDataset(el, 'smoothrBoundAuth', '1');
+
+    el.addEventListener('click', async evt => {
+      evt.preventDefault();
+      const currentUser = window.smoothr?.auth?.user?.value;
+      if (currentUser) {
+        const url = (await lookupDashboardHomeUrl()) || '/';
+        window.location.href = url;
+      } else {
+        const target = document.querySelector('[data-smoothr="auth-wrapper"]');
+        (target || document).dispatchEvent(
+          new CustomEvent('smoothr:open-auth', {
+            detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
+          })
+        );
+      }
+    });
+  });
 }
 
 function bindSignOutButtons() {

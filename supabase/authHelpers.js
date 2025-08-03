@@ -182,7 +182,10 @@ export function initAuth() {
     bindAuthElements();
     bindSignOutButtons();
     if (typeof MutationObserver !== 'undefined') {
-      const observer = new MutationObserver(() => bindAuthElements());
+      const observer = new MutationObserver(() => {
+        bindAuthElements();
+        bindSignOutButtons();
+      });
       observer.observe(document.body, { childList: true, subtree: true });
     }
   });
