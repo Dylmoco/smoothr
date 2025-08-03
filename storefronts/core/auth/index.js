@@ -318,8 +318,8 @@ function bindAuthElements(root = document) {
 
     el.addEventListener('click', async evt => {
       evt.preventDefault();
-      const currentUser = window.smoothr?.auth?.user?.value;
-      if (currentUser) {
+      const userRef = window.smoothr?.auth?.user;
+      if (userRef?.value !== null) {
         const url = (await lookupDashboardHomeUrl()) || '/';
         window.location.href = url;
       } else {
