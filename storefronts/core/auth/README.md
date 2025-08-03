@@ -75,9 +75,10 @@ Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
 ## `[data-smoothr]` attributes
 
 Any element with a `[data-smoothr]` attribute can trigger an action. Place the
-required inputs (for example email and password fields) inside a parent form or
-container. The SDK automatically attaches handlers on page load and uses a
-`MutationObserver` so elements added later are also bound.
+required inputs (for example fields marked `[data-smoothr="email"]` and
+`[data-smoothr="password"]`) inside a parent form or container. The SDK
+automatically attaches handlers on page load and uses a `MutationObserver` so
+elements added later are also bound.
 
 ### `[data-smoothr="login"]`
 
@@ -123,9 +124,10 @@ container. The SDK automatically attaches handlers on page load and uses a
 
 ## Signup
 
-Attach `[data-smoothr="signup"]` to a form containing `email`, `password` and a
-matching `password-confirm` input. A strength meter element labelled
-`[data-smoothr-password-strength]` is optional but recommended. The SDK
+Attach `[data-smoothr="signup"]` to a form containing `[data-smoothr="email"]`,
+`[data-smoothr="password"]` and a matching `[data-smoothr="password-confirm"]`
+input. A strength meter element labelled `[data-smoothr-password-strength]` is
+optional but recommended. The SDK
 validates email format, requires a strong password and ensures both password
 fields match. When the signup succeeds a confirmation message is shown and the
 user is redirected after a short delay.
