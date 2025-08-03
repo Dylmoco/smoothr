@@ -210,7 +210,7 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
     document
       .querySelectorAll('form[data-smoothr="password-reset-confirm"]')
       .forEach(form => {
-        const passwordInput = form.querySelector('[data-smoothr-input="password"]');
+        const passwordInput = form.querySelector('[data-smoothr="password"]');
         if (passwordInput && passwordInput.addEventListener) {
           passwordInput.addEventListener('input', () => {
             updateStrengthMeter(form, passwordInput.value);
@@ -218,7 +218,7 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
         }
         form.addEventListener && form.addEventListener('submit', async evt => {
           evt.preventDefault();
-          const confirmInput = form.querySelector('[data-smoothr-input="password-confirm"]');
+          const confirmInput = form.querySelector('[data-smoothr="password-confirm"]');
           const password = passwordInput?.value || '';
           const confirm = confirmInput?.value || '';
           if (passwordStrength(password) < 3) {

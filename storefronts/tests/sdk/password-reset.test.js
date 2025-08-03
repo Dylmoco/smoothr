@@ -130,9 +130,8 @@ describe("password reset confirmation", () => {
         if (ev === "submit") submitHandler = cb;
       }),
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr-input="password"]') return passwordInputObj;
-        if (sel === '[data-smoothr-input="password-confirm"]')
-          return confirmInputObj;
+        if (sel === '[data-smoothr="password"]') return passwordInputObj;
+        if (sel === '[data-smoothr="password-confirm"]') return confirmInputObj;
         return null;
       }),
     };
