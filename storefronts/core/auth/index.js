@@ -28,8 +28,64 @@ function safeSetDataset(el, key, val) {
 }
 
 function bindAuthElements(root = document) {
+  document.querySelectorAll('[data-smoothr="login"]').forEach(el => {
+    if (el.dataset.smoothrBoundAuth) return;
+    safeSetDataset(el, 'smoothrBoundAuth', '1');
+
+    const form = el.closest('[data-smoothr="login-form"]');
+    if (form && !form.dataset?.smoothrBoundLoginSubmit) {
+      safeSetDataset(form, 'smoothrBoundLoginSubmit', '1');
+      form.addEventListener &&
+        form.addEventListener('submit', evt => {
+          evt.preventDefault();
+          el.dispatchEvent &&
+            el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+        });
+    }
+
+    el.addEventListener &&
+      el.addEventListener('click', async evt => {
+        evt.preventDefault();
+        const targetForm = form;
+        if (!targetForm) return;
+        const emailInput = targetForm.querySelector('[data-smoothr="email"]');
+        const passwordInput = targetForm.querySelector('[data-smoothr="password"]');
+        const emailVal = emailInput?.value || '';
+        const password = passwordInput?.value || '';
+        if (!isValidEmail(emailVal)) {
+          showError(targetForm, 'Enter a valid email address', emailInput, el);
+          return;
+        }
+        setLoading(el, true);
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: emailVal,
+            password
+          });
+          if (!error) {
+            if (typeof window !== 'undefined') {
+              window.smoothr = window.smoothr || {};
+              window.smoothr.auth = { user: data.user || null };
+            }
+            showSuccess(targetForm, 'Logged in, redirecting...', el);
+            document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+            const url = await lookupRedirectUrl('login');
+            setTimeout(() => {
+              window.location.href = url;
+            }, 1000);
+          } else {
+            showError(targetForm, error.message || 'Invalid credentials', emailInput, el);
+          }
+        } catch (err) {
+          showError(targetForm, err.message || 'Network error', emailInput, el);
+        } finally {
+          setLoading(el, false);
+        }
+      });
+  });
+
   const selector =
-    '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+    '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
   root.querySelectorAll(selector).forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
@@ -44,57 +100,6 @@ function bindAuthElements(root = document) {
     const form = el.tagName === 'FORM' ? el : el.closest('form');
 
     switch (type) {
-      case 'login': {
-        if (form && el !== form && !form.dataset?.smoothrBoundLoginSubmit) {
-          safeSetDataset(form, 'smoothrBoundLoginSubmit', '1');
-          form.addEventListener && form.addEventListener('submit', evt => {
-            evt.preventDefault();
-            el.dispatchEvent &&
-              el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
-          });
-        }
-        attach(async evt => {
-          evt.preventDefault();
-          const targetForm = form;
-          if (!targetForm) return;
-          const email = targetForm.querySelector('[data-smoothr="email"]');
-          const passwordInput = targetForm.querySelector('[data-smoothr="password"]');
-          const emailVal = email?.value || '';
-          const password = passwordInput?.value || '';
-          if (!isValidEmail(emailVal)) {
-            showError(targetForm, 'Enter a valid email address', email, el);
-            return;
-          }
-          setLoading(el, true);
-          try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email: emailVal,
-              password
-            });
-            if (!error) {
-              if (typeof window !== 'undefined') {
-                window.smoothr = window.smoothr || {};
-                window.smoothr.auth = { user: data.user || null };
-              }
-              showSuccess(targetForm, 'Logged in, redirecting...', el);
-              document.dispatchEvent(
-                new CustomEvent('smoothr:login', { detail: data })
-              );
-              const url = await lookupRedirectUrl('login');
-              setTimeout(() => {
-                window.location.href = url;
-              }, 1000);
-            } else {
-              showError(targetForm, error.message || 'Invalid credentials', email, el);
-            }
-          } catch (err) {
-            showError(targetForm, err.message || 'Network error', email, el);
-          } finally {
-            setLoading(el, false);
-          }
-        });
-        break;
-      }
       case 'login-google': {
         attach(async evt => {
           evt.preventDefault();
