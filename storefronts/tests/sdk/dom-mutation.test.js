@@ -44,6 +44,7 @@ function flushPromises() {
 const LOGIN_SELECTOR = '[data-smoothr="login"]';
 const OTHER_SELECTOR =
   '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
+const ACCOUNT_ACCESS_SELECTOR = '[data-smoothr="account-access"]';
 
 describe("dynamic DOM bindings", () => {
   let mutationCallback;
@@ -51,6 +52,7 @@ describe("dynamic DOM bindings", () => {
   let forms;
   let doc;
   let win;
+  let authWrapper;
 
   beforeEach(() => {
     elements = [];
@@ -63,6 +65,7 @@ describe("dynamic DOM bindings", () => {
       observe() {}
       disconnect() {}
     };
+    authWrapper = { dispatchEvent: vi.fn() };
     doc = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
@@ -72,7 +75,14 @@ describe("dynamic DOM bindings", () => {
           return elements.filter(el => el.dataset?.smoothr === "login");
         }
         if (selector === OTHER_SELECTOR) {
-          return elements.filter(el => el.dataset?.smoothr !== "login");
+          return elements.filter(el =>
+            ["signup", "login-google", "login-apple", "password-reset"].includes(
+              el.dataset?.smoothr
+            )
+          );
+        }
+        if (selector === ACCOUNT_ACCESS_SELECTOR) {
+          return elements.filter(el => el.dataset?.smoothr === "account-access");
         }
         if (selector === 'form[data-smoothr="auth-form"]') {
           return forms;
@@ -80,6 +90,9 @@ describe("dynamic DOM bindings", () => {
         if (selector === '[data-smoothr="sign-out"]') return [];
         return [];
       }),
+      querySelector: vi.fn(sel =>
+        sel === '[data-smoothr="auth-wrapper"]' ? authWrapper : null
+      ),
       dispatchEvent: vi.fn(),
     };
     win = {
@@ -350,5 +363,31 @@ describe("dynamic DOM bindings", () => {
     expect(errorEl.removeAttribute).toHaveBeenCalledWith("hidden");
     expect(errorEl.hidden).toBeUndefined();
     expect(errorEl.style.display).toBe("");
+  });
+
+  it("binds newly added account-access elements and dispatches open-auth", async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+    let clickHandler;
+    const btn = {
+      tagName: "DIV",
+      dataset: { smoothr: "account-access" },
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") clickHandler = cb;
+      }),
+    };
+
+    auth.initAuth();
+    await flushPromises();
+    elements.push(btn);
+    mutationCallback();
+    expect(btn.addEventListener).toHaveBeenCalled();
+
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(doc.querySelector).toHaveBeenCalledWith('[data-smoothr="auth-wrapper"]');
+    expect(authWrapper.dispatchEvent).toHaveBeenCalled();
+    const evt = authWrapper.dispatchEvent.mock.calls[0][0];
+    expect(evt.type).toBe("smoothr:open-auth");
+    expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-wrapper"]');
   });
 });
