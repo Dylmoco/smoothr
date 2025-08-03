@@ -162,6 +162,8 @@ export default Smoothr;
 
     window.Smoothr = Smoothr;
     window.smoothr = window.smoothr || Smoothr;
+    window.smoothr = window.smoothr || {};
+    window.smoothr.auth = auth;
     window.smoothr.supabase = supabase;
 
     // Optional helpers for DevTools
