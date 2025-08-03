@@ -1,7 +1,7 @@
 # auth
 
 Authentication utilities powered by Supabase. Attach `[data-smoothr]`
-attributes to trigger login and logout from any storefront.
+attributes to trigger login and sign-out from any storefront.
 
 > **Why use a `div` for the login button?**
 > Webflow blocks password form submissions on `.webflow.io` domains. By never
@@ -10,12 +10,12 @@ attributes to trigger login and logout from any storefront.
 
 ## Redirect lookup
 
-After a successful login or logout the SDK queries the `stores` table in
+After a successful login or sign-out the SDK queries the `stores` table in
 Supabase to find redirect URLs for the current domain. It matches on the
 `store_domain` column, normalizing `window.location.hostname` by stripping
 `www.` and lowercasing.
 
-If a row exists, it uses the `login_redirect_url` or `logout_redirect_url`
+If a row exists, it uses the `login_redirect_url` or `sign-out_redirect_url`
 columns. If nothing is configured or the domain is not found, the user is
 redirected to the site root (`/` or `window.location.origin`).
 
@@ -23,7 +23,7 @@ Required columns in the `stores` table:
 
 - `store_domain` – domain of the storefront
 - `login_redirect_url` – URL to redirect after login
-- `logout_redirect_url` – URL to redirect after logout
+- `sign-out_redirect_url` – URL to redirect after sign-out
 
 
 ## Usage
@@ -62,7 +62,8 @@ Markup example:
   <button type="submit">Create Account</button>
 </form>
 <div data-smoothr="login-google">Sign in with Google</div>
-<div data-smoothr="logout">Logout</div>
+<div data-smoothr="login-apple">Sign in with Apple</div>
+<div data-smoothr="sign-out">Logout</div>
 ```
 
 Error and success containers (`[data-smoothr-error]` and `[data-smoothr-success]`)
@@ -70,7 +71,7 @@ can live anywhere near the element that triggers the action. The SDK walks up
 the DOM from the clicked element to find the closest container before falling
 back to `alert()` and logging a message to the console if none exists.
 
-Both flows dispatch `smoothr:login` and `smoothr:logout` DOM events.
+Both flows dispatch `smoothr:login` and `smoothr:sign-out` DOM events.
 
 ## `[data-smoothr]` attributes
 
@@ -100,10 +101,16 @@ elements added later are also bound.
 <button data-smoothr="login-google">Sign in with Google</button>
 ```
 
-### `[data-smoothr="logout"]`
+### `[data-smoothr="login-apple"]`
 
 ```html
-<a href="#" data-smoothr="logout">Logout</a>
+<button data-smoothr="login-apple">Sign in with Apple</button>
+```
+
+### `[data-smoothr="sign-out"]`
+
+```html
+<a href="#" data-smoothr="sign-out">Logout</a>
 ```
 
 ### `[data-smoothr="password-reset"]`
