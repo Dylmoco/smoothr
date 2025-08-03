@@ -31,12 +31,14 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
-describe("google login button", () => {
-  let clickHandler;
+describe("OAuth login buttons", () => {
+  let googleClickHandler;
+  let appleClickHandler;
   let store;
 
   beforeEach(() => {
-    clickHandler = undefined;
+    googleClickHandler = undefined;
+    appleClickHandler = undefined;
     store = null;
     global.window = {
       location: { origin: "", href: "", hostname: "" },
@@ -50,37 +52,62 @@ describe("google login button", () => {
       }),
       removeItem: vi.fn(),
     };
+    const googleBtn = {
+      tagName: "DIV",
+      dataset: { smoothr: "login-google" },
+      getAttribute: (attr) =>
+        attr === "data-smoothr" ? "login-google" : null,
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") googleClickHandler = cb;
+      }),
+      closest: vi.fn(() => null),
+    };
+    const appleBtn = {
+      tagName: "DIV",
+      dataset: { smoothr: "login-apple" },
+      getAttribute: (attr) =>
+        attr === "data-smoothr" ? "login-apple" : null,
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") appleClickHandler = cb;
+      }),
+      closest: vi.fn(() => null),
+    };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((selector) => {
-        if (selector.includes('[data-smoothr="login-google"]')) {
-          const btn = {
-            dataset: { smoothr: "login-google" },
-            getAttribute: (attr) =>
-              attr === "data-smoothr" ? "login-google" : null,
-            addEventListener: vi.fn((ev, cb) => {
-              if (ev === "click") clickHandler = cb;
-            }),
-            closest: vi.fn(() => null),
-          };
-          return [btn];
-        }
-        return [];
+        const result = [];
+        if (selector.includes('[data-smoothr="login-google"]')) result.push(googleBtn);
+        if (selector.includes('[data-smoothr="login-apple"]')) result.push(appleBtn);
+        return result;
       }),
     };
   });
 
-  it("triggers Supabase OAuth sign-in", async () => {
+  it("triggers Supabase OAuth sign-in for Google", async () => {
     initAuth();
     await flushPromises();
 
-    await clickHandler({ preventDefault: () => {} });
+    await googleClickHandler({ preventDefault: () => {} });
     await flushPromises();
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: "google",
+      options: { redirectTo: expect.any(String) },
+    });
+    expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
+  });
+
+  it("triggers Supabase OAuth sign-in for Apple", async () => {
+    initAuth();
+    await flushPromises();
+
+    await appleClickHandler({ preventDefault: () => {} });
+    await flushPromises();
+
+    expect(signInWithOAuthMock).toHaveBeenCalledWith({
+      provider: "apple",
       options: { redirectTo: expect.any(String) },
     });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");

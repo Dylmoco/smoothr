@@ -48,15 +48,18 @@ describe("password reset request", () => {
   beforeEach(() => {
     emailValue = "user@example.com";
     clickHandler = undefined;
+    let btn;
     const form = {
       dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]')
           return { value: emailValue };
+        if (sel === '[data-smoothr="password-reset"]') return btn;
         return null;
       }),
     };
-    const btn = {
+    btn = {
+      tagName: "DIV",
       dataset: { smoothr: "password-reset" },
       getAttribute: (attr) =>
         attr === "data-smoothr" ? "password-reset" : null,
@@ -74,9 +77,11 @@ describe("password reset request", () => {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
       }),
-      querySelectorAll: vi.fn((sel) =>
-        sel.includes('[data-smoothr="password-reset"]') ? [btn] : [],
-      ),
+      querySelectorAll: vi.fn((sel) => {
+        if (sel.includes('[data-smoothr="password-reset"]')) return [btn];
+        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
+        return [];
+      }),
     };
     global.alert = global.window.alert = vi.fn();
   });
@@ -124,16 +129,19 @@ describe("password reset confirmation", () => {
       addEventListener: vi.fn(),
     };
     confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
+    let btn;
     const form = {
       dataset: { smoothr: "auth-form" },
       tagName: "FORM",
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="password"]') return passwordInputObj;
         if (sel === '[data-smoothr="password-confirm"]') return confirmInputObj;
+        if (sel === '[data-smoothr="password-reset-confirm"]') return btn;
         return null;
       }),
     };
-    const btn = {
+    btn = {
+      tagName: "DIV",
       dataset: { smoothr: "password-reset-confirm" },
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
@@ -149,9 +157,11 @@ describe("password reset confirmation", () => {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
       }),
-      querySelectorAll: vi.fn((sel) =>
-        sel.includes('[data-smoothr="password-reset-confirm"]') ? [btn] : [],
-      ),
+      querySelectorAll: vi.fn((sel) => {
+        if (sel.includes('[data-smoothr="password-reset-confirm"]')) return [btn];
+        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
+        return [];
+      }),
     };
     global.alert = global.window.alert = vi.fn();
   });

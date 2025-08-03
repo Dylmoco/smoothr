@@ -34,33 +34,30 @@ function flushPromises() {
 
 describe("login with immutable dataset", () => {
   let clickHandler;
-  let submitHandler;
   let emailValue;
   let passwordValue;
-  let btn;
+  let loginTrigger;
 
   beforeEach(() => {
     clickHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";
-    submitHandler = undefined;
 
     const form = {
-      dataset: {},
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "submit") submitHandler = cb;
-      }),
+      dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]')
           return { value: emailValue };
         if (sel === '[data-smoothr="password"]')
           return { value: passwordValue };
+        if (sel === '[data-smoothr="login"]') return loginTrigger;
         return null;
       }),
     };
     Object.freeze(form.dataset);
 
-    btn = {
+    loginTrigger = {
+      tagName: "DIV",
       closest: vi.fn(() => form),
       dataset: { smoothr: "login" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
@@ -69,11 +66,7 @@ describe("login with immutable dataset", () => {
       }),
       textContent: "Login",
     };
-    Object.freeze(btn.dataset);
-
-    form.addEventListener.mockImplementation((ev, cb) => {
-      if (ev === "submit") cb({ preventDefault: () => {} });
-    });
+    Object.freeze(loginTrigger.dataset);
 
     global.window = {
       location: { href: "" },
@@ -85,7 +78,7 @@ describe("login with immutable dataset", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) => {
-        if (sel.includes('[data-smoothr="login"]')) return [btn];
+        if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
         if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
@@ -98,7 +91,7 @@ describe("login with immutable dataset", () => {
     auth.initAuth();
     await flushPromises();
 
-    expect(btn.dataset.smoothrBoundAuth).toBeUndefined();
+    expect(loginTrigger.dataset.smoothrBoundAuth).toBeUndefined();
 
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
