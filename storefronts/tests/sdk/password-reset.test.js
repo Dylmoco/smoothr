@@ -42,25 +42,28 @@ function flushPromises() {
 }
 
 describe("password reset request", () => {
-  let submitHandler;
+  let clickHandler;
   let emailValue;
 
   beforeEach(() => {
     emailValue = "user@example.com";
-    submitHandler = undefined;
+    clickHandler = undefined;
     const form = {
-      dataset: { smoothr: "password-reset" },
-      tagName: "FORM",
-      getAttribute: (attr) =>
-        attr === "data-smoothr" ? "password-reset" : null,
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "submit") submitHandler = cb;
-      }),
+      dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]')
           return { value: emailValue };
         return null;
       }),
+    };
+    const btn = {
+      dataset: { smoothr: "password-reset" },
+      getAttribute: (attr) =>
+        attr === "data-smoothr" ? "password-reset" : null,
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") clickHandler = cb;
+      }),
+      closest: vi.fn(() => form),
     };
     global.window = {
       location: { href: "", origin: "" },
@@ -72,7 +75,7 @@ describe("password reset request", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) =>
-        sel.includes('[data-smoothr="password-reset"]') ? [form] : [],
+        sel.includes('[data-smoothr="password-reset"]') ? [btn] : [],
       ),
     };
     global.alert = global.window.alert = vi.fn();
@@ -82,7 +85,7 @@ describe("password reset request", () => {
     resetPasswordMock.mockResolvedValue({ data: {}, error: null });
     auth.initAuth();
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(resetPasswordMock).toHaveBeenCalledWith("user@example.com", {
       redirectTo: "",
@@ -97,7 +100,7 @@ describe("password reset request", () => {
     });
     auth.initAuth();
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.alert).toHaveBeenCalled();
   });
