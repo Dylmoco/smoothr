@@ -184,7 +184,7 @@ export default Smoothr;
     });
 
     Promise.resolve(auth.initAuth()).then(() => {
-      if (window.smoothr?.auth?.user) {
+      if (window.smoothr?.auth?.user?.value) {
         orders.renderOrders();
       }
     });

@@ -62,11 +62,11 @@ describe("global auth", () => {
 
     initAuth();
     await flushPromises();
-    expect(global.window.smoothr.auth.user).toEqual(user);
+    expect(global.window.smoothr.auth.user.value).toEqual(user);
 
     getUserMock.mockResolvedValueOnce({ data: { user: null } });
     await signOutHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.window.smoothr.auth.user).toBeNull();
+    expect(global.window.smoothr.auth.user.value).toBeNull();
   });
 });

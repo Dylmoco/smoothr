@@ -129,7 +129,7 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(global.window.smoothr.auth.user).toEqual(user);
+    expect(global.window.smoothr.auth.user.value).toEqual(user);
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
     expect(evt.type).toBe("smoothr:login");
@@ -174,7 +174,7 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(global.window.smoothr.auth.user).toEqual(user);
+    expect(global.window.smoothr.auth.user.value).toEqual(user);
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
     expect(evt.type).toBe("smoothr:login");

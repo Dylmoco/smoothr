@@ -144,7 +144,7 @@ export async function initCheckout(config) {
         (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0) * 100
       );
       const currency = window.SMOOTHR_CONFIG.baseCurrency;
-      const customer_id = window.smoothr.auth.user?.id || null;
+      const customer_id = window.smoothr.auth.user?.value?.id || null;
       const store_id = window.SMOOTHR_CONFIG.storeId;
       const platform = window.SMOOTHR_CONFIG.platform;
 

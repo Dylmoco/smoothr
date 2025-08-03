@@ -221,6 +221,6 @@ describe("password reset confirmation", () => {
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.window.smoothr.auth.user).toEqual(user);
+    expect(global.window.smoothr.auth.user.value).toEqual(user);
   });
 });
