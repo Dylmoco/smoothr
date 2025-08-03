@@ -182,12 +182,12 @@ and the final redirect is determined by the store settings described earlier.
 ## Accessing the current user
 
 `initAuth()` retrieves the existing session and exposes it on
-`window.smoothr.auth.user`. The value is `null` if no user is logged in.
+`window.smoothr.auth.user.value`. The value is `null` if no user is logged in.
 After `initAuth()` resolves (or after automatic initialization when loading
 the SDK) you can check whether someone is logged in by reading:
 
 ```javascript
-window.smoothr?.auth?.user !== null
+window.smoothr?.auth?.user?.value !== null
 ```
 
 This property is `undefined` before initialization, so ensure `initAuth()` has

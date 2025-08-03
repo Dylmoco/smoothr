@@ -1,10 +1,8 @@
 import { supabase } from '../../../shared/supabase/browserClient';
 import {
-  initAuth,
-  initPasswordResetConfirmation,
+  initAuth as initAuthHelper,
   signInWithGoogle,
   signInWithApple,
-  signUp,
   requestPasswordReset,
   lookupRedirectUrl,
   normalizeDomain,
@@ -14,16 +12,145 @@ import {
   setLoading,
   showError,
   showSuccess,
-  registerDOMBindings
+  registerDOMBindings,
+  findMessageContainer
 } from '../../../supabase/authHelpers.js';
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
+// minimal reactive ref implementation
+function ref(val) {
+  return { value: val };
+}
+
+const user = ref(null);
+
+async function login(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+  if (!error) {
+    user.value = data.user || null;
+    if (typeof window !== 'undefined') {
+      window.smoothr = window.smoothr || {};
+      window.smoothr.auth = auth;
+    }
+  }
+  return { data, error };
+}
+
+async function signup(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (!error) {
+    user.value = data.user || null;
+    if (typeof window !== 'undefined') {
+      window.smoothr = window.smoothr || {};
+      window.smoothr.auth = auth;
+    }
+  }
+  return { data, error };
+}
+
+async function resetPassword(email) {
+  return await requestPasswordReset(email);
+}
+
+async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  const {
+    data: { user: currentUser }
+  } = await supabase.auth.getUser();
+  user.value = currentUser || null;
+  if (typeof window !== 'undefined') {
+    window.smoothr = window.smoothr || {};
+    window.smoothr.auth = auth;
+    if (currentUser) {
+      log(
+        `%c✅ Smoothr Auth: Logged in as ${currentUser.email}`,
+        'color: #22c55e; font-weight: bold;'
+      );
+    } else {
+      log('%c🔒 Smoothr Auth: Not logged in', 'color: #f87171; font-weight: bold;');
+    }
+  }
+  return { error };
+}
+
+async function initAuth(...args) {
+  await initAuthHelper(...args);
+  if (typeof window !== 'undefined') {
+    user.value = window.smoothr?.auth?.user || null;
+    window.smoothr.auth = auth;
+  }
+}
+
+function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    if (access_token && refresh_token) {
+      supabase.auth.setSession({ access_token, refresh_token });
+    }
+    document
+      .querySelectorAll('[data-smoothr="password-reset-confirm"]')
+      .forEach(trigger => {
+        const form =
+          trigger.closest?.('[data-smoothr="auth-form"]') ||
+          findMessageContainer(trigger, '[data-smoothr="auth-form"]');
+        if (!form) return;
+        const passwordInput = form.querySelector('[data-smoothr="password"]');
+        if (passwordInput && passwordInput.addEventListener) {
+          passwordInput.addEventListener('input', () => {
+            updateStrengthMeter(form, passwordInput.value);
+          });
+        }
+        trigger.addEventListener &&
+          trigger.addEventListener('click', async evt => {
+            evt.preventDefault();
+            const confirmInput = form.querySelector('[data-smoothr="password-confirm"]');
+            const password = passwordInput?.value || '';
+            const confirm = confirmInput?.value || '';
+            if (passwordStrength(password) < 3) {
+              showError(form, 'Weak password', passwordInput, trigger);
+              return;
+            }
+            if (password !== confirm) {
+              showError(form, 'Passwords do not match', confirmInput, trigger);
+              return;
+            }
+            setLoading(trigger, true);
+            try {
+              const { data, error } = await supabase.auth.updateUser({ password });
+              if (error) {
+                showError(form, error.message || 'Password update failed', trigger, trigger);
+              } else {
+                user.value = data.user || null;
+                if (typeof window !== 'undefined') {
+                  window.smoothr = window.smoothr || {};
+                  window.smoothr.auth = auth;
+                }
+                showSuccess(form, 'Password updated', trigger);
+                setTimeout(() => {
+                  window.location.href = redirectTo;
+                }, 1000);
+              }
+            } catch (err) {
+              showError(form, err.message || 'Password update failed', trigger, trigger);
+            } finally {
+              setLoading(trigger, false);
+            }
+          });
+      });
+  });
+}
+
 function safeSetDataset(el, key, val) {
   try {
     if (el && el.dataset) el.dataset[key] = val;
-  } catch (err) {
+  } catch {
     // dataset might be readonly
   }
 }
@@ -50,15 +177,8 @@ function bindAuthElements(root = document) {
         }
         setLoading(el, true);
         try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: emailVal,
-            password
-          });
+          const { data, error } = await login(emailVal, password);
           if (!error) {
-            if (typeof window !== 'undefined') {
-              window.smoothr = window.smoothr || {};
-              window.smoothr.auth = { user: data.user || null };
-            }
             showSuccess(targetForm, 'Logged in, redirecting...', el);
             document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
             const url = await lookupRedirectUrl('login');
@@ -132,14 +252,10 @@ function bindAuthElements(root = document) {
           }
           setLoading(el, true);
           try {
-            const { data, error } = await signUp(email, password);
+            const { data, error } = await signup(email, password);
             if (error) {
               showError(targetForm, error.message || 'Signup failed', emailInput, el);
             } else {
-              if (typeof window !== 'undefined') {
-                window.smoothr = window.smoothr || {};
-                window.smoothr.auth = { user: data.user || null };
-              }
               document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
               showSuccess(targetForm, 'Account created! Redirecting...', el);
               const url = await lookupRedirectUrl('login');
@@ -168,7 +284,7 @@ function bindAuthElements(root = document) {
           }
           setLoading(el, true);
           try {
-            const { error } = await requestPasswordReset(email);
+            const { error } = await resetPassword(email);
             if (error) {
               showError(
                 targetForm,
@@ -200,22 +316,9 @@ function bindSignOutButtons() {
   document.querySelectorAll('[data-smoothr="sign-out"]').forEach(btn => {
     btn.addEventListener('click', async evt => {
       evt.preventDefault();
-      const { error } = await supabase.auth.signOut();
+      const { error } = await signOut();
       if (error) {
         log(error);
-      }
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-      if (typeof window !== 'undefined') {
-        window.smoothr = window.smoothr || {};
-        window.smoothr.auth = { user: user || null };
-
-        if (user) {
-          log(`%c✅ Smoothr Auth: Logged in as ${user.email}`, 'color: #22c55e; font-weight: bold;');
-        } else {
-          log('%c🔒 Smoothr Auth: Not logged in', 'color: #f87171; font-weight: bold;');
-        }
       }
       document.dispatchEvent(new CustomEvent('smoothr:sign-out'));
       const url = await lookupRedirectUrl('sign-out');
@@ -226,13 +329,33 @@ function bindSignOutButtons() {
 
 registerDOMBindings(bindAuthElements, bindSignOutButtons);
 
+const auth = {
+  login,
+  signup,
+  resetPassword,
+  signOut,
+  initAuth,
+  user
+};
+
+if (typeof window !== 'undefined') {
+  window.smoothr = window.smoothr || {};
+  window.smoothr.auth = auth;
+}
+
 export {
   initAuth,
   initPasswordResetConfirmation,
   signInWithGoogle,
   signInWithApple,
-  signUp,
-  requestPasswordReset,
   lookupRedirectUrl,
-  normalizeDomain
+  normalizeDomain,
+  login,
+  signup,
+  resetPassword,
+  signOut,
+  user
 };
+
+export default auth;
+

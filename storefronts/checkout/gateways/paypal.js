@@ -112,7 +112,7 @@ export async function mountCardFields() {
         cart,
         total,
         currency,
-        customer_id: window.smoothr?.auth?.user?.id || null,
+        customer_id: window.smoothr?.auth?.user?.value?.id || null,
         platform: window.SMOOTHR_CONFIG?.platform
       };
 
