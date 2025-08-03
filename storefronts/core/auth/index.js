@@ -3,6 +3,7 @@ import {
   initAuth,
   initPasswordResetConfirmation,
   signInWithGoogle,
+  signInWithApple,
   signUp,
   requestPasswordReset,
   lookupRedirectUrl,
@@ -76,7 +77,7 @@ function bindAuthElements(root = document) {
   });
 
   const selector =
-    '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+    '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
   root.querySelectorAll(selector).forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
@@ -88,6 +89,13 @@ function bindAuthElements(root = document) {
         el.addEventListener('click', async evt => {
           evt.preventDefault();
           await signInWithGoogle();
+        });
+        break;
+      }
+      case 'login-apple': {
+        el.addEventListener('click', async evt => {
+          evt.preventDefault();
+          await signInWithApple();
         });
         break;
       }
@@ -188,8 +196,8 @@ function bindAuthElements(root = document) {
   });
 }
 
-function bindLogoutButtons() {
-  document.querySelectorAll('[data-smoothr="logout"]').forEach(btn => {
+function bindSignOutButtons() {
+  document.querySelectorAll('[data-smoothr="sign-out"]').forEach(btn => {
     btn.addEventListener('click', async evt => {
       evt.preventDefault();
       const { error } = await supabase.auth.signOut();
@@ -209,19 +217,20 @@ function bindLogoutButtons() {
           log('%c🔒 Smoothr Auth: Not logged in', 'color: #f87171; font-weight: bold;');
         }
       }
-      document.dispatchEvent(new CustomEvent('smoothr:logout'));
-      const url = await lookupRedirectUrl('logout');
+      document.dispatchEvent(new CustomEvent('smoothr:sign-out'));
+      const url = await lookupRedirectUrl('sign-out');
       window.location.href = url;
     });
   });
 }
 
-registerDOMBindings(bindAuthElements, bindLogoutButtons);
+registerDOMBindings(bindAuthElements, bindSignOutButtons);
 
 export {
   initAuth,
   initPasswordResetConfirmation,
   signInWithGoogle,
+  signInWithApple,
   signUp,
   requestPasswordReset,
   lookupRedirectUrl,

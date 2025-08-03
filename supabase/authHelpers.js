@@ -164,7 +164,7 @@ export function initAuth() {
   });
   document.addEventListener('DOMContentLoaded', () => {
     bindAuthElements();
-    bindLogoutButtons();
+    bindSignOutButtons();
     if (typeof MutationObserver !== 'undefined') {
       const observer = new MutationObserver(() => bindAuthElements());
       observer.observe(document.body, { childList: true, subtree: true });
@@ -180,6 +180,17 @@ export async function signInWithGoogle() {
   }
   await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: { redirectTo: getOAuthRedirectUrl() }
+  });
+}
+
+export async function signInWithApple() {
+  await lookupRedirectUrl('login');
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('smoothr_oauth', '1');
+  }
+  await supabase.auth.signInWithOAuth({
+    provider: 'apple',
     options: { redirectTo: getOAuthRedirectUrl() }
   });
 }
@@ -258,9 +269,9 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
 // Placeholder functions to avoid reference errors. These will be provided by
 // storefront modules at runtime.
 export let bindAuthElements = () => {};
-export let bindLogoutButtons = () => {};
+export let bindSignOutButtons = () => {};
 
-export function registerDOMBindings(bindAuth, bindLogout) {
+export function registerDOMBindings(bindAuth, bindSignOut) {
   bindAuthElements = bindAuth;
-  bindLogoutButtons = bindLogout;
+  bindSignOutButtons = bindSignOut;
 }

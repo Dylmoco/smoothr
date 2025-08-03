@@ -43,7 +43,7 @@ function flushPromises() {
 
 const LOGIN_SELECTOR = '[data-smoothr="login"]';
 const OTHER_SELECTOR =
-  '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+  '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
 
 describe("dynamic DOM bindings", () => {
   let mutationCallback;
@@ -72,7 +72,7 @@ describe("dynamic DOM bindings", () => {
         if (selector === OTHER_SELECTOR) {
           return elements.filter(el => el.dataset?.smoothr !== "login");
         }
-        if (selector === '[data-smoothr="logout"]') return [];
+        if (selector === '[data-smoothr="sign-out"]') return [];
         return [];
       }),
       dispatchEvent: vi.fn(),

@@ -28,10 +28,10 @@ function flushPromises() {
 }
 
 describe("global auth", () => {
-  let logoutHandler;
+  let signOutHandler;
 
   beforeEach(() => {
-    logoutHandler = undefined;
+    signOutHandler = undefined;
     global.window = {
       location: { origin: "", href: "", hostname: "" },
       addEventListener: vi.fn(),
@@ -41,10 +41,10 @@ describe("global auth", () => {
       addEventListener: vi.fn((evt, cb) => cb()),
       dispatchEvent: vi.fn(),
       querySelectorAll: vi.fn((selector) => {
-        if (selector === '[data-smoothr="logout"]') {
+        if (selector === '[data-smoothr="sign-out"]') {
           const btn = {
             addEventListener: vi.fn((event, cb) => {
-              if (event === "click") logoutHandler = cb;
+              if (event === "click") signOutHandler = cb;
             }),
           };
           return [btn];
@@ -63,7 +63,7 @@ describe("global auth", () => {
     expect(global.window.smoothr.auth.user).toEqual(user);
 
     getUserMock.mockResolvedValueOnce({ data: { user: null } });
-    await logoutHandler({ preventDefault: () => {} });
+    await signOutHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.smoothr.auth.user).toBeNull();
   });
