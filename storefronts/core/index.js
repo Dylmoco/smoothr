@@ -162,6 +162,12 @@ export default Smoothr;
 
     window.Smoothr = Smoothr;
     window.smoothr = window.smoothr || Smoothr;
+    window.smoothr.supabase = supabase;
+
+    // Optional helpers for DevTools
+    window.smoothr.getSession = () => supabase.auth.getSession();
+    window.smoothr.getUser = () => supabase.auth.getUser();
+
     window.renderCart = renderCart;
     log('🎨 renderCart registered in SDK');
 
