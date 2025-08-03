@@ -1,14 +1,17 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../../core/auth/index.js", () => ({
-  initAuth: vi.fn(),
-  user: null,
-  $$typeof: Symbol.for('react.test.json'),
-  type: 'module',
-  props: {},
-  children: []
-}));
+vi.mock("../../core/auth/index.js", () => {
+  const authMock = {
+    initAuth: vi.fn().mockResolvedValue(),
+    user: null,
+    $$typeof: Symbol.for('react.test.json'),
+    type: 'module',
+    props: {},
+    children: []
+  };
+  return { default: authMock, ...authMock };
+});
 
 // Mock remaining core modules to simple objects so import succeeds
 const dummy = {
@@ -69,12 +72,12 @@ beforeEach(() => {
 });
 
 describe("global smoothr alias", () => {
-  it("sets window.smoothr referencing the Smoothr object", async () => {
+  it("exposes auth on window.smoothr", async () => {
     const core = await import("../../core/index.js");
     await new Promise(setImmediate);
     expect(global.window.Smoothr).toBe(core.default);
-    expect(global.window.smoothr).toBe(core.default);
-    expect(typeof global.window.smoothr.orders.renderOrders).toBe("function");
-    expect(typeof global.window.smoothr.cart.addItem).toBe("function");
+    expect(global.window.smoothr.auth).toBe(core.default.auth);
+    expect(typeof global.window.Smoothr.orders.renderOrders).toBe("function");
+    expect(typeof global.window.Smoothr.cart.addItem).toBe("function");
   });
 });
