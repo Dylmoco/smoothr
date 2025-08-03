@@ -41,8 +41,9 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
-const ATTR_SELECTOR =
-  '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
+const LOGIN_SELECTOR = '[data-smoothr="login"]';
+const OTHER_SELECTOR =
+  '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="password-reset"]';
 
 describe("dynamic DOM bindings", () => {
   let mutationCallback;
@@ -64,8 +65,13 @@ describe("dynamic DOM bindings", () => {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
       }),
-      querySelectorAll: vi.fn((selector) => {
-        if (selector === ATTR_SELECTOR) return elements;
+      querySelectorAll: vi.fn(selector => {
+        if (selector === LOGIN_SELECTOR) {
+          return elements.filter(el => el.dataset?.smoothr === "login");
+        }
+        if (selector === OTHER_SELECTOR) {
+          return elements.filter(el => el.dataset?.smoothr !== "login");
+        }
         if (selector === '[data-smoothr="logout"]') return [];
         return [];
       }),
