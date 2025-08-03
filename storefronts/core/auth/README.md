@@ -52,18 +52,31 @@ Markup example:
   <input type="password" data-smoothr="password" />
   <div data-smoothr="login">Sign In</div>
 </form>
-<form data-smoothr="signup">
+<form data-smoothr="auth-form">
   <input type="email" data-smoothr="email" />
   <input type="password" data-smoothr="password" />
   <input type="password" data-smoothr="password-confirm" />
   <div data-smoothr-password-strength></div>
   <div data-smoothr-error hidden></div>
   <div data-smoothr-success hidden></div>
-  <button type="submit">Create Account</button>
+  <div data-smoothr="signup">Create Account</div>
 </form>
 <div data-smoothr="login-google">Sign in with Google</div>
 <div data-smoothr="login-apple">Sign in with Apple</div>
-<div data-smoothr="sign-out">Logout</div>
+<div data-smoothr="sign-out">Sign Out</div>
+```
+
+While a request is in progress the trigger element is disabled and its text is
+temporarily replaced with `Loading...`. Style this state using the
+`data-original-text` attribute applied during the request:
+
+```html
+<div data-smoothr="login">Sign In</div>
+<style>
+  [data-smoothr][data-original-text] {
+    opacity: 0.5;
+  }
+</style>
 ```
 
 Error and success containers (`[data-smoothr-error]` and `[data-smoothr-success]`)
@@ -85,53 +98,52 @@ elements added later are also bound.
 
 ```html
 <div data-smoothr="login">Sign In</div>
-<button data-smoothr="login">Sign In</button>
-<a href="#" data-smoothr="login">Sign In</a>
 ```
 
 ### `[data-smoothr="signup"]`
 
 ```html
-<button data-smoothr="signup">Create Account</button>
+<div data-smoothr="signup">Create Account</div>
 ```
 
 ### `[data-smoothr="login-google"]`
 
 ```html
-<button data-smoothr="login-google">Sign in with Google</button>
+<div data-smoothr="login-google">Sign in with Google</div>
 ```
 
 ### `[data-smoothr="login-apple"]`
 
 ```html
-<button data-smoothr="login-apple">Sign in with Apple</button>
+<div data-smoothr="login-apple">Sign in with Apple</div>
 ```
 
 ### `[data-smoothr="sign-out"]`
 
 ```html
-<a href="#" data-smoothr="sign-out">Logout</a>
+<div data-smoothr="sign-out">Sign Out</div>
 ```
 
 ### `[data-smoothr="password-reset"]`
 
 ```html
-<button data-smoothr="password-reset">Send reset link</button>
+<div data-smoothr="password-reset">Send reset link</div>
 ```
 
 ### `[data-smoothr="password-reset-confirm"]`
 
 ```html
-<form data-smoothr="password-reset-confirm">
+<form data-smoothr="auth-form">
   <input type="password" data-smoothr="password" />
   <input type="password" data-smoothr="password-confirm" />
-  <button type="submit">Set new password</button>
+  <div data-smoothr="password-reset-confirm">Set new password</div>
 </form>
 ```
 
 ## Signup
 
-Attach `[data-smoothr="signup"]` to a form containing `[data-smoothr="email"]`,
+Attach `[data-smoothr="signup"]` to an element inside a
+`[data-smoothr="auth-form"]` containing `[data-smoothr="email"]`,
 `[data-smoothr="password"]` and a matching `[data-smoothr="password-confirm"]`
 input. A strength meter element labelled `[data-smoothr-password-strength]` is
 optional but recommended. The SDK
@@ -156,6 +168,17 @@ The SDK redirects users to the URL defined by the
 completes authentication the user returns to that page, the login event fires,
 and the final redirect is determined by the store settings described earlier.
 
+## Apple OAuth login
+
+Call `signInWithApple()` to start an OAuth flow with Apple. You can invoke the
+function directly or attach `[data-smoothr="login-apple"]` to any element as
+shown above.
+
+The SDK redirects users to the URL defined by the
+`NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL` environment variable. After Supabase
+completes authentication the user returns to that page, the login event fires,
+and the final redirect is determined by the store settings described earlier.
+
 ## Accessing the current user
 
 `initAuth()` retrieves the existing session and exposes it on
@@ -173,7 +196,8 @@ completed before relying on it.
 ## Password reset
 
 To send password reset emails the SDK provides a `requestPasswordReset` helper
-and binds forms marked with `[data-smoothr="password-reset"]`. The reset link in
+and binds triggers marked `[data-smoothr="password-reset"]` inside a form
+labelled `[data-smoothr="auth-form"]`. The reset link in
 the email must point to a page that calls `initPasswordResetConfirmation()` so
 the user can set a new password.
 
@@ -187,19 +211,19 @@ NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
 ### Request form markup
 
 ```html
-<form data-smoothr="password-reset">
+<form data-smoothr="auth-form">
   <input type="email" data-smoothr="email" />
-  <button type="submit">Send reset link</button>
+  <div data-smoothr="password-reset">Send reset link</div>
 </form>
 ```
 
 ### Confirmation page markup
 
 ```html
-<form data-smoothr="password-reset-confirm">
+<form data-smoothr="auth-form">
   <input type="password" data-smoothr="password" />
   <input type="password" data-smoothr="password-confirm" />
-  <button type="submit">Set new password</button>
+  <div data-smoothr="password-reset-confirm">Set new password</div>
 </form>
 <script type="module">
   import { initAuth, initPasswordResetConfirmation } from './auth/index.js';
