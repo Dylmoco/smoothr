@@ -135,6 +135,22 @@ export async function lookupRedirectUrl(type = 'login') {
   }
 }
 
+export async function lookupDashboardHomeUrl() {
+  const domain = normalizeDomain(window.location.hostname);
+  try {
+    const { data, error } = await supabase
+      .from('public_store_settings')
+      .select('dashboard_home_url')
+      .eq('domain', domain)
+      .single();
+    if (error) throw error;
+    return data?.dashboard_home_url || '/';
+  } catch (error) {
+    console.warn('[Smoothr Auth] Dashboard home lookup failed:', error);
+    return '/';
+  }
+}
+
 export function initAuth() {
   const p = supabase.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
