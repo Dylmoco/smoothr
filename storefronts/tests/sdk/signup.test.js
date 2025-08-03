@@ -35,7 +35,7 @@ function flushPromises() {
 }
 
 describe("signup flow", () => {
-  let submitHandler;
+  let clickHandler;
   let emailValue;
   let passwordValue;
   let confirmValue;
@@ -45,14 +45,9 @@ describe("signup flow", () => {
     emailValue = "test@example.com";
     passwordValue = "Password1";
     confirmValue = "Password1";
-    submitHandler = undefined;
+    clickHandler = undefined;
     const form = {
-      dataset: { smoothr: "signup" },
-      tagName: "FORM",
-      getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "submit") submitHandler = cb;
-      }),
+      dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((selector) => {
         if (selector === '[data-smoothr="email"]')
           return { value: emailValue };
@@ -62,6 +57,14 @@ describe("signup flow", () => {
           return { value: confirmValue };
         return null;
       }),
+    };
+    const btn = {
+      dataset: { smoothr: "signup" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") clickHandler = cb;
+      }),
+      closest: vi.fn(() => form),
     };
 
     global.window = {
@@ -74,7 +77,7 @@ describe("signup flow", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) =>
-        sel.includes('[data-smoothr="signup"]') ? [form] : [],
+        sel.includes('[data-smoothr="signup"]') ? [btn] : [],
       ),
       dispatchEvent: vi.fn(),
     };
@@ -84,7 +87,7 @@ describe("signup flow", () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
     auth.initAuth();
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(signUpMock).toHaveBeenCalledWith({
       email: "test@example.com",
@@ -97,7 +100,7 @@ describe("signup flow", () => {
     signUpMock.mockResolvedValue({ data: null, error: new Error("bad") });
     auth.initAuth();
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.document.dispatchEvent).not.toHaveBeenCalled();
     expect(global.window.location.href).toBe("");
@@ -108,18 +111,18 @@ describe("signup flow", () => {
     auth.initAuth();
     await flushPromises();
     emailValue = "bademail";
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     signUpMock.mockClear();
     passwordValue = "short";
     emailValue = "user@example.com";
     confirmValue = "short";
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     signUpMock.mockClear();
     passwordValue = "Password1";
     confirmValue = "Mismatch";
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
   });
 
@@ -128,7 +131,7 @@ describe("signup flow", () => {
     signUpMock.mockResolvedValue({ data: { user }, error: null });
     auth.initAuth();
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.smoothr.auth.user).toEqual(user);
   });

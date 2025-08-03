@@ -34,21 +34,17 @@ function flushPromises() {
 
 describe("login form", () => {
   let clickHandler;
-  let submitHandler;
   let emailValue;
   let passwordValue;
 
   beforeEach(() => {
     clickHandler = undefined;
-    submitHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";
 
     const form = {
-      dataset: {},
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "submit") submitHandler = cb;
-      }),
+      dataset: { smoothr: "auth-form" },
+      addEventListener: vi.fn(),
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]')
           return { value: emailValue };
@@ -101,7 +97,7 @@ describe("login form", () => {
     expect(signInMock).not.toHaveBeenCalled();
 
     emailValue = "user@example.com";
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(signInMock).toHaveBeenCalled();
   });

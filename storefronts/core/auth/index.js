@@ -32,16 +32,7 @@ function bindAuthElements(root = document) {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
 
-    const form = el.closest('[data-smoothr="auth-form"]');
-    if (form && !form.dataset?.smoothrBoundLoginSubmit) {
-      safeSetDataset(form, 'smoothrBoundLoginSubmit', '1');
-      form.addEventListener &&
-        form.addEventListener('submit', evt => {
-          evt.preventDefault();
-          el.dispatchEvent &&
-            el.dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
-        });
-    }
+    const form = el.closest ? el.closest('[data-smoothr="auth-form"]') : null;
 
     el.addEventListener &&
       el.addEventListener('click', async evt => {
@@ -90,18 +81,11 @@ function bindAuthElements(root = document) {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
     const type = el.getAttribute('data-smoothr');
-    const attach = handler => {
-      if (el.tagName === 'FORM') {
-        el.addEventListener && el.addEventListener('submit', handler);
-      } else {
-        el.addEventListener && el.addEventListener('click', handler);
-      }
-    };
-    const form = el.tagName === 'FORM' ? el : el.closest('form');
+    const form = el.closest ? el.closest('[data-smoothr="auth-form"]') : null;
 
     switch (type) {
       case 'login-google': {
-        attach(async evt => {
+        el.addEventListener('click', async evt => {
           evt.preventDefault();
           await signInWithGoogle();
         });
@@ -116,7 +100,7 @@ function bindAuthElements(root = document) {
             });
           }
         }
-        attach(async evt => {
+        el.addEventListener('click', async evt => {
           evt.preventDefault();
           const targetForm = form;
           if (!targetForm) return;
@@ -138,8 +122,7 @@ function bindAuthElements(root = document) {
             showError(targetForm, 'Passwords do not match', confirmInput, el);
             return;
           }
-          const submitBtn = targetForm.querySelector('[type="submit"]');
-          setLoading(submitBtn, true);
+          setLoading(el, true);
           try {
             const { data, error } = await signUp(email, password);
             if (error) {
@@ -159,13 +142,13 @@ function bindAuthElements(root = document) {
           } catch (err) {
             showError(targetForm, err.message || 'Network error', emailInput, el);
           } finally {
-            setLoading(submitBtn, false);
+            setLoading(el, false);
           }
         });
         break;
       }
       case 'password-reset': {
-        attach(async evt => {
+        el.addEventListener('click', async evt => {
           evt.preventDefault();
           const targetForm = form;
           if (!targetForm) return;
@@ -175,8 +158,7 @@ function bindAuthElements(root = document) {
             showError(targetForm, 'Enter a valid email address', emailInput, el);
             return;
           }
-          const submitBtn = targetForm.querySelector('[type="submit"]');
-          setLoading(submitBtn, true);
+          setLoading(el, true);
           try {
             const { error } = await requestPasswordReset(email);
             if (error) {
@@ -197,7 +179,7 @@ function bindAuthElements(root = document) {
               el
             );
           } finally {
-            setLoading(submitBtn, false);
+            setLoading(el, false);
           }
         });
         break;
