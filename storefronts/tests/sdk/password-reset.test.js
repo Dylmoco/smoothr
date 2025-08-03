@@ -107,7 +107,7 @@ describe("password reset request", () => {
 });
 
 describe("password reset confirmation", () => {
-  let submitHandler;
+  let clickHandler;
   let passwordValue;
   let confirmValue;
   let passwordInputObj;
@@ -118,25 +118,27 @@ describe("password reset confirmation", () => {
     setSessionMock.mockClear();
     passwordValue = "newpass123";
     confirmValue = "newpass123";
-    submitHandler = undefined;
+    clickHandler = undefined;
     passwordInputObj = {
       value: passwordValue,
       addEventListener: vi.fn(),
     };
     confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
     const form = {
-      dataset: { smoothr: "password-reset-confirm" },
+      dataset: { smoothr: "auth-form" },
       tagName: "FORM",
-      getAttribute: (attr) =>
-        attr === "data-smoothr" ? "password-reset-confirm" : null,
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "submit") submitHandler = cb;
-      }),
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="password"]') return passwordInputObj;
         if (sel === '[data-smoothr="password-confirm"]') return confirmInputObj;
         return null;
       }),
+    };
+    const btn = {
+      dataset: { smoothr: "password-reset-confirm" },
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") clickHandler = cb;
+      }),
+      closest: vi.fn(() => form),
     };
     global.window = {
       location: { href: "", origin: "", hash: "#access_token=a&refresh_token=b" },
@@ -148,7 +150,7 @@ describe("password reset confirmation", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) =>
-        sel.includes('[data-smoothr="password-reset-confirm"]') ? [form] : [],
+        sel.includes('[data-smoothr="password-reset-confirm"]') ? [btn] : [],
       ),
     };
     global.alert = global.window.alert = vi.fn();
@@ -159,7 +161,7 @@ describe("password reset confirmation", () => {
     setSessionMock.mockResolvedValue({ data: {}, error: null });
     auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(setSessionMock).toHaveBeenCalledWith({
       access_token: "a",
@@ -174,7 +176,7 @@ describe("password reset confirmation", () => {
     setSessionMock.mockResolvedValue({ data: {}, error: null });
     auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.alert).toHaveBeenCalled();
   });
@@ -188,7 +190,7 @@ describe("password reset confirmation", () => {
     confirmValue = "short";
     passwordInputObj.value = passwordValue;
     confirmInputObj.value = confirmValue;
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(updateUserMock).not.toHaveBeenCalled();
     updateUserMock.mockClear();
@@ -196,7 +198,7 @@ describe("password reset confirmation", () => {
     confirmValue = "Different1";
     passwordInputObj.value = passwordValue;
     confirmInputObj.value = confirmValue;
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(updateUserMock).not.toHaveBeenCalled();
   });
@@ -207,7 +209,7 @@ describe("password reset confirmation", () => {
     setSessionMock.mockResolvedValue({ data: {}, error: null });
     auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
-    await submitHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.smoothr.auth.user).toEqual(user);
   });
