@@ -42,6 +42,7 @@ describe("login form", () => {
     emailValue = "user@example.com";
     passwordValue = "Password1";
 
+    let loginTrigger;
     const form = {
       dataset: { smoothr: "auth-form" },
       addEventListener: vi.fn(),
@@ -50,20 +51,17 @@ describe("login form", () => {
           return { value: emailValue };
         if (sel === '[data-smoothr="password"]')
           return { value: passwordValue };
-        if (sel === '[data-smoothr="login"]') return btn;
+        if (sel === '[data-smoothr="login"]') return loginTrigger;
         return null;
       }),
     };
-
-    const btn = {
+    loginTrigger = {
+      tagName: "DIV",
       closest: vi.fn(() => form),
       dataset: { smoothr: "login" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
-      }),
-      dispatchEvent: vi.fn((ev) => {
-        if (ev.type === "click") clickHandler(ev);
       }),
       textContent: "Login",
     };
@@ -78,7 +76,7 @@ describe("login form", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) => {
-        if (sel.includes('[data-smoothr="login"]')) return [btn];
+        if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
         if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
         return [];
       }),

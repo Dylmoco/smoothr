@@ -48,11 +48,13 @@ const OTHER_SELECTOR =
 describe("dynamic DOM bindings", () => {
   let mutationCallback;
   let elements;
+  let forms;
   let doc;
   let win;
 
   beforeEach(() => {
     elements = [];
+    forms = [];
     mutationCallback = undefined;
     global.MutationObserver = class {
       constructor(cb) {
@@ -72,6 +74,9 @@ describe("dynamic DOM bindings", () => {
         if (selector === OTHER_SELECTOR) {
           return elements.filter(el => el.dataset?.smoothr !== "login");
         }
+        if (selector === 'form[data-smoothr="auth-form"]') {
+          return forms;
+        }
         if (selector === '[data-smoothr="sign-out"]') return [];
         return [];
       }),
@@ -89,15 +94,18 @@ describe("dynamic DOM bindings", () => {
   it("attaches listeners to added login elements and updates auth state", async () => {
     const emailInput = { value: "user@example.com" };
     const passwordInput = { value: "Password1" };
+    let btn;
     const form = {
+      dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === '[data-smoothr="password"]') return passwordInput;
+        if (sel === '[data-smoothr="login"]') return btn;
         return null;
       }),
     };
     let clickHandler;
-    const btn = {
+    btn = {
       tagName: "DIV",
       dataset: { smoothr: "login" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
@@ -111,6 +119,7 @@ describe("dynamic DOM bindings", () => {
     await flushPromises();
     expect(btn.addEventListener).not.toHaveBeenCalled();
 
+    forms.push(form);
     elements.push(btn);
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
@@ -130,19 +139,21 @@ describe("dynamic DOM bindings", () => {
     const emailInput = { value: "new@example.com" };
     const passwordInput = { value: "Password1" };
     const confirmInput = { value: "Password1" };
+    let btn;
     const form = {
+      dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === '[data-smoothr="password"]') return passwordInput;
         if (sel === '[data-smoothr="password-confirm"]')
           return confirmInput;
-        if (sel === '[type="submit"]') return {};
+        if (sel === '[data-smoothr="signup"]') return btn;
         return null;
       }),
     };
     let clickHandler;
-    const btn = {
-      tagName: "BUTTON",
+    btn = {
+      tagName: "DIV",
       dataset: { smoothr: "signup" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
       closest: vi.fn(() => form),
@@ -153,6 +164,7 @@ describe("dynamic DOM bindings", () => {
 
     auth.initAuth();
     await flushPromises();
+    forms.push(form);
     elements.push(btn);
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
@@ -216,6 +228,54 @@ describe("dynamic DOM bindings", () => {
     expect(evt.type).toBe("smoothr:login");
   });
 
+  it("attaches listeners to added apple login elements and dispatches login event", async () => {
+    let clickHandler;
+    let store = null;
+    global.localStorage = {
+      getItem: vi.fn(() => store),
+      setItem: vi.fn((k, v) => {
+        store = v;
+      }),
+      removeItem: vi.fn(() => {
+        store = null;
+      }),
+    };
+    const btn = {
+      tagName: "DIV",
+      dataset: { smoothr: "login-apple" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "login-apple" : null),
+      closest: vi.fn(() => null),
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") clickHandler = cb;
+      }),
+    };
+
+    auth.initAuth();
+    await flushPromises();
+    elements.push(btn);
+    mutationCallback();
+    expect(btn.addEventListener).toHaveBeenCalled();
+
+    signInWithOAuthMock.mockResolvedValue({});
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+
+    expect(signInWithOAuthMock).toHaveBeenCalledWith({
+      provider: "apple",
+      options: { redirectTo: expect.any(String) },
+    });
+    expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
+
+    const user = { id: "4", email: "apple@example.com" };
+    getUserMock.mockResolvedValue({ data: { user } });
+    auth.initAuth();
+    await flushPromises();
+
+    expect(global.document.dispatchEvent).toHaveBeenCalled();
+    const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
+    expect(evt.type).toBe("smoothr:login");
+  });
+
   it("attaches listeners to added password reset elements and shows inline messages", async () => {
     const emailInput = { value: "user@example.com" };
     const successEl = {
@@ -236,18 +296,20 @@ describe("dynamic DOM bindings", () => {
         if (attr === "hidden") delete errorEl.hidden;
       }),
     };
+    let btn;
     const form = {
+      dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === "[data-smoothr-success]") return successEl;
         if (sel === "[data-smoothr-error]") return errorEl;
-        if (sel === '[type="submit"]') return {};
+        if (sel === '[data-smoothr="password-reset"]') return btn;
         return null;
       }),
     };
     let clickHandler;
-    const btn = {
-      tagName: "BUTTON",
+    btn = {
+      tagName: "DIV",
       dataset: { smoothr: "password-reset" },
       getAttribute: (attr) =>
         attr === "data-smoothr" ? "password-reset" : null,
@@ -259,6 +321,7 @@ describe("dynamic DOM bindings", () => {
 
     auth.initAuth();
     await flushPromises();
+    forms.push(form);
     elements.push(btn);
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();

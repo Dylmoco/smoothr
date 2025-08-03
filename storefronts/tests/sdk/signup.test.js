@@ -46,6 +46,7 @@ describe("signup flow", () => {
     passwordValue = "Password1";
     confirmValue = "Password1";
     clickHandler = undefined;
+    let btn;
     const form = {
       dataset: { smoothr: "auth-form" },
       querySelector: vi.fn((selector) => {
@@ -55,10 +56,12 @@ describe("signup flow", () => {
           return { value: passwordValue };
         if (selector === '[data-smoothr="password-confirm"]')
           return { value: confirmValue };
+        if (selector === '[data-smoothr="signup"]') return btn;
         return null;
       }),
     };
-    const btn = {
+    btn = {
+      tagName: "DIV",
       dataset: { smoothr: "signup" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
       addEventListener: vi.fn((ev, cb) => {
@@ -76,9 +79,11 @@ describe("signup flow", () => {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
       }),
-      querySelectorAll: vi.fn((sel) =>
-        sel.includes('[data-smoothr="signup"]') ? [btn] : [],
-      ),
+      querySelectorAll: vi.fn((sel) => {
+        if (sel.includes('[data-smoothr="signup"]')) return [btn];
+        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
+        return [];
+      }),
       dispatchEvent: vi.fn(),
     };
   });
