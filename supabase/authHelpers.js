@@ -178,7 +178,7 @@ export function initAuth() {
       }
     }
   });
-  document.addEventListener('DOMContentLoaded', () => {
+  const setupBindings = () => {
     bindAuthElements();
     bindSignOutButtons();
     if (typeof MutationObserver !== 'undefined') {
@@ -188,7 +188,12 @@ export function initAuth() {
       });
       observer.observe(document.body, { childList: true, subtree: true });
     }
-  });
+  };
+  if (document.readyState !== 'loading') {
+    setupBindings();
+  } else {
+    document.addEventListener('DOMContentLoaded', setupBindings);
+  }
   return p;
 }
 
