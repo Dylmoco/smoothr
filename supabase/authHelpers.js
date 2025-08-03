@@ -118,20 +118,19 @@ export function normalizeDomain(hostname) {
   return hostname.replace(/^www\./, '').toLowerCase();
 }
 
-export async function lookupRedirectUrl(type) {
+export async function lookupRedirectUrl(type = 'login') {
   const domain = normalizeDomain(window.location.hostname);
+  const column = `${type}_redirect_url`;
   try {
     const { data, error } = await supabase
-      .from('stores')
-      .select(`${type}_redirect_url`)
-      .eq('store_domain', domain)
+      .from('public_store_settings')
+      .select(column)
+      .eq('domain', domain)
       .single();
-    if (error || !data) {
-      throw error;
-    }
-    return data[`${type}_redirect_url`] || window.location.origin;
+    if (error) throw error;
+    return data?.[column] || window.location.origin;
   } catch (error) {
-    err(error);
+    console.warn('[Smoothr Auth] Redirect lookup failed:', error);
     return window.location.origin;
   }
 }
