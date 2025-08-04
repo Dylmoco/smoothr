@@ -1,5 +1,5 @@
 import * as supabaseClient from '../../shared/supabase/browserClient';
-const { supabase } = supabaseClient;
+const { supabase, ensureSupabaseSessionAuth } = supabaseClient;
 
 // expose for debugging
 if (typeof window !== 'undefined') {
@@ -114,6 +114,26 @@ export default Smoothr;
 
 // Bootstrap SDK: load config and then initialize everything
 (async function initSmoothr() {
+  if (
+    typeof window !== 'undefined' &&
+    window.location?.hash?.includes('access_token')
+  ) {
+    const { data, error } = await supabase.auth.getSessionFromUrl({
+      storeSession: true
+    });
+    if (error) {
+      console.warn('[Smoothr] Error parsing session from URL:', error);
+    }
+  }
+
+  await ensureSupabaseSessionAuth();
+
+  if (supabase.auth?.onAuthStateChange) {
+    supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[Smoothr] Auth state changed, new session:', session);
+    });
+  }
+
   if (typeof globalThis.setSelectedCurrency !== 'function') {
     globalThis.setSelectedCurrency = () => {};
   }
