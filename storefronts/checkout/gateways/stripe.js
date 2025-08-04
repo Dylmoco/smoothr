@@ -4,7 +4,7 @@ import forceStripeIframeStyle, {
   initStripeStyles
 } from '../utils/stripeIframeStyles.js';
 
-import { supabase } from '../../../shared/supabase/browserClient';
+import { loadPublicConfig } from '../../core/config.ts';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 let fieldsMounted = false;
@@ -224,16 +224,7 @@ export function ready() {
 export async function getStoreSettings(storeId) {
   if (!storeId) return null;
   try {
-    const { data, error } = await supabase
-      .from('public_store_settings')
-      .select('*')
-      .eq('store_id', storeId)
-      .maybeSingle();
-    if (error) {
-      warn('Store settings lookup failed:', error.message || error);
-      return null;
-    }
-    return data || null;
+    return await loadPublicConfig(storeId);
   } catch (e) {
     warn('Store settings fetch error:', e?.message || e);
     return null;
