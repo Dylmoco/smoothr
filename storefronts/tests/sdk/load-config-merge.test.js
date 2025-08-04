@@ -18,20 +18,22 @@ vi.mock('../../../shared/supabase/browserClient', () => {
     data: { session: { access_token: 'test-token' } }
   });
 
-  const setAuth = vi.fn();
+  const setSession = vi.fn();
   const applySessionAuth = vi.fn().mockResolvedValue();
 
-  const single = vi.fn(() => Promise.resolve({
-    data: { foo: 'bar' },
-    error: null
-  }));
+  const single = vi.fn(() =>
+    Promise.resolve({
+      data: { foo: 'bar' },
+      error: null
+    })
+  );
   const eq = vi.fn(() => ({ single }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
 
   return {
     supabase: {
-      auth: { getSession, setAuth },
+      auth: { getSession, setSession },
       applySessionAuth,
       from
     }
@@ -42,9 +44,9 @@ beforeEach(() => {
   vi.resetModules();
 
   global.window = {
-    SMOOTHR_CONFIG: { 
-      apiBase: 'https://example.com', 
-      storeId: '00000000-0000-0000-0000-000000000000' 
+    SMOOTHR_CONFIG: {
+      apiBase: 'https://example.com',
+      storeId: '00000000-0000-0000-0000-000000000000'
     },
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
@@ -57,11 +59,19 @@ beforeEach(() => {
     querySelector: vi.fn(() => null),
     getElementById: vi.fn(() => ({
       dataset: { storeId: '00000000-0000-0000-0000-000000000000' },
-      getAttribute: vi.fn((attr) => attr === 'data-store-id' ? '00000000-0000-0000-0000-000000000000' : null)
+      getAttribute: vi.fn((attr) =>
+        attr === 'data-store-id'
+          ? '00000000-0000-0000-0000-000000000000'
+          : null
+      )
     })),
     currentScript: {
       dataset: { storeId: '00000000-0000-0000-0000-000000000000' },
-      getAttribute: vi.fn((attr) => attr === 'data-store-id' ? '00000000-0000-0000-0000-000000000000' : null)
+      getAttribute: vi.fn((attr) =>
+        attr === 'data-store-id'
+          ? '00000000-0000-0000-0000-000000000000'
+          : null
+      )
     }
   };
 
@@ -84,7 +94,10 @@ describe('loadConfig merge', () => {
     const { loadConfig } = await import('../../core/index.js');
     await loadConfig('00000000-0000-0000-0000-000000000000');
 
-    console.log('SMOOTHR_CONFIG after loadConfig:', global.window.SMOOTHR_CONFIG);
+    console.log(
+      'SMOOTHR_CONFIG after loadConfig:',
+      global.window.SMOOTHR_CONFIG
+    );
 
     expect(global.window.SMOOTHR_CONFIG).toEqual(
       expect.objectContaining({

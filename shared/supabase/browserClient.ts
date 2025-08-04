@@ -13,13 +13,13 @@ async function applySessionAuth() {
       data: { session }
     } = await supabase.auth.getSession();
 
-    const token = session?.access_token;
+    const access_token = session?.access_token;
+    const refresh_token = session?.refresh_token;
 
-    if (token) {
-      await supabase.auth.setSession({
-        access_token: token,
-        refresh_token: '' // no need for refresh token in this use case
-      });
+    if (access_token && refresh_token) {
+      await supabase.auth.setSession({ access_token, refresh_token });
+    } else {
+      console.warn('[Smoothr] Missing access or refresh token — skipping session restore');
     }
   } catch {
     // ignore errors
