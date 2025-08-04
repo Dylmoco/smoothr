@@ -35,10 +35,10 @@ jobs:
         working-directory: storefronts
         run: npm ci --ignore-scripts --loglevel verbose
 
-      # ✅ Verbose test logs
+      # ✅ Run tests (without --verbose to prevent Vitest crash)
       - name: Run tests
         working-directory: storefronts
-        run: npm test -- --verbose
+        run: npm test
 
       - name: Build SDK
         working-directory: storefronts
