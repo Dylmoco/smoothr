@@ -28,6 +28,7 @@ import authorizeNet from './gateways/authorizeNet.js';
 import paypal from './gateways/paypal.js';
 import nmi from './gateways/nmi.js';
 import segpay from './gateways/segpay.js';
+import { loadPublicConfig } from '../core/config.js';
 
 function forEachPayButton(fn) {
   document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
@@ -49,6 +50,11 @@ export async function initCheckout(config) {
 
   let isSubmitting = false;
   const { log, warn, err, select, q } = checkoutLogger();
+
+  const publicConfig = await loadPublicConfig(window.SMOOTHR_CONFIG?.storeId);
+  if (publicConfig) {
+    window.SMOOTHR_CONFIG = { ...window.SMOOTHR_CONFIG, ...publicConfig };
+  }
 
   log('SDK initialized');
   log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
