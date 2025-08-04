@@ -220,7 +220,11 @@ export async function signInWithApple() {
 }
 
 export async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { store_id: SMOOTHR_CONFIG.storeId } }
+  });
   if (!error && typeof window !== 'undefined') {
     window.smoothr = window.smoothr || {};
     window.smoothr.auth = { user: data.user || null };
