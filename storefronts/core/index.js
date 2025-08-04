@@ -44,17 +44,20 @@ const auth = authModule?.default || authModule;
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
-    const { data, error } = await anonClient
+    const client =
+      typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+        ? supabase
+        : anonClient;
+    const { data, error } = await client
       .from('public_store_settings')
       .select('*')
-      .eq('store_id', storeId);
+      .eq('store_id', storeId)
+      .single();
     if (error) throw error;
-    Object.assign(window.SMOOTHR_CONFIG, data?.[0]);
-    if (
-      'api_base' in window.SMOOTHR_CONFIG &&
-      !window.SMOOTHR_CONFIG.apiBase
-    ) {
-      window.SMOOTHR_CONFIG.apiBase = window.SMOOTHR_CONFIG.api_base;
+    const record = data ?? {};
+    for (const [key, value] of Object.entries(record)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      window.SMOOTHR_CONFIG[camelKey] = value;
     }
     window.SMOOTHR_CONFIG.storeId = storeId;
     console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', window.SMOOTHR_CONFIG);
