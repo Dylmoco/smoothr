@@ -1,20 +1,16 @@
 import resolveGateway from '../../../core/utils/resolveGateway.js';
-import { loadPublicConfig } from '../../core/config.ts';
 
-export default async function getActivePaymentGateway(log = () => {}, warn = () => {}) {
+export default function getActivePaymentGateway(log = () => {}, warn = () => {}) {
   const cfg = window.SMOOTHR_CONFIG || {};
-  if (cfg.active_payment_gateway) {
-    return resolveGateway(cfg, {});
+
+  if (!cfg.active_payment_gateway) {
+    const err = new Error('active_payment_gateway not configured');
+    warn(err.message);
+    throw err;
   }
 
-  const storeId = cfg.storeId;
-  if (!storeId) {
-    throw new Error('Store ID missing');
-  }
-
-  const settings = await loadPublicConfig(storeId);
   try {
-    return resolveGateway(cfg, settings || {});
+    return resolveGateway(cfg);
   } catch (e) {
     warn('Gateway resolution failed:', e?.message || e);
     throw e;
