@@ -62,6 +62,7 @@ export function setupAbandonedCartTracker(opts = {}) {
   isSetup = true;
 
   const debug = !!opts.debug;
+  let lastLog = 0;
   const meta = readMeta();
 
   ensureSessionId(meta);
@@ -75,18 +76,26 @@ export function setupAbandonedCartTracker(opts = {}) {
   meta.lastActive = Date.now();
   writeMeta(meta);
 
+  const maybeLog = (label, value) => {
+    if (!debug) return;
+    const now = Date.now();
+    if (now - lastLog < 30000) return;
+    lastLog = now;
+    console.log(`smoothr:abandoned-cart ${label}`, value);
+  };
+
   const updateModified = () => {
     const m = readMeta();
     m.lastModified = Date.now();
     writeMeta(m);
-    if (debug) console.log('smoothr:abandoned-cart lastModified', m.lastModified);
+    maybeLog('lastModified', m.lastModified);
   };
 
   const updateActive = () => {
     const m = readMeta();
     m.lastActive = Date.now();
     writeMeta(m);
-    if (debug) console.log('smoothr:abandoned-cart lastActive', m.lastActive);
+    maybeLog('lastActive', m.lastActive);
   };
 
   window.addEventListener('smoothr:cart:updated', updateModified);
