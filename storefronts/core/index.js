@@ -1,5 +1,5 @@
 import * as supabaseClient from '../../shared/supabase/browserClient';
-const { supabase } = supabaseClient;
+const { supabase, ensureSupabaseSessionAuth } = supabaseClient;
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
@@ -36,24 +36,33 @@ const auth = authModule?.default || authModule;
 // Load config from public_store_settings into window.SMOOTHR_CONFIG
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
-  const { data, error } = await supabase
-    .from('public_store_settings')
-    .select('*')
-    .eq('store_id', storeId)
-    .single();
-  if (error) throw error;
-  window.SMOOTHR_CONFIG = {
-    ...(window.SMOOTHR_CONFIG || {}),
-    ...(data || {})
-  };
-  if (
-    'api_base' in window.SMOOTHR_CONFIG &&
-    !window.SMOOTHR_CONFIG.apiBase
-  ) {
-    window.SMOOTHR_CONFIG.apiBase = window.SMOOTHR_CONFIG.api_base;
+  try {
+    await ensureSupabaseSessionAuth?.();
+    const { data, error } = await supabase
+      .from('public_store_settings')
+      .select('*')
+      .eq('store_id', storeId)
+      .single();
+    if (error) throw error;
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      ...(data || {})
+    };
+    if (
+      'api_base' in window.SMOOTHR_CONFIG &&
+      !window.SMOOTHR_CONFIG.apiBase
+    ) {
+      window.SMOOTHR_CONFIG.apiBase = window.SMOOTHR_CONFIG.api_base;
+    }
+    window.SMOOTHR_CONFIG.storeId = storeId;
+    console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', window.SMOOTHR_CONFIG);
+  } catch (error) {
+    console.warn('[Smoothr SDK] Failed to load config:', error?.message || error);
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      storeId
+    };
   }
-  window.SMOOTHR_CONFIG.storeId = storeId;
-  console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', window.SMOOTHR_CONFIG);
 }
 
 // Default rate source (fallback)
@@ -111,14 +120,12 @@ export default Smoothr;
   }
 
   try {
-    const applySessionAuth = supabaseClient.applySessionAuth;
-    await applySessionAuth?.();
     await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');
   } catch (err) {
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
       console.log('[Smoothr SDK] Test environment: Ignoring error:', err.message);
     } else {
-      throw err;
+      console.warn('[Smoothr SDK] Bootstrap failed:', err?.message || err);
     }
   }
 

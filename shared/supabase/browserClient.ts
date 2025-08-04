@@ -5,7 +5,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-async function applySessionAuth() {
+async function ensureSupabaseSessionAuth() {
   try {
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') return;
 
@@ -26,4 +26,4 @@ async function applySessionAuth() {
   }
 }
 
-export { supabase, applySessionAuth };
+export { supabase, ensureSupabaseSessionAuth };
