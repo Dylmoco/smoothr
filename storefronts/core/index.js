@@ -2,10 +2,12 @@ import * as supabaseClient from '../../shared/supabase/browserClient';
 const { supabase } = supabaseClient;
 
 import { createClient as createAnonClient } from '@supabase/supabase-js';
+import { anonClientOptions } from './config.ts';
 
 const anonClient = createAnonClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  anonClientOptions
 );
 
 import * as abandonedCart from './abandoned-cart/index.js';
