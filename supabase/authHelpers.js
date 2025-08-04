@@ -1,4 +1,5 @@
 import { supabase } from '../shared/supabase/browserClient';
+import { loadPublicConfig } from '../storefronts/core/config.ts';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
@@ -122,16 +123,10 @@ export function normalizeDomain(hostname) {
 }
 
 export async function lookupRedirectUrl(type = 'login') {
-  const domain = normalizeDomain(window.location.hostname);
   const column = `${type}_redirect_url`;
   try {
-    const { data, error } = await supabase
-      .from('public_store_settings')
-      .select(column)
-      .eq('domain', domain)
-      .single();
-    if (error) throw error;
-    return data?.[column] || window.location.origin;
+    const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
+    return config?.[column] || window.location.origin;
   } catch (error) {
     console.warn('[Smoothr Auth] Redirect lookup failed:', error);
     return window.location.origin;
@@ -139,15 +134,9 @@ export async function lookupRedirectUrl(type = 'login') {
 }
 
 export async function lookupDashboardHomeUrl() {
-  const domain = normalizeDomain(window.location.hostname);
   try {
-    const { data, error } = await supabase
-      .from('public_store_settings')
-      .select('dashboard_home_url')
-      .eq('domain', domain)
-      .single();
-    if (error) throw error;
-    return data?.dashboard_home_url || '/';
+    const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
+    return config?.dashboard_home_url || '/';
   } catch (error) {
     console.warn('[Smoothr Auth] Dashboard home lookup failed:', error);
     return '/';
