@@ -18,12 +18,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 🐛 Confirm runner & secrets
+        run: |
+          echo "Git SHA: ${{ github.sha }}"
+          echo "Node version: $(node -v || echo not installed)"
+          echo "Supabase URL starts with: ${NEXT_PUBLIC_SUPABASE_URL:0:10}"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: storefronts/package-lock.json
+          # TEMP cache invalidation to force full reinstall
+          cache-dependency-path: storefronts/package-lock.json.invalidated
 
       - name: Install dependencies
         working-directory: storefronts
