@@ -70,9 +70,6 @@ npm run dev
 The storefront SDK is automatically built and deployed by GitHub Actions so no
 manual build step is required.
 
-Use `npm run bundle:webflow-checkout` from the repository root to rebuild only
-the Webflow checkout script.
-
 During the build a helper script (`storefronts/scripts/check-sdk.js`) verifies
 that required exports exist and that no compiled file still contains
 `import.meta.env`. The build fails if any such reference is found.
@@ -346,9 +343,6 @@ functions and build scripts. Browser logs are controlled via
 - **Coding style**: follow the existing style—two space indentation, single
   quotes and trailing semicolons. Keep the code free of unused variables and
   prefer small, focused commits.
-- **Checkout modules**: after modifying any files under `storefronts/checkout/**`
-  run `npm run bundle:webflow-checkout` before committing so
-  `storefronts/dist/platforms/webflow/checkout.js` stays in sync.
 
 ## License
 
