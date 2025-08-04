@@ -259,13 +259,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key> \
 npm run build
 ```
 
-If you modify files under `checkout/` also run:
-
-```bash
-npm run bundle:webflow-checkout
-```
-
-to regenerate `dist/platforms/webflow/checkout.js`.
 
 ## CI/CD
 

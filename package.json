@@ -11,7 +11,6 @@
   "scripts": {
     "test": "npm --workspace storefronts test && npm run test:supabase",
     "test:supabase": "vitest run supabase/functions",
-    "bundle:webflow-checkout": "node storefronts/scripts/bundle-webflow-checkout.js",
     "postinstall": "node scripts/postinstall.js"
   },
   "devDependencies": {
