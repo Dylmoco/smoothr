@@ -12,7 +12,68 @@ if (!storeId)
   );
 
 // Dynamically import modules that rely on SMOOTHR_CONFIG
-const [
+const moduleDefs = [
+  { name: 'abandonedCart', path: './abandoned-cart/index.js' },
+  { name: 'affiliates', path: './affiliates/index.js' },
+  { name: 'analytics', path: './analytics/index.js' },
+  { name: 'currency', path: './currency/index.js' },
+  { name: 'dashboard', path: './dashboard/index.js' },
+  { name: 'discounts', path: './discounts/index.js' },
+  { name: 'cart', path: './cart.js' },
+  { name: 'orders', path: './orders/index.js' },
+  { name: 'returns', path: './returns/index.js' },
+  { name: 'reviews', path: './reviews/index.js' },
+  { name: 'subscriptions', path: './subscriptions/index.js' },
+  { name: 'authModule', path: './auth/index.js', exports: ['initAuth'] },
+  { name: 'stripeGateway', path: '../checkout/gateways/stripe.js' },
+  {
+    name: 'liveRates',
+    path: './currency/live-rates.js',
+    exports: ['fetchExchangeRates']
+  },
+  {
+    name: 'addToCart',
+    path: './cart/addToCart.js',
+    exports: ['initCartBindings']
+  },
+  {
+    name: 'renderCartModule',
+    path: './cart/renderCart.js',
+    exports: ['renderCart']
+  },
+  {
+    name: 'webflowDom',
+    path: '../platforms/webflow/webflow-dom.js',
+    exports: ['setSelectedCurrency']
+  },
+  {
+    name: 'cmsCurrencyModule',
+    path: './currency/cms-currency.js',
+    exports: ['setSelectedCurrency']
+  }
+];
+
+const modulesLoaded = {};
+
+for (const { name, path, exports: expected } of moduleDefs) {
+  try {
+    const mod = await import(path);
+    modulesLoaded[name] = mod;
+    if (expected) {
+      for (const exp of expected) {
+        if (typeof mod[exp] === 'undefined') {
+          console.warn(
+            `[Smoothr SDK] ${name} missing expected export "${exp}"`
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`[Smoothr SDK] Failed to load ${name} from ${path}`, err);
+  }
+}
+
+const {
   abandonedCart,
   affiliates,
   analytics,
@@ -31,33 +92,14 @@ const [
   renderCartModule,
   webflowDom,
   cmsCurrencyModule
-] = await Promise.all([
-  import('./abandoned-cart/index.js'),
-  import('./affiliates/index.js'),
-  import('./analytics/index.js'),
-  import('./currency/index.js'),
-  import('./dashboard/index.js'),
-  import('./discounts/index.js'),
-  import('./cart.js'),
-  import('./orders/index.js'),
-  import('./returns/index.js'),
-  import('./reviews/index.js'),
-  import('./subscriptions/index.js'),
-  import('./auth/index.js'),
-  import('../checkout/gateways/stripe.js'),
-  import('./currency/live-rates.js'),
-  import('./cart/addToCart.js'),
-  import('./cart/renderCart.js'),
-  import('../platforms/webflow/webflow-dom.js'),
-  import('./currency/cms-currency.js')
-]);
+} = modulesLoaded;
 
-const auth = authModule.default || authModule;
-const { fetchExchangeRates } = liveRates;
-const { initCartBindings } = addToCart;
-const { renderCart } = renderCartModule;
-const { setSelectedCurrency: setDomCurrency } = webflowDom;
-const { setSelectedCurrency: setCmsCurrency } = cmsCurrencyModule;
+const auth = authModule?.default || authModule;
+const { fetchExchangeRates } = liveRates || {};
+const { initCartBindings } = addToCart || {};
+const { renderCart } = renderCartModule || {};
+const { setSelectedCurrency: setDomCurrency } = webflowDom || {};
+const { setSelectedCurrency: setCmsCurrency } = cmsCurrencyModule || {};
 
 // Load config from public_store_settings into window.SMOOTHR_CONFIG
 async function loadConfig(storeId) {
@@ -184,14 +226,18 @@ export default Smoothr;
       log('smoothr:live-rates-url', debugUrl);
     }
 
-    fetchExchangeRates(base, symbols, cfg.rateSource || urlBase)
-      .then(rates => {
-        if (rates) {
-          currency.updateRates(rates);
-          if (cfg.debug) log('smoothr:live-rates', rates);
-        }
-      })
-      .catch(() => {});
+    if (typeof fetchExchangeRates === 'function') {
+      fetchExchangeRates(base, symbols, cfg.rateSource || urlBase)
+        .then(rates => {
+          if (rates) {
+            currency.updateRates(rates);
+            if (cfg.debug) log('smoothr:live-rates', rates);
+          }
+        })
+        .catch(() => {});
+    } else {
+      console.warn('[Smoothr SDK] fetchExchangeRates is not available');
+    }
 
     if (cfg.platform === 'cms') {
       setSelectedCurrency = setCmsCurrency;
@@ -216,14 +262,22 @@ export default Smoothr;
 
     document.addEventListener('DOMContentLoaded', () => {
       log('✅ DOM ready – calling initCartBindings');
-      initCartBindings();
-    });
-
-    auth.initAuth().then(() => {
-      if (window.smoothr?.auth?.user?.value) {
-        orders.renderOrders();
+      if (typeof initCartBindings === 'function') {
+        initCartBindings();
+      } else {
+        console.warn('[Smoothr SDK] initCartBindings is not available');
       }
     });
+
+    if (auth?.initAuth) {
+      auth.initAuth().then(() => {
+        if (window.smoothr?.auth?.user?.value && orders?.renderOrders) {
+          orders.renderOrders();
+        }
+      });
+    } else {
+      console.warn('[Smoothr SDK] auth.initAuth is not available');
+    }
 
     globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || setSelectedCurrency;
   }
