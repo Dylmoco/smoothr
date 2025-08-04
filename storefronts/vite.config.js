@@ -1,9 +1,26 @@
 import { defineConfig, loadEnv } from 'vite';
 import path from 'path';
+import fs from 'fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function getAllJs(dir) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const full = path.resolve(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...getAllJs(full));
+    } else if (entry.isFile() && full.endsWith('.js')) {
+      files.push(full);
+    }
+  }
+  return files;
+}
+
+const inputFiles = getAllJs(path.resolve(__dirname, 'core'));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -26,14 +43,17 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'esnext', // ✅ Enables top-level await
-      lib: {
-        entry: path.resolve(__dirname, 'core/index.js'),
-        name: 'SmoothrSDK',
-        fileName: () => 'smoothr-sdk.js',
-        formats: ['es']
-      },
       rollupOptions: {
-        treeshake: false
+        input: inputFiles,
+        treeshake: false,
+        preserveEntrySignatures: 'exports-only',
+        output: {
+          preserveModules: true,
+          preserveModulesRoot: path.resolve(__dirname, 'core'),
+          entryFileNames: (chunk) =>
+            chunk.name === 'index' ? 'smoothr-sdk.js' : '[name].js',
+          chunkFileNames: '[name].js'
+        }
       },
       outDir: 'dist',
       emptyOutDir: true
