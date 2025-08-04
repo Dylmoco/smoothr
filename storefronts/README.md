@@ -136,6 +136,11 @@ the SDK listens for the `submit` event so clicks on child elements won't start
 checkout. Avoid adding the attribute to generic containers to prevent unwanted
 triggers.
 
+The `[data-smoothr-pay]` element must exist in the DOM before `initCheckout`
+runs. If the trigger is inserted asynchronously, delay calling `initCheckout`
+or ensure the element is present. When no checkout trigger is found the SDK
+logs a warning and re-attempts initialization after a short delay.
+
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
 active payment gateway. This single endpoint handles all providers. `initCheckout` chooses the gateway by reading
 `window.SMOOTHR_CONFIG.active_payment_gateway`. When the property isn't defined,
