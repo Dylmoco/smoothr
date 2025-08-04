@@ -25,6 +25,17 @@ const inputFiles = getAllJs(path.resolve(__dirname, 'core'));
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
+    optimizeDeps: {
+      include: [
+        '@supabase/supabase-js',
+        '@supabase/gotrue-js',
+        '@supabase/postgrest-js',
+        '@supabase/storage-js',
+        '@supabase/realtime-js',
+        '@supabase/functions-js',
+        'isows'
+      ]
+    },
     define: {
       // Map Cloudflare’s NEXT_PUBLIC_* secrets into process.env
       'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
@@ -44,6 +55,7 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'esnext', // ✅ Enables top-level await
       rollupOptions: {
+        external: [],
         input: inputFiles,
         treeshake: false,
         preserveEntrySignatures: 'exports-only',
