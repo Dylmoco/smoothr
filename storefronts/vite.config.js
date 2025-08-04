@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
       )
     },
     build: {
+      target: 'esnext', // ✅ Enables top-level await
       lib: {
         entry: path.resolve(__dirname, 'core/index.js'),
         name: 'SmoothrSDK',
