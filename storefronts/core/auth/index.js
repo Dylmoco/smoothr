@@ -1,4 +1,4 @@
-import { supabase } from '../../../shared/supabase/browserClient';
+import { supabase, applySessionAuth } from '../../../shared/supabase/browserClient';
 import {
   initAuth as initAuthHelper,
   signInWithGoogle,
@@ -48,6 +48,7 @@ async function login(email, password) {
   if (!error) {
     user.value = data.user || null;
     updateGlobalAuth();
+    await applySessionAuth();
   }
   return { data, error };
 }
@@ -61,6 +62,7 @@ async function signup(email, password) {
   if (!error) {
     user.value = data.user || null;
     updateGlobalAuth();
+    await applySessionAuth();
   }
   return { data, error };
 }

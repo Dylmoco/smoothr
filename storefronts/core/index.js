@@ -1,4 +1,5 @@
-import { supabase } from '../../shared/supabase/browserClient';
+import * as supabaseClient from '../../shared/supabase/browserClient';
+const { supabase } = supabaseClient;
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
@@ -106,6 +107,8 @@ export default Smoothr;
   if (!storeId) throw new Error('Missing data-store-id on <script> tag');
 
   try {
+    const applySessionAuth = supabaseClient.applySessionAuth;
+    await applySessionAuth?.();
     await loadConfig(storeId);
   } catch (err) {
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
@@ -187,10 +190,11 @@ export default Smoothr;
     window.smoothr = window.smoothr || {};
     window.smoothr.auth = auth;
     window.smoothr.supabase = supabase;
-
     // Optional helpers for DevTools
-    window.smoothr.getSession = () => supabase.auth.getSession();
-    window.smoothr.getUser = () => supabase.auth.getUser();
+    if (supabase.auth) {
+      window.smoothr.getSession = () => supabase.auth.getSession();
+      window.smoothr.getUser = () => supabase.auth.getUser();
+    }
 
     if (isFeatureEnabled('cart')) {
       window.renderCart = renderCart;
