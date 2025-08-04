@@ -323,8 +323,7 @@ function bindAuthElements(root = document) {
         const url = (await lookupDashboardHomeUrl()) || '/';
         window.location.href = url;
       } else {
-        const target = document.querySelector('[data-smoothr="auth-wrapper"]');
-        (target || document).dispatchEvent(
+        window.dispatchEvent(
           new CustomEvent('smoothr:open-auth', {
             detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
           })

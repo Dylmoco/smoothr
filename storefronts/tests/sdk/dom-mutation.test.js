@@ -52,7 +52,6 @@ describe("dynamic DOM bindings", () => {
   let forms;
   let doc;
   let win;
-  let authWrapper;
 
   beforeEach(() => {
     elements = [];
@@ -65,7 +64,6 @@ describe("dynamic DOM bindings", () => {
       observe() {}
       disconnect() {}
     };
-    authWrapper = { dispatchEvent: vi.fn() };
     doc = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
@@ -90,15 +88,14 @@ describe("dynamic DOM bindings", () => {
         if (selector === '[data-smoothr="sign-out"]') return [];
         return [];
       }),
-      querySelector: vi.fn(sel =>
-        sel === '[data-smoothr="auth-wrapper"]' ? authWrapper : null
-      ),
+      querySelector: vi.fn(() => null),
       dispatchEvent: vi.fn(),
     };
     win = {
       location: { href: "", origin: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     };
     global.document = doc;
     global.window = win;
@@ -384,9 +381,8 @@ describe("dynamic DOM bindings", () => {
 
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(doc.querySelector).toHaveBeenCalledWith('[data-smoothr="auth-wrapper"]');
-    expect(authWrapper.dispatchEvent).toHaveBeenCalled();
-    const evt = authWrapper.dispatchEvent.mock.calls[0][0];
+    expect(win.dispatchEvent).toHaveBeenCalled();
+    const evt = win.dispatchEvent.mock.calls[0][0];
     expect(evt.type).toBe("smoothr:open-auth");
     expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-wrapper"]');
   });
