@@ -19,12 +19,13 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 
   const setAuth = vi.fn();
 
-  const single = vi.fn(async () => ({
-    data: { api_base: 'https://example.com' },
-    error: null
-  }));
-  const eq = vi.fn(() => ({ single }));
-  const select = vi.fn(() => ({ eq }));
+  // ✅ Mock select returning api_base
+  const select = vi.fn(() =>
+    Promise.resolve({
+      data: [{ api_base: 'https://example.com' }],
+      error: null
+    })
+  );
   const from = vi.fn(() => ({ select }));
 
   return {
@@ -37,20 +38,26 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 
 beforeEach(() => {
   vi.resetModules();
-  global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
-  );
+
+  // ✅ Ensure SMOOTHR_CONFIG exists
   global.window = {
+    SMOOTHR_CONFIG: {},
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn()
   };
+
   global.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
     querySelector: vi.fn(() => null),
     currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } }
   };
+
+  global.fetch = vi.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+  );
+
   global.localStorage = {
     getItem: vi.fn(),
     setItem: vi.fn(),

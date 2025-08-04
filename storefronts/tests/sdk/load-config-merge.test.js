@@ -19,12 +19,13 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 
   const setAuth = vi.fn();
 
-  const single = vi.fn(async () => ({
-    data: { foo: 'bar' },
-    error: null
-  }));
-  const eq = vi.fn(() => ({ single }));
-  const select = vi.fn(() => ({ eq }));
+  // ✅ Mock select returning foo for merging
+  const select = vi.fn(() =>
+    Promise.resolve({
+      data: [{ foo: 'bar' }],
+      error: null
+    })
+  );
   const from = vi.fn(() => ({ select }));
 
   return {
@@ -37,21 +38,26 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 
 beforeEach(() => {
   vi.resetModules();
-  global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
-  );
+
+  // ✅ Set existing config to check merge result
   global.window = {
+    SMOOTHR_CONFIG: { apiBase: 'https://example.com' },
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    SMOOTHR_CONFIG: { apiBase: 'https://example.com' }
+    removeEventListener: vi.fn()
   };
+
   global.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
     querySelector: vi.fn(() => null),
     currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } }
   };
+
+  global.fetch = vi.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+  );
+
   global.localStorage = {
     getItem: vi.fn(),
     setItem: vi.fn(),
