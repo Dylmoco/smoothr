@@ -82,7 +82,8 @@ async function loadConfig(storeId) {
 
 // Default rate source (fallback)
 const DEFAULT_RATE_SOURCE =
-  'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
+  (typeof process !== 'undefined' && process.env.LIVE_RATES_URL) ||
+  'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
 
 // Export modules
 export {

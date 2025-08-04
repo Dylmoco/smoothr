@@ -13,7 +13,8 @@ function getAuthToken() {
 // requests through a Supabase Edge Function to avoid Cloudflare redirect
 // issues.
 const DEFAULT_RATE_SOURCE =
-  'https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP';
+  (typeof process !== 'undefined' && process.env.LIVE_RATES_URL) ||
+  'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
 
 // Endpoint requiring auth token
 const PROXY_LIVE_RATES_ENDPOINT =

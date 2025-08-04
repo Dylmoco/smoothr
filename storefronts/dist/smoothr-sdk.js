@@ -11,20 +11,20 @@ const [
   g,
   I,
   o,
-  R,
   _,
-  f,
+  R,
   y,
+  C,
   T,
   M,
-  G,
-  h,
-  C,
   N,
+  h,
+  S,
   F,
-  D,
+  G,
+  v,
   H,
-  E
+  D
 ] = await Promise.all([
   import("./index-D8-ajrxI.js"),
   import("./index-l0sNRNKZ.js"),
@@ -39,13 +39,13 @@ const [
   import("./index-DdXTRxfG.js"),
   import("./index-CiqK_mhe.js"),
   import("./stripe-CVIssmpr.js"),
-  import("./live-rates-DDmeqLjo.js"),
+  import("./live-rates-Dhj7rMMo.js"),
   import("./addToCart-CKwAs-r9.js"),
   import("./renderCart-Bm3EkEl-.js"),
   import("./webflow-dom-D85yY8Wo.js"),
   import("./cms-currency-CNzwnkVa.js")
-]), d = h.default || h, { fetchExchangeRates: B } = N, { initCartBindings: O } = F, { renderCart: S } = D, { setSelectedCurrency: v } = H, { setSelectedCurrency: k } = E;
-async function U(r) {
+]), d = h.default || h, { fetchExchangeRates: E } = F, { initCartBindings: f } = G, { renderCart: O } = v, { setSelectedCurrency: k } = H, { setSelectedCurrency: B } = D;
+async function x(r) {
   const { data: s, error: i } = await a.from("public_store_settings").select("*").eq("store_id", r).single();
   if (i) throw i;
   window.SMOOTHR_CONFIG = {
@@ -53,20 +53,20 @@ async function U(r) {
     ...s || {}
   }, "api_base" in window.SMOOTHR_CONFIG && !window.SMOOTHR_CONFIG.apiBase && (window.SMOOTHR_CONFIG.apiBase = window.SMOOTHR_CONFIG.api_base), window.SMOOTHR_CONFIG.storeId = r;
 }
-const K = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?base=GBP&symbols=USD,EUR,GBP", x = {
+const K = typeof process < "u" && "https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates" || "https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates", U = {
   abandonedCart: b,
   affiliates: g,
   analytics: I,
   currency: o,
-  dashboard: R,
-  discounts: _,
-  cart: f,
-  orders: y,
+  dashboard: _,
+  discounts: R,
+  cart: y,
+  orders: C,
   returns: T,
   reviews: M,
-  subscriptions: G,
+  subscriptions: N,
   auth: d,
-  checkout: C
+  checkout: S
 };
 (async function() {
   typeof globalThis.setSelectedCurrency != "function" && (globalThis.setSelectedCurrency = () => {
@@ -74,14 +74,14 @@ const K = "https://<your-project-id>.functions.supabase.co/proxy-live-rates?base
   const s = window.SMOOTHR_CONFIG.storeId;
   if (console.log("[Smoothr SDK] Bootstrap triggered", { storeId: s }), !s) throw new Error("Missing data-store-id on <script> tag");
   try {
-    await U(s);
+    await x(s);
   } catch (t) {
     if (!(typeof process < "u" && process.env.NODE_ENV === "test"))
       throw t;
   }
   const i = typeof window < "u" && window.SMOOTHR_CONFIG?.debug, n = (...t) => i && console.log("[Smoothr SDK]", ...t);
   n("Smoothr SDK loaded");
-  let u = v;
+  let u = k;
   if (typeof window < "u") {
     const t = window.SMOOTHR_CONFIG;
     if (typeof document < "u" && typeof document.createElement == "function" && !document.querySelector("#smoothr-card-styles")) {
@@ -97,13 +97,13 @@ iframe[data-accept-id]{display:block!important;}`, document.head.appendChild(e);
       let e = w;
       /[?&]base=/.test(e) || (e += (e.includes("?") ? "&" : "?") + `base=${encodeURIComponent(l)}`), /[?&]symbols=/.test(e) || (e += (e.includes("?") ? "&" : "?") + `symbols=${m.join(",")}`), n("smoothr:live-rates-url", e);
     }
-    B(l, m, t.rateSource || w).then((e) => {
+    E(l, m, t.rateSource || w).then((e) => {
       e && (o.updateRates(e), t.debug && n("smoothr:live-rates", e));
     }).catch(() => {
-    }), t.platform === "cms" && (u = k), window.Smoothr = x, window.smoothr = window.smoothr || {}, window.smoothr.auth = d, window.smoothr.supabase = a, window.smoothr.getSession = () => a.auth.getSession(), window.smoothr.getUser = () => a.auth.getUser(), window.renderCart = S, n("🎨 renderCart registered in SDK"), window.Smoothr.cart = { ...f, ...window.Smoothr.cart || {} }, window.Smoothr.cart.renderCart = S, window.Smoothr.checkout = C, window.initCartBindings = O, document.addEventListener("DOMContentLoaded", () => {
-      n("✅ DOM ready – calling initCartBindings"), O();
+    }), t.platform === "cms" && (u = B), window.Smoothr = U, window.smoothr = window.smoothr || {}, window.smoothr.auth = d, window.smoothr.supabase = a, window.smoothr.getSession = () => a.auth.getSession(), window.smoothr.getUser = () => a.auth.getUser(), window.renderCart = O, n("🎨 renderCart registered in SDK"), window.Smoothr.cart = { ...y, ...window.Smoothr.cart || {} }, window.Smoothr.cart.renderCart = O, window.Smoothr.checkout = S, window.initCartBindings = f, document.addEventListener("DOMContentLoaded", () => {
+      n("✅ DOM ready – calling initCartBindings"), f();
     }), d.initAuth().then(() => {
-      window.smoothr?.auth?.user?.value && y.renderOrders();
+      window.smoothr?.auth?.user?.value && C.renderOrders();
     }), globalThis.setSelectedCurrency = globalThis.setSelectedCurrency || u;
   }
 })();
@@ -112,14 +112,14 @@ export {
   g as affiliates,
   I as analytics,
   d as auth,
-  f as cart,
-  C as checkout,
+  y as cart,
+  S as checkout,
   o as currency,
-  R as dashboard,
-  x as default,
-  _ as discounts,
-  y as orders,
+  _ as dashboard,
+  U as default,
+  R as discounts,
+  C as orders,
   T as returns,
   M as reviews,
-  G as subscriptions
+  N as subscriptions
 };
