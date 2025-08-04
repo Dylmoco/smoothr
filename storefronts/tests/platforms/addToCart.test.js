@@ -124,7 +124,7 @@ describe("webflow add-to-cart binding", () => {
   });
 
   it("warns when no image is found", () => {
-    console.warn = vi.fn();
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     wrapper.querySelector.mockImplementation(() => null);
     wrapper.parentElement = null;
 
@@ -140,7 +140,8 @@ describe("webflow add-to-cart binding", () => {
       quantity: 1,
       image: ""
     });
-    expect(console.warn).toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it("detects wrapper when button is nested deeply", () => {
@@ -159,5 +160,25 @@ describe("webflow add-to-cart binding", () => {
       quantity: 1,
       image: "img1.jpg",
     });
+  });
+
+  it("stops polling after limit and exposes failure state", () => {
+    vi.useFakeTimers();
+    document.querySelectorAll.mockReturnValue([]);
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => {});
+    initAddToCart();
+    for (let i = 0; i < 10; i++) {
+      vi.runOnlyPendingTimers();
+    }
+    expect(window.Smoothr.cart.addButtonPollingDisabled).toBe(true);
+    expect(window.Smoothr.cart.addButtonPollingRetries).toBe(10);
+    expect(warnSpy).toHaveBeenLastCalledWith(
+      "[Smoothr Cart]",
+      "No [data-smoothr-add] elements after 10 attempts—feature disabled"
+    );
+    warnSpy.mockRestore();
+    vi.useRealTimers();
   });
 });

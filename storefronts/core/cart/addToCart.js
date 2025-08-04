@@ -6,12 +6,18 @@ import * as cart from '../cart.js';
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {};
   // Use a shallow copy so the cart object remains extensible
-  window.Smoothr.cart = { ...cart };
+  window.Smoothr.cart = {
+    ...cart,
+    addButtonPollingRetries: 0,
+    addButtonPollingDisabled: false
+  };
 }
 
 let initLogShown = false;
 let noButtonsWarned = false;
 let foundLogShown = false;
+const MAX_POLL_ATTEMPTS = 10;
+let pollAttempts = 0;
 
 const debug = window.SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
@@ -37,14 +43,23 @@ export function initCartBindings() {
 
   if (buttons.length === 0) {
     const path = window.location?.pathname || '';
-      if (path.includes('/checkout')) {
-        if (debug) log('🧩 addToCart polling disabled on checkout page');
-        return;
-      }
-      if (!noButtonsWarned) {
-        warn('no buttons found; retrying...');
-        noButtonsWarned = true;
-      }
+    if (path.includes('/checkout')) {
+      if (debug) log('🧩 addToCart polling disabled on checkout page');
+      return;
+    }
+    pollAttempts++;
+    Smoothr.cart.addButtonPollingRetries = pollAttempts;
+    if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+      warn(
+        `No [data-smoothr-add] elements after ${MAX_POLL_ATTEMPTS} attempts—feature disabled`
+      );
+      Smoothr.cart.addButtonPollingDisabled = true;
+      return;
+    }
+    if (!noButtonsWarned) {
+      warn('no buttons found; retrying...');
+      noButtonsWarned = true;
+    }
     setTimeout(initCartBindings, 500);
     return;
   }
