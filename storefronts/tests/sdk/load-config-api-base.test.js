@@ -19,13 +19,12 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 
   const setAuth = vi.fn();
 
-  // ✅ Mock select returning api_base
-  const select = vi.fn(() =>
-    Promise.resolve({
-      data: [{ api_base: 'https://example.com' }],
-      error: null
-    })
-  );
+  const maybeSingle = vi.fn().mockResolvedValue({
+    data: { api_base: 'https://example.com' },
+    error: null
+  });
+  const eq = vi.fn(() => ({ maybeSingle }));
+  const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
 
   return {
@@ -39,7 +38,6 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 beforeEach(() => {
   vi.resetModules();
 
-  // ✅ Ensure SMOOTHR_CONFIG exists
   global.window = {
     SMOOTHR_CONFIG: {},
     location: { origin: '', href: '', hostname: '' },
@@ -66,8 +64,31 @@ beforeEach(() => {
 });
 
 describe('loadConfig api_base mapping', () => {
-  it('sets apiBase from supabase config', async () => {
-    await import('../../core/index.js');
-    expect(global.window.SMOOTHR_CONFIG.apiBase).toBe('https://example.com');
-  });
+  it(
+    'sets apiBase from supabase config',
+    async () => {
+      await import('../../core/index.js');
+
+      const timeout = 5000;
+      const started = Date.now();
+
+      await new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+          const ready = global.window.SMOOTHR_CONFIG.apiBase === 'https://example.com';
+          const expired = Date.now() - started > timeout;
+
+          if (ready) {
+            clearInterval(interval);
+            resolve();
+          } else if (expired) {
+            clearInterval(interval);
+            reject(new Error('Timed out waiting for SMOOTHR_CONFIG.apiBase'));
+          }
+        }, 10);
+      });
+
+      expect(global.window.SMOOTHR_CONFIG.apiBase).toBe('https://example.com');
+    },
+    6000 // timeout override
+  );
 });

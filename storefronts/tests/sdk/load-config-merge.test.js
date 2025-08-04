@@ -19,13 +19,12 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 
   const setAuth = vi.fn();
 
-  // ✅ Mock select returning foo for merging
-  const select = vi.fn(() =>
-    Promise.resolve({
-      data: [{ foo: 'bar' }],
-      error: null
-    })
-  );
+  const maybeSingle = vi.fn().mockResolvedValue({
+    data: { foo: 'bar' },
+    error: null
+  });
+  const eq = vi.fn(() => ({ maybeSingle }));
+  const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
 
   return {
@@ -39,7 +38,6 @@ vi.mock('../../../shared/supabase/browserClient', () => {
 beforeEach(() => {
   vi.resetModules();
 
-  // ✅ Set existing config to check merge result
   global.window = {
     SMOOTHR_CONFIG: { apiBase: 'https://example.com' },
     location: { origin: '', href: '', hostname: '' },
@@ -66,14 +64,37 @@ beforeEach(() => {
 });
 
 describe('loadConfig merge', () => {
-  it('preserves existing config values', async () => {
-    await import('../../core/index.js');
-    expect(global.window.SMOOTHR_CONFIG).toEqual(
-      expect.objectContaining({
-        apiBase: 'https://example.com',
-        foo: 'bar',
-        storeId: '00000000-0000-0000-0000-000000000000'
-      })
-    );
-  });
+  it(
+    'preserves existing config values',
+    async () => {
+      await import('../../core/index.js');
+
+      const timeout = 5000;
+      const started = Date.now();
+
+      await new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+          const ready = global.window.SMOOTHR_CONFIG.foo === 'bar';
+          const expired = Date.now() - started > timeout;
+
+          if (ready) {
+            clearInterval(interval);
+            resolve();
+          } else if (expired) {
+            clearInterval(interval);
+            reject(new Error('Timed out waiting for SMOOTHR_CONFIG.foo'));
+          }
+        }, 10);
+      });
+
+      expect(global.window.SMOOTHR_CONFIG).toEqual(
+        expect.objectContaining({
+          apiBase: 'https://example.com',
+          foo: 'bar',
+          storeId: '00000000-0000-0000-0000-000000000000'
+        })
+      );
+    },
+    6000 // timeout override
+  );
 });
