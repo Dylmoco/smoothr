@@ -1,5 +1,12 @@
 import * as supabaseClient from '../../shared/supabase/browserClient';
-const { supabase, ensureSupabaseSessionAuth } = supabaseClient;
+const { supabase } = supabaseClient;
+
+import { createClient as createAnonClient } from '@supabase/supabase-js';
+
+const anonClient = createAnonClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
@@ -37,17 +44,12 @@ const auth = authModule?.default || authModule;
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
-    await ensureSupabaseSessionAuth?.();
-    const { data, error } = await supabase
+    const { data, error } = await anonClient
       .from('public_store_settings')
       .select('*')
-      .eq('store_id', storeId)
-      .single();
+      .eq('store_id', storeId);
     if (error) throw error;
-    window.SMOOTHR_CONFIG = {
-      ...(window.SMOOTHR_CONFIG || {}),
-      ...(data || {})
-    };
+    Object.assign(window.SMOOTHR_CONFIG, data?.[0]);
     if (
       'api_base' in window.SMOOTHR_CONFIG &&
       !window.SMOOTHR_CONFIG.apiBase
