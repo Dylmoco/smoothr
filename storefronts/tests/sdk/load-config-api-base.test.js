@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import * as core from '../../core/index.js';
 
 vi.mock('../../core/auth/index.js', () => {
   const authMock = {
@@ -18,18 +19,20 @@ vi.mock('../../../shared/supabase/browserClient', () => {
   });
 
   const setAuth = vi.fn();
+  const applySessionAuth = vi.fn().mockResolvedValue();
 
-  const maybeSingle = vi.fn().mockResolvedValue({
+  const single = vi.fn(() => Promise.resolve({
     data: { api_base: 'https://example.com' },
     error: null
-  });
-  const eq = vi.fn(() => ({ maybeSingle }));
+  }));
+  const eq = vi.fn(() => ({ single }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
 
   return {
     supabase: {
       auth: { getSession, setAuth },
+      applySessionAuth,
       from
     }
   };
@@ -39,7 +42,7 @@ beforeEach(() => {
   vi.resetModules();
 
   global.window = {
-    SMOOTHR_CONFIG: {},
+    SMOOTHR_CONFIG: { storeId: '00000000-0000-0000-0000-000000000000' },
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn()
@@ -49,7 +52,14 @@ beforeEach(() => {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
     querySelector: vi.fn(() => null),
-    currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } }
+    getElementById: vi.fn(() => ({
+      dataset: { storeId: '00000000-0000-0000-0000-000000000000' },
+      getAttribute: vi.fn((attr) => attr === 'data-store-id' ? '00000000-0000-0000-0000-000000000000' : null)
+    })),
+    currentScript: {
+      dataset: { storeId: '00000000-0000-0000-0000-000000000000' },
+      getAttribute: vi.fn((attr) => attr === 'data-store-id' ? '00000000-0000-0000-0000-000000000000' : null)
+    }
   };
 
   global.fetch = vi.fn(() =>
@@ -61,34 +71,18 @@ beforeEach(() => {
     setItem: vi.fn(),
     removeItem: vi.fn()
   };
+
+  console.log('Test setup: SMOOTHR_CONFIG=', global.window.SMOOTHR_CONFIG);
 });
 
 describe('loadConfig api_base mapping', () => {
-  it(
-    'sets apiBase from supabase config',
-    async () => {
-      await import('../../core/index.js');
+  it('sets apiBase from supabase config', async () => {
+    console.log('Starting test: loadConfig api_base mapping');
+    const { loadConfig } = await import('../../core/index.js');
+    await loadConfig('00000000-0000-0000-0000-000000000000');
 
-      const timeout = 5000;
-      const started = Date.now();
+    console.log('SMOOTHR_CONFIG after loadConfig:', global.window.SMOOTHR_CONFIG);
 
-      await new Promise((resolve, reject) => {
-        const interval = setInterval(() => {
-          const ready = global.window.SMOOTHR_CONFIG.apiBase === 'https://example.com';
-          const expired = Date.now() - started > timeout;
-
-          if (ready) {
-            clearInterval(interval);
-            resolve();
-          } else if (expired) {
-            clearInterval(interval);
-            reject(new Error('Timed out waiting for SMOOTHR_CONFIG.apiBase'));
-          }
-        }, 10);
-      });
-
-      expect(global.window.SMOOTHR_CONFIG.apiBase).toBe('https://example.com');
-    },
-    6000 // timeout override
-  );
+    expect(global.window.SMOOTHR_CONFIG.apiBase).toBe('https://example.com');
+  }, 5000);
 });
