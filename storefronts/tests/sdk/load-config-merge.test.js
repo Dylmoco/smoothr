@@ -19,7 +19,7 @@ vi.mock('../../../shared/supabase/browserClient', () => {
   });
 
   const setAuth = vi.fn();
-  const applySessionAuth = vi.fn().mockResolvedValue();
+  const ensureSupabaseSessionAuth = vi.fn().mockResolvedValue();
 
   const single = vi.fn(() => Promise.resolve({
     data: { foo: 'bar' },
@@ -32,9 +32,9 @@ vi.mock('../../../shared/supabase/browserClient', () => {
   return {
     supabase: {
       auth: { getSession, setAuth },
-      applySessionAuth,
       from
-    }
+    },
+    ensureSupabaseSessionAuth
   };
 });
 
