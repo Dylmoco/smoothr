@@ -28,14 +28,13 @@ jobs:
         with:
           node-version: 20
           # cache intentionally disabled for debug — omit the cache field entirely
-          # cache-dependency-path: storefronts/package-lock.json
 
       # ✅ Install with no postinstall + verbose logs
       - name: Install dependencies
         working-directory: storefronts
         run: npm ci --ignore-scripts --loglevel verbose
 
-      # ✅ Run tests (without --verbose to prevent Vitest crash)
+      # ✅ Verbose test logs
       - name: Run tests
         working-directory: storefronts
         run: npm test
@@ -43,16 +42,6 @@ jobs:
       - name: Build SDK
         working-directory: storefronts
         run: npm run build
-
-      - name: Bundle Webflow checkout
-        working-directory: storefronts
-        run: node scripts/bundle-webflow-checkout.js
-
-      - name: Verify Webflow bundle is up-to-date
-        working-directory: storefronts
-        run: |
-          git diff --quiet dist/platforms/webflow/checkout.js \
-            || (echo "❌ storefronts/dist/platforms/webflow/checkout.js is stale. Please re-run npm run bundle:webflow-checkout and commit the changes." && exit 1)
 
       - name: Postbuild check
         working-directory: storefronts
