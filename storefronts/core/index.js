@@ -1,6 +1,11 @@
 import * as supabaseClient from '../../shared/supabase/browserClient';
 const { supabase } = supabaseClient;
 
+// expose for debugging
+if (typeof window !== 'undefined') {
+  window.supabase = supabase;
+}
+
 import { getAnonClient } from './config.ts';
 
 const anonClient = getAnonClient();
