@@ -6075,7 +6075,7 @@ function vi(s = document) {
         const a = await ui() || "/";
         window.location.href = a;
       } else
-        (document.querySelector('[data-smoothr="auth-wrapper"]') || document).dispatchEvent(
+        window.dispatchEvent(
           new CustomEvent("smoothr:open-auth", {
             detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
           })

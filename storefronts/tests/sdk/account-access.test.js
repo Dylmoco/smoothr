@@ -33,11 +33,9 @@ function flushPromises() {
 describe("account access trigger", () => {
   let btn;
   let clickHandler;
-  let authWrapper;
 
   beforeEach(() => {
     clickHandler = undefined;
-    authWrapper = { dispatchEvent: vi.fn() };
     btn = {
       tagName: "DIV",
       dataset: { smoothr: "account-access" },
@@ -50,6 +48,7 @@ describe("account access trigger", () => {
       location: { href: "", origin: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
@@ -67,9 +66,7 @@ describe("account access trigger", () => {
         if (selector === '[data-smoothr="sign-out"]') return [];
         return [];
       }),
-      querySelector: vi.fn((sel) =>
-        sel === '[data-smoothr="auth-wrapper"]' ? authWrapper : null
-      ),
+      querySelector: vi.fn(() => null),
       dispatchEvent: vi.fn(),
     };
   });
@@ -97,11 +94,8 @@ describe("account access trigger", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(global.document.querySelector).toHaveBeenCalledWith(
-      '[data-smoothr="auth-wrapper"]'
-    );
-    expect(authWrapper.dispatchEvent).toHaveBeenCalled();
-    const evt = authWrapper.dispatchEvent.mock.calls[0][0];
+    expect(global.window.dispatchEvent).toHaveBeenCalled();
+    const evt = global.window.dispatchEvent.mock.calls[0][0];
     expect(evt.type).toBe("smoothr:open-auth");
     expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-wrapper"]');
   });
