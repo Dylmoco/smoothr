@@ -4,7 +4,6 @@ import forceStripeIframeStyle, {
   initStripeStyles
 } from '../utils/stripeIframeStyles.js';
 
-import { loadPublicConfig } from '../../core/config.js';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 let fieldsMounted = false;
@@ -56,17 +55,17 @@ export async function waitForInteractable(el, timeout = 1500) {
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
   const storeId = window.SMOOTHR_CONFIG?.storeId;
+  const config = window.SMOOTHR_CONFIG || {};
+  if (
+    config.active_payment_gateway &&
+    config.active_payment_gateway !== 'stripe'
+  ) {
+    warn('Stripe is not the active payment gateway');
+    return null;
+  }
   let key;
   if (storeId) {
     try {
-      const data = await loadPublicConfig(storeId);
-      if (
-        data?.active_payment_gateway &&
-        data.active_payment_gateway !== 'stripe'
-      ) {
-        warn('Stripe is not the active payment gateway');
-        return null;
-      }
       const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
       if (cred) {
         key = cred.publishable_key || '';
@@ -229,15 +228,13 @@ export function ready() {
   return !!stripe && !!cardNumberElement;
 }
 
-export async function getStoreSettings(storeId) {
-  if (!storeId) return null;
-  try {
-    const data = await loadPublicConfig(storeId);
-    return data;
-  } catch (e) {
-    warn('Store settings fetch error:', e?.message || e);
+export async function getStoreSettings() {
+  const data = window.SMOOTHR_CONFIG;
+  if (!data) {
+    warn('Store settings not found');
     return null;
   }
+  return data;
 }
 
 export async function createPaymentMethod(billing_details) {
