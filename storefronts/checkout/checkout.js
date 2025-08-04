@@ -34,6 +34,17 @@ function forEachPayButton(fn) {
   document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
 }
 
+function showLoginPopup() {
+  const fn =
+    window?.Smoothr?.auth?.showLoginPopup ||
+    window?.smoothr?.auth?.showLoginPopup;
+  if (typeof fn === 'function') {
+    fn();
+  } else {
+    console.warn('[Smoothr] showLoginPopup not implemented');
+  }
+}
+
 const gateways = { stripe, authorizeNet, paypal, nmi, segpay };
 
 export async function initCheckout(config) {
@@ -41,10 +52,6 @@ export async function initCheckout(config) {
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
   const debug = window.SMOOTHR_CONFIG?.debug;
   if (debug) console.log('[Smoothr] initCheckout', config);
-
-  const payButtons = document.querySelectorAll('[data-smoothr-pay]');
-  if (debug) console.log('[Smoothr] Found pay buttons:', payButtons.length);
-
   if (window.__SMOOTHR_CHECKOUT_BOUND__) return;
   window.__SMOOTHR_CHECKOUT_BOUND__ = true;
 
@@ -74,14 +81,14 @@ export async function initCheckout(config) {
   };
 
   // mount fields common to all gateways
-  const checkoutEl = await select('[data-smoothr-pay]');
-  if (!checkoutEl) {
+  await select('[data-smoothr-pay]');
+  let payButtons = document.querySelectorAll('[data-smoothr-pay]');
+  if (debug) console.log('[Smoothr] Found pay buttons:', payButtons.length);
+  if (!payButtons.length) {
     const path = window.location?.pathname || '';
     const isCheckoutPath = /checkout|cart/.test(path);
     if (debug) {
-      warn(
-        'No checkout trigger found. Add a [data-smoothr-pay] element or delay initCheckout.'
-      );
+      warn('No checkout trigger found. Add a [data-smoothr-pay] element or delay initCheckout.');
     } else if (isCheckoutPath) {
       console.warn(
         '[Smoothr Checkout]',
@@ -96,6 +103,7 @@ export async function initCheckout(config) {
     }
     return;
   }
+  const checkoutEl = payButtons[0];
   log('checkout trigger found', checkoutEl);
 
   const fields = collectFormFields(q);
@@ -125,13 +133,19 @@ export async function initCheckout(config) {
     return;
   }
 
-  const isForm = checkoutEl.tagName.toLowerCase() === 'form';
-  const eventName = isForm ? 'submit' : 'click';
-
   payButtons.forEach(btn => {
+    const isForm = btn.tagName.toLowerCase() === 'form';
+    const eventName = isForm ? 'submit' : 'click';
     btn.addEventListener(eventName, async e => {
       e.preventDefault();
       e.stopPropagation();
+
+      const { data } = await window.supabaseAuth.auth.getSession();
+      if (!data?.session) {
+        showLoginPopup();
+        return;
+      }
+      const provider = window.SMOOTHR_CONFIG.active_payment_gateway;
 
       if (isSubmitting) {
         warn('Checkout already in progress');
@@ -243,7 +257,7 @@ export async function initCheckout(config) {
       }
     });
   });
-  log(`${eventName} handler attached`);
+  log('pay button handlers attached');
 }
 
 // collects form data, supports billing same-as-shipping
