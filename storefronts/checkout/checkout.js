@@ -23,18 +23,17 @@ import {
   disableButton,
   enableButton
 } from './utils/cartHash.js';
+import stripe from './gateways/stripe.js';
+import authorizeNet from './gateways/authorizeNet.js';
+import paypal from './gateways/paypal.js';
+import nmi from './gateways/nmi.js';
+import segpay from './gateways/segpay.js';
 
 function forEachPayButton(fn) {
   document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
 }
 
-const gatewayLoaders = {
-  stripe: () => import('./gateways/stripe.js'),
-  authorizeNet: () => import('./gateways/authorizeNet.js'),
-  paypal: () => import('./gateways/paypal.js'),
-  nmi: () => import('./gateways/nmi.js'),
-  segpay: () => import('./gateways/segpay.js')
-};
+const gateways = { stripe, authorizeNet, paypal, nmi, segpay };
 
 export async function initCheckout(config) {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
@@ -54,9 +53,8 @@ export async function initCheckout(config) {
   log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
 
   const provider = await getActivePaymentGateway(log, warn);
-  const loader = gatewayLoaders[provider];
-  if (!loader) throw new Error(`Unknown payment gateway: ${provider}`);
-  const gateway = (await loader()).default;
+  const gateway = gateways[provider];
+  if (!gateway) throw new Error(`Unknown payment gateway: ${provider}`);
   log(`Using gateway: ${provider}`);
 
   // assign gateway methods to global namespace
