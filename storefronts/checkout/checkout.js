@@ -71,7 +71,15 @@ export async function initCheckout(config) {
   // mount fields common to all gateways
   const checkoutEl = await select('[data-smoothr-pay]');
   if (!checkoutEl) {
-    warn('Missing [data-smoothr-pay]');
+    warn(
+      'No checkout trigger found. Add a [data-smoothr-pay] element or delay initCheckout.'
+    );
+    window.__SMOOTHR_CHECKOUT_INITIALIZED__ = false;
+    window.__SMOOTHR_CHECKOUT_BOUND__ = false;
+    if (!window.__SMOOTHR_CHECKOUT_RETRY__) {
+      window.__SMOOTHR_CHECKOUT_RETRY__ = true;
+      setTimeout(() => initCheckout(config), 100);
+    }
     return;
   }
   log('checkout trigger found', checkoutEl);
