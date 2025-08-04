@@ -97,6 +97,7 @@ describe("signup flow", () => {
     expect(signUpMock).toHaveBeenCalledWith({
       email: "test@example.com",
       password: "Password1",
+      options: { data: { store_id: globalThis.SMOOTHR_CONFIG.storeId } },
     });
     expect(global.document.dispatchEvent).toHaveBeenCalled();
   });
