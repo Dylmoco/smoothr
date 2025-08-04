@@ -17,7 +17,11 @@ import {
   findMessageContainer
 } from '../../../supabase/authHelpers.js';
 
-const debug = window.SMOOTHR_CONFIG?.debug;
+// Ensure SMOOTHR_CONFIG is accessible in both browser and non-browser environments
+const globalScope = typeof window !== 'undefined' ? window : globalThis;
+const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
+
+const debug = SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
 // minimal reactive ref implementation
@@ -30,7 +34,8 @@ const user = ref(null);
 async function login(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
-    password
+    password,
+    options: { data: { store_id: SMOOTHR_CONFIG.storeId } }
   });
   if (!error) {
     user.value = data.user || null;
@@ -43,7 +48,11 @@ async function login(email, password) {
 }
 
 async function signup(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { store_id: SMOOTHR_CONFIG.storeId } }
+  });
   if (!error) {
     user.value = data.user || null;
     if (typeof window !== 'undefined') {
