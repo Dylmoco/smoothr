@@ -24,12 +24,11 @@ jobs:
         run: echo "✅ CI runner is active"
 
       - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-      node-version: 20
-        # cache intentionally disabled for debug — omit the cache field entirely
-        # cache-dependency-path: storefronts/package-lock.json
-
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # cache intentionally disabled for debug — omit the cache field entirely
+          # cache-dependency-path: storefronts/package-lock.json
 
       # ✅ Install with no postinstall + verbose logs
       - name: Install dependencies
