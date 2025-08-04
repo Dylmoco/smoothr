@@ -17,6 +17,11 @@ export default defineConfig(({ mode }) => {
       ),
       __NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL__: JSON.stringify(
         env.NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL
+      ),
+
+      // ✅ Live rates API for dynamic currency conversions
+      'process.env.LIVE_RATES_URL': JSON.stringify(
+        'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates'
       )
     },
     build: {
