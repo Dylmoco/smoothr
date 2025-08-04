@@ -1,6 +1,9 @@
 import { supabase } from '../shared/supabase/browserClient';
 
-const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+const globalScope = typeof window !== 'undefined' ? window : globalThis;
+const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
+
+const debug = SMOOTHR_CONFIG.debug;
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Auth]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Auth]', ...args);
