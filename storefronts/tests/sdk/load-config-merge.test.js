@@ -11,13 +11,28 @@ vi.mock('../../core/auth/index.js', () => {
   };
   return { default: authMock, ...authMock };
 });
-vi.mock('../../../shared/supabase/browserClient', () => {
 
-  const single = vi.fn(async () => ({ data: { foo: 'bar' }, error: null }));
+vi.mock('../../../shared/supabase/browserClient', () => {
+  const getSession = vi.fn().mockResolvedValue({
+    data: { session: { access_token: 'test-token' } }
+  });
+
+  const setAuth = vi.fn();
+
+  const single = vi.fn(async () => ({
+    data: { foo: 'bar' },
+    error: null
+  }));
   const eq = vi.fn(() => ({ single }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
-  return { supabase: { from } };
+
+  return {
+    supabase: {
+      auth: { getSession, setAuth },
+      from
+    }
+  };
 });
 
 beforeEach(() => {
