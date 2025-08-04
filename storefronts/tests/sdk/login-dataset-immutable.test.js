@@ -13,6 +13,7 @@ vi.mock("@supabase/supabase-js", () => {
       getUser: getUserMock,
       signInWithPassword: signInMock,
       signOut: vi.fn(),
+      onAuthStateChange: vi.fn(),
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({

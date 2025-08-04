@@ -21,6 +21,7 @@ vi.mock("@supabase/supabase-js", () => {
       resetPasswordForEmail: resetPasswordMock,
       updateUser: updateUserMock,
       setSession: setSessionMock,
+      onAuthStateChange: vi.fn(),
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({

@@ -4,15 +4,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 var signInMock;
 var getUserMock;
 var createClientMock;
+var getSessionMock;
 
 vi.mock("@supabase/supabase-js", () => {
   signInMock = vi.fn();
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
+  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: {} }, error: null }));
   createClientMock = vi.fn(() => ({
     auth: {
       getUser: getUserMock,
       signInWithPassword: signInMock,
       signOut: vi.fn(),
+      onAuthStateChange: vi.fn(),
+      getSession: getSessionMock,
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -108,5 +112,7 @@ describe("login form", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.smoothr.auth.user.value).toEqual(user);
+    await global.window.smoothr.auth.client.auth.getSession();
+    expect(getSessionMock).toHaveBeenCalled();
   });
 });
