@@ -38,10 +38,11 @@ const gateways = { stripe, authorizeNet, paypal, nmi, segpay };
 export async function initCheckout(config) {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
-  console.log('[Smoothr] initCheckout', config);
+  const debug = window.SMOOTHR_CONFIG?.debug;
+  if (debug) console.log('[Smoothr] initCheckout', config);
 
   const payButtons = document.querySelectorAll('[data-smoothr-pay]');
-  console.log('[Smoothr] Found pay buttons:', payButtons.length);
+  if (debug) console.log('[Smoothr] Found pay buttons:', payButtons.length);
 
   if (window.__SMOOTHR_CHECKOUT_BOUND__) return;
   window.__SMOOTHR_CHECKOUT_BOUND__ = true;
@@ -69,9 +70,18 @@ export async function initCheckout(config) {
   // mount fields common to all gateways
   const checkoutEl = await select('[data-smoothr-pay]');
   if (!checkoutEl) {
-    warn(
-      'No checkout trigger found. Add a [data-smoothr-pay] element or delay initCheckout.'
-    );
+    const path = window.location?.pathname || '';
+    const isCheckoutPath = /checkout|cart/.test(path);
+    if (debug) {
+      warn(
+        'No checkout trigger found. Add a [data-smoothr-pay] element or delay initCheckout.'
+      );
+    } else if (isCheckoutPath) {
+      console.warn(
+        '[Smoothr Checkout]',
+        'No checkout trigger found. Add a [data-smoothr-pay] element or delay initCheckout.'
+      );
+    }
     window.__SMOOTHR_CHECKOUT_INITIALIZED__ = false;
     window.__SMOOTHR_CHECKOUT_BOUND__ = false;
     if (!window.__SMOOTHR_CHECKOUT_RETRY__) {
