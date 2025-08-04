@@ -4,7 +4,7 @@ import forceStripeIframeStyle, {
   initStripeStyles
 } from '../utils/stripeIframeStyles.js';
 
-import { loadPublicConfig } from '../../core/config.ts';
+import { loadPublicConfig } from '../../core/config.js';
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 let fieldsMounted = false;
@@ -59,6 +59,14 @@ async function resolveStripeKey() {
   let key;
   if (storeId) {
     try {
+      const data = await loadPublicConfig(storeId);
+      if (
+        data?.active_payment_gateway &&
+        data.active_payment_gateway !== 'stripe'
+      ) {
+        warn('Stripe is not the active payment gateway');
+        return null;
+      }
       const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
       if (cred) {
         key = cred.publishable_key || '';
@@ -224,7 +232,8 @@ export function ready() {
 export async function getStoreSettings(storeId) {
   if (!storeId) return null;
   try {
-    return await loadPublicConfig(storeId);
+    const data = await loadPublicConfig(storeId);
+    return data;
   } catch (e) {
     warn('Store settings fetch error:', e?.message || e);
     return null;
