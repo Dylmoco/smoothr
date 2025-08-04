@@ -17,28 +17,28 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
+        id: checkout
 
-      - name: 🐛 Confirm runner & secrets
-        run: |
-          echo "Git SHA: ${{ github.sha }}"
-          echo "Node version: $(node -v || echo not installed)"
-          echo "Supabase URL starts with: ${NEXT_PUBLIC_SUPABASE_URL:0:10}"
+      # ✅ Early confirmation that runner is active
+      - name: Confirm runner
+        run: echo "✅ CI runner is active"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          # TEMP cache invalidation to force full reinstall
-          cache-dependency-path: storefronts/package-lock.json.invalidated
+          cache: 'false'
+          # cache-dependency-path: storefronts/package-lock.json (disabled for debugging)
 
+      # ✅ Install with no postinstall + verbose logs
       - name: Install dependencies
         working-directory: storefronts
-        run: npm ci
+        run: npm ci --ignore-scripts --loglevel verbose
 
+      # ✅ Verbose test logs
       - name: Run tests
         working-directory: storefronts
-        run: npm test
+        run: npm test -- --verbose
 
       - name: Build SDK
         working-directory: storefronts
@@ -80,3 +80,8 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ✅ End-of-job fallback in case nothing runs
+      - name: Warn if no steps executed
+        if: ${{ always() && steps.checkout.conclusion == 'skipped' }}
+        run: echo "::warning ::Workflow ended before executing any job steps"
