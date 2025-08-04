@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...args);
 
-export const anonClientOptions = {
+const anonClientOptions = {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
@@ -13,7 +13,7 @@ export const anonClientOptions = {
 
 let anonClient: ReturnType<typeof createClient> | null = null;
 
-export function getAnonClient() {
+function getAnonClient() {
   const globalKey = `__supabaseAuthClient${anonClientOptions.auth.storageKey}`;
   if (!anonClient) {
     anonClient = (globalThis as any)[globalKey] || null;

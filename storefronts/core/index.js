@@ -1,14 +1,13 @@
-import * as supabaseClient from '../../shared/supabase/browserClient';
-const { supabase, ensureSupabaseSessionAuth } = supabaseClient;
-
-// expose for debugging
+import {
+  supabase as authClient,
+  ensureSupabaseSessionAuth
+} from '../../shared/supabase/browserClient';
+const supabase = authClient;
 if (typeof window !== 'undefined') {
-  window.supabase = supabase;
+  window.supabaseAuth = authClient;
 }
 
-import { getAnonClient } from './config.ts';
-
-const anonClient = getAnonClient();
+import { loadPublicConfig } from './config.ts';
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';
@@ -46,17 +45,20 @@ const auth = authModule?.default || authModule;
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
-    const client =
+    let record;
+    if (
       typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-        ? supabase
-        : anonClient;
-    const { data, error } = await client
-      .from('public_store_settings')
-      .select('*')
-      .eq('store_id', storeId)
-      .single();
-    if (error) throw error;
-    const record = data ?? {};
+    ) {
+      const { data, error } = await supabase
+        .from('public_store_settings')
+        .select('*')
+        .eq('store_id', storeId)
+        .single();
+      if (error) throw error;
+      record = data ?? {};
+    } else {
+      record = (await loadPublicConfig(storeId)) ?? {};
+    }
     for (const [key, value] of Object.entries(record)) {
       const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
       window.SMOOTHR_CONFIG[camelKey] = value;
@@ -227,7 +229,7 @@ export default Smoothr;
     window.Smoothr = Smoothr;
     window.smoothr = window.smoothr || {};
     window.smoothr.auth = auth;
-    window.smoothr.supabase = supabase;
+    window.smoothr.supabaseAuth = authClient;
     // Optional helpers for DevTools
     if (supabase.auth) {
       window.smoothr.getSession = () => supabase.auth.getSession();
