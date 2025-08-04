@@ -1,14 +1,9 @@
 import * as supabaseClient from '../../shared/supabase/browserClient';
 const { supabase } = supabaseClient;
 
-import { createClient as createAnonClient } from '@supabase/supabase-js';
-import { anonClientOptions } from './config.ts';
+import { getAnonClient } from './config.ts';
 
-const anonClient = createAnonClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  anonClientOptions
-);
+const anonClient = getAnonClient();
 
 import * as abandonedCart from './abandoned-cart/index.js';
 import * as affiliates from './affiliates/index.js';

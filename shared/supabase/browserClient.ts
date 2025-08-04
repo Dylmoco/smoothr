@@ -1,9 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const storageKey = 'smoothr-browser-client';
+const globalKey = `__supabaseAuthClient${storageKey}`;
+
+const supabase =
+  (globalThis as any)[globalKey] ||
+  ((globalThis as any)[globalKey] = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        storageKey
+      }
+    }
+  ));
 
 async function ensureSupabaseSessionAuth() {
   try {
