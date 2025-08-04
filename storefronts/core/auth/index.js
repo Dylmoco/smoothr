@@ -31,6 +31,14 @@ function ref(val) {
 
 const user = ref(null);
 
+function updateGlobalAuth() {
+  if (typeof window !== 'undefined') {
+    window.smoothr = window.smoothr || {};
+    window.smoothr.auth = auth;
+    window.smoothr.auth.client = supabase;
+  }
+}
+
 async function login(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -39,10 +47,7 @@ async function login(email, password) {
   });
   if (!error) {
     user.value = data.user || null;
-    if (typeof window !== 'undefined') {
-      window.smoothr = window.smoothr || {};
-      window.smoothr.auth = auth;
-    }
+    updateGlobalAuth();
   }
   return { data, error };
 }
@@ -55,10 +60,7 @@ async function signup(email, password) {
   });
   if (!error) {
     user.value = data.user || null;
-    if (typeof window !== 'undefined') {
-      window.smoothr = window.smoothr || {};
-      window.smoothr.auth = auth;
-    }
+    updateGlobalAuth();
   }
   return { data, error };
 }
@@ -73,9 +75,8 @@ async function signOut() {
     data: { user: currentUser }
   } = await supabase.auth.getUser();
   user.value = currentUser || null;
+  updateGlobalAuth();
   if (typeof window !== 'undefined') {
-    window.smoothr = window.smoothr || {};
-    window.smoothr.auth = auth;
     if (currentUser) {
       log(
         `%c✅ Smoothr Auth: Logged in as ${currentUser.email}`,
@@ -92,7 +93,7 @@ async function initAuth(...args) {
   await initAuthHelper(...args);
   if (typeof window !== 'undefined') {
     user.value = window.smoothr?.auth?.user || null;
-    window.smoothr.auth = auth;
+    updateGlobalAuth();
   }
 }
 
@@ -133,20 +134,17 @@ function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
             }
             setLoading(trigger, true);
             try {
-              const { data, error } = await supabase.auth.updateUser({ password });
-              if (error) {
-                showError(form, error.message || 'Password update failed', trigger, trigger);
-              } else {
-                user.value = data.user || null;
-                if (typeof window !== 'undefined') {
-                  window.smoothr = window.smoothr || {};
-                  window.smoothr.auth = auth;
+                const { data, error } = await supabase.auth.updateUser({ password });
+                if (error) {
+                  showError(form, error.message || 'Password update failed', trigger, trigger);
+                } else {
+                  user.value = data.user || null;
+                updateGlobalAuth();
+                  showSuccess(form, 'Password updated', trigger);
+                  setTimeout(() => {
+                    window.location.href = redirectTo;
+                  }, 1000);
                 }
-                showSuccess(form, 'Password updated', trigger);
-                setTimeout(() => {
-                  window.location.href = redirectTo;
-                }, 1000);
-              }
             } catch (err) {
               showError(form, err.message || 'Password update failed', trigger, trigger);
             } finally {
@@ -365,13 +363,16 @@ const auth = {
   resetPassword,
   signOut,
   initAuth,
-  user
+  user,
+  client: supabase
 };
 
-if (typeof window !== 'undefined') {
-  window.smoothr = window.smoothr || {};
-  window.smoothr.auth = auth;
-}
+updateGlobalAuth();
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  user.value = session?.user || null;
+  updateGlobalAuth();
+});
 
 export {
   initAuth,
