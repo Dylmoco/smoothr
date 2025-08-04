@@ -1,24 +1,63 @@
 import { supabase } from '../../shared/supabase/browserClient';
 
-import * as abandonedCart from './abandoned-cart/index.js';
-import * as affiliates from './affiliates/index.js';
-import * as analytics from './analytics/index.js';
-import * as currency from './currency/index.js';
-import * as dashboard from './dashboard/index.js';
-import * as discounts from './discounts/index.js';
-import * as cart from './cart.js';
-import * as orders from './orders/index.js';
-import * as returns from './returns/index.js';
-import * as reviews from './reviews/index.js';
-import * as subscriptions from './subscriptions/index.js';
-import auth from './auth/index.js';
-import * as stripeGateway from '../checkout/gateways/stripe.js';
+// Capture the store ID as soon as the bundle loads
+const script = document.currentScript || document.getElementById('smoothr-sdk');
+const storeId = script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
+window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
+window.SMOOTHR_CONFIG.storeId = storeId;
+console.log('[Smoothr SDK] Initialized storeId:', storeId);
+if (!storeId)
+  console.warn(
+    '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
+  );
 
-import { fetchExchangeRates } from './currency/live-rates.js';
-import { initCartBindings } from './cart/addToCart.js';
-import { renderCart } from './cart/renderCart.js';
-import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow/webflow-dom.js';
-import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
+// Dynamically import modules that rely on SMOOTHR_CONFIG
+const [
+  abandonedCart,
+  affiliates,
+  analytics,
+  currency,
+  dashboard,
+  discounts,
+  cart,
+  orders,
+  returns,
+  reviews,
+  subscriptions,
+  authModule,
+  stripeGateway,
+  liveRates,
+  addToCart,
+  renderCartModule,
+  webflowDom,
+  cmsCurrencyModule
+] = await Promise.all([
+  import('./abandoned-cart/index.js'),
+  import('./affiliates/index.js'),
+  import('./analytics/index.js'),
+  import('./currency/index.js'),
+  import('./dashboard/index.js'),
+  import('./discounts/index.js'),
+  import('./cart.js'),
+  import('./orders/index.js'),
+  import('./returns/index.js'),
+  import('./reviews/index.js'),
+  import('./subscriptions/index.js'),
+  import('./auth/index.js'),
+  import('../checkout/gateways/stripe.js'),
+  import('./currency/live-rates.js'),
+  import('./cart/addToCart.js'),
+  import('./cart/renderCart.js'),
+  import('../platforms/webflow/webflow-dom.js'),
+  import('./currency/cms-currency.js')
+]);
+
+const auth = authModule.default || authModule;
+const { fetchExchangeRates } = liveRates;
+const { initCartBindings } = addToCart;
+const { renderCart } = renderCartModule;
+const { setSelectedCurrency: setDomCurrency } = webflowDom;
+const { setSelectedCurrency: setCmsCurrency } = cmsCurrencyModule;
 
 // Load config from public_store_settings into window.SMOOTHR_CONFIG
 async function loadConfig(storeId) {
@@ -85,11 +124,8 @@ export default Smoothr;
   if (typeof globalThis.setSelectedCurrency !== 'function') {
     globalThis.setSelectedCurrency = () => {};
   }
-  const currentScript =
-    document.currentScript ||
-    document.querySelector('script[src*="smoothr-sdk"][data-store-id]');
 
-  const storeId = currentScript?.dataset?.storeId;
+  const storeId = window.SMOOTHR_CONFIG.storeId;
 
   console.log('[Smoothr SDK] Bootstrap triggered', { storeId });
 
