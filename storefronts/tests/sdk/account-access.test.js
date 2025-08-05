@@ -22,10 +22,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as authHelpers from "../../../supabase/authHelpers.js";
-vi.spyOn(authHelpers, "lookupDashboardHomeUrl").mockResolvedValue("/dashboard");
-
-let auth;
+let authHelpers;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -34,9 +31,7 @@ function flushPromises() {
 describe("account access trigger", () => {
   let btn;
   let clickHandler;
-
-  beforeEach(async () => {
-    vi.resetModules();
+  beforeEach(() => {
     clickHandler = undefined;
     btn = {
       tagName: "DIV",
@@ -50,7 +45,13 @@ describe("account access trigger", () => {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     };
+    const scriptEl = {
+      dataset: { storeId: "1" },
+      getAttribute: vi.fn(() => "1"),
+    };
     global.document = {
+      currentScript: null,
+      getElementById: vi.fn(() => scriptEl),
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
         if (evt === "click") clickHandler = cb;
@@ -69,36 +70,53 @@ describe("account access trigger", () => {
       querySelector: vi.fn(() => null),
       dispatchEvent: vi.fn(),
     };
-    auth = await import("../../features/auth/index.js");
   });
 
-  it("redirects logged-in users to dashboard home", async () => {
-    const user = { id: "1", email: "test@example.com" };
-    getUserMock.mockResolvedValueOnce({ data: { user } });
+  describe("redirects logged-in users to dashboard home", () => {
+    let user;
 
-    await auth.init();
-    await flushPromises();
-    expect(global.window.Smoothr.auth.user.value).toEqual(user);
+    beforeEach(async () => {
+      vi.resetModules();
+      authHelpers = await import("../../../supabase/authHelpers.js");
+      vi
+        .spyOn(authHelpers, "lookupDashboardHomeUrl")
+        .mockResolvedValue("/dashboard");
+      user = { id: "1", email: "test@example.com" };
+      getUserMock.mockResolvedValueOnce({ data: { user } });
+      const { init } = await import("../../features/auth/index.js");
+      await init({});
+      await flushPromises();
+    });
 
-    await clickHandler({ target: btn, preventDefault: () => {} });
-    await flushPromises();
-    expect(authHelpers.lookupDashboardHomeUrl).toHaveBeenCalled();
-    expect(global.window.location.href).toBe("/dashboard");
+    it("redirects logged-in users to dashboard home", async () => {
+      expect(global.window.Smoothr.auth.user.value).toEqual(user);
+
+      await clickHandler({ target: btn, preventDefault: () => {} });
+      await flushPromises();
+      expect(authHelpers.lookupDashboardHomeUrl).toHaveBeenCalled();
+      expect(global.window.location.href).toBe("/dashboard");
+    });
   });
 
-  it("dispatches open-auth event for anonymous users", async () => {
-    getUserMock.mockResolvedValueOnce({ data: { user: null } });
+  describe("dispatches open-auth event for anonymous users", () => {
+    beforeEach(async () => {
+      vi.resetModules();
+      getUserMock.mockResolvedValueOnce({ data: { user: null } });
+      authHelpers = await import("../../../supabase/authHelpers.js");
+      const { init } = await import("../../features/auth/index.js");
+      await init({});
+      await flushPromises();
+    });
 
-    await auth.init();
-    await flushPromises();
+    it("dispatches open-auth event for anonymous users", async () => {
+      await clickHandler({ target: btn, preventDefault: () => {} });
+      await flushPromises();
 
-    await clickHandler({ target: btn, preventDefault: () => {} });
-    await flushPromises();
-
-    expect(global.window.dispatchEvent).toHaveBeenCalled();
-    const evt = global.window.dispatchEvent.mock.calls[0][0];
-    expect(evt.type).toBe("smoothr:open-auth");
-    expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-wrapper"]');
+      expect(global.window.dispatchEvent).toHaveBeenCalled();
+      const evt = global.window.dispatchEvent.mock.calls[0][0];
+      expect(evt.type).toBe("smoothr:open-auth");
+      expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-wrapper"]');
+    });
   });
 });
 
