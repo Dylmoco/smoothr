@@ -166,7 +166,7 @@ function safeSetDataset(el, key, val) {
 }
 
 function bindAuthElements(root = document) {
-  document.querySelectorAll('[data-smoothr="login"]').forEach(el => {
+  document.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
 
