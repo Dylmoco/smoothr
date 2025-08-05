@@ -20,7 +20,7 @@ beforeEach(() => {
     SMOOTHR_CONFIG: {
       baseCurrency: "EUR",
       rates: { USD: 1, EUR: 0.8 },
-      rateSource: "https://example.com/api/live-rates",
+      rateSource: "https://example.com/api/deprecated-live-rates",
       debug: true,
     },
   };

@@ -1,4 +1,4 @@
-// DEPRECATED: Replaced by Supabase Edge Function `proxy-live-rates`
+// Deprecated legacy endpoint replaced by Supabase Edge Function `proxy-live-rates`
 const CACHE = new Map();
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -9,9 +9,9 @@ const CORS_HEADERS = {
 
 export async function onRequestGet({ request, env }) {
   const debug = env && env.SMOOTHR_DEBUG === 'true';
-  const log = (...args) => debug && console.log('[live-rates]', ...args);
-  const warn = (...args) => debug && console.warn('[live-rates]', ...args);
-  const err = (...args) => debug && console.error('[live-rates]', ...args);
+  const log = (...args) => debug && console.log('[deprecated-live-rates]', ...args);
+  const warn = (...args) => debug && console.warn('[deprecated-live-rates]', ...args);
+  const err = (...args) => debug && console.error('[deprecated-live-rates]', ...args);
   const url = new URL(request.url);
   const base = (url.searchParams.get('base') || 'GBP').toUpperCase();
   const symbolsParam = url.searchParams.get('symbols');
