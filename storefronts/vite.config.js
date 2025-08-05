@@ -32,7 +32,6 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         external: [],
         input: {
-          sdk: path.resolve(__dirname, 'features/index.js'),
             'sdk-auth-entry': path.resolve(
               __dirname,
               'features/auth/sdk-auth-entry.js'

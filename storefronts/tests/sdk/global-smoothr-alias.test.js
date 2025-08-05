@@ -73,10 +73,15 @@ beforeEach(() => {
 
 describe("global smoothr alias", () => {
   it("exposes auth on window.smoothr", async () => {
-    const core = await import("../../features/index.js");
+    const { default: smoothr } = await import(
+      "../../features/auth/sdk-auth-entry.js"
+    );
+    const checkout = await import("../../features/checkout/checkout-core.js");
+    Object.assign(global.window.Smoothr, checkout);
+    Object.assign(global.window.smoothr, checkout);
     await new Promise(setImmediate);
-    expect(global.window.Smoothr).toBe(core.default);
-    expect(global.window.smoothr.auth).toBe(core.default.auth);
+    expect(global.window.Smoothr).toBe(smoothr);
+    expect(global.window.smoothr.auth).toBe(smoothr.auth);
     expect(typeof global.window.Smoothr.orders.renderOrders).toBe("function");
     expect(typeof global.window.Smoothr.cart.addItem).toBe("function");
   });

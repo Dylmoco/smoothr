@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import * as core from '../../features/index.js';
+import * as core from '../../features/auth/sdk-auth-entry.js';
 
 vi.mock('../../features/auth/index.js', () => {
   const authMock = {
@@ -88,7 +88,9 @@ beforeEach(() => {
 describe('loadConfig api_base mapping', () => {
   it('sets apiBase from supabase config', async () => {
     console.log('Starting test: loadConfig api_base mapping');
-    const { loadConfig } = await import('../../features/index.js');
+    const { loadConfig } = await import(
+      '../../features/auth/sdk-auth-entry.js'
+    );
     await loadConfig('00000000-0000-0000-0000-000000000000');
 
     console.log(

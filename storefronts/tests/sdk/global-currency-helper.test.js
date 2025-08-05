@@ -28,7 +28,7 @@ beforeEach(() => {
 
 describe("global currency helper", () => {
   it("attaches setSelectedCurrency to globalThis", async () => {
-    await import("../../features/index.js");
+    await import("../../features/auth/sdk-auth-entry.js");
     expect(typeof globalThis.setSelectedCurrency).toBe("function");
   });
 });
