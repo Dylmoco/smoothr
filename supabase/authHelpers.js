@@ -147,11 +147,19 @@ export async function lookupDashboardHomeUrl() {
 
   try {
     const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
-    cachedDashboardHomeUrl = config?.dashboard_home_url || '/';
+    const url = config?.dashboard_home_url;
+    if (!url) {
+      console.warn(
+        '[Smoothr Auth] Dashboard home URL missing. Falling back to /account'
+      );
+      cachedDashboardHomeUrl = '/account';
+    } else {
+      cachedDashboardHomeUrl = url;
+    }
     return cachedDashboardHomeUrl;
   } catch (error) {
     console.warn('[Smoothr Auth] Dashboard home lookup failed:', error);
-    cachedDashboardHomeUrl = '/';
+    cachedDashboardHomeUrl = '/account';
     return cachedDashboardHomeUrl;
   }
 }
