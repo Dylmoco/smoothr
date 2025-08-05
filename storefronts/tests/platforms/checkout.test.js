@@ -124,7 +124,7 @@ beforeEach(() => {
     };
     await createPaymentMethodMock({ billing_details });
     if (provider === 'authorizeNet') {
-      await fetch(`/api/create-order`, {
+      await fetch(`/api/createOrder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: '{}'
@@ -212,7 +212,7 @@ describe('checkout', () => {
     await window.Smoothr.checkout.submit();
 
     expect(fetch).toHaveBeenCalledWith(
-      `/api/create-order`,
+      `/api/createOrder`,
       expect.any(Object)
     );
     expect(fetch).toHaveBeenLastCalledWith(

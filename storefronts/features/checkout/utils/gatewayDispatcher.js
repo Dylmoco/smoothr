@@ -24,13 +24,13 @@ export default async function gatewayDispatcher(provider, payload, token, log, w
         billing: payload.billing,
         store_id: payload.store_id
       };
-      const orderRes = await fetch(`${apiBase}/api/create-order`, {
+      const orderRes = await fetch(`${apiBase}/api/createOrder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload)
       });
       const orderData = await orderRes.clone().json().catch(() => ({}));
-      log('create-order response', orderRes.status, orderData);
+      log('createOrder response', orderRes.status, orderData);
       if (!orderRes.ok || !orderData?.order_number) {
         err('Order creation failed');
         return { res: orderRes, data: orderData };
