@@ -5,13 +5,13 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 ## Directory Overview
 
 - **/storefronts/** – Client-facing storefront code and widgets.
-  - **/features/** – Storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, cart, customer dashboard, abandoned cart, and subscriptions.
+  - **/features/** – Storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, cart, customer dashboard, abandoned cart, and subscriptions. Discount helpers live in `storefronts/features/discounts/discounts.ts`.
   - **/adapters/** – Adapters for various web builder platforms.
-- **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, abandoned cart, subscriptions, and Supabase helpers.
+- **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, abandoned cart, subscriptions, and Supabase helpers. Includes utilities like `shared/utils/applyCors.ts` for CORS handling.
 - **/smoothr/** – Next.js admin dashboard application.
   - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, dashboard, abandoned cart, and subscriptions.
 - **/scripts/** – Repository-level Node scripts like the postinstall hook.
-- **/supabase/** – Supabase functions, migrations, and database helpers.
+- **/supabase/** – Supabase functions, migrations, and database helpers, including `supabase/supabaseClient.js` for initializing the client.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
 The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience.
