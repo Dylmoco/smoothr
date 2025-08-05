@@ -31,7 +31,7 @@ for (const ws of workspaces) {
 
   if (!fs.existsSync(modulesDir)) {
     console.log(`[Smoothr] Installing dependencies for ${ws}...`);
-    // Prevent nested execution of this postinstall script by ignoring lifecycle
+    // Prevent nested execution of this postinstall script by ignoring lifecyclee
     // scripts when installing workspace dependencies
     execSync(`npm --workspace ${ws} install --ignore-scripts`, {
       stdio: 'inherit',
