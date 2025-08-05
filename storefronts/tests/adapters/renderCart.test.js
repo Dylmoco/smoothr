@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import * as currency from '../../features/currency/index.js';
+import { init as initSDK } from '../../features/currency/index.js';
 
 let container;
 let template;
 let totalEl;
 let removeItemMock;
-let Smoothr;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -58,39 +57,36 @@ beforeEach(async () => {
 
   removeItemMock = vi.fn();
 
-  Smoothr = {
-    cart: {
-      getCart: () => ({
-        items: [
-          {
-            product_id: 'p1',
-            name: 'Item One',
-            price: 100,
-            quantity: 2,
-            options: { size: 'M' },
-            image: 'img1.jpg'
-          },
-          {
-            product_id: 'p2',
-            name: 'Item Two',
-            price: 50,
-            quantity: 1,
-            options: { size: 'L' }
-          }
-        ]
-      }),
-      getTotal: () => 250,
-      removeItem: removeItemMock
-    }
-  };
-
-  window.Smoothr = Smoothr;
   window.SMOOTHR_CONFIG = { baseCurrency: 'USD' };
   global.fetch = vi.fn(() =>
     Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
   );
   global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
-  await currency.init({ baseCurrency: 'USD' });
+  await initSDK({ baseCurrency: 'USD' });
+
+  window.Smoothr.cart = {
+    getCart: () => ({
+      items: [
+        {
+          product_id: 'p1',
+          name: 'Item One',
+          price: 100,
+          quantity: 2,
+          options: { size: 'M' },
+          image: 'img1.jpg'
+        },
+        {
+          product_id: 'p2',
+          name: 'Item Two',
+          price: 50,
+          quantity: 1,
+          options: { size: 'L' }
+        }
+      ]
+    }),
+    getTotal: () => 250,
+    removeItem: removeItemMock
+  };
 });
 
 async function loadRenderCart() {
