@@ -1,7 +1,7 @@
 import {
   supabase as authClient,
   ensureSupabaseSessionAuth
-} from '../../shared/supabase/browserClient';
+} from './supabaseClient.js';
 import authModule from './auth/index.js';
 import { loadPublicConfig } from './config.ts';
 import {
