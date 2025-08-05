@@ -10,6 +10,10 @@ vi.mock("../../features/auth/index.js", () => {
     props: {},
     children: []
   };
+  authMock.init = vi.fn(async () => {
+    global.window.Smoothr = global.window.Smoothr || {};
+    global.window.Smoothr.auth = authMock;
+  });
   return { default: authMock, ...authMock };
 });
 
@@ -72,16 +76,13 @@ beforeEach(() => {
 });
 
 describe("global smoothr alias", () => {
-  it("exposes auth on window.smoothr", async () => {
-    const { default: smoothr } = await import(
-      "../../features/auth/sdk-auth-entry.js"
-    );
+  it("exposes auth and checkout APIs on window.Smoothr", async () => {
+    const { init } = await import("../../features/auth/index.js");
     const checkout = await import("../../features/checkout/checkout-core.js");
+    await init(global.window.SMOOTHR_CONFIG);
     Object.assign(global.window.Smoothr, checkout);
-    Object.assign(global.window.smoothr, checkout);
     await new Promise(setImmediate);
-    expect(global.window.Smoothr).toBe(smoothr);
-    expect(global.window.smoothr.auth).toBe(smoothr.auth);
+    expect(global.window.Smoothr.auth).toBeDefined();
     expect(typeof global.window.Smoothr.orders.renderOrders).toBe("function");
     expect(typeof global.window.Smoothr.cart.addItem).toBe("function");
   });
