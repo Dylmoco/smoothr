@@ -1,7 +1,7 @@
-export * from './auth-only.js';
+export * from '../features/auth/sdk-auth-entry.js';
 export * from './checkout.js';
 
-import authOnly from './auth-only.js';
+import authOnly from '../features/auth/sdk-auth-entry.js';
 import * as checkout from './checkout.js';
 
 const Smoothr = { ...authOnly, ...checkout };

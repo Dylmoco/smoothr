@@ -1,14 +1,14 @@
 import {
   supabase as authClient,
   ensureSupabaseSessionAuth
-} from './supabaseClient.js';
-import authModule from './auth/index.js';
-import { loadPublicConfig } from './config.ts';
+} from '../../core/supabaseClient.js';
+import authModule from '../../core/auth/index.js';
+import { loadPublicConfig } from '../../core/config.ts';
 import {
   lookupRedirectUrl,
   lookupDashboardHomeUrl
-} from '../../supabase/authHelpers.js';
-import * as currency from './currency/index.js';
+} from '../../../supabase/authHelpers.js';
+import * as currency from '../../core/currency/index.js';
 
 const supabase = authClient;
 if (typeof window !== 'undefined') {

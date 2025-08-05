@@ -245,10 +245,13 @@ shared checkout module. `initCheckout` runs automatically once the DOM is ready,
 so no polling logic is required.
 
 For pages that only need authentication and user management, include the
-lightweight `core/auth-only.js` bundle:
+lightweight `features/auth/sdk-auth-entry.js` bundle:
 
 ```html
-<script type="module" src="https://sdk.smoothr.io/core/auth-only.js?v=dev-final"></script>
+<script
+  type="module"
+  src="https://sdk.smoothr.io/features/auth/sdk-auth-entry.js?v=dev-final"
+></script>
 ```
 
 ## Development

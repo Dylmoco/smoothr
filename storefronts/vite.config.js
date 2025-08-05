@@ -33,7 +33,10 @@ export default defineConfig(({ mode }) => {
         external: [],
         input: {
           sdk: path.resolve(__dirname, 'core/index.js'),
-          'auth-only': path.resolve(__dirname, 'core/auth-only.js'),
+            'sdk-auth-entry': path.resolve(
+              __dirname,
+              'features/auth/sdk-auth-entry.js'
+            ),
           checkout: path.resolve(__dirname, 'core/checkout.js')
         },
         treeshake: true,
