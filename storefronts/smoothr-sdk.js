@@ -3,7 +3,8 @@
 
 const scriptEl = document.getElementById('smoothr-sdk');
 const storeId = scriptEl?.dataset?.storeId || null;
-const platform = scriptEl?.dataset?.platform || null;
+const platform =
+  scriptEl?.dataset?.platform || scriptEl?.getAttribute?.('platform') || null;
 
 const debug = new URLSearchParams(location.search).get('smoothr-debug') === 'true';
 
