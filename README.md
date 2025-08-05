@@ -7,11 +7,11 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 - **/storefronts/** – Client-facing storefront code and widgets.
   - **/features/** – Storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, cart, customer dashboard, abandoned cart, and subscriptions.
   - **/adapters/** – Adapters for various web builder platforms.
-  - **/clonables/** – Embeddable widgets and plug‑and‑play code.
-- **/client/** – Legacy platform scripts like the Webflow checkout adapter kept for compatibility.
 - **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, abandoned cart, subscriptions, and Supabase helpers.
 - **/smoothr/** – Next.js admin dashboard application.
   - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, dashboard, abandoned cart, and subscriptions.
+- **/scripts/** – Repository-level Node scripts like the postinstall hook.
+- **/supabase/** – Supabase functions, migrations, and database helpers.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
 The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience.
@@ -127,7 +127,7 @@ defined, the script fetches the store's
 `[provider]` segment in the route should match this value and defaults to
 `stripe` when no configuration is found.
 
-Payment gateway resolution is handled by `core/utils/resolveGateway()`. This
+Payment gateway resolution is handled by `storefronts/features/checkout/utils/resolveGateway.js`. This
 function **throws an error** when no gateway is configured or when an
 unsupported value is supplied. Ensure `active_payment_gateway` is set on either
 `SMOOTHR_CONFIG` or in the store settings.
