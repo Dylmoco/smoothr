@@ -11,6 +11,12 @@ async function initCheckout() {
   console.log('[Smoothr Checkout] SMOOTHR_CONFIG', window.SMOOTHR_CONFIG);
 
   const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
+  if (gateway === undefined) {
+    console.warn(
+      '[Smoothr Checkout] No active payment gateway configured'
+    );
+    return;
+  }
   console.log('[Smoothr Checkout] Using gateway:', gateway);
 
   console.log(
