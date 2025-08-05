@@ -148,7 +148,7 @@ the SDK fetches `public_store_settings.active_payment_gateway` from Supabase
 using the provided `storeId` and writes the value back to `SMOOTHR_CONFIG`.
 The default provider is `stripe`.
 
-Gateway detection relies on `core/utils/resolveGateway()`. It will **throw an
+Gateway detection relies on `features/checkout/utils/resolveGateway.js`. It will **throw an
 error** when `active_payment_gateway` is missing or set to an unsupported
 provider. Always configure a valid gateway on `SMOOTHR_CONFIG` or in the store
 settings before initializing checkout.
