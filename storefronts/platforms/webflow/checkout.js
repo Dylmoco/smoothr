@@ -40,9 +40,16 @@ window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
 window.SMOOTHR_CONFIG.platform = 'webflow-ecom';
 
 const waitForStoreId = () => {
-  if (window.SMOOTHR_CONFIG?.storeId) {
-    console.log('[Smoothr] initCheckout ready — mounting');
-    initCheckout();
+  const config = window.SMOOTHR_CONFIG;
+  if (config?.storeId) {
+    if (config.active_payment_gateway) {
+      console.log('[Smoothr] initCheckout ready — mounting');
+      initCheckout();
+    } else {
+      console.warn(
+        '[Smoothr] No active payment gateway configured, skipping initCheckout'
+      );
+    }
   } else {
     console.log('[Smoothr] Waiting for storeId...');
     setTimeout(waitForStoreId, 50);
