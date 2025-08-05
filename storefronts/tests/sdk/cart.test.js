@@ -1,12 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
+vi.mock("../../features/auth/index.js", () => {
+  const authMock = { init: vi.fn().mockResolvedValue() };
+  return { default: authMock, ...authMock };
+});
+vi.mock("../../features/auth/sdk-auth-entry.js", () => ({
+  default: { auth: {}, loadConfig: vi.fn(), storeRedirects: {}, currency: {} },
+}));
+
+import * as auth from "../../features/auth/index.js";
+
 let store;
 let events;
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules();
   store = {};
   events = [];
+  global.fetch = vi.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+  );
   global.localStorage = {
     getItem: vi.fn((key) => store[key] ?? null),
     setItem: vi.fn((key, val) => {
@@ -21,13 +34,43 @@ beforeEach(() => {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     location: { origin: "", href: "", hostname: "" },
+    Smoothr: {},
   };
-  global.document = {};
+  global.document = {
+    addEventListener: vi.fn((evt, cb) => {
+      if (evt === "DOMContentLoaded") cb();
+    }),
+    querySelectorAll: vi.fn((sel) => {
+      if (sel === "[data-smoothr]") {
+        return [
+          {
+            getAttribute: () => "cart",
+            dataset: { smoothr: "cart" },
+          },
+        ];
+      }
+      return [];
+    }),
+    dispatchEvent: vi.fn(),
+    currentScript: {
+      dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
+    },
+    getElementById: vi.fn(() => ({
+      dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
+    })),
+  };
+  await import("../../features/auth/sdk-auth-entry.js");
+  await auth.init({
+    storeId: "00000000-0000-0000-0000-000000000000",
+    baseCurrency: "USD",
+  });
+  const cart = await import("../../features/cart/index.js");
+  global.window.Smoothr.cart = cart;
 });
 
 describe("cart module", () => {
-  it("adds items and increments quantity", async () => {
-    const cart = await import("../../features/cart/index.js");
+  it("adds items and increments quantity", () => {
+    const { cart } = window.Smoothr;
     cart.addItem({ product_id: "1", name: "Test", price: 100, quantity: 1 });
     cart.addItem({ product_id: "1", name: "Test", price: 100, quantity: 1 });
     const stored = JSON.parse(store["smoothr_cart"]);
@@ -35,16 +78,16 @@ describe("cart module", () => {
     expect(events.length).toBe(2);
   });
 
-  it("persists product_id in storage", async () => {
-    const cart = await import("../../features/cart/index.js");
+  it("persists product_id in storage", () => {
+    const { cart } = window.Smoothr;
     cart.addItem({ product_id: "7", name: "Widget", price: 200, quantity: 1 });
     const stored = JSON.parse(store["smoothr_cart"]);
     expect(stored.items[0].product_id).toBe("7");
     expect(cart.getCart().items[0].product_id).toBe("7");
   });
 
-  it("updates quantity and calculates totals with discount", async () => {
-    const cart = await import("../../features/cart/index.js");
+  it("updates quantity and calculates totals with discount", () => {
+    const { cart } = window.Smoothr;
     cart.addItem({ product_id: "1", name: "A", price: 100, quantity: 2 });
     cart.updateQuantity("1", 3);
     cart.applyDiscount({ code: "SAVE", type: "percent", amount: 50 });
@@ -52,8 +95,8 @@ describe("cart module", () => {
     expect(cart.getTotal()).toBe(150);
   });
 
-  it("clears cart", async () => {
-    const cart = await import("../../features/cart/index.js");
+  it("clears cart", () => {
+    const { cart } = window.Smoothr;
     cart.addItem({ product_id: "1", name: "A", price: 100, quantity: 1 });
     cart.clearCart();
     expect(cart.getCart().items.length).toBe(0);
