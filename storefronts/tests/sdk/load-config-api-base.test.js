@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import * as core from '../../core/index.js';
+import * as core from '../../features/index.js';
 
-vi.mock('../../core/auth/index.js', () => {
+vi.mock('../../features/auth/index.js', () => {
   const authMock = {
     initAuth: vi.fn().mockResolvedValue(),
     user: null,
@@ -13,7 +13,7 @@ vi.mock('../../core/auth/index.js', () => {
   return { default: authMock, ...authMock };
 });
 
-vi.mock('../../core/supabaseClient.js', () => {
+vi.mock('../../features/supabaseClient.js', () => {
   const getSession = vi.fn().mockResolvedValue({
     data: { session: { access_token: 'test-token' } }
   });
@@ -88,7 +88,7 @@ beforeEach(() => {
 describe('loadConfig api_base mapping', () => {
   it('sets apiBase from supabase config', async () => {
     console.log('Starting test: loadConfig api_base mapping');
-    const { loadConfig } = await import('../../core/index.js');
+    const { loadConfig } = await import('../../features/index.js');
     await loadConfig('00000000-0000-0000-0000-000000000000');
 
     console.log(

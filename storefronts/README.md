@@ -2,7 +2,7 @@
 
 Client-facing storefront code and widgets.
 
-This package contains the core storefront modules located in `./core`.
+This package contains the storefront modules located in `./features`.
 
 All build scripts use ECMAScript Module (ESM) syntax and require **Node.js 20 or later**. Update any local builds or Cloudflare/Vercel deployment commands to use Node 20+ if they specify an older version.
 
@@ -40,7 +40,7 @@ When the SDK loads it fetches your store settings from Supabase. Any
 window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 ```
 
-## Core modules
+## Features
 
 - abandoned-cart
 - affiliates
@@ -58,9 +58,9 @@ window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 
 ```javascript
 
-import * as core from './core/index.js';
+import * as features from './features/index.js';
 
-core.discounts; // example access
+features.discounts; // example access
 ```
 
 ### Orders
@@ -114,11 +114,11 @@ persisted in `localStorage`.
 ## Cart UI helpers
 
 Helpers for rendering the cart and binding `[data-smoothr-add]` buttons live in
-`./core/cart`. Import them as needed:
+`./features/cart`. Import them as needed:
 
 ```javascript
-import { renderCart } from './core/cart/renderCart.js';
-import { initCartBindings } from './core/cart/addToCart.js';
+import { renderCart } from './features/cart/renderCart.js';
+import { initCartBindings } from './features/cart/addToCart.js';
 ```
 
 Call `renderCart()` after page load to display items and totals. Use

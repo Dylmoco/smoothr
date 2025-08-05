@@ -1,7 +1,7 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../../core/auth/index.js", () => {
+vi.mock("../../features/auth/index.js", () => {
   const authMock = {
     initAuth: vi.fn().mockResolvedValue(),
     user: null,
@@ -20,28 +20,28 @@ const dummy = {
   props: {},
   children: []
 };
-vi.mock('../../core/abandoned-cart/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/affiliates/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/analytics/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/dashboard/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/discounts/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/abandoned-cart/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/affiliates/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/analytics/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/dashboard/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/discounts/index.js', () => ({ default: dummy, ...dummy }));
 vi.mock('../../features/cart/index.js', () => ({
   default: { addItem: vi.fn(), ...dummy },
   addItem: vi.fn(),
   ...dummy,
 }));
-vi.mock('../../core/orders/index.js', () => ({
+vi.mock('../../features/orders/index.js', () => ({
   default: { renderOrders: vi.fn(), fetchOrderHistory: vi.fn(), ...dummy },
   renderOrders: vi.fn(),
   fetchOrderHistory: vi.fn(),
   ...dummy,
 }));
-vi.mock('../../core/returns/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/reviews/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/subscriptions/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/returns/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/reviews/index.js', () => ({ default: dummy, ...dummy }));
+vi.mock('../../features/subscriptions/index.js', () => ({ default: dummy, ...dummy }));
 
-vi.mock('../../core/currency/index.js', async () => {
-  const actual = await vi.importActual('../../core/currency/index.js');
+vi.mock('../../features/currency/index.js', async () => {
+  const actual = await vi.importActual('../../features/currency/index.js');
   return {
     ...actual,
     baseCurrency: 'USD',
@@ -73,7 +73,7 @@ beforeEach(() => {
 
 describe("global smoothr alias", () => {
   it("exposes auth on window.smoothr", async () => {
-    const core = await import("../../core/index.js");
+    const core = await import("../../features/index.js");
     await new Promise(setImmediate);
     expect(global.window.Smoothr).toBe(core.default);
     expect(global.window.smoothr.auth).toBe(core.default.auth);

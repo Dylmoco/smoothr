@@ -25,7 +25,7 @@ vi.mock("@supabase/supabase-js", () => {
 import * as authHelpers from "../../../supabase/authHelpers.js";
 vi.spyOn(authHelpers, "lookupDashboardHomeUrl").mockResolvedValue("/dashboard");
 
-import * as auth from "../../core/auth/index.js";
+import * as auth from "../../features/auth/index.js";
 
 function flushPromises() {
   return new Promise(setImmediate);

@@ -3,7 +3,7 @@ import {
   setSelectedCurrency,
   initCurrencyDom,
 } from "../../adapters/webflow/currencyDomAdapter.js";
-import { setBaseCurrency, updateRates } from "../../core/currency/index.js";
+import { setBaseCurrency, updateRates } from "../../features/currency/index.js";
 
 class CustomEvt {
   constructor(type, init) {

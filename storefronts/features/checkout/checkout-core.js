@@ -12,16 +12,16 @@ export async function loadStripeGateway() {
 
 export const checkout = await loadStripeGateway();
 
-import * as abandonedCart from '../../core/abandoned-cart/index.js';
-import * as affiliates from '../../core/affiliates/index.js';
-import * as analytics from '../../core/analytics/index.js';
+import * as abandonedCart from '../../features/abandoned-cart/index.js';
+import * as affiliates from '../../features/affiliates/index.js';
+import * as analytics from '../../features/analytics/index.js';
 import * as cart from '../cart/index.js';
-import * as dashboard from '../../core/dashboard/index.js';
-import * as discounts from '../../core/discounts/index.js';
-import * as orders from '../../core/orders/index.js';
-import * as returns from '../../core/returns/index.js';
-import * as reviews from '../../core/reviews/index.js';
-import * as subscriptions from '../../core/subscriptions/index.js';
+import * as dashboard from '../../features/dashboard/index.js';
+import * as discounts from '../../features/discounts/index.js';
+import * as orders from '../../features/orders/index.js';
+import * as returns from '../../features/returns/index.js';
+import * as reviews from '../../features/reviews/index.js';
+import * as subscriptions from '../../features/subscriptions/index.js';
 
 // Lazy re-export of initCheckout to avoid bundling gateway code until used
 export async function initCheckout(config) {
@@ -33,7 +33,7 @@ export async function initCheckout(config) {
 export { default as getActivePaymentGateway } from './utils/resolveGateway.js';
 
 // Re-export renderCart helper
-import { renderCart } from '../../core/cart/renderCart.js';
+import { renderCart } from '../../features/cart/renderCart.js';
 export { renderCart };
 
 // Helper to mount gateway specific iframes lazily

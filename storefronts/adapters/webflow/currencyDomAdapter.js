@@ -1,4 +1,4 @@
-import { convertPrice, formatPrice, baseCurrency } from '../../core/currency/index.js';
+import { convertPrice, formatPrice, baseCurrency } from '../../features/currency/index.js';
 
 const PRICE_SELECTOR =
   '[data-smoothr-price], [data-smoothr-total], [data-smoothr="price"]';

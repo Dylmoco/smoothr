@@ -39,7 +39,7 @@ beforeEach(() => {
 
 describe("SMOOTHR_CONFIG integration", () => {
   it("applies base currency and rates on load", async () => {
-    const core = await import("../../core/index.js");
+    const core = await import("../../features/index.js");
     await flushPromises();
     const { currency } = core;
     expect(currency.baseCurrency).toBe("EUR");
