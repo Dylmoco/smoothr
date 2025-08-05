@@ -1,5 +1,5 @@
 import { supabase } from '../storefronts/core/supabaseClient.js';
-import { loadPublicConfig } from '../storefronts/core/config.ts';
+import { loadPublicConfig } from '../storefronts/features/config/sdkConfig.ts';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};

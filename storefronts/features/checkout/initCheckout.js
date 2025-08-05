@@ -28,7 +28,7 @@ import authorizeNet from './gateways/authorizeNet.js';
 import paypal from './gateways/paypal.js';
 import nmi from './gateways/nmi.js';
 import segpay from './gateways/segpay.js';
-import { loadPublicConfig } from '../../core/config.js';
+import { loadPublicConfig } from '../config/sdkConfig.ts';
 
 function forEachPayButton(fn) {
   document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
