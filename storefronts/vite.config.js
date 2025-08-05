@@ -36,7 +36,8 @@ export default defineConfig(({ mode }) => {
               __dirname,
               'features/auth/sdk-auth-entry.js'
             ),
-          checkout: path.resolve(__dirname, 'features/checkout/checkout-core.js')
+          checkout: path.resolve(__dirname, 'features/checkout/checkout-core.js'),
+          'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.js')
         },
         treeshake: true,
         preserveEntrySignatures: 'exports-only',
