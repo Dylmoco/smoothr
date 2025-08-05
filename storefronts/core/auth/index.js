@@ -329,10 +329,14 @@ function bindAuthElements(root = document) {
       evt.preventDefault();
       await ensureSupabaseSessionAuth();
       const userRef = window.smoothr?.auth?.user;
-      if (userRef?.value !== null) {
+      const isLoggedIn = userRef?.value !== null;
+      log('Resolved login state:', isLoggedIn ? 'authenticated' : 'not authenticated');
+      if (isLoggedIn) {
         const url = (await lookupDashboardHomeUrl()) || '/';
+        log('Redirecting to dashboard:', url);
         window.location.href = url;
       } else {
+        log("Dispatching 'smoothr:open-auth' event");
         window.dispatchEvent(
           new CustomEvent('smoothr:open-auth', {
             detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
