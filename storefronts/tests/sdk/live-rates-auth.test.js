@@ -1,6 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { fetchExchangeRates } from '../../core/currency/live-rates.js';
+import { fetchExchangeRates } from '../../features/currency/fetchLiveRates.js';
 
 beforeEach(() => {
   vi.resetModules();
