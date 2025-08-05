@@ -327,6 +327,7 @@ function bindAuthElements(root = document) {
 
     el.addEventListener('click', async evt => {
       evt.preventDefault();
+      await ensureSupabaseSessionAuth();
       const userRef = window.smoothr?.auth?.user;
       if (userRef?.value !== null) {
         const url = (await lookupDashboardHomeUrl()) || '/';
