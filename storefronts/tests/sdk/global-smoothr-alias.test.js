@@ -1,5 +1,10 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
+// Preserve original global references to restore after tests
+const originalFetch = global.fetch;
+const originalWindow = global.window;
+const originalDocument = global.document;
 
 vi.mock("../../core/auth/index.js", () => {
   const authMock = {
@@ -69,6 +74,27 @@ beforeEach(() => {
     querySelector: vi.fn(() => null),
     currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
   };
+});
+
+afterEach(() => {
+  // Restore original globals after each test run
+  if (originalFetch === undefined) {
+    delete global.fetch;
+  } else {
+    global.fetch = originalFetch;
+  }
+
+  if (originalWindow === undefined) {
+    delete global.window;
+  } else {
+    global.window = originalWindow;
+  }
+
+  if (originalDocument === undefined) {
+    delete global.document;
+  } else {
+    global.document = originalDocument;
+  }
 });
 
 describe("global smoothr alias", () => {
