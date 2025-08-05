@@ -122,7 +122,12 @@ export async function init(config = {}) {
     const debugQuery =
       new URLSearchParams(window.location.search).get('smoothr-debug') ===
       'true';
-    debug = window.SMOOTHR_CONFIG?.debug || debugQuery;
+    debug =
+      typeof config.debug === 'boolean'
+        ? config.debug
+        : typeof window.SMOOTHR_CONFIG?.debug === 'boolean'
+          ? window.SMOOTHR_CONFIG.debug
+          : debugQuery;
   }
 
   if (config.baseCurrency) setBaseCurrency(config.baseCurrency);
