@@ -26,7 +26,7 @@ import {
 import stripe from './gateways/stripe.js';
 import authorizeNet from './gateways/authorizeNet.js';
 import paypal from './gateways/paypal.js';
-import nmi from './gateways/nmi.js';
+import nmi from './gateways/nmiGateway.js';
 import segpay from './gateways/segpay.js';
 import { loadPublicConfig } from '../config/sdkConfig.ts';
 

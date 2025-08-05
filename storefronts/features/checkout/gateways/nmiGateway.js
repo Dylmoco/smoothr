@@ -1,6 +1,6 @@
-// src/checkout/gateways/nmi.js
+// src/checkout/gateways/nmiGateway.js
 
-import { resolveTokenizationKey } from '../providers/nmi.js'
+import { resolveTokenizationKey } from '../providers/nmiProvider.js'
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js'
 import { disableButton, enableButton } from '../utils/cartHash.js'
 import styleNmiIframes, { getNmiStyles } from '../utils/nmiIframeStyles.js'

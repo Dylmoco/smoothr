@@ -46,7 +46,7 @@ export async function renderGatewayIframe(provider, ...args) {
         : undefined;
     }
     case 'nmi': {
-      const mod = await import('./gateways/nmi.js');
+      const mod = await import('./gateways/nmiGateway.js');
       const gateway = mod.default || mod;
       if (gateway?.mountCardFields) {
         return gateway.mountCardFields(...args);

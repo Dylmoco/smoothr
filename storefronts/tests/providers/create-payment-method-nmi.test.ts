@@ -45,7 +45,7 @@ beforeEach(async () => {
   const addSpy = vi.spyOn(document, 'addEventListener').mockImplementation(() => {});
   window.SMOOTHR_CONFIG = { debug: true } as any;
   window.CollectJS = { tokenize: vi.fn() } as any;
-  const mod = await import('../../features/checkout/gateways/nmi.js');
+  const mod = await import('../../features/checkout/gateways/nmiGateway.js');
   createPaymentMethod = mod.createPaymentMethod;
   addSpy.mockRestore();
 });

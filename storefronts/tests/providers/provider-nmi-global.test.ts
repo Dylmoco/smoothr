@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe('nmi gateway global', () => {
   it('exposes mountNMI on window as mountNMIFields', async () => {
-    const mod = await import('../../features/checkout/gateways/nmi.js');
+    const mod = await import('../../features/checkout/gateways/nmiGateway.js');
     expect(typeof mod.mountNMI).toBe('function');
     expect(window.Smoothr.mountNMIFields).toBe(mod.mountNMI);
   });

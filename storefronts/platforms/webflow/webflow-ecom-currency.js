@@ -1,6 +1,6 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
 import { initCurrencyDom } from '../../core/currency/webflow-dom.js';
-import { mountNMI } from '../../features/checkout/gateways/nmi.js';
+import { mountNMI } from '../../features/checkout/gateways/nmiGateway.js';
 
 async function initCheckout() {
   if (!window.SMOOTHR_CONFIG) {
