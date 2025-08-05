@@ -1,6 +1,6 @@
 // [Codex Fix] Added to test gateway resolution logic
 import { describe, it, expect } from 'vitest';
-import resolveGateway from '../../../core/utils/resolveGateway.js';
+import resolveGateway from '../../features/checkout/utils/resolveGateway.js';
 
 describe('resolveGateway', () => {
   it('prefers config.active_payment_gateway', () => {
