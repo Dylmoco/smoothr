@@ -13,7 +13,7 @@ vi.mock('../../features/auth/index.js', () => {
   return { default: authMock, ...authMock };
 });
 
-vi.mock('../../features/supabaseClient.js', () => {
+vi.mock('../../../supabase/supabaseClient.js', () => {
   const getSession = vi.fn().mockResolvedValue({
     data: { session: { access_token: 'test-token' } }
   });

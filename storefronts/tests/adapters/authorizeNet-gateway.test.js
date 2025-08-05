@@ -13,7 +13,7 @@ vi.mock('../../features/checkout/utils/authorizeNetIframeStyles.js', async () =>
   };
 });
 
-vi.mock('../../features/supabaseClient.js', () => {
+vi.mock('../../../supabase/supabaseClient.js', () => {
   const maybeSingle = vi.fn(async () => ({
     data: { settings: { client_key: 'client', api_login_id: 'id' } },
     error: null
