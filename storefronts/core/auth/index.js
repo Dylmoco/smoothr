@@ -204,7 +204,7 @@ function bindAuthElements(root = document) {
   });
 
   const selector =
-    '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
+    '[data-smoothr="signup"], [data-smoothr="login"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
   root.querySelectorAll(selector).forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
@@ -223,6 +223,39 @@ function bindAuthElements(root = document) {
         el.addEventListener('click', async evt => {
           evt.preventDefault();
           await signInWithApple();
+        });
+        break;
+      }
+      case 'login': {
+        el.addEventListener('click', async evt => {
+          evt.preventDefault();
+          const targetForm = form;
+          if (!targetForm) return;
+          const emailInput = targetForm.querySelector('[data-smoothr="email"]');
+          const passwordInput = targetForm.querySelector('[data-smoothr="password"]');
+          const email = emailInput?.value || '';
+          const password = passwordInput?.value || '';
+          if (!isValidEmail(email)) {
+            showError(targetForm, 'Enter a valid email address', emailInput, el);
+            return;
+          }
+          setLoading(el, true);
+          try {
+            const { data, error } = await login(email, password);
+            if (error) {
+              showError(targetForm, error.message || 'Login failed', emailInput, el);
+            } else {
+              document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
+              const url = await lookupRedirectUrl('login');
+              if (url) {
+                window.location.href = url;
+              }
+            }
+          } catch (err) {
+            showError(targetForm, err.message || 'Network error', emailInput, el);
+          } finally {
+            setLoading(el, false);
+          }
         });
         break;
       }
