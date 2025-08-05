@@ -130,7 +130,6 @@ beforeEach(() => {
       }
     }
   };
-  global.window.smoothr = global.window.Smoothr;
   global.alert = global.window.alert = vi.fn();
 });
 

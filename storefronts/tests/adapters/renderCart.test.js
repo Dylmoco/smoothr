@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import * as currency from '../../features/currency/index.js';
 
 let container;
 let template;
@@ -6,7 +7,7 @@ let totalEl;
 let removeItemMock;
 let Smoothr;
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules();
   document.body.innerHTML = '';
 
@@ -84,6 +85,12 @@ beforeEach(() => {
   };
 
   window.Smoothr = Smoothr;
+  window.SMOOTHR_CONFIG = { baseCurrency: 'USD' };
+  global.fetch = vi.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+  );
+  global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
+  await currency.init({ baseCurrency: 'USD' });
 });
 
 async function loadRenderCart() {
@@ -114,9 +121,9 @@ describe('renderCart', () => {
     const clone = container.querySelector('.cart-rendered');
     expect(clone.querySelector('[data-smoothr-name]').textContent).toBe('Item Two');
     expect(clone.querySelector('[data-smoothr-quantity]').textContent).toBe('1');
-    expect(clone.querySelector('[data-smoothr-price]').textContent).toBe('0.5');
-    expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('0.5');
-    expect(totalEl.textContent).toBe('2.5');
+    expect(clone.querySelector('[data-smoothr-price]').textContent).toBe('$0.50');
+    expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('$0.50');
+    expect(totalEl.textContent).toBe('$2.50');
   });
 
   it('remove buttons trigger cart.removeItem', async () => {

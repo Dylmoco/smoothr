@@ -30,9 +30,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as auth from "../../features/auth/index.js";
-
-vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+let auth;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -44,7 +42,8 @@ describe("signup flow", () => {
   let passwordValue;
   let confirmValue;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     signUpMock.mockClear();
     emailValue = "test@example.com";
     passwordValue = "Password1";
@@ -90,11 +89,13 @@ describe("signup flow", () => {
       }),
       dispatchEvent: vi.fn(),
     };
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
   });
 
   it("signs up and redirects on success", async () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -108,7 +109,7 @@ describe("signup flow", () => {
 
   it("does nothing on signup failure", async () => {
     signUpMock.mockResolvedValue({ data: null, error: new Error("bad") });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -118,7 +119,7 @@ describe("signup flow", () => {
 
   it("validates email and password", async () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     emailValue = "bademail";
     await clickHandler({ preventDefault: () => {} });
@@ -136,15 +137,15 @@ describe("signup flow", () => {
     await flushPromises();
   });
 
-  it("sets window.smoothr.auth.user on success", async () => {
+  it("sets window.Smoothr.auth.user on success", async () => {
     const user = { id: "1" };
     signUpMock.mockResolvedValue({ data: { user }, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
-    await global.window.smoothr.auth.client.auth.getSession();
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
+    await global.window.Smoothr.auth.client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
   });
 });

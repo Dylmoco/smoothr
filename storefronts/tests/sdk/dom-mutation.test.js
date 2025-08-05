@@ -1,6 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as auth from "../../features/auth/index.js";
+let auth;
 
 var signInMock;
 var signUpMock;
@@ -36,7 +36,6 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -55,7 +54,8 @@ describe("dynamic DOM bindings", () => {
   let win;
   let docClickHandler;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     elements = [];
     forms = [];
     mutationCallback = undefined;
@@ -103,6 +103,8 @@ describe("dynamic DOM bindings", () => {
     };
     global.document = doc;
     global.window = win;
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
   });
 
   it("attaches listeners to added login elements and updates auth state", async () => {
@@ -129,7 +131,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     expect(btn.addEventListener).not.toHaveBeenCalled();
 
@@ -143,7 +145,7 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
     expect(evt.type).toBe("smoothr:login");
@@ -176,7 +178,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     forms.push(form);
     elements.push(btn);
@@ -188,7 +190,7 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
     expect(evt.type).toBe("smoothr:login");
@@ -216,7 +218,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     elements.push(btn);
     mutationCallback();
@@ -234,7 +236,7 @@ describe("dynamic DOM bindings", () => {
 
     const user = { id: "3", email: "google@example.com" };
     getUserMock.mockResolvedValue({ data: { user } });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalled();
@@ -264,7 +266,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     elements.push(btn);
     mutationCallback();
@@ -282,7 +284,7 @@ describe("dynamic DOM bindings", () => {
 
     const user = { id: "4", email: "apple@example.com" };
     getUserMock.mockResolvedValue({ data: { user } });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalled();
@@ -333,7 +335,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     forms.push(form);
     elements.push(btn);
@@ -374,7 +376,7 @@ describe("dynamic DOM bindings", () => {
       closest: vi.fn(() => btn),
     };
 
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     elements.push(btn);
     mutationCallback();

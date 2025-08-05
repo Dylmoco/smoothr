@@ -21,7 +21,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import { auth } from "../../adapters/core/sdk-auth-entry.js";
+import { auth, init } from "../../adapters/core/sdk-auth-entry.js";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -58,17 +58,17 @@ describe("global auth", () => {
     };
   });
 
-  it("sets and clears window.smoothr.auth.user", async () => {
+  it("sets and clears window.Smoothr.auth.user", async () => {
     const user = { id: "1", email: "test@example.com" };
     getUserMock.mockResolvedValueOnce({ data: { user } });
 
-    auth.initAuth();
+    await init();
     await flushPromises();
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
 
     getUserMock.mockResolvedValueOnce({ data: { user: null } });
     await signOutHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.window.smoothr.auth.user.value).toBeNull();
+    expect(global.window.Smoothr.auth.user.value).toBeNull();
   });
 });

@@ -34,9 +34,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as auth from "../../features/auth/index.js";
-
-vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+let auth;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -46,7 +44,8 @@ describe("password reset request", () => {
   let clickHandler;
   let emailValue;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     emailValue = "user@example.com";
     clickHandler = undefined;
     let btn;
@@ -85,11 +84,13 @@ describe("password reset request", () => {
       }),
     };
     global.alert = global.window.alert = vi.fn();
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
   });
 
   it("sends reset email", async () => {
     resetPasswordMock.mockResolvedValue({ data: {}, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -104,7 +105,7 @@ describe("password reset request", () => {
       data: null,
       error: new Error("bad"),
     });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -119,7 +120,8 @@ describe("password reset confirmation", () => {
   let passwordInputObj;
   let confirmInputObj;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     updateUserMock.mockClear();
     setSessionMock.mockClear();
     passwordValue = "newpass123";
@@ -165,6 +167,8 @@ describe("password reset confirmation", () => {
       }),
     };
     global.alert = global.window.alert = vi.fn();
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
   });
 
   it("updates password and redirects", async () => {
@@ -214,7 +218,7 @@ describe("password reset confirmation", () => {
     expect(updateUserMock).not.toHaveBeenCalled();
   });
 
-  it("sets window.smoothr.auth.user after update", async () => {
+  it("sets window.Smoothr.auth.user after update", async () => {
     const user = { id: "1", email: "test@example.com" };
     updateUserMock.mockResolvedValue({ data: { user }, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
@@ -222,6 +226,6 @@ describe("password reset confirmation", () => {
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
   });
 });
