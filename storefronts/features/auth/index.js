@@ -1,4 +1,4 @@
-import { supabase, ensureSupabaseSessionAuth } from '../supabaseClient.js';
+import { supabase, ensureSupabaseSessionAuth } from '../../../supabase/supabaseClient.js';
 import {
   initAuth as initAuthHelper,
   signInWithGoogle,

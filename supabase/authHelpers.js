@@ -1,4 +1,4 @@
-import { supabase } from '../storefronts/features/supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 import { loadPublicConfig } from '../storefronts/features/config/sdkConfig.ts';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
