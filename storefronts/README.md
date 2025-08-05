@@ -154,7 +154,7 @@ provider. Always configure a valid gateway on `SMOOTHR_CONFIG` or in the store
 settings before initializing checkout.
 
 ```js
-import resolveGateway from '../core/utils/resolveGateway.js';
+import resolveGateway from './features/checkout/utils/resolveGateway.js';
 
 resolveGateway({ active_payment_gateway: 'nmi' });
 // => 'nmi'

@@ -30,7 +30,7 @@ export async function initCheckout(config) {
 }
 
 // Re-export utility for resolving active payment gateway
-export { default as getActivePaymentGateway } from './utils/resolveGateway.js';
+export { default as getActivePaymentGateway } from './utils/getActivePaymentGateway.js';
 
 // Re-export renderCart helper
 import { renderCart } from '../../features/cart/renderCart.js';

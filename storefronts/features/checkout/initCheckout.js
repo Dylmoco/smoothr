@@ -14,7 +14,7 @@ if (
 
 import bindCardInputs from './utils/inputFormatters.js';
 import checkoutLogger from './utils/checkoutLogger.js';
-import getActivePaymentGateway from './utils/resolveGateway.js';
+import getActivePaymentGateway from './utils/getActivePaymentGateway.js';
 import collectFormFields from './utils/collectFormFields.js';
 import constructPayload from './utils/constructPayload.js';
 import gatewayDispatcher from './utils/gatewayDispatcher.js';

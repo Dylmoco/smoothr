@@ -133,7 +133,7 @@ unsupported value is supplied. Ensure `active_payment_gateway` is set on either
 `SMOOTHR_CONFIG` or in the store settings.
 
 ```js
-import resolveGateway from './core/utils/resolveGateway.js';
+import resolveGateway from './storefronts/features/checkout/utils/resolveGateway.js';
 
 resolveGateway({ active_payment_gateway: 'stripe' });
 // => 'stripe'
