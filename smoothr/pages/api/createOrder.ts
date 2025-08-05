@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import 'shared/init';
 import { createServerSupabaseClient } from 'shared/supabase/serverClient';
 import { createOrder } from 'shared/checkout/createOrder';
+import { applyCors } from '../../utils/cors';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,15 +11,11 @@ export default async function handler(
   const supabase = createServerSupabaseClient();
   const origin = process.env.CORS_ORIGIN || '*';
   if (req.method === 'OPTIONS') {
-    return res
-      .status(200)
-      .setHeader('Access-Control-Allow-Origin', origin)
-      .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .end();
+    applyCors(res, origin);
+    return res.status(200).end();
   }
 
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  applyCors(res, origin);
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;

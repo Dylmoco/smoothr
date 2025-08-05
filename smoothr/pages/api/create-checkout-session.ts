@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { createServerSupabaseClient } from 'shared/supabase/serverClient';
 import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
+import { applyCors } from '../../utils/cors';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[create-checkout]', ...args);
@@ -23,16 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const origin = req.headers.origin || '*';
   try {
     if (req.method === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      applyCors(res, origin);
       res.status(200).end();
       return;
     }
 
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    applyCors(res, origin);
 
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method not allowed' });

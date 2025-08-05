@@ -1,17 +1,15 @@
 // pages/api/get-payment-key.js
 import { createClient } from '@supabase/supabase-js';
+import { applyCors } from '../../utils/cors';
 
 export default async function handler(req, res) {
   const origin = process.env.CORS_ORIGIN || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
+    applyCors(res, origin);
     return res.status(200).json({});
   }
 
+  applyCors(res, origin);
   const { storeId, provider } = req.query;
 
   if (!storeId || !provider) {
