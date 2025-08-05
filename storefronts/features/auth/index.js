@@ -378,7 +378,11 @@ const auth = {
 };
 
 export async function init(config = {}) {
-  if (initialized) return window.Smoothr?.auth;
+  updateGlobalAuth();
+  if (initialized) {
+    log('Auth module already initialized');
+    return window.Smoothr?.auth;
+  }
 
   if (typeof window !== 'undefined') {
     window.SMOOTHR_CONFIG = { ...(window.SMOOTHR_CONFIG || {}), ...config };

@@ -111,7 +111,11 @@ function updateGlobalCurrency() {
 }
 
 export async function init(config = {}) {
-  if (initialized) return window.Smoothr?.currency;
+  updateGlobalCurrency();
+  if (initialized) {
+    if (debug) console.log('[Smoothr] Currency module already initialized');
+    return window.Smoothr?.currency;
+  }
 
   if (typeof window !== 'undefined') {
     window.SMOOTHR_CONFIG = { ...(window.SMOOTHR_CONFIG || {}), ...config };
