@@ -299,7 +299,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   let providerHandler: any;
   try {
-    const mod = await import(`./providers/${provider}.ts`);
+    const providerFile = provider === 'stripe' ? 'stripeProvider' : provider;
+    const mod = await import(`./providers/${providerFile}.ts`);
     providerHandler = mod.default;
   } catch (e) {
     warn('Unknown provider:', provider);

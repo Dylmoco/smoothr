@@ -1,4 +1,4 @@
-import * as stripe from './stripe.js';
+import * as stripe from './stripeGateway.js';
 import * as authorizeNet from './authorizeNet.js';
 import * as paypal from './paypal.js';
 import * as nmi from './nmiGateway.js';

@@ -3,7 +3,7 @@
 let stripeGatewayPromise;
 export async function loadStripeGateway() {
   if (!stripeGatewayPromise) {
-    stripeGatewayPromise = import('./gateways/stripe.js').then(
+    stripeGatewayPromise = import('./gateways/stripeGateway.js').then(
       m => m.default || m
     );
   }
