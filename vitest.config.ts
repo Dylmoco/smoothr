@@ -10,7 +10,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'smoothr'),
-      '@/lib/findOrCreateCustomer': resolve(__dirname, 'storefronts/lib/findOrCreateCustomer.ts'),
+      '@/lib/findOrCreateCustomer': resolve(
+        __dirname,
+        'shared/lib/findOrCreateCustomer.ts'
+      ),
     },
   },
 });

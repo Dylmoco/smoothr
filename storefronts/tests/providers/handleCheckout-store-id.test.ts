@@ -19,6 +19,10 @@ vi.mock('../../../shared/supabase/serverClient', () => {
   return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
 });
 
+vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
+  findOrCreateCustomer: vi.fn().mockResolvedValue('test_customer_id'),
+}));
+
 async function loadModule() {
   const mod = await import('../../../shared/checkout/handleCheckout.ts');
   handleCheckout = mod.handleCheckout;

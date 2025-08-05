@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { findOrCreateCustomer } from '../../../smoothr/lib/findOrCreateCustomer.ts';
+import { findOrCreateCustomer } from '../../../shared/lib/findOrCreateCustomer.ts';
 
 const debug = Deno.env.get('SMOOTHR_DEBUG') === 'true';
 const log = (...args: any[]) => debug && console.log('[webflow-order]', ...args);

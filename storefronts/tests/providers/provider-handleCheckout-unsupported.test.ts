@@ -3,6 +3,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 let handleCheckout: any;
 
+vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
+  findOrCreateCustomer: vi.fn(async () => {
+    throw new Error('fail');
+  }),
+}));
+
 vi.mock('../../../shared/supabase/serverClient', () => {
   const client = {
     from: (table: string) => {
