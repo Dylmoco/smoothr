@@ -141,7 +141,7 @@ afterEach(() => {
 
 describe('checkout payload', () => {
   it('sends expected data to fetch', async () => {
-    const mod = await import('../../checkout/checkout.js');
+    const mod = await import('../../platforms/core/checkout.js');
     if (domReadyCb) {
       await domReadyCb();
     }

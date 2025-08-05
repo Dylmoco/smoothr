@@ -31,7 +31,7 @@
   console.log('[NMI] performance hints injected');
 })();
 
-import { initCheckout } from '../../checkout/checkout.js';
+import { initCheckout } from '../core/checkout.js';
 
 export { initCheckout };
 
