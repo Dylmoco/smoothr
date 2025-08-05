@@ -1,9 +1,9 @@
-import supabase from './supabaseClient.js';
+import supabase from '../../core/supabaseClient.js';
 
 const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
-const warn = (...args) => debug && console.warn('[Smoothr Config]', ...args);
+const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...args);
 
-export async function loadPublicConfig(storeId) {
+export async function loadPublicConfig(storeId: string) {
   if (!storeId) return null;
   try {
     const { data, error } = await supabase
@@ -16,7 +16,7 @@ export async function loadPublicConfig(storeId) {
       return null;
     }
     return data || null;
-  } catch (e) {
+  } catch (e: any) {
     warn('Store settings fetch error:', e?.message || e);
     return null;
   }
