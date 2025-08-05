@@ -41,7 +41,7 @@ and persists the choice in `localStorage`. Pair it with a select element and add
   <option value="EUR">EUR</option>
 </select>
 <script type="module">
-  import { setSelectedCurrency } from '../../core/currency/webflow-dom.js';
+  import { setSelectedCurrency } from '../../adapters/webflow/currencyDomAdapter.js';
   document
     .getElementById('currency')
     .addEventListener('change', e => setSelectedCurrency(e.target.value));
