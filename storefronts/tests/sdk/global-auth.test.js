@@ -38,7 +38,9 @@ describe("global auth", () => {
       removeEventListener: vi.fn(),
     };
     global.document = {
-      addEventListener: vi.fn((evt, cb) => cb()),
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === "DOMContentLoaded") cb();
+      }),
       dispatchEvent: vi.fn(),
       querySelectorAll: vi.fn((selector) => {
         if (selector === '[data-smoothr="sign-out"]') {

@@ -40,9 +40,7 @@ describe("account access trigger", () => {
     btn = {
       tagName: "DIV",
       dataset: { smoothr: "account-access" },
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "click") clickHandler = cb;
-      }),
+      closest: vi.fn(() => btn),
     };
 
     global.window = {
@@ -54,9 +52,9 @@ describe("account access trigger", () => {
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
+        if (evt === "click") clickHandler = cb;
       }),
       querySelectorAll: vi.fn((selector) => {
-        if (selector === '[data-smoothr="account-access"]') return [btn];
         if (selector === '[data-smoothr="login"]') return [];
         if (
           selector ===
@@ -80,7 +78,7 @@ describe("account access trigger", () => {
     await flushPromises();
     expect(global.window.smoothr.auth.user.value).toEqual(user);
 
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ target: btn, preventDefault: () => {} });
     await flushPromises();
     expect(authHelpers.lookupDashboardHomeUrl).toHaveBeenCalled();
     expect(global.window.location.href).toBe("/dashboard");
@@ -92,7 +90,7 @@ describe("account access trigger", () => {
     await auth.initAuth();
     await flushPromises();
 
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ target: btn, preventDefault: () => {} });
     await flushPromises();
 
     expect(global.window.dispatchEvent).toHaveBeenCalled();

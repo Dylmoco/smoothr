@@ -321,11 +321,10 @@ function bindAuthElements(root = document) {
     }
   });
 
-  document.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
-    if (el.dataset.smoothrBoundAuth) return;
-    safeSetDataset(el, 'smoothrBoundAuth', '1');
-
-    el.addEventListener('click', async evt => {
+  if (!document.__smoothrAccountAccessHandler) {
+    document.__smoothrAccountAccessHandler = async evt => {
+      const el = evt.target.closest('[data-smoothr="account-access"]');
+      if (!el) return;
       evt.preventDefault();
       await ensureSupabaseSessionAuth();
       const userRef = window.smoothr?.auth?.user;
@@ -343,8 +342,9 @@ function bindAuthElements(root = document) {
           })
         );
       }
-    });
-  });
+    };
+    document.addEventListener('click', document.__smoothrAccountAccessHandler);
+  }
 }
 
 function bindSignOutButtons() {
