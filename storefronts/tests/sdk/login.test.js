@@ -29,8 +29,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as auth from "../../features/auth/index.js";
-vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+let auth;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -41,7 +40,8 @@ describe("login form", () => {
   let emailValue;
   let passwordValue;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     clickHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";
@@ -86,11 +86,13 @@ describe("login form", () => {
       }),
       dispatchEvent: vi.fn(),
     };
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
   });
 
   it("validates email before login", async () => {
     signInMock.mockResolvedValue({ data: {}, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
 
     emailValue = "bad";
@@ -104,15 +106,15 @@ describe("login form", () => {
     expect(signInMock).toHaveBeenCalled();
   });
 
-  it("sets window.smoothr.auth.user on success", async () => {
+  it("sets window.Smoothr.auth.user on success", async () => {
     const user = { id: "1", email: "user@example.com" };
     signInMock.mockResolvedValue({ data: { user }, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
-    await global.window.smoothr.auth.client.auth.getSession();
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
+    await global.window.Smoothr.auth.client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
   });
 });

@@ -64,7 +64,6 @@ beforeEach(() => {
     },
     Smoothr: { cart: { getCart: () => ({ items: [] }), getTotal: () => 0 } }
   };
-  global.window.smoothr = global.window.Smoothr;
 });
 
 describe('stripe element mounting', () => {

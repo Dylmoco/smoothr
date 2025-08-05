@@ -3,7 +3,7 @@ import {
   setSelectedCurrency,
   initCurrencyDom,
 } from "../../adapters/webflow/currencyDomAdapter.js";
-import { setBaseCurrency, updateRates } from "../../features/currency/index.js";
+import * as currency from "../../features/currency/index.js";
 
 class CustomEvt {
   constructor(type, init) {
@@ -17,9 +17,9 @@ describe("webflow adapter price replacement", () => {
   let els;
   let store;
 
-  beforeEach(() => {
-    setBaseCurrency("USD");
-    updateRates({ USD: 1, EUR: 0.5 });
+  beforeEach(async () => {
+    await currency.init({ baseCurrency: "USD" });
+    currency.updateRates({ USD: 1, EUR: 0.5 });
 
     store = null;
     global.localStorage = {
@@ -28,6 +28,9 @@ describe("webflow adapter price replacement", () => {
         store = v;
       }),
     };
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+    );
 
     events = {};
     els = [

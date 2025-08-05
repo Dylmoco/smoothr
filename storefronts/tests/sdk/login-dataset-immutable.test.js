@@ -26,8 +26,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import * as auth from "../../features/auth/index.js";
-vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+let auth;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -39,7 +38,8 @@ describe("login with immutable dataset", () => {
   let passwordValue;
   let loginTrigger;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     clickHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";
@@ -85,11 +85,13 @@ describe("login with immutable dataset", () => {
       }),
       dispatchEvent: vi.fn(),
     };
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
   });
 
   it("logs in even when dataset is immutable", async () => {
     signInMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    auth.initAuth();
+    await auth.init();
     await flushPromises();
 
     expect(loginTrigger.dataset.smoothrBoundAuth).toBeUndefined();

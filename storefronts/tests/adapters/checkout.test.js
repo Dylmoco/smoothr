@@ -97,7 +97,6 @@ beforeEach(() => {
   };
 
   global.window.Smoothr = Smoothr;
-  global.window.smoothr = Smoothr;
   submitCheckout = async () => {
     const provider =
       global.window.SMOOTHR_CONFIG?.active_payment_gateway || 'stripe';

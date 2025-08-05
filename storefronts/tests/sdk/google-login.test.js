@@ -26,7 +26,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import { initAuth } from "../../features/auth/index.js";
+let init;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -37,7 +37,8 @@ describe("OAuth login buttons", () => {
   let appleClickHandler;
   let store;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     googleClickHandler = undefined;
     appleClickHandler = undefined;
     store = null;
@@ -84,10 +85,11 @@ describe("OAuth login buttons", () => {
         return result;
       }),
     };
+    ({ init } = await import("../../features/auth/index.js"));
   });
 
   it("triggers Supabase OAuth sign-in for Google", async () => {
-    initAuth();
+    await init();
     await flushPromises();
 
     await googleClickHandler({ preventDefault: () => {} });
@@ -101,7 +103,7 @@ describe("OAuth login buttons", () => {
   });
 
   it("triggers Supabase OAuth sign-in for Apple", async () => {
-    initAuth();
+    await init();
     await flushPromises();
 
     await appleClickHandler({ preventDefault: () => {} });

@@ -54,13 +54,13 @@ describe("auth state change", () => {
   });
 
   it("updates user and global auth on session change", async () => {
-    await auth.initAuth();
+    await auth.init();
     await flushPromises();
     const user = { id: "42", email: "test@example.com" };
     onAuthStateChangeHandler("SIGNED_IN", { user });
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
-    expect(global.window.smoothr.auth.client).toBeDefined();
-    await global.window.smoothr.auth.client.auth.getSession();
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
+    expect(global.window.Smoothr.auth.client).toBeDefined();
+    await global.window.Smoothr.auth.client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
   });
 });

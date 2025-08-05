@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  formatPrice,
-  convertPrice,
-  setBaseCurrency,
-  updateRates
-} from '../../features/currency/index.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import * as currency from '../../features/currency/index.js';
+
+const { formatPrice, convertPrice, setBaseCurrency, updateRates, init } = currency;
 
 describe('currency utilities', () => {
-  beforeEach(() => {
-    setBaseCurrency('USD');
+  beforeEach(async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+    );
+    global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
+    await init({ baseCurrency: 'USD' });
     updateRates({ USD: 1, EUR: 0.9, GBP: 0.8 });
   });
 

@@ -25,7 +25,7 @@ vi.mock("@supabase/supabase-js", () => {
 import * as authHelpers from "../../../supabase/authHelpers.js";
 vi.spyOn(authHelpers, "lookupDashboardHomeUrl").mockResolvedValue("/dashboard");
 
-import * as auth from "../../features/auth/index.js";
+let auth;
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -35,7 +35,8 @@ describe("account access trigger", () => {
   let btn;
   let clickHandler;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     clickHandler = undefined;
     btn = {
       tagName: "DIV",
@@ -68,15 +69,16 @@ describe("account access trigger", () => {
       querySelector: vi.fn(() => null),
       dispatchEvent: vi.fn(),
     };
+    auth = await import("../../features/auth/index.js");
   });
 
   it("redirects logged-in users to dashboard home", async () => {
     const user = { id: "1", email: "test@example.com" };
     getUserMock.mockResolvedValueOnce({ data: { user } });
 
-    await auth.initAuth();
+    await auth.init();
     await flushPromises();
-    expect(global.window.smoothr.auth.user.value).toEqual(user);
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
 
     await clickHandler({ target: btn, preventDefault: () => {} });
     await flushPromises();
@@ -87,7 +89,7 @@ describe("account access trigger", () => {
   it("dispatches open-auth event for anonymous users", async () => {
     getUserMock.mockResolvedValueOnce({ data: { user: null } });
 
-    await auth.initAuth();
+    await auth.init();
     await flushPromises();
 
     await clickHandler({ target: btn, preventDefault: () => {} });
