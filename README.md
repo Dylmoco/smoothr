@@ -86,12 +86,12 @@ The storefront SDK publishes lightweight bundles that can be loaded directly:
 ></script>
 
 <!-- Checkout bundle -->
-<script type="module" src="https://sdk.smoothr.io/core/checkout.js"></script>
+<script type="module" src="https://sdk.smoothr.io/features/checkout/checkout-core.js"></script>
 ```
 
 `sdk-auth-entry.js` initializes authentication and currency helpers without any
-checkout logic. `checkout.js` provides the checkout flow and can be paired with
-platform adapters like `./platforms/webflow/checkout.js`.
+checkout logic. `checkout-core.js` provides the checkout flow and can be paired with
+platform adapters like `./adapters/webflow/initCheckoutWebflow.js`.
 
 ## Checkout API
 

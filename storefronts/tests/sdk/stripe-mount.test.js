@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 let styleSpy = vi.fn();
 let getCredMock;
 
-vi.mock('../../checkout/utils/stripeIframeStyles.js', () => ({
+vi.mock('../../features/checkout/utils/stripeIframeStyles.js', () => ({
 
   default: (...args) => styleSpy(...args),
   initStripeStyles: vi.fn(),
   getFonts: vi.fn(() => []),
   elementStyleFromContainer: vi.fn(() => ({}))
 }));
-vi.mock('../../checkout/getPublicCredential.js', () => ({
+vi.mock('../../features/checkout/getPublicCredential.js', () => ({
   getPublicCredential: (...args) => getCredMock(...args)
 }));
 
@@ -69,7 +69,7 @@ beforeEach(() => {
 
 describe('stripe element mounting', () => {
   it('mounts each field to its container', async () => {
-    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    const { mountCardFields } = await import('../../features/checkout/gateways/stripe.js');
     await mountCardFields();
     await vi.advanceTimersByTimeAsync(500);
     vi.useRealTimers();
@@ -98,7 +98,7 @@ describe('stripe element mounting', () => {
     global.document.querySelector.mockImplementation(() => null);
     global.window.SMOOTHR_CONFIG.debug = true;
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    const { mountCardFields } = await import('../../features/checkout/gateways/stripe.js');
     await mountCardFields();
     await vi.advanceTimersByTimeAsync(1000);
     expect(warnSpy).toHaveBeenCalled();
@@ -107,7 +107,7 @@ describe('stripe element mounting', () => {
   });
 
   it('enforces iframe styles after mount', async () => {
-    const { mountCardFields } = await import('../../checkout/gateways/stripe.js');
+    const { mountCardFields } = await import('../../features/checkout/gateways/stripe.js');
     const p = mountCardFields();
     await vi.advanceTimersByTimeAsync(500);
     await p;
@@ -118,7 +118,7 @@ describe('stripe element mounting', () => {
   });
 
   it('waitForVisible resolves when width becomes visible', async () => {
-    const { waitForVisible } = await import('../../checkout/gateways/stripe.js');
+    const { waitForVisible } = await import('../../features/checkout/gateways/stripe.js');
     let width = 0;
     const el = { getBoundingClientRect: vi.fn(() => ({ width })) };
     let resolved = false;
@@ -136,7 +136,7 @@ describe('stripe element mounting', () => {
   });
 
   it('waitForInteractable resolves when element becomes clickable', async () => {
-    const { waitForInteractable } = await import('../../checkout/gateways/stripe.js');
+    const { waitForInteractable } = await import('../../features/checkout/gateways/stripe.js');
     let width = 0;
     let offset = null;
     let active = null;

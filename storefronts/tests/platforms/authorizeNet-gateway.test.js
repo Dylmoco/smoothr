@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let styleSpy = vi.fn();
 
-vi.mock('../../checkout/utils/authorizeNetIframeStyles.js', async () => {
-  const actual = await vi.importActual('../../checkout/utils/authorizeNetIframeStyles.js');
+vi.mock('../../features/checkout/utils/authorizeNetIframeStyles.js', async () => {
+  const actual = await vi.importActual('../../features/checkout/utils/authorizeNetIframeStyles.js');
   return {
     ...actual,
     forceAuthorizeInputStyle: (...args) => styleSpy(...args),
@@ -57,7 +57,7 @@ beforeEach(async () => {
   email.className = 'email-field';
   document.body.appendChild(email);
 
-  const mod = await import('../../checkout/gateways/authorizeNet.js');
+  const mod = await import('../../features/checkout/gateways/authorizeNet.js');
   createPaymentMethod = mod.createPaymentMethod;
   mountCardFields = mod.mountCardFields;
 

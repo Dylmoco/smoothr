@@ -232,12 +232,12 @@ field container.
 </script>
 ```
 
-A Webflow‑specific adapter lives at `./platforms/webflow/checkout.js`. It merely
+A Webflow‑specific adapter lives at `./adapters/webflow/initCheckoutWebflow.js`. It merely
 sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
-`core/checkout.js` module. Embed it with:
+`features/checkout/checkout-core.js` module. Embed it with:
 
 ```html
-<script type="module" src="https://sdk.smoothr.io/platforms/webflow/checkout.js?v=dev-final"></script>
+<script type="module" src="https://sdk.smoothr.io/adapters/webflow/initCheckoutWebflow.js?v=dev-final"></script>
 ```
 
 The adapter simply sets `SMOOTHR_CONFIG.platform = 'webflow'` and loads the
@@ -256,7 +256,7 @@ lightweight `features/auth/sdk-auth-entry.js` bundle:
 
 ## Development
 
-Run `npm run build` after modifying files in `checkout/gateways`. The build
+Run `npm run build` after modifying files in `features/checkout/gateways`. The build
 copies updated sources into `dist/gateways` so the published SDK includes the
 latest gateway logic. Commit both the source and corresponding `dist` files in
 the same change.

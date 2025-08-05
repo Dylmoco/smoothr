@@ -117,9 +117,9 @@ Stripe Elements automatically inherit font and color styles from their container
 
 Webflow layouts can occasionally shrink the Stripe Elements iframe to a single pixel. The checkout adapter exports a helper called `forceStripeIframeStyle()` that applies explicit width and positioning styles to the iframe container. This helper is invoked automatically after each Element mounts, preventing the 1-pixel bug without any manual calls. The fix works across all Webflow layout types.
 
-A drop-in Webflow checkout script is available at `./webflow/checkout.js`.
+A drop-in Webflow checkout script is available at `../adapters/webflow/initCheckoutWebflow.js`.
 Include it on your page with:
 
 ```html
-<script type="module" src="https://sdk.smoothr.io/platforms/webflow/checkout.js?v=dev-final"></script>
+<script type="module" src="https://sdk.smoothr.io/adapters/webflow/initCheckoutWebflow.js?v=dev-final"></script>
 ```
