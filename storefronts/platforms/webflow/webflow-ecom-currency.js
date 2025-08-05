@@ -44,5 +44,11 @@ async function initCheckout() {
 }
 
 // Run init on load
-document.addEventListener('DOMContentLoaded', initCheckout);
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.SMOOTHR_CONFIG?.active_payment_gateway) {
+    initCheckout();
+  } else {
+    console.warn('[Smoothr Checkout] Skipping initCheckout — no active gateway');
+  }
+});
 
