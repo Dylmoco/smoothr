@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
               __dirname,
               'features/auth/sdk-auth-entry.js'
             ),
-          checkout: path.resolve(__dirname, 'core/checkout.js')
+          checkout: path.resolve(__dirname, 'features/checkout/checkout-core.js')
         },
         treeshake: true,
         preserveEntrySignatures: 'exports-only',

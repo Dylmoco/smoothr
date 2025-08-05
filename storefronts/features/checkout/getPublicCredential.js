@@ -1,4 +1,4 @@
-import { supabase } from '../core/supabaseClient.js';
+import { supabase } from '../../core/supabaseClient.js';
 
 export async function getPublicCredential(storeId, integrationId, gateway) {
   if (!storeId || !integrationId) return null;

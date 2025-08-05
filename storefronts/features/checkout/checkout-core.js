@@ -3,7 +3,7 @@
 let stripeGatewayPromise;
 export async function loadStripeGateway() {
   if (!stripeGatewayPromise) {
-    stripeGatewayPromise = import('../checkout/gateways/stripe.js').then(
+    stripeGatewayPromise = import('./gateways/stripe.js').then(
       m => m.default || m
     );
   }
@@ -12,28 +12,28 @@ export async function loadStripeGateway() {
 
 export const checkout = await loadStripeGateway();
 
-import * as abandonedCart from './abandoned-cart/index.js';
-import * as affiliates from './affiliates/index.js';
-import * as analytics from './analytics/index.js';
-import * as cart from './cart.js';
-import * as dashboard from './dashboard/index.js';
-import * as discounts from './discounts/index.js';
-import * as orders from './orders/index.js';
-import * as returns from './returns/index.js';
-import * as reviews from './reviews/index.js';
-import * as subscriptions from './subscriptions/index.js';
+import * as abandonedCart from '../../core/abandoned-cart/index.js';
+import * as affiliates from '../../core/affiliates/index.js';
+import * as analytics from '../../core/analytics/index.js';
+import * as cart from '../../core/cart.js';
+import * as dashboard from '../../core/dashboard/index.js';
+import * as discounts from '../../core/discounts/index.js';
+import * as orders from '../../core/orders/index.js';
+import * as returns from '../../core/returns/index.js';
+import * as reviews from '../../core/reviews/index.js';
+import * as subscriptions from '../../core/subscriptions/index.js';
 
 // Lazy re-export of initCheckout to avoid bundling gateway code until used
 export async function initCheckout(config) {
-  const mod = await import('../checkout/checkout.js');
+  const mod = await import('./initCheckout.js');
   return mod.initCheckout(config);
 }
 
 // Re-export utility for resolving active payment gateway
-export { default as getActivePaymentGateway } from '../checkout/utils/resolveGateway.js';
+export { default as getActivePaymentGateway } from './utils/resolveGateway.js';
 
 // Re-export renderCart helper
-import { renderCart } from './cart/renderCart.js';
+import { renderCart } from '../../core/cart/renderCart.js';
 export { renderCart };
 
 // Helper to mount gateway specific iframes lazily
@@ -46,7 +46,7 @@ export async function renderGatewayIframe(provider, ...args) {
         : undefined;
     }
     case 'nmi': {
-      const mod = await import('../checkout/gateways/nmi.js');
+      const mod = await import('./gateways/nmi.js');
       const gateway = mod.default || mod;
       if (gateway?.mountCardFields) {
         return gateway.mountCardFields(...args);

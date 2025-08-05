@@ -67,13 +67,13 @@ beforeEach(async () => {
 
   getCredMock = vi.fn(async () => ({ tokenization_key: 'tok_key' }));
 
-  vi.mock('../../checkout/getPublicCredential.js', () => ({
+  vi.mock('../../features/checkout/getPublicCredential.js', () => ({
     getPublicCredential: getCredMock
   }));
 
   window.SMOOTHR_CONFIG = { storeId: 'store-1', active_payment_gateway: 'nmi' } as any;
 
-  const mod = await import('../../checkout/gateways/nmi.js');
+  const mod = await import('../../features/checkout/gateways/nmi.js');
   mountNMI = mod.mountNMI;
   ready = mod.ready;
 });
