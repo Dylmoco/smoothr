@@ -7,12 +7,13 @@ function flushPromises() {
 
 beforeEach(() => {
   vi.resetModules();
-  global.fetch = vi.fn(() =>
-    Promise.resolve({
+  global.fetch = vi
+    .fn()
+    .mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ rates: { USD: 1, EUR: 0.8 } }),
-    }),
-  );
+      text: () => Promise.resolve("{}"),
+    });
   global.window = {
     location: { origin: "", href: "", hostname: "" },
     addEventListener: vi.fn(),
