@@ -55,7 +55,7 @@ export async function mountCardFields() {
         parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
         0;
       const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
-      const res = await fetch(`${apiBase}/api/checkout/paypal/create-order`, {
+      const res = await fetch(`${apiBase}/api/checkout/paypal/createPayPalOrder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: total, currency, store_id: storeId })
@@ -145,7 +145,7 @@ export async function mountCardFields() {
             parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
             0;
           const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
-          const res = await fetch(`${apiBase}/api/checkout/paypal/create-order`, {
+          const res = await fetch(`${apiBase}/api/checkout/paypal/createPayPalOrder`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: total, currency, store_id: storeId })

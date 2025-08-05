@@ -37,7 +37,7 @@ export default async function handler(
     const data = await createOrder({ ...req.body, order_number } as any);
     res.status(200).json(data);
   } catch (err: any) {
-    console.error('[create-order] failed:', err);
+    console.error('[createOrder] failed:', err);
     res.status(500).json({ error: err.message });
   }
 }

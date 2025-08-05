@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { result } = await client.execute(request);
     res.status(200).json({ id: result.id });
   } catch (err) {
-    console.error('[PayPal create-order] failed:', err);
+    console.error('[PayPal createPayPalOrder] failed:', err);
     res.status(500).json({ error: err instanceof Error ? err.message : 'PayPal order creation failed' });
   }
 }
