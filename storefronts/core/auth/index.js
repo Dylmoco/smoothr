@@ -332,7 +332,7 @@ function bindAuthElements(root = document) {
       const isLoggedIn = userRef?.value !== null;
       log('Resolved login state:', isLoggedIn ? 'authenticated' : 'not authenticated');
       if (isLoggedIn) {
-        const url = (await lookupDashboardHomeUrl()) || '/';
+        const url = (await lookupDashboardHomeUrl()) || '/account';
         log('Redirecting to dashboard:', url);
         window.location.href = url;
       } else {
