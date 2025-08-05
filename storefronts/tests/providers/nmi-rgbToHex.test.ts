@@ -51,7 +51,7 @@ async function setup(color: string) {
 
   window.SMOOTHR_CONFIG = { storeId: 'store-1', active_payment_gateway: 'nmi' } as any
 
-  const mod = await import('../../features/checkout/gateways/nmi.js')
+  const mod = await import('../../features/checkout/gateways/nmiGateway.js')
   initNMI = mod.initNMI
 
   await initNMI('tok_key')
