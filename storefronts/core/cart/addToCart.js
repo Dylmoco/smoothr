@@ -1,4 +1,4 @@
-import * as cart from '../cart.js';
+import * as cart from '../../features/cart/index.js';
 
 // Ensure the cart module is available on the global Smoothr object before any
 // DOM bindings are attached. This prevents addItem calls from failing when the

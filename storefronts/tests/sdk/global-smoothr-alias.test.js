@@ -25,7 +25,7 @@ vi.mock('../../core/affiliates/index.js', () => ({ default: dummy, ...dummy }));
 vi.mock('../../core/analytics/index.js', () => ({ default: dummy, ...dummy }));
 vi.mock('../../core/dashboard/index.js', () => ({ default: dummy, ...dummy }));
 vi.mock('../../core/discounts/index.js', () => ({ default: dummy, ...dummy }));
-vi.mock('../../core/cart.js', () => ({
+vi.mock('../../features/cart/index.js', () => ({
   default: { addItem: vi.fn(), ...dummy },
   addItem: vi.fn(),
   ...dummy,

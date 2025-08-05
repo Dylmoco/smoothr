@@ -15,7 +15,7 @@ export const checkout = await loadStripeGateway();
 import * as abandonedCart from '../../core/abandoned-cart/index.js';
 import * as affiliates from '../../core/affiliates/index.js';
 import * as analytics from '../../core/analytics/index.js';
-import * as cart from '../../core/cart.js';
+import * as cart from '../cart/index.js';
 import * as dashboard from '../../core/dashboard/index.js';
 import * as discounts from '../../core/discounts/index.js';
 import * as orders from '../../core/orders/index.js';
