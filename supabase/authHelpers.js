@@ -122,24 +122,37 @@ export function normalizeDomain(hostname) {
   return hostname.replace(/^www\./, '').toLowerCase();
 }
 
+const cachedRedirectUrls = {};
+let cachedDashboardHomeUrl;
+
 export async function lookupRedirectUrl(type = 'login') {
+  if (cachedRedirectUrls[type]) return cachedRedirectUrls[type];
+
   const column = `${type}_redirect_url`;
   try {
     const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
-    return config?.[column] || window.location.origin;
+    const url = config?.[column] || window.location.origin;
+    cachedRedirectUrls[type] = url;
+    return url;
   } catch (error) {
     console.warn('[Smoothr Auth] Redirect lookup failed:', error);
-    return window.location.origin;
+    const fallback = window.location.origin;
+    cachedRedirectUrls[type] = fallback;
+    return fallback;
   }
 }
 
 export async function lookupDashboardHomeUrl() {
+  if (cachedDashboardHomeUrl) return cachedDashboardHomeUrl;
+
   try {
     const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
-    return config?.dashboard_home_url || '/';
+    cachedDashboardHomeUrl = config?.dashboard_home_url || '/';
+    return cachedDashboardHomeUrl;
   } catch (error) {
     console.warn('[Smoothr Auth] Dashboard home lookup failed:', error);
-    return '/';
+    cachedDashboardHomeUrl = '/';
+    return cachedDashboardHomeUrl;
   }
 }
 
