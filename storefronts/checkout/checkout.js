@@ -67,6 +67,12 @@ export async function initCheckout(config) {
   log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
 
   const provider = await getActivePaymentGateway(log, warn);
+  if (!provider) {
+    warn('No active payment gateway resolved. Aborting initCheckout.');
+    window.__SMOOTHR_CHECKOUT_INITIALIZED__ = false;
+    window.__SMOOTHR_CHECKOUT_BOUND__ = false;
+    return;
+  }
   const gateway = gateways[provider];
   if (!gateway) throw new Error(`Unknown payment gateway: ${provider}`);
   log(`Using gateway: ${provider}`);
