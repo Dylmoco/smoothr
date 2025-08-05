@@ -23,7 +23,7 @@ import {
   disableButton,
   enableButton
 } from './utils/cartHash.js';
-import stripe from './gateways/stripe.js';
+import stripe from './gateways/stripeGateway.js';
 import authorizeNet from './gateways/authorizeNet.js';
 import paypal from './gateways/paypal.js';
 import nmi from './gateways/nmiGateway.js';

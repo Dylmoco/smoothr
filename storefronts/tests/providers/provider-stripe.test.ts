@@ -37,7 +37,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
 });
 
 async function loadModule() {
-  const mod = await import('../../../shared/checkout/providers/stripe.ts');
+  const mod = await import('../../../shared/checkout/providers/stripeProvider.ts');
   handleStripe = mod.default;
 }
 
