@@ -6,7 +6,7 @@ Cart DOM helpers like `addToCart.js` and `renderCart.js` now live in `../core/ca
 
 ## Currency dropdown
 
-`webflow-dom.js` replaces any element marked with `data-smoothr-price` or
+`currencyDomAdapter.js` replaces any element marked with `data-smoothr-price` or
 `data-smoothr="price"` with a formatted value. The function
 `setSelectedCurrency` updates prices on the page and stores
 the chosen currency in `localStorage`.
@@ -20,7 +20,7 @@ the chosen currency in `localStorage`.
   <option value="EUR">EUR</option>
 </select>
 <script type="module">
-  import { setSelectedCurrency } from './webflow-dom.js';
+  import { setSelectedCurrency } from '../adapters/webflow/currencyDomAdapter.js';
   document
     .getElementById('currency-select')
     .addEventListener('change', e => setSelectedCurrency(e.target.value));
