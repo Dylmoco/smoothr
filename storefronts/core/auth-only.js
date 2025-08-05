@@ -15,6 +15,10 @@ if (typeof window !== 'undefined') {
   window.supabaseAuth = authClient;
 }
 
+if (typeof globalThis.setSelectedCurrency !== 'function') {
+  globalThis.setSelectedCurrency = () => {};
+}
+
 const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
 
 const script = document.currentScript || document.getElementById('smoothr-sdk');
@@ -31,7 +35,7 @@ const SMOOTHR_CONFIG = window.SMOOTHR_CONFIG;
 
 const auth = authModule?.default || authModule;
 
-export async function loadConfig(storeId) {
+  export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
     let record;
@@ -66,7 +70,7 @@ export async function loadConfig(storeId) {
   }
 }
 
-export { auth, loadConfig, storeRedirects, SMOOTHR_CONFIG };
+  export { auth, storeRedirects, SMOOTHR_CONFIG, currency };
 
 const Smoothr = { auth, loadConfig, storeRedirects, currency, SMOOTHR_CONFIG };
 export default Smoothr;
@@ -84,12 +88,12 @@ export default Smoothr;
     }
   }
 
-  await ensureSupabaseSessionAuth();
+    await ensureSupabaseSessionAuth();
 
-  try {
-    await loadConfig(
-      storeId || '00000000-0000-0000-0000-000000000000'
-    );
+    try {
+      await loadConfig(
+        storeId || '00000000-0000-0000-0000-000000000000'
+      );
   } catch (err) {
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
       console.log('[Smoothr SDK] Test environment: Ignoring error:', err.message);
