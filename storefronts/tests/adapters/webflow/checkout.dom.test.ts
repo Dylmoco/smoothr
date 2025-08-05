@@ -78,7 +78,7 @@ describe('webflow checkout adapter dom', () => {
     (window as any).intlTelInput = vi.fn();
 
     vi.useFakeTimers();
-    await import('../../../../client/platforms/webflow/checkoutAdapter.js');
+    await import('../../adapters/core/checkout-adapter.js');
     await vi.runAllTimersAsync();
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.runAllTimersAsync();
