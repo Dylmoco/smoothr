@@ -1,5 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 let initAddToCart;
+let origWindow;
+let origDocument;
+let origCustomEvent;
 
 class CustomEvt {
   constructor(type, init) {
@@ -16,6 +19,9 @@ describe("webflow add-to-cart binding", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    origWindow = global.window;
+    origDocument = global.document;
+    origCustomEvent = global.CustomEvent;
     events = {};
     btn = {
       dataset: {},
@@ -77,6 +83,24 @@ describe("webflow add-to-cart binding", () => {
     // Override cart methods after module initializes
     global.window.Smoothr.cart.addItem = addItemMock;
     global.window.Smoothr.cart.getCart = vi.fn(() => ({}));
+  });
+
+  afterEach(() => {
+    if (origWindow === undefined) {
+      delete global.window;
+    } else {
+      global.window = origWindow;
+    }
+    if (origDocument === undefined) {
+      delete global.document;
+    } else {
+      global.document = origDocument;
+    }
+    if (origCustomEvent === undefined) {
+      delete global.CustomEvent;
+    } else {
+      global.CustomEvent = origCustomEvent;
+    }
   });
 
   it("binds click handler once", () => {
