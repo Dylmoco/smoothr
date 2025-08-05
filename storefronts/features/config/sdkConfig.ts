@@ -1,4 +1,4 @@
-import supabase from '../../core/supabaseClient.js';
+import supabase from '../../features/supabaseClient.js';
 
 const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
 const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...args);

@@ -1,8 +1,8 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../../core/currency/index.js", async () => {
-  const actual = await vi.importActual("../../core/currency/index.js");
+vi.mock("../../features/currency/index.js", async () => {
+  const actual = await vi.importActual("../../features/currency/index.js");
   return { ...actual, baseCurrency: "USD" };
 });
 
@@ -28,7 +28,7 @@ beforeEach(() => {
 
 describe("global currency helper", () => {
   it("attaches setSelectedCurrency to globalThis", async () => {
-    await import("../../core/index.js");
+    await import("../../features/index.js");
     expect(typeof globalThis.setSelectedCurrency).toBe("function");
   });
 });

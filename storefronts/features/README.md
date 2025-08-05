@@ -1,6 +1,6 @@
-# core
+# features
 
-Core storefront modules for Smoothr.
+Storefront features for Smoothr.
 
 ## Modules
 
@@ -22,7 +22,7 @@ Core storefront modules for Smoothr.
 Import modules from this directory's index:
 
 ```javascript
-import * as core from './core/index.js';
+import * as features from './features/index.js';
 
-core.orders; // access the orders module
+features.orders; // access the orders module
 ```

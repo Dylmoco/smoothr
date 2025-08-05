@@ -5,8 +5,8 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 ## Directory Overview
 
 - **/storefronts/** – Client-facing storefront code and widgets.
-  - **/core/** – Core storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, cart, customer dashboard, abandoned cart, and subscriptions.
-  - **/platforms/** – Adapters for various web builder platforms.
+  - **/features/** – Storefront modules such as orders, returns, reviews, analytics, discounts, currency, affiliates, cart, customer dashboard, abandoned cart, and subscriptions.
+  - **/adapters/** – Adapters for various web builder platforms.
   - **/clonables/** – Embeddable widgets and plug‑and‑play code.
 - **/client/** – Legacy platform scripts like the Webflow checkout adapter kept for compatibility.
 - **/shared/** – Server-side logic for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, abandoned cart, subscriptions, and Supabase helpers.

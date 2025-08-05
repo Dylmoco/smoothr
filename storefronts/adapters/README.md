@@ -1,8 +1,8 @@
-# platforms
+# adapters
 
 Adapters for Webflow, Framer, Webstudio, and other platforms.
 
-Cart DOM helpers like `addToCart.js` and `renderCart.js` now live in `../core/cart`.
+Cart DOM helpers like `addToCart.js` and `renderCart.js` now live in `../features/cart`.
 
 ## Currency dropdown
 
@@ -77,7 +77,7 @@ styles.
 </div>
 <div>Total: <span data-smoothr-total></span></div>
 <script type="module">
-  import { renderCart } from '../core/cart/renderCart.js';
+  import { renderCart } from '../features/cart/renderCart.js';
   renderCart();
 </script>
 ```

@@ -1,6 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as auth from "../../core/auth/index.js";
+import * as auth from "../../features/auth/index.js";
 
 var signInMock;
 var signUpMock;

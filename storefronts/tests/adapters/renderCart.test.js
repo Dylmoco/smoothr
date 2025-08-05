@@ -87,7 +87,7 @@ beforeEach(() => {
 });
 
 async function loadRenderCart() {
-  const mod = await import('../../core/cart/renderCart.js');
+  const mod = await import('../../features/cart/renderCart.js');
   return mod.renderCart;
 }
 

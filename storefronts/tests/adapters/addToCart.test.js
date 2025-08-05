@@ -73,7 +73,7 @@ describe("webflow add-to-cart binding", () => {
     };
     global.window.SMOOTHR_CONFIG = { debug: true };
     global.CustomEvent = CustomEvt;
-    ({ initAddToCart } = await import("../../core/cart/addToCart.js"));
+    ({ initAddToCart } = await import("../../features/cart/addToCart.js"));
     // Override cart methods after module initializes
     global.window.Smoothr.cart.addItem = addItemMock;
     global.window.Smoothr.cart.getCart = vi.fn(() => ({}));

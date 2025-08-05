@@ -6,7 +6,7 @@ import {
   updateRates,
   rates,
   baseCurrency
-} from '../../core/currency/index.js';
+} from '../../features/currency/index.js';
 
 describe('additional conversion logic', () => {
   beforeEach(() => {
