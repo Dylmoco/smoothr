@@ -165,45 +165,33 @@ function safeSetDataset(el, key, val) {
   }
 }
 
+function showLoginPopup() {
+  const fn =
+    window?.Smoothr?.auth?.showLoginPopup ||
+    window?.smoothr?.auth?.showLoginPopup;
+  if (typeof fn === 'function') {
+    fn();
+  } else {
+    console.warn('[Smoothr] showLoginPopup not implemented');
+  }
+}
+
+export async function clickHandler(evt) {
+  evt.preventDefault();
+  const { data } = await window.supabaseAuth.auth.getSession();
+  if (!data?.session) {
+    showLoginPopup();
+  } else {
+    const url = await lookupRedirectUrl('login');
+    window.location.href = url;
+  }
+}
+
 function bindAuthElements(root = document) {
   document.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
     if (el.dataset.smoothrBoundAuth) return;
     safeSetDataset(el, 'smoothrBoundAuth', '1');
-
-    const form = el.closest ? el.closest('[data-smoothr="auth-form"]') : null;
-
-    el.addEventListener &&
-      el.addEventListener('click', async evt => {
-        evt.preventDefault();
-        const targetForm = form;
-        if (!targetForm) return;
-        const emailInput = targetForm.querySelector('[data-smoothr="email"]');
-        const passwordInput = targetForm.querySelector('[data-smoothr="password"]');
-        const emailVal = emailInput?.value || '';
-        const password = passwordInput?.value || '';
-        if (!isValidEmail(emailVal)) {
-          showError(targetForm, 'Enter a valid email address', emailInput, el);
-          return;
-        }
-        setLoading(el, true);
-        try {
-          const { data, error } = await login(emailVal, password);
-          if (!error) {
-            showSuccess(targetForm, 'Logged in, redirecting...', el);
-            document.dispatchEvent(new CustomEvent('smoothr:login', { detail: data }));
-            const url = await lookupRedirectUrl('login');
-            setTimeout(() => {
-              window.location.href = url;
-            }, 1000);
-          } else {
-            showError(targetForm, error.message || 'Invalid credentials', emailInput, el);
-          }
-        } catch (err) {
-          showError(targetForm, err.message || 'Network error', emailInput, el);
-        } finally {
-          setLoading(el, false);
-        }
-      });
+    el.addEventListener && el.addEventListener('click', clickHandler);
   });
 
   const selector =
@@ -321,25 +309,6 @@ function bindAuthElements(root = document) {
     }
   });
 
-  document.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
-    if (el.dataset.smoothrBoundAuth) return;
-    safeSetDataset(el, 'smoothrBoundAuth', '1');
-
-    el.addEventListener('click', async evt => {
-      evt.preventDefault();
-      const userRef = window.smoothr?.auth?.user;
-      if (userRef?.value !== null) {
-        const url = (await lookupDashboardHomeUrl()) || '/';
-        window.location.href = url;
-      } else {
-        window.dispatchEvent(
-          new CustomEvent('smoothr:open-auth', {
-            detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
-          })
-        );
-      }
-    });
-  });
 }
 
 function bindSignOutButtons() {
@@ -388,7 +357,9 @@ export {
   signup,
   resetPassword,
   signOut,
-  user
+  user,
+  bindAuthElements,
+  clickHandler
 };
 
 export default auth;
