@@ -52,6 +52,12 @@ const auth = authModule?.default || authModule;
     } else {
       record = (await loadPublicConfig(storeId)) ?? {};
     }
+    console.debug('[Smoothr Config] Loaded config:', record);
+    if (record.active_payment_gateway == null) {
+      console.debug(
+        '[Smoothr Config] active_payment_gateway is null or undefined (empty settings or RLS issue)'
+      );
+    }
     for (const [key, value] of Object.entries(record)) {
       const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
       window.SMOOTHR_CONFIG[camelKey] = value;
