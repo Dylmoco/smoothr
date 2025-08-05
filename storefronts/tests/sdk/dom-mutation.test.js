@@ -53,11 +53,13 @@ describe("dynamic DOM bindings", () => {
   let forms;
   let doc;
   let win;
+  let docClickHandler;
 
   beforeEach(() => {
     elements = [];
     forms = [];
     mutationCallback = undefined;
+    docClickHandler = undefined;
     global.MutationObserver = class {
       constructor(cb) {
         mutationCallback = cb;
@@ -68,6 +70,7 @@ describe("dynamic DOM bindings", () => {
     doc = {
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
+        if (evt === "click") docClickHandler = cb;
       }),
       querySelectorAll: vi.fn(selector => {
         if (selector === LOGIN_SELECTOR) {
@@ -365,22 +368,19 @@ describe("dynamic DOM bindings", () => {
 
   it("binds newly added account-access elements and dispatches open-auth", async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
-    let clickHandler;
     const btn = {
       tagName: "DIV",
       dataset: { smoothr: "account-access" },
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "click") clickHandler = cb;
-      }),
+      closest: vi.fn(() => btn),
     };
 
     auth.initAuth();
     await flushPromises();
     elements.push(btn);
     mutationCallback();
-    expect(btn.addEventListener).toHaveBeenCalled();
+    expect(docClickHandler).toBeTypeOf("function");
 
-    await clickHandler({ preventDefault: () => {} });
+    await docClickHandler({ target: btn, preventDefault: () => {} });
     await flushPromises();
     expect(win.dispatchEvent).toHaveBeenCalled();
     const evt = win.dispatchEvent.mock.calls[0][0];
