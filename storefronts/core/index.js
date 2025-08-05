@@ -21,12 +21,22 @@ import * as returns from './returns/index.js';
 import * as reviews from './reviews/index.js';
 import * as subscriptions from './subscriptions/index.js';
 import authModule from './auth/index.js';
-import stripeGateway from '../checkout/gateways/stripe.js';
 import { fetchExchangeRates } from './currency/live-rates.js';
 import { initCartBindings } from './cart/addToCart.js';
 import { renderCart } from './cart/renderCart.js';
 import { setSelectedCurrency as setDomCurrency } from '../platforms/webflow/webflow-dom.js';
 import { setSelectedCurrency as setCmsCurrency } from './currency/cms-currency.js';
+
+let stripeGatewayPromise;
+async function loadStripeGateway() {
+  if (!stripeGatewayPromise) {
+    stripeGatewayPromise = import('../checkout/gateways/stripe.js').then(
+      m => m.default || m
+    );
+  }
+  return stripeGatewayPromise;
+}
+
 
 // Capture the store ID as soon as the bundle loads
 const script = document.currentScript || document.getElementById('smoothr-sdk');
@@ -92,9 +102,10 @@ export {
   returns,
   reviews,
   subscriptions,
-  auth,
-  stripeGateway as checkout
+  auth
 };
+
+export const checkout = await loadStripeGateway();
 
 const Smoothr = {
   abandonedCart,
@@ -109,7 +120,7 @@ const Smoothr = {
   reviews,
   subscriptions,
   auth,
-  checkout: stripeGateway
+  checkout: checkout
 };
 
 export default Smoothr;
@@ -242,7 +253,7 @@ export default Smoothr;
 
       window.Smoothr.cart = { ...cart, ...(window.Smoothr.cart || {}) };
       window.Smoothr.cart.renderCart = renderCart;
-      window.Smoothr.checkout = stripeGateway;
+      window.Smoothr.checkout = await loadStripeGateway();
       window.initCartBindings = initCartBindings;
 
       document.addEventListener('DOMContentLoaded', () => {
