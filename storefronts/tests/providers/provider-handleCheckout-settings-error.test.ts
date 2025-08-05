@@ -9,6 +9,10 @@ vi.mock('../../../shared/checkout/providers/nmi.ts', () => {
   return { default: providerMock };
 });
 
+vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
+  findOrCreateCustomer: vi.fn().mockResolvedValue('test_customer_id'),
+}));
+
 vi.mock('../../../shared/supabase/serverClient', () => {
   const client = {
     from: (table: string) => {

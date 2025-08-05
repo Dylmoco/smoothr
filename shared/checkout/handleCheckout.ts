@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase, testMarker } from '../supabase/serverClient';
-import { findOrCreateCustomer } from '@/lib/findOrCreateCustomer';
+import { findOrCreateCustomer } from '../lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import { validateCheckoutPayload } from './utils/validateCheckoutPayload';
 import { dedupeOrders } from './utils/dedupeOrders';

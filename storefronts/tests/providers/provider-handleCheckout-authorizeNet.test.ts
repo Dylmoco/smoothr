@@ -8,6 +8,10 @@ vi.mock('../../../shared/checkout/providers/authorizeNet.ts', () => {
   return { default: vi.fn(async () => ({ success: true, data: { transactionResponse: { transId: 't123' } } })) };
 });
 
+vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
+  findOrCreateCustomer: vi.fn().mockResolvedValue('test_customer_id'),
+}));
+
 
 vi.mock('../../../shared/supabase/serverClient', () => {
   let storeFromCall = 0;
