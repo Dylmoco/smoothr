@@ -57,10 +57,10 @@ window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 ### Usage
 
 ```javascript
+import { auth } from './features/auth/sdk-auth-entry.js';
+import { discounts } from './features/checkout/checkout-core.js';
 
-import * as features from './features/index.js';
-
-features.discounts; // example access
+discounts; // example access
 ```
 
 ### Orders

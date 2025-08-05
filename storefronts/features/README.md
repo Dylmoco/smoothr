@@ -19,10 +19,10 @@ Storefront features for Smoothr.
 
 ### Usage
 
-Import modules from this directory's index:
+Import modules directly from their paths:
 
 ```javascript
-import * as features from './features/index.js';
+import { orders } from './orders/index.js';
 
-features.orders; // access the orders module
+orders.renderOrders(); // access the orders module
 ```
