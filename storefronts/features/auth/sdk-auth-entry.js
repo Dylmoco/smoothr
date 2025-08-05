@@ -3,7 +3,7 @@ import {
   ensureSupabaseSessionAuth
 } from '../../core/supabaseClient.js';
 import authModule from '../../core/auth/index.js';
-import { loadPublicConfig } from '../../core/config.ts';
+import { loadPublicConfig } from '../config/sdkConfig.ts';
 import {
   lookupRedirectUrl,
   lookupDashboardHomeUrl
