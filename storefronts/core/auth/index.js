@@ -178,11 +178,20 @@ function showLoginPopup() {
 
 export async function clickHandler(evt) {
   evt.preventDefault();
-  const { data } = await window.supabaseAuth.auth.getSession();
-  if (!data?.session) {
+  const client = window?.smoothr?.auth?.client || supabase;
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session) {
+    window.dispatchEvent(
+      new CustomEvent('smoothr:open-auth', {
+        detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
+      })
+    );
     showLoginPopup();
   } else {
-    const url = await lookupRedirectUrl('login');
+    const url = await lookupDashboardHomeUrl();
     window.location.href = url;
   }
 }
