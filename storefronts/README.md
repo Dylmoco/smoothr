@@ -234,7 +234,7 @@ field container.
 
 A Webflow‑specific adapter lives at `./platforms/webflow/checkout.js`. It merely
 sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
-`checkout/checkout.js` module. Embed it with:
+`core/checkout.js` module. Embed it with:
 
 ```html
 <script type="module" src="https://sdk.smoothr.io/platforms/webflow/checkout.js?v=dev-final"></script>
@@ -243,6 +243,13 @@ sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
 The adapter simply sets `SMOOTHR_CONFIG.platform = 'webflow'` and loads the
 shared checkout module. `initCheckout` runs automatically once the DOM is ready,
 so no polling logic is required.
+
+For pages that only need authentication and user management, include the
+lightweight `core/auth-only.js` bundle:
+
+```html
+<script type="module" src="https://sdk.smoothr.io/core/auth-only.js?v=dev-final"></script>
+```
 
 ## Development
 

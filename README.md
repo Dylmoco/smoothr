@@ -74,6 +74,22 @@ During the build a helper script (`storefronts/scripts/check-sdk.js`) verifies
 that required exports exist and that no compiled file still contains
 `import.meta.env`. The build fails if any such reference is found.
 
+### Standalone bundles
+
+The storefront SDK publishes lightweight bundles that can be loaded directly:
+
+```html
+<!-- Auth-only bundle -->
+<script type="module" src="https://sdk.smoothr.io/core/auth-only.js"></script>
+
+<!-- Checkout bundle -->
+<script type="module" src="https://sdk.smoothr.io/core/checkout.js"></script>
+```
+
+`auth-only.js` initializes authentication and currency helpers without any
+checkout logic. `checkout.js` provides the checkout flow and can be paired with
+platform adapters like `./platforms/webflow/checkout.js`.
+
 ## Checkout API
 
 The admin dashboard exposes two endpoints for initiating a checkout:

@@ -21,7 +21,7 @@ vi.mock("@supabase/supabase-js", () => {
   return { createClient: createClientMock };
 });
 
-import { initAuth } from "../../core/auth/index.js";
+import { auth } from "../../platforms/core/auth-only.js";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -62,7 +62,7 @@ describe("global auth", () => {
     const user = { id: "1", email: "test@example.com" };
     getUserMock.mockResolvedValueOnce({ data: { user } });
 
-    initAuth();
+    auth.initAuth();
     await flushPromises();
     expect(global.window.smoothr.auth.user.value).toEqual(user);
 

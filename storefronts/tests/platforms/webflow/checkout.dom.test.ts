@@ -14,7 +14,7 @@ beforeEach(() => {
     </div>
   `;
   delete (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__;
-  (window as any).SMOOTHR_CONFIG.active_payment_gateway = 'stripe';
+  (window as any).SMOOTHR_CONFIG = { active_payment_gateway: 'stripe' } as any;
 });
 
 afterEach(() => {
@@ -30,7 +30,7 @@ describe('webflow checkout adapter dom', () => {
 
   it('loads without modifying global flag', async () => {
     await import('../../../platforms/webflow/checkout.js');
-    expect((window as any).__SMOOTHR_CHECKOUT_INITIALIZED__).toBe(true);
+    expect((window as any).__SMOOTHR_CHECKOUT_INITIALIZED__).toBeUndefined();
 
     vi.resetModules();
     (window as any).__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
