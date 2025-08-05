@@ -31,14 +31,17 @@ export default defineConfig(({ mode }) => {
       target: 'esnext', // ✅ Enables top-level await
       rollupOptions: {
         external: [],
-        input: path.resolve(__dirname, 'core/index.js'),
-        treeshake: false,
+        input: {
+          sdk: path.resolve(__dirname, 'core/index.js'),
+          'auth-only': path.resolve(__dirname, 'core/auth-only.js'),
+          checkout: path.resolve(__dirname, 'core/checkout.js')
+        },
+        treeshake: true,
         preserveEntrySignatures: 'exports-only',
         output: {
           dir: path.resolve(__dirname, 'dist'),
-          entryFileNames: 'smoothr-sdk.js',
-          format: 'es',
-          inlineDynamicImports: true
+          entryFileNames: 'smoothr-[name].js',
+          format: 'es'
         }
       },
       outDir: 'dist',
