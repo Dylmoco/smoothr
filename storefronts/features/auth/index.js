@@ -23,7 +23,7 @@ const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
 
 let initialized = false;
 
-let debug = SMOOTHR_CONFIG?.debug;
+let debug = false;
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
 // minimal reactive ref implementation
@@ -392,7 +392,12 @@ export async function init(config = {}) {
   const debugQuery =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('smoothr-debug') === 'true';
-  debug = SMOOTHR_CONFIG?.debug || debugQuery;
+  debug =
+    typeof config.debug === 'boolean'
+      ? config.debug
+      : typeof SMOOTHR_CONFIG.debug === 'boolean'
+        ? SMOOTHR_CONFIG.debug
+        : debugQuery;
 
   registerDOMBindings(bindAuthElements, bindSignOutButtons);
 
