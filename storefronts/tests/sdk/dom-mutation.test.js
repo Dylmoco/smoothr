@@ -56,6 +56,7 @@ describe("dynamic DOM bindings", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    document?.dispatchEvent?.mockClear?.();
     elements = [];
     forms = [];
     mutationCallback = undefined;
@@ -72,19 +73,19 @@ describe("dynamic DOM bindings", () => {
         if (evt === "DOMContentLoaded") cb();
         if (evt === "click") docClickHandler = cb;
       }),
-      querySelectorAll: vi.fn(selector => {
+      querySelectorAll: vi.fn((selector) => {
         if (selector === LOGIN_SELECTOR) {
-          return elements.filter(el => el.dataset?.smoothr === "login");
+          return elements.filter((el) => el.dataset?.smoothr === "login");
         }
         if (selector === OTHER_SELECTOR) {
-          return elements.filter(el =>
+          return elements.filter((el) =>
             ["signup", "login-google", "login-apple", "password-reset"].includes(
               el.dataset?.smoothr
             )
           );
         }
         if (selector === ACCOUNT_ACCESS_SELECTOR) {
-          return elements.filter(el => el.dataset?.smoothr === "account-access");
+          return elements.filter((el) => el.dataset?.smoothr === "account-access");
         }
         if (selector === 'form[data-smoothr="auth-form"]') {
           return forms;
@@ -93,7 +94,9 @@ describe("dynamic DOM bindings", () => {
         return [];
       }),
       querySelector: vi.fn(() => null),
-      dispatchEvent: vi.fn(),
+      dispatchEvent() {
+        return true;
+      },
     };
     win = {
       location: { href: "", origin: "" },
@@ -102,6 +105,8 @@ describe("dynamic DOM bindings", () => {
       dispatchEvent: vi.fn(),
     };
     global.document = doc;
+    vi.spyOn(document, "dispatchEvent").mockImplementation(() => true);
+    document.dispatchEvent.mockClear();
     global.window = win;
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
@@ -146,8 +151,9 @@ describe("dynamic DOM bindings", () => {
     await flushPromises();
 
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
-    expect(global.document.dispatchEvent).toHaveBeenCalled();
+    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
+    expect(evt).toBeInstanceOf(CustomEvent);
     expect(evt.type).toBe("smoothr:login");
   });
 
@@ -191,8 +197,9 @@ describe("dynamic DOM bindings", () => {
     await flushPromises();
 
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
-    expect(global.document.dispatchEvent).toHaveBeenCalled();
+    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
+    expect(evt).toBeInstanceOf(CustomEvent);
     expect(evt.type).toBe("smoothr:login");
   });
 
@@ -235,12 +242,17 @@ describe("dynamic DOM bindings", () => {
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
     const user = { id: "3", email: "google@example.com" };
+    document.dispatchEvent.mockClear();
+    vi.resetModules();
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
     getUserMock.mockResolvedValue({ data: { user } });
     await auth.init();
     await flushPromises();
 
-    expect(global.document.dispatchEvent).toHaveBeenCalled();
+    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
+    expect(evt).toBeInstanceOf(CustomEvent);
     expect(evt.type).toBe("smoothr:login");
   });
 
@@ -283,12 +295,17 @@ describe("dynamic DOM bindings", () => {
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
     const user = { id: "4", email: "apple@example.com" };
+    document.dispatchEvent.mockClear();
+    vi.resetModules();
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
     getUserMock.mockResolvedValue({ data: { user } });
     await auth.init();
     await flushPromises();
 
-    expect(global.document.dispatchEvent).toHaveBeenCalled();
+    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
     const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
+    expect(evt).toBeInstanceOf(CustomEvent);
     expect(evt.type).toBe("smoothr:login");
   });
 
