@@ -21,7 +21,9 @@ import {
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
 
-const debug = SMOOTHR_CONFIG?.debug;
+let initialized = false;
+
+let debug = SMOOTHR_CONFIG?.debug;
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
 // minimal reactive ref implementation
@@ -33,9 +35,10 @@ const user = ref(null);
 
 function updateGlobalAuth() {
   if (typeof window !== 'undefined') {
-    window.smoothr = window.smoothr || {};
+    window.Smoothr = window.Smoothr || {};
+    window.Smoothr.auth = auth;
+    window.smoothr = window.smoothr || window.Smoothr;
     window.smoothr.auth = auth;
-    window.smoothr.auth.client = supabase;
   }
 }
 
@@ -362,26 +365,53 @@ function bindSignOutButtons() {
   });
 }
 
-registerDOMBindings(bindAuthElements, bindSignOutButtons);
-
 const auth = {
   login,
   signup,
   resetPassword,
   signOut,
+  logout: signOut,
+  getSession: () => supabase.auth.getSession(),
   initAuth,
   user,
   client: supabase
 };
 
-updateGlobalAuth();
+export async function init(config = {}) {
+  if (initialized) return window.Smoothr?.auth;
 
-supabase.auth.onAuthStateChange((_event, session) => {
-  user.value = session?.user || null;
+  if (typeof window !== 'undefined') {
+    window.SMOOTHR_CONFIG = { ...(window.SMOOTHR_CONFIG || {}), ...config };
+  }
+  Object.assign(SMOOTHR_CONFIG, config);
+
+  const debugQuery =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('smoothr-debug') === 'true';
+  debug = SMOOTHR_CONFIG?.debug || debugQuery;
+
+  registerDOMBindings(bindAuthElements, bindSignOutButtons);
+
+  await initAuth();
+  await ensureSupabaseSessionAuth();
+
   updateGlobalAuth();
-});
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    user.value = session?.user || null;
+    updateGlobalAuth();
+  });
+
+  if (debug) {
+    console.log('[Smoothr] Auth module loaded');
+  }
+
+  initialized = true;
+  return window.Smoothr?.auth;
+}
 
 export {
+  init,
   initAuth,
   initPasswordResetConfirmation,
   signInWithGoogle,
