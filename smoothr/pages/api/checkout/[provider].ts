@@ -2,19 +2,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import '../../../../shared/init';
 import { handleCheckout } from 'shared/checkout/handleCheckout';
+import { applyCors } from '../../../utils/cors';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const origin = process.env.CORS_ORIGIN || '*';
   if (req.method === 'OPTIONS') {
-    return res
-      .status(200)
-      .setHeader('Access-Control-Allow-Origin', origin)
-      .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .end();
+    applyCors(res, origin);
+    return res.status(200).end();
   }
 
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  applyCors(res, origin);
 
   console.log('[API] 🔥 [provider] API route hit');
   if (req.method !== 'POST' && req.method !== 'OPTIONS') {
