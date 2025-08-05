@@ -1,3 +1,3 @@
 # abandoned-cart
 
-Abandoned cart analytics and admin logic.
+Abandoned cart analytics and admin logic..
