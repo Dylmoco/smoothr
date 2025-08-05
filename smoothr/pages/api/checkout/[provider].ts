@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import '../../../../shared/init';
 import { handleCheckout } from 'shared/checkout/handleCheckout';
-import { applyCors } from '../../../utils/cors';
+import { applyCors } from '../../../../shared/utils/applyCors';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const origin = process.env.CORS_ORIGIN || '*';
