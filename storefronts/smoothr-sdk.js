@@ -1,4 +1,5 @@
 import { supabase } from '../supabase/supabaseClient.js';
+import { mergeConfig } from './features/config/globalConfig.js';
 
 const scriptEl = document.getElementById('smoothr-sdk');
 const storeId = scriptEl?.dataset?.storeId || null;
@@ -15,7 +16,7 @@ if (!scriptEl || !storeId) {
     );
   }
 } else {
-  const config = (window.SMOOTHR_CONFIG = { storeId, platform, debug });
+  const config = mergeConfig({ storeId, platform, debug });
   const Smoothr = (window.Smoothr = window.Smoothr || {});
   window.smoothr = window.smoothr || Smoothr;
   Smoothr.config = config;

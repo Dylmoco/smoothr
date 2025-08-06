@@ -1,7 +1,8 @@
 // Core cart module for Smoothr SDK
+import { getConfig } from '../config/globalConfig.js';
 const STORAGE_KEY = 'smoothr_cart';
 
-const debug = window.SMOOTHR_CONFIG?.debug;
+const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Cart]', ...args);

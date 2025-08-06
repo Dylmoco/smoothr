@@ -3,8 +3,9 @@
  */
 
 import { supabase } from '../../../supabase/supabaseClient.js';
+import { getConfig } from '../config/globalConfig.js';
 
-const debug = window.SMOOTHR_CONFIG?.debug;
+const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Orders]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Orders]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Orders]', ...args);

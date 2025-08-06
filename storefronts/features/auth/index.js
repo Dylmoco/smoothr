@@ -1,4 +1,5 @@
 import { supabase, ensureSupabaseSessionAuth } from '../../../supabase/supabaseClient.js';
+import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import {
   initAuth as initAuthHelper,
   signInWithGoogle,
@@ -17,9 +18,7 @@ import {
   findMessageContainer
 } from '../../../supabase/authHelpers.js';
 
-// Ensure SMOOTHR_CONFIG is accessible in both browser and non-browser environments
-const globalScope = typeof window !== 'undefined' ? window : globalThis;
-const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
+const SMOOTHR_CONFIG = getConfig();
 
 let initialized = false;
 
@@ -384,10 +383,7 @@ const auth = {
     return window.Smoothr?.auth;
   }
 
-  if (typeof window !== 'undefined') {
-    window.SMOOTHR_CONFIG = { ...(window.SMOOTHR_CONFIG || {}), ...config };
-  }
-  Object.assign(SMOOTHR_CONFIG, config);
+  const merged = mergeConfig(config);
 
   const debugQuery =
     typeof window !== 'undefined' &&
@@ -395,8 +391,8 @@ const auth = {
   debug =
     typeof config.debug === 'boolean'
       ? config.debug
-      : typeof SMOOTHR_CONFIG.debug === 'boolean'
-        ? SMOOTHR_CONFIG.debug
+      : typeof merged.debug === 'boolean'
+        ? merged.debug
         : debugQuery;
 
   registerDOMBindings(bindAuthElements, bindSignOutButtons);

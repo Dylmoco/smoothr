@@ -1,7 +1,8 @@
 import { handleSuccessRedirect } from './handleSuccessRedirect.js';
+import { getConfig } from '../../config/globalConfig.js';
 
 export default async function gatewayDispatcher(provider, payload, token, log, warn, err) {
-  const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
+  const apiBase = getConfig().apiBase || '';
   log('POST', `${apiBase}/api/checkout/${provider}`);
 
   if (!apiBase.startsWith('https://')) {

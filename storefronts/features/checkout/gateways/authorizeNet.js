@@ -5,6 +5,7 @@ import {
   getAuthorizeNetStyles,
   initAuthorizeStyles
 } from '../utils/authorizeNetIframeStyles.js';
+import { getConfig } from '../../config/globalConfig.js';
 
 let fieldsMounted = false;
 let mountPromise;
@@ -73,7 +74,7 @@ function getAcceptCredentials() {
   };
 }
 
-const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
+const DEBUG = !!getConfig().debug;
 const log = (...a) => DEBUG && console.log('[AuthorizeNet]', ...a);
 const warn = (...a) => DEBUG && console.warn('[AuthorizeNet]', ...a);
 
@@ -89,7 +90,7 @@ function loadAcceptJs() {
     let script = document.querySelector('script[data-smoothr-accept]');
     if (!script) {
       script = document.createElement('script');
-      const env = window.SMOOTHR_CONFIG?.env?.toLowerCase();
+      const env = getConfig().env?.toLowerCase();
       const isProd = env === 'production' || env === 'prod';
       script.src = isProd
         ? 'https://js.authorize.net/v1/Accept.js'
@@ -110,7 +111,7 @@ function loadAcceptJs() {
 async function resolveCredentials() {
   if (clientKey && apiLoginID && transactionKey !== undefined)
     return { clientKey, apiLoginID };
-  const storeId = window.SMOOTHR_CONFIG?.storeId;
+  const storeId = getConfig().storeId;
   if (!storeId) return { clientKey: null, apiLoginID: null };
   const cred = await getPublicCredential(storeId, 'authorizeNet');
   clientKey = cred?.settings?.client_key || '';

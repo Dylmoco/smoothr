@@ -1,3 +1,5 @@
+import { getConfig } from '../config/globalConfig.js';
+
 function getSelectedCurrency(Smoothr) {
   if (typeof window === 'undefined') {
     return Smoothr?.currency?.baseCurrency || 'USD';
@@ -18,7 +20,7 @@ function hideTemplatesGlobally() {
 }
 
 export function renderCart() {
-  const debug = window.SMOOTHR_CONFIG?.debug;
+  const { debug } = getConfig();
   if (debug) console.log('🎨 renderCart() triggered');
   if (typeof document === 'undefined') return;
   setTimeout(() => hideTemplatesGlobally(), 50);

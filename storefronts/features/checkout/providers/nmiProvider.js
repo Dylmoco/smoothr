@@ -1,17 +1,18 @@
 import { getPublicCredential } from '../getPublicCredential.js';
+import { getConfig } from '../../config/globalConfig.js';
 
 let cachedKey;
 
-const DEBUG = !!window.SMOOTHR_CONFIG?.debug;
+const DEBUG = !!getConfig().debug;
 const log = (...a) => DEBUG && console.log('[NMI]', ...a);
 const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
 export async function resolveTokenizationKey() {
   if (cachedKey !== undefined) return cachedKey;
-  const storeId = window.SMOOTHR_CONFIG?.storeId;
+  const storeId = getConfig().storeId;
   if (!storeId) return null;
 
-  const gateway = window.SMOOTHR_CONFIG?.active_payment_gateway || 'nmi';
+  const gateway = getConfig().active_payment_gateway || 'nmi';
 
   try {
     const cred = await getPublicCredential(storeId, 'nmi', gateway);

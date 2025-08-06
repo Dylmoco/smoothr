@@ -1,4 +1,5 @@
 import { fetchExchangeRates } from './fetchLiveRates.js';
+import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
 /**
  * Manages currency formatting, conversion and basic DOM integration.
@@ -117,16 +118,15 @@ export async function init(config = {}) {
     return window.Smoothr?.currency;
   }
 
+  mergeConfig(config);
   if (typeof window !== 'undefined') {
-    window.SMOOTHR_CONFIG = { ...(window.SMOOTHR_CONFIG || {}), ...config };
     const debugQuery =
-      new URLSearchParams(window.location.search).get('smoothr-debug') ===
-      'true';
+      new URLSearchParams(window.location.search).get('smoothr-debug') === 'true';
     debug =
       typeof config.debug === 'boolean'
         ? config.debug
-        : typeof window.SMOOTHR_CONFIG?.debug === 'boolean'
-          ? window.SMOOTHR_CONFIG.debug
+        : typeof getConfig().debug === 'boolean'
+          ? getConfig().debug
           : debugQuery;
   }
 

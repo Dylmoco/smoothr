@@ -6,10 +6,12 @@
  * can be used by future recovery flows (emails, webhooks, etc.).
  */
 
+import { getConfig } from '../config/globalConfig.js';
+
 const STORAGE_KEY = 'smoothr_cart_meta';
 let isSetup = false;
 
-const debug = window.SMOOTHR_CONFIG?.debug;
+const { debug } = getConfig();
 const log = (...args) => debug && console.log('smoothr:abandoned-cart', ...args);
 const warn = (...args) => debug && console.warn('smoothr:abandoned-cart', ...args);
 const err = (...args) => debug && console.error('smoothr:abandoned-cart', ...args);

@@ -6,6 +6,7 @@ import forceStripeIframeStyle, {
 
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
+import { getConfig } from '../../config/globalConfig.js';
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -15,7 +16,7 @@ let cachedKey;
 let cardNumberElement;
 let mountPromise;
 
-const debug = window.SMOOTHR_CONFIG?.debug;
+const debug = getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
@@ -54,8 +55,9 @@ export async function waitForInteractable(el, timeout = 1500) {
 
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
-  const storeId = window.SMOOTHR_CONFIG?.storeId;
-  const config = window.SMOOTHR_CONFIG || {};
+  const cfg = getConfig();
+  const storeId = cfg?.storeId;
+  const config = cfg || {};
   if (
     config.active_payment_gateway &&
     config.active_payment_gateway !== 'stripe'
@@ -229,7 +231,7 @@ export function ready() {
 }
 
 export async function getStoreSettings() {
-  const data = window.SMOOTHR_CONFIG;
+  const data = getConfig();
   if (!data) {
     warn('Store settings not found');
     return null;

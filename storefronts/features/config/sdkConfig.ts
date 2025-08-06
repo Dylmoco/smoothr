@@ -1,6 +1,7 @@
 import supabase from '../../../supabase/supabaseClient.js';
+import { getConfig } from './globalConfig.js';
 
-const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+const debug = typeof window !== 'undefined' && getConfig().debug;
 const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...args);
 
 export async function loadPublicConfig(storeId: string) {

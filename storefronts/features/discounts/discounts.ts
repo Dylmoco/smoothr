@@ -1,6 +1,7 @@
 import { supabase } from '../../../supabase/supabaseClient.js';
+import { getConfig } from '../config/globalConfig.js';
 
-const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args: any[]) => debug && console.log('[Smoothr Discounts]', ...args);
 const warn = (...args: any[]) => debug && console.warn('[Smoothr Discounts]', ...args);
 

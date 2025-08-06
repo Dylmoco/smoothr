@@ -5,6 +5,7 @@ import {
 import * as authExports from './index.js';
 import { loadPublicConfig } from '../config/sdkConfig.ts';
 import * as currency from '../currency/index.js';
+import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
 const authModule = authExports.default || authExports;
 let authInit = () => {};
@@ -35,21 +36,20 @@ export async function loadConfig(storeId) {
         '[Smoothr Config] active_payment_gateway is null or undefined (empty settings or RLS issue)'
       );
     }
+    const updates = {};
     for (const [key, value] of Object.entries(record)) {
       const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-      window.SMOOTHR_CONFIG[camelKey] = value;
+      updates[camelKey] = value;
     }
-    window.SMOOTHR_CONFIG.storeId = storeId;
-    console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', window.SMOOTHR_CONFIG);
+    updates.storeId = storeId;
+    mergeConfig(updates);
+    console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', getConfig());
   } catch (error) {
     console.warn(
       '[Smoothr SDK] Failed to load config:',
       error?.message || error
     );
-    window.SMOOTHR_CONFIG = {
-      ...(window.SMOOTHR_CONFIG || {}),
-      storeId
-    };
+    mergeConfig({ storeId });
   }
 }
 
@@ -72,13 +72,7 @@ export async function init(config = {}) {
   const storeId =
     config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
 
-  if (typeof window !== 'undefined') {
-    window.SMOOTHR_CONFIG = {
-      ...(window.SMOOTHR_CONFIG || {}),
-      ...config,
-      storeId
-    };
-  }
+  mergeConfig({ ...config, storeId });
 
   if (!storeId) {
     console.warn(
@@ -116,7 +110,7 @@ export async function init(config = {}) {
     }
   }
 
-  const cfg = window.SMOOTHR_CONFIG || {};
+  const cfg = getConfig();
   if (cfg.baseCurrency) currency.setBaseCurrency(cfg.baseCurrency);
   if (cfg.rates) currency.updateRates(cfg.rates);
 
@@ -144,6 +138,5 @@ export async function init(config = {}) {
   return authAPI;
 }
 
-export const SMOOTHR_CONFIG =
-  (typeof window !== 'undefined' && window.SMOOTHR_CONFIG) || {};
+export const SMOOTHR_CONFIG = getConfig();
 

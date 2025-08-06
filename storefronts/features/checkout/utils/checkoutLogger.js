@@ -1,7 +1,8 @@
 import waitForElement from './waitForElement.js';
+import { getConfig } from '../../config/globalConfig.js';
 
 export default function checkoutLogger(block = document) {
-  const debug = window.SMOOTHR_CONFIG?.debug;
+  const debug = getConfig().debug;
   const log = (...args) => debug && console.log('[Smoothr Checkout]', ...args);
   const warn = (...args) => debug && console.warn('[Smoothr Checkout]', ...args);
   const err = (...args) => debug && console.error('[Smoothr Checkout]', ...args);
