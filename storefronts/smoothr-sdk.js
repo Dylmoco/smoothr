@@ -63,6 +63,51 @@ if (!scriptEl || !storeId) {
     }
   }
 
+  let cartInitPromise = null;
+  let checkoutInitPromise = null;
+
+  async function scanSpecialFeatures({ log = true, loaded } = {}) {
+    const tasks = [];
+
+    if (
+      !cartInitPromise &&
+      typeof document !== 'undefined' &&
+      document.querySelector?.('[data-smoothr="add-to-cart"]')
+    ) {
+      cartInitPromise = safeImport('./features/cart/init.js');
+      tasks.push(
+        cartInitPromise.then(async mod => {
+          if (mod?.init) await mod.init(Smoothr.config);
+          return mod ? 'cart' : null;
+        })
+      );
+    }
+
+    if (
+      !checkoutInitPromise &&
+      typeof document !== 'undefined' &&
+      document.querySelector?.('[data-smoothr="pay"]')
+    ) {
+      checkoutInitPromise = safeImport('./features/checkout/init.js');
+      tasks.push(
+        checkoutInitPromise.then(async mod => {
+          if (mod?.init) await mod.init(Smoothr.config);
+          return mod ? 'checkout' : null;
+        })
+      );
+    }
+
+    const names = (await Promise.all(tasks)).filter(Boolean);
+    if (loaded && names.length) loaded.push(...names);
+    if (log && debug && names.length) {
+      console.log(`[Smoothr] Loaded features: ${names.join(', ')}`);
+      if (names.includes('checkout')) {
+        const gateway = Smoothr.config?.settings?.active_payment_gateway;
+        if (gateway) console.log(`[Smoothr] Active gateway: ${gateway}`);
+      }
+    }
+  }
+
   // Initialize core modules
   const auth = await safeImport('./features/auth/index.js');
   if (auth) {
@@ -99,12 +144,19 @@ if (!scriptEl || !storeId) {
       };
     }
     await adapter.platformReady?.(Smoothr.config);
+    await scanSpecialFeatures();
   }
 
-  function runFeatureInit() {
-    const elements = Array.from(document.querySelectorAll('[data-smoothr]'));
-    const featureNames = [...new Set(elements.map(el => el.getAttribute('data-smoothr')))].filter(Boolean);
+  async function runFeatureInit() {
+    const elements = Array.from(
+      (typeof document !== 'undefined' && document.querySelectorAll?.('[data-smoothr]')) || []
+    );
+    let featureNames = [...new Set(elements.map(el => el.getAttribute('data-smoothr')))].filter(
+      name => !!name && !['add-to-cart', 'pay'].includes(name)
+    );
     const loaded = [];
+
+    await scanSpecialFeatures({ log: false, loaded });
 
     const imports = featureNames.map(async name => {
       try {
@@ -125,7 +177,13 @@ if (!scriptEl || !storeId) {
     Promise.all(imports).then(() => {
       if (debug) {
         console.log('DOM scan:', featureNames);
-        console.log('Loaded features:', loaded);
+        if (loaded.length) {
+          console.log(`[Smoothr] Loaded features: ${loaded.join(', ')}`);
+          if (loaded.includes('checkout')) {
+            const gateway = Smoothr.config?.settings?.active_payment_gateway;
+            if (gateway) console.log(`[Smoothr] Active gateway: ${gateway}`);
+          }
+        }
         console.groupEnd();
       }
     });
@@ -141,6 +199,7 @@ if (!scriptEl || !storeId) {
 
   onReady(async () => {
     await adapter?.domReady?.(Smoothr.config);
+    await scanSpecialFeatures();
     adapter?.observeDOMChanges?.(Smoothr.config);
     runFeatureInit();
   });
