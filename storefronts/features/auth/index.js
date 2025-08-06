@@ -377,7 +377,7 @@ const auth = {
   client: supabase
 };
 
-export async function init(config = {}) {
+  async function init(config = {}) {
   updateGlobalAuth();
   if (initialized) {
     log('Auth module already initialized');
