@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
+    base: 'https://sdk.smoothr.io/',
     optimizeDeps: {
       include: ['@supabase/supabase-js']
     },
