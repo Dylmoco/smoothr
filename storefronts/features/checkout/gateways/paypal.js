@@ -1,6 +1,7 @@
 import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import { disableButton, enableButton } from '../utils/cartHash.js';
+import { getConfig } from '../../config/globalConfig.js';
 
 let mounted = false;
 let isSubmitting = false;
@@ -34,7 +35,7 @@ export async function mountCardFields() {
   // prevent default Smoothr click handler
   container.addEventListener('click', e => e.stopImmediatePropagation(), true);
 
-  const storeId = window.SMOOTHR_CONFIG?.storeId;
+  const storeId = getConfig().storeId;
   const cred = await getPublicCredential(storeId, 'paypal');
   const clientId = cred?.settings?.client_id || cred?.api_key || '';
   if (!clientId) {
@@ -44,7 +45,7 @@ export async function mountCardFields() {
 
   await loadScript(`https://www.paypal.com/sdk/js?client-id=${clientId}`);
 
-  const apiBase = window.SMOOTHR_CONFIG?.apiBase || '';
+  const apiBase = getConfig().apiBase || '';
 
   const paypalButtons = window.paypal.Buttons({
       createOrder: async () => {
@@ -54,7 +55,7 @@ export async function mountCardFields() {
         window.Smoothr?.cart?.getTotal?.() ||
         parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
         0;
-      const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
+      const currency = getConfig().baseCurrency || 'USD';
       const res = await fetch(`${apiBase}/api/checkout/paypal/createPayPalOrder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,7 +100,7 @@ export async function mountCardFields() {
         window.Smoothr?.cart?.getTotal?.() ||
         parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
         0;
-      const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
+      const currency = getConfig().baseCurrency || 'USD';
 
       const payload = {
         orderID: data.orderID,
@@ -113,7 +114,7 @@ export async function mountCardFields() {
         total,
         currency,
         customer_id: window.smoothr?.auth?.user?.value?.id || null,
-        platform: window.SMOOTHR_CONFIG?.platform
+        platform: getConfig().platform
       };
 
       const res = await fetch(`${apiBase}/api/checkout/paypal/capture-order`, {
@@ -144,7 +145,7 @@ export async function mountCardFields() {
             window.Smoothr?.cart?.getTotal?.() ||
             parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
             0;
-          const currency = window.SMOOTHR_CONFIG?.baseCurrency || 'USD';
+          const currency = getConfig().baseCurrency || 'USD';
           const res = await fetch(`${apiBase}/api/checkout/paypal/createPayPalOrder`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

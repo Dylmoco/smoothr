@@ -1,4 +1,5 @@
 import * as cart from '../../features/cart/index.js';
+import { getConfig } from '../config/globalConfig.js';
 
 // Ensure the cart module is available on the global Smoothr object before any
 // DOM bindings are attached. This prevents addItem calls from failing when the
@@ -19,7 +20,7 @@ let foundLogShown = false;
 const MAX_POLL_ATTEMPTS = 10;
 let pollAttempts = 0;
 
-const debug = window.SMOOTHR_CONFIG?.debug;
+const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Cart]', ...args);

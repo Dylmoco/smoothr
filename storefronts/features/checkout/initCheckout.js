@@ -29,6 +29,7 @@ import paypal from './gateways/paypal.js';
 import nmi from './gateways/nmiGateway.js';
 import segpay from './gateways/segpay.js';
 import { loadPublicConfig } from '../config/sdkConfig.ts';
+import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
 function forEachPayButton(fn) {
   document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
@@ -50,7 +51,7 @@ const gateways = { stripe, authorizeNet, paypal, nmi, segpay };
 export async function initCheckout(config) {
   if (window.__SMOOTHR_CHECKOUT_INITIALIZED__) return;
   window.__SMOOTHR_CHECKOUT_INITIALIZED__ = true;
-  const debug = window.SMOOTHR_CONFIG?.debug;
+  const debug = getConfig().debug;
   if (debug) console.log('[Smoothr] initCheckout', config);
   if (window.__SMOOTHR_CHECKOUT_BOUND__) return;
   window.__SMOOTHR_CHECKOUT_BOUND__ = true;
@@ -58,13 +59,13 @@ export async function initCheckout(config) {
   let isSubmitting = false;
   const { log, warn, err, select, q } = checkoutLogger();
 
-  const publicConfig = await loadPublicConfig(window.SMOOTHR_CONFIG?.storeId);
+  const publicConfig = await loadPublicConfig(getConfig().storeId);
   if (publicConfig) {
-    window.SMOOTHR_CONFIG = { ...window.SMOOTHR_CONFIG, ...publicConfig };
+    mergeConfig(publicConfig);
   }
 
   log('SDK initialized');
-  log('SMOOTHR_CONFIG', JSON.stringify(window.SMOOTHR_CONFIG));
+  log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
 
   const provider = await getActivePaymentGateway(log, warn);
   if (!provider) {
@@ -151,7 +152,7 @@ export async function initCheckout(config) {
         showLoginPopup();
         return;
       }
-      const provider = window.SMOOTHR_CONFIG.active_payment_gateway;
+      const provider = getConfig().active_payment_gateway;
 
       if (isSubmitting) {
         warn('Checkout already in progress');
@@ -185,10 +186,11 @@ export async function initCheckout(config) {
       const total = Math.round(
         (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0) * 100
       );
-      const currency = window.SMOOTHR_CONFIG.baseCurrency;
+      const cfg = getConfig();
+      const currency = cfg.baseCurrency;
       const customer_id = window.smoothr.auth.user?.value?.id || null;
-      const store_id = window.SMOOTHR_CONFIG.storeId;
-      const platform = window.SMOOTHR_CONFIG.platform;
+      const store_id = cfg.storeId;
+      const platform = cfg.platform;
 
       const cartHash = await computeCartHash(items, total, email);
       const last = JSON.parse(localStorage.getItem('smoothr_last_submission') || '{}');
@@ -230,7 +232,7 @@ export async function initCheckout(config) {
           platform
         });
 
-        if (window.SMOOTHR_CONFIG.debug) window.__latestSmoothrPayload = payload;
+        if (getConfig().debug) window.__latestSmoothrPayload = payload;
 
         const { res, data: resp } = await gatewayDispatcher(
           provider,
@@ -384,6 +386,7 @@ function handleCheckoutError(res, data, hash) {
 
 function handleCheckoutSuccess(resp) {
   localStorage.removeItem('smoothr_last_submission');
-  if (window.SMOOTHR_CONFIG.successUrl) window.location.href = window.SMOOTHR_CONFIG.successUrl;
+  const cfg = getConfig();
+  if (cfg.successUrl) window.location.href = cfg.successUrl;
   window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: resp }));
 }

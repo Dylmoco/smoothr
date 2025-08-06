@@ -4,6 +4,7 @@ import { resolveTokenizationKey } from '../providers/nmiProvider.js'
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js'
 import { disableButton, enableButton } from '../utils/cartHash.js'
 import styleNmiIframes, { getNmiStyles } from '../utils/nmiIframeStyles.js'
+import { getConfig } from '../../config/globalConfig.js'
 
 let hasMounted = false
 let isConfigured = false
@@ -21,7 +22,7 @@ export async function mountCardFields() {
   hasMounted = true
   configPromise = new Promise(resolve => { resolveConfig = resolve })
 
-  const storeId = window.SMOOTHR_CONFIG.storeId
+  const storeId = getConfig().storeId
   const tokenKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
   if (!tokenKey) {
     console.warn('[NMI] Tokenization key missing')

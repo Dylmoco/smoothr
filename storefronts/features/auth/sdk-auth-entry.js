@@ -5,14 +5,14 @@ import {
   lookupDashboardHomeUrl
 } from '../../../supabase/authHelpers.js';
 import * as currency from '../currency/index.js';
+import { getConfig } from '../config/globalConfig.js';
 
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
 }
 
 const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
-const SMOOTHR_CONFIG =
-  (typeof window !== 'undefined' && window.SMOOTHR_CONFIG) || {};
+const SMOOTHR_CONFIG = getConfig();
 
 const Smoothr = { auth, loadConfig, storeRedirects, currency, SMOOTHR_CONFIG };
 export { auth, loadConfig, storeRedirects, currency, SMOOTHR_CONFIG };

@@ -1,9 +1,11 @@
-const debug = typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.debug;
+import { getConfig } from '../config/globalConfig.js';
+
+const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Rates]', ...args);
 
 function getAuthToken() {
   return (
-    (typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.liveRatesToken) ||
+    (typeof window !== 'undefined' && getConfig().liveRatesToken) ||
     (typeof process !== 'undefined' && process.env.LIVE_RATES_AUTH_TOKEN)
   );
 }
