@@ -33,19 +33,15 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         external: [],
         input: {
-            'sdk-auth-entry': path.resolve(
-              __dirname,
-              'features/auth/sdk-auth-entry.js'
-            ),
-          checkout: path.resolve(__dirname, 'features/checkout/checkout-core.js'),
           'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.js')
         },
         treeshake: true,
         preserveEntrySignatures: 'exports-only',
         output: {
           dir: path.resolve(__dirname, 'dist'),
-          entryFileNames: 'smoothr-[name].js',
-          format: 'es'
+          entryFileNames: '[name].js',
+          format: 'es',
+          inlineDynamicImports: true
         }
       },
       outDir: 'dist',
