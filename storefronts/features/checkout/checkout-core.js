@@ -1,3 +1,4 @@
+// Deprecated: checkout logic migrated to loader-based modules
 // core/checkout.js
 
 let stripeGatewayPromise;

@@ -1,3 +1,4 @@
+// Deprecated: migrated to ../providers/nmi/init.js
 // src/checkout/gateways/nmiGateway.js
 
 import { resolveTokenizationKey } from '../providers/nmiProvider.js'

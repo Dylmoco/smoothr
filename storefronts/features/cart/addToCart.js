@@ -1,3 +1,4 @@
+// Deprecated: logic merged into ./init.js
 import * as cart from '../../features/cart/index.js';
 
 // Ensure the cart module is available on the global Smoothr object before any

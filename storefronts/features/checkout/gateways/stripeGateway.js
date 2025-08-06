@@ -1,3 +1,4 @@
+// Deprecated: migrated to ../providers/stripe/init.js
 import forceStripeIframeStyle, {
   elementStyleFromContainer,
   getFonts,

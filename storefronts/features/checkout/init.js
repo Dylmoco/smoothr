@@ -1,5 +1,3 @@
-import { loadScriptOnce } from '../../utils/loadScriptOnce.js';
-
 let initialized = false;
 
 export async function init(config = {}) {
@@ -24,22 +22,10 @@ export async function init(config = {}) {
     const mod = await import(`./providers/${gateway}/init.js`);
     const provider = mod.default || mod;
 
-    const scriptSrc =
-      provider.scriptSrc ||
-      provider.sdkSrc ||
-      provider.src ||
-      provider.sdk?.src;
-    const globalCheck =
-      provider.global ||
-      provider.globalVar ||
-      provider.sdk?.global ||
-      provider.globalCheck;
-
-    if (scriptSrc) {
-      await loadScriptOnce(scriptSrc, globalCheck);
-    }
+    const result = await (provider.init ? provider.init(config) : undefined);
 
     const checkoutFn =
+      result?.checkout ||
       provider.checkout ||
       (provider.default && provider.default.checkout);
 

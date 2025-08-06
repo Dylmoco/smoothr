@@ -1,4 +1,4 @@
-export function loadScriptOnce(src, globalCheck) {
+export function loadScriptOnce(src, globalCheck, attrs = {}) {
   if (globalCheck && window[globalCheck]) {
     return Promise.resolve(window[globalCheck]);
   }
@@ -19,6 +19,12 @@ export function loadScriptOnce(src, globalCheck) {
     const script = document.createElement('script');
     script.src = src;
     script.async = true;
+
+    Object.entries(attrs || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        script.setAttribute(key, String(value));
+      }
+    });
 
     script.addEventListener('load', () => {
       script.dataset.loaded = 'true';

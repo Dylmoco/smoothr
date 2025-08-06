@@ -16,10 +16,48 @@ import {
   registerDOMBindings,
   findMessageContainer
 } from '../../../supabase/authHelpers.js';
+import { loadPublicConfig } from '../config/sdkConfig.ts';
+import * as currency from '../currency/index.js';
 
 // Ensure SMOOTHR_CONFIG is accessible in both browser and non-browser environments
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
+
+export async function loadConfig(storeId) {
+  console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
+  try {
+    let record;
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      const { data, error } = await supabase
+        .from('public_store_settings')
+        .select('*')
+        .eq('store_id', storeId)
+        .single();
+      if (error) throw error;
+      record = data ?? {};
+    } else {
+      record = (await loadPublicConfig(storeId)) ?? {};
+    }
+    console.debug('[Smoothr Config] Loaded config:', record);
+    if (record.active_payment_gateway == null) {
+      console.debug(
+        '[Smoothr Config] active_payment_gateway is null or undefined (empty settings or RLS issue)'
+      );
+    }
+    for (const [key, value] of Object.entries(record)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      window.SMOOTHR_CONFIG[camelKey] = value;
+    }
+    window.SMOOTHR_CONFIG.storeId = storeId;
+    console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', window.SMOOTHR_CONFIG);
+  } catch (error) {
+    console.warn('[Smoothr SDK] Failed to load config:', error?.message || error);
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      storeId
+    };
+  }
+}
 
 let initialized = false;
 
@@ -377,7 +415,7 @@ const auth = {
   client: supabase
 };
 
-  async function init(config = {}) {
+export async function init(config = {}) {
   updateGlobalAuth();
   if (initialized) {
     log('Auth module already initialized');
@@ -389,6 +427,21 @@ const auth = {
   }
   Object.assign(SMOOTHR_CONFIG, config);
 
+  const script =
+    typeof document !== 'undefined'
+      ? document.currentScript || document.getElementById('smoothr-sdk')
+      : null;
+  const storeId =
+    SMOOTHR_CONFIG.storeId ||
+    script?.getAttribute?.('data-store-id') ||
+    script?.dataset?.storeId;
+  SMOOTHR_CONFIG.storeId = storeId;
+  if (!storeId) {
+    console.warn(
+      '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
+    );
+  }
+
   const debugQuery =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('smoothr-debug') === 'true';
@@ -399,12 +452,54 @@ const auth = {
         ? SMOOTHR_CONFIG.debug
         : debugQuery;
 
+  if (
+    typeof window !== 'undefined' &&
+    window.location?.hash?.includes('access_token')
+  ) {
+    const { error } = await supabase.auth.getSessionFromUrl({
+      storeSession: true
+    });
+    if (error) {
+      console.warn('[Smoothr SDK] Error parsing session from URL:', error);
+    }
+  }
+
+  await ensureSupabaseSessionAuth();
+
+  try {
+    await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      console.log('[Smoothr SDK] Test environment: Ignoring error:', err.message);
+    } else {
+      console.warn('[Smoothr SDK] Failed to load config:', err?.message || err);
+    }
+  }
+
+  const cfg = window.SMOOTHR_CONFIG;
+  if (cfg.baseCurrency) currency.setBaseCurrency(cfg.baseCurrency);
+  if (cfg.rates) currency.updateRates(cfg.rates);
+
   registerDOMBindings(bindAuthElements, bindSignOutButtons);
 
   await initAuth();
   await ensureSupabaseSessionAuth();
 
   updateGlobalAuth();
+
+  if (typeof window !== 'undefined') {
+    window.Smoothr = window.Smoothr || {};
+    Object.assign(window.Smoothr, {
+      auth,
+      loadConfig,
+      storeRedirects: { lookupRedirectUrl, lookupDashboardHomeUrl },
+      currency,
+      SMOOTHR_CONFIG: window.SMOOTHR_CONFIG
+    });
+    window.smoothr = window.smoothr || {};
+    window.smoothr.auth = auth;
+    window.smoothr.supabaseAuth = supabase;
+  }
 
   supabase.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user || null;
@@ -432,7 +527,8 @@ export {
   signup,
   resetPassword,
   signOut,
-  user
+  user,
+  loadConfig
 };
 
 export default auth;

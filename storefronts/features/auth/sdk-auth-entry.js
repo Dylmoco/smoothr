@@ -1,3 +1,4 @@
+// Deprecated: consolidated into features/auth/index.js
 import {
   supabase as authClient,
   ensureSupabaseSessionAuth
