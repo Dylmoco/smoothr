@@ -35,6 +35,11 @@ export async function mountCardFields() {
   return configPromise
 }
 
+export async function mountCheckout(config) {
+  if (hasMounted) return configPromise
+  return mountCardFields(config)
+}
+
 /**
  * Inject CollectJS and configure
  */
@@ -152,17 +157,15 @@ function resetSubmission(buttons) {
   buttons.forEach(enableButton)
 }
 
-// Exports & auto-mount
-export const mountNMI = mountCardFields
+// Exports
+export const mountNMI = mountCheckout
 export function isMounted() { return isConfigured }
 export function ready() { return isConfigured }
 export async function createPaymentMethod() { return { error:{message:'use CollectJS callback'}, payment_method:null } }
-export default { mountCardFields, isMounted, ready, createPaymentMethod }
+export default { mountCardFields, mountCheckout, isMounted, ready, createPaymentMethod }
 
 if (typeof window !== 'undefined') {
   window.Smoothr = window.Smoothr || {}
   // expose for provider-nmi-global.test.ts
   window.Smoothr.mountNMIFields = mountNMI
-  if (document.readyState === 'complete') mountCardFields()
-  else document.addEventListener('DOMContentLoaded', mountCardFields)
 }

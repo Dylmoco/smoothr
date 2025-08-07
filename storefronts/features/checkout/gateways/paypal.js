@@ -195,6 +195,11 @@ export async function mountCardFields() {
   }
 }
 
+export async function mountCheckout(config) {
+  if (isMounted()) return;
+  await mountCardFields(config);
+}
+
 export function isMounted() {
   return mounted;
 }
@@ -210,6 +215,7 @@ export async function createPaymentMethod() {
 export default {
   initPayPal,
   mountCardFields,
+  mountCheckout,
   isMounted,
   ready,
   createPaymentMethod
