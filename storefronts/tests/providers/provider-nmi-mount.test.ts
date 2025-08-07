@@ -6,6 +6,8 @@ let getCredMock: any;
 let appendChildSpy: any;
 let getComputedStyleSpy: any;
 let scriptPromise: Promise<any>;
+let resolveScript: any;
+let consoleErrorSpy: any;
 let mountCallback: Function | null = null;
 
 beforeEach(async () => {
@@ -46,8 +48,9 @@ beforeEach(async () => {
     if (evt === 'DOMContentLoaded') mountCallback = cb;
   });
 
-  let resolveScript;
   scriptPromise = new Promise(r => (resolveScript = r));
+
+  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
   appendChildSpy = vi.spyOn(document.head, 'appendChild').mockImplementation(el => {
     const tag = (el as HTMLElement).tagName;
@@ -79,8 +82,10 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   appendChildSpy?.mockRestore();
   getComputedStyleSpy?.mockRestore();
+  consoleErrorSpy?.mockRestore();
   window.CollectJS = undefined as any;
   Object.defineProperty(document, 'readyState', {
     configurable: true,
@@ -92,10 +97,11 @@ afterEach(() => {
 
 describe('mountNMI', () => {
   async function triggerMount() {
-    mountCallback?.();
+    const p = mountCallback ? mountCallback() : mountNMI();
     await vi.runAllTimersAsync();
     await scriptPromise;
     await vi.runAllTimersAsync();
+    return p;
   }
 
   it('loads tokenization key and injects script', { timeout: 20000 }, async () => {
@@ -108,7 +114,33 @@ describe('mountNMI', () => {
 
   it('reports ready when CollectJS is configured', { timeout: 20000 }, async () => {
     await triggerMount();
+    await expect(ready()).resolves.toBeUndefined();
+    expect(window.CollectJS.configure).toHaveBeenCalled();
+  });
+
+  it('rejects and logs error if CollectJS fails to load', { timeout: 20000 }, async () => {
+    window.SMOOTHR_CONFIG.debug = true as any;
+    appendChildSpy.mockImplementation(el => {
+      const tag = (el as HTMLElement).tagName;
+      if (tag === 'SCRIPT') {
+        setTimeout(() => {
+          el.dispatchEvent(new Event('load'));
+          resolveScript(el);
+        });
+        return el;
+      }
+      if (tag === 'LINK') {
+        return el;
+      }
+      return HTMLElement.prototype.appendChild.call(document.head, el);
+    });
+
+    const readyPromise = mountNMI();
+    const expectation = expect(readyPromise).rejects.toThrow('CollectJS failed to load');
     await vi.runAllTimersAsync();
-    expect(ready()).toBe(true);
+    await scriptPromise;
+    await vi.advanceTimersByTimeAsync(15000);
+    await expectation;
+    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 });
