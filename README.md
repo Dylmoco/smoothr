@@ -70,10 +70,6 @@ npm run dev
 The storefront SDK is automatically built and deployed by GitHub Actions so no
 manual build step is required.
 
-During the build a helper script (`storefronts/scripts/check-sdk.js`) verifies
-that required exports exist and that no compiled file still contains
-`import.meta.env`. The build fails if any such reference is found.
-
 ### Standalone bundles
 
 The storefront SDK publishes lightweight bundles that can be loaded directly:
