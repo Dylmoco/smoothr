@@ -8,12 +8,10 @@ import {
   setBaseCurrency,
   baseCurrency
 } from './index.js';
+import { mergeConfig, getConfig } from '../config/globalConfig.js';
+import { fetchExchangeRates } from './fetchLiveRates.js';
 
 let initialized = false;
-
-const SUPABASE_ENDPOINT =
-  'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
-const REMOTE_ENDPOINT = 'https://api.exchangerate.host/latest';
 const PRICE_SELECTOR = '[data-smoothr-price], [data-smoothr-total]';
 
 function parsePriceText(text) {
@@ -56,37 +54,70 @@ function bindCurrencySelectors(root = document) {
   });
 }
 
-async function fetchRates(base, symbols, token) {
-  if (typeof fetch === 'undefined') return null;
-  const headers = { Accept: 'application/json' };
-  let url;
-  if (token) {
-    url = `${SUPABASE_ENDPOINT}?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
-    headers.Authorization = `Token ${token}`;
-  } else {
-    url = `${REMOTE_ENDPOINT}?base=${encodeURIComponent(base)}&symbols=${symbols.join(',')}`;
+async function domReady() {
+  if (typeof document === 'undefined') return;
+  if (document.readyState === 'loading') {
+    await new Promise(resolve => {
+      document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
   }
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error('Failed to fetch rates');
-  const data = await res.json();
-  const out = {};
-  symbols.forEach(code => {
-    if (typeof data?.rates?.[code] === 'number') out[code] = data.rates[code];
-  });
-  return out;
+}
+
+function updateGlobalCurrency() {
+  if (typeof globalThis !== 'undefined') {
+    globalThis.setSelectedCurrency = setSelectedCurrency;
+  }
+  if (typeof window === 'undefined') {
+    return {
+      setCurrency: setSelectedCurrency,
+      getCurrency: getSelectedCurrency,
+      getRates: getRates || (() => ({})),
+      convertPrice,
+      formatPrice,
+      fetchExchangeRates
+    };
+  }
+  const Smoothr = (window.Smoothr = window.Smoothr || {});
+  window.smoothr = window.smoothr || Smoothr;
+  Smoothr.currency = {
+    setCurrency: setSelectedCurrency,
+    getCurrency: getSelectedCurrency,
+    getRates: getRates || (() => ({})),
+    convertPrice,
+    formatPrice,
+    fetchExchangeRates
+  };
+  window.smoothr.currency = Smoothr.currency;
+  return Smoothr.currency;
 }
 
 export async function init(config = {}) {
   if (initialized) return window.Smoothr?.currency;
 
-  if (config.baseCurrency && setBaseCurrency) setBaseCurrency(config.baseCurrency);
-  const base = config.baseCurrency || baseCurrency || 'USD';
-  const token = config?.settings?.liveRatesToken;
+  mergeConfig({
+    ...config,
+    ...(config.settings?.liveRatesToken
+      ? { liveRatesToken: config.settings.liveRatesToken }
+      : {}),
+    ...(config.rateSource ? { rateSource: config.rateSource } : {})
+  });
+
+  const cfg = getConfig();
+  const debug = typeof window !== 'undefined' && cfg.debug;
+  const log = (...args) => debug && console.log('[Smoothr Currency]', ...args);
+
+  if (cfg.baseCurrency && setBaseCurrency) setBaseCurrency(cfg.baseCurrency);
+  const base = cfg.baseCurrency || baseCurrency || 'USD';
+
+  await domReady();
+
   try {
     const symbols = Object.keys(getRates ? getRates() : {});
-    const fetched = await fetchRates(base, symbols, token);
+    const fetched = await fetchExchangeRates(base, symbols, cfg.rateSource);
     if (fetched && updateRates) updateRates(fetched);
-  } catch {}
+  } catch (err) {
+    log('Failed to fetch exchange rates', err);
+  }
 
   if (typeof document !== 'undefined') {
     updateDisplayedPrices();
@@ -94,21 +125,9 @@ export async function init(config = {}) {
     document.addEventListener('smoothr:currencychange', updateDisplayedPrices);
   }
 
-  if (typeof window !== 'undefined') {
-    const Smoothr = (window.Smoothr = window.Smoothr || {});
-    window.smoothr = window.smoothr || Smoothr;
-    Smoothr.currency = {
-      setCurrency: setSelectedCurrency,
-      getCurrency: getSelectedCurrency,
-      getRates: getRates || (() => ({})),
-      convertPrice,
-      formatPrice,
-      baseCurrency
-    };
-    window.smoothr.currency = Smoothr.currency;
-  }
+  const helper = updateGlobalCurrency();
 
   initialized = true;
-  return window.Smoothr?.currency;
+  return helper;
 }
 
