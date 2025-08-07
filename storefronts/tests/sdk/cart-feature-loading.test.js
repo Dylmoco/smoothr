@@ -35,7 +35,12 @@ describe("cart feature loading", () => {
     delete globalThis[globalKey];
   });
 
-  it("initializes cart when trigger exists", async () => {
+  it.each([
+    '[data-smoothr="add-to-cart"]',
+    '[data-smoothr-add]',
+    '[data-smoothr-total]',
+    '[data-smoothr-cart]'
+  ])("initializes cart when trigger %s exists", async selector => {
     const scriptEl = { dataset: { storeId: "1" } };
     global.location = { search: "" };
     global.window = {
@@ -47,7 +52,7 @@ describe("cart feature loading", () => {
       readyState: "complete",
       addEventListener: vi.fn(),
       querySelectorAll: vi.fn(() => []),
-      querySelector: vi.fn(sel => sel === '[data-smoothr="add-to-cart"]' ? {} : null),
+      querySelector: vi.fn(sel => (sel === selector ? {} : null)),
       getElementById: vi.fn(() => scriptEl),
     };
 

@@ -39,7 +39,12 @@ describe("cart DOM trigger", () => {
     delete globalThis[globalKey];
   });
 
-  it("imports cart when [data-smoothr=\"add-to-cart\"] is present", async () => {
+  it.each([
+    '[data-smoothr="add-to-cart"]',
+    '[data-smoothr-add]',
+    '[data-smoothr-total]',
+    '[data-smoothr-cart]'
+  ])("imports cart when %s is present", async selector => {
     const scriptEl = { dataset: { storeId: "1" } };
     global.window = {
       location: { search: "" },
@@ -50,26 +55,7 @@ describe("cart DOM trigger", () => {
       readyState: "complete",
       addEventListener: vi.fn(),
       querySelectorAll: vi.fn(() => []),
-      querySelector: vi.fn(sel => (sel === '[data-smoothr="add-to-cart"]' ? {} : null)),
-      getElementById: vi.fn(() => scriptEl),
-    };
-    await import("../../smoothr-sdk.js");
-    await flushPromises();
-    expect(cartInitMock).toHaveBeenCalled();
-  });
-
-  it("imports cart when [data-smoothr-add] is present", async () => {
-    const scriptEl = { dataset: { storeId: "1" } };
-    global.window = {
-      location: { search: "" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    };
-    global.document = {
-      readyState: "complete",
-      addEventListener: vi.fn(),
-      querySelectorAll: vi.fn(() => []),
-      querySelector: vi.fn(sel => (sel === '[data-smoothr-add]' ? {} : null)),
+      querySelector: vi.fn(sel => (sel === selector ? {} : null)),
       getElementById: vi.fn(() => scriptEl),
     };
     await import("../../smoothr-sdk.js");
