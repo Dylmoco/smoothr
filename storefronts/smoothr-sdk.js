@@ -22,6 +22,10 @@ if (!scriptEl || !storeId) {
   }
 } else {
   const config = mergeConfig({ storeId, platform, debug });
+  if (config.platform === 'webflow-ecom') {
+    console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
+    config.platform = 'webflow';
+  }
   const Smoothr = (window.Smoothr = window.Smoothr || {});
   window.smoothr = window.smoothr || Smoothr;
   Smoothr.config = config;
