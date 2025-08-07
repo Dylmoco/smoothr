@@ -5,18 +5,15 @@ export function initAdapter(config) {
   return {
     domReady: () =>
       new Promise(resolve => {
-        if (document.readyState !== 'loading') {
+        const run = () => {
           initCurrencyDom();
           resolve();
+        };
+
+        if (document.readyState !== 'loading') {
+          run();
         } else {
-          document.addEventListener(
-            'DOMContentLoaded',
-            () => {
-              initCurrencyDom();
-              resolve();
-            },
-            { once: true }
-          );
+          document.addEventListener('DOMContentLoaded', run, { once: true });
         }
       })
   };
