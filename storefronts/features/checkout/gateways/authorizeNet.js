@@ -201,6 +201,11 @@ export async function mountCardFields() {
   return mountPromise;
 }
 
+export async function mountCheckout(config) {
+  if (isMounted()) return;
+  await mountCardFields(config);
+}
+
 export function isMounted() {
   return fieldsMounted;
 }
@@ -343,6 +348,7 @@ export async function createPaymentMethod() {
 
 export default {
   mountCardFields,
+  mountCheckout,
   isMounted,
   ready,
   getReadiness,

@@ -20,8 +20,6 @@ const debug = getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
-initStripeStyles();
-
 export async function waitForVisible(el, timeout = 1000) {
   if (!el || typeof el.getBoundingClientRect !== 'function') return;
   log('Waiting for element to be visible', el);
@@ -222,6 +220,12 @@ export async function mountCardFields() {
   return mountPromise;
 }
 
+export async function mountCheckout(config) {
+  if (isMounted()) return;
+  initStripeStyles();
+  await mountCardFields(config);
+}
+
 export function isMounted() {
   return fieldsMounted;
 }
@@ -265,6 +269,7 @@ export async function createPaymentMethod(billing_details) {
 
 export default {
   mountCardFields,
+  mountCheckout,
   isMounted,
   ready,
   getStoreSettings,
