@@ -8,7 +8,9 @@ vi.mock('../../features/auth/index.js', () => {
     $$typeof: Symbol.for('react.test.json'),
     type: 'module',
     props: {},
-    children: []
+    children: [],
+    lookupRedirectUrl: vi.fn(),
+    lookupDashboardHomeUrl: vi.fn(),
   };
   return { default: authMock, ...authMock };
 });
