@@ -54,7 +54,3 @@ export function initCurrencyDom() {
   replacePrices();
   document.addEventListener('smoothr:currencychange', replacePrices);
 }
-
-if (typeof window !== 'undefined') {
-  initCurrencyDom();
-}
