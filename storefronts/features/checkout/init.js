@@ -2,7 +2,7 @@
 
 import bindCardInputs from './utils/inputFormatters.js';
 import checkoutLogger from './utils/checkoutLogger.js';
-import getActivePaymentGateway from './utils/getActivePaymentGateway.js';
+import resolveGateway from './utils/resolveGateway.js';
 import collectFormFields from './utils/collectFormFields.js';
 import constructPayload from './utils/constructPayload.js';
 import gatewayDispatcher from './utils/gatewayDispatcher.js';
@@ -11,14 +11,10 @@ import {
   disableButton,
   enableButton
 } from './utils/cartHash.js';
-import stripe from './gateways/stripeGateway.js';
-import authorizeNet from './gateways/authorizeNet.js';
-import paypal from './gateways/paypal.js';
-import nmi from './gateways/nmiGateway.js';
-import segpay from './gateways/segpay.js';
 import { loadPublicConfig } from '../config/sdkConfig.ts';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
+import loadScriptOnce from '../../utils/loadScriptOnce.js';
 
 let initialized = false;
 
@@ -37,7 +33,20 @@ function showLoginPopup() {
   }
 }
 
-const gateways = { stripe, authorizeNet, paypal, nmi, segpay };
+
+const sdkUrls = {
+  stripe: 'https://js.stripe.com/v3/',
+  authorizeNet: 'https://jstest.authorize.net/v1/Accept.js',
+  nmi: 'https://secure.nmi.com/token/Collect.js'
+};
+
+const gatewayModules = {
+  stripe: () => import('./gateways/stripeGateway.js'),
+  authorizeNet: () => import('./gateways/authorizeNet.js'),
+  paypal: () => import('./gateways/paypal.js'),
+  nmi: () => import('./gateways/nmiGateway.js'),
+  segpay: () => import('./gateways/segpay.js')
+};
 
 export async function init(config = {}) {
   if (initialized) return window.Smoothr?.checkout;
@@ -59,13 +68,30 @@ export async function init(config = {}) {
   log('SDK initialized');
   log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
 
-  const provider = await getActivePaymentGateway(log, warn);
+  let provider;
+  try {
+    const cfg = getConfig();
+    provider = resolveGateway(cfg, cfg.settings);
+  } catch (e) {
+    warn('Gateway resolution failed:', e?.message || e);
+    return;
+  }
   if (!provider) {
     warn('No active payment gateway resolved. Aborting init.');
     return;
   }
-  const gateway = gateways[provider];
-  if (!gateway) throw new Error(`Unknown payment gateway: ${provider}`);
+  if (sdkUrls[provider]) {
+    try {
+      await loadScriptOnce(sdkUrls[provider]);
+    } catch (e) {
+      warn('Failed to load gateway SDK:', e?.message || e);
+      return;
+    }
+  }
+
+  const loadGateway = gatewayModules[provider];
+  if (!loadGateway) throw new Error(`Unknown payment gateway: ${provider}`);
+  const gateway = (await loadGateway()).default;
   log(`Using gateway: ${provider}`);
 
   // mount fields common to all gateways

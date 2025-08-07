@@ -6,13 +6,13 @@ import {
   initAuthorizeStyles
 } from '../utils/authorizeNetIframeStyles.js';
 import { getConfig } from '../../config/globalConfig.js';
+import loadScriptOnce from '../../../utils/loadScriptOnce.js';
 
 let fieldsMounted = false;
 let mountPromise;
 let clientKey;
 let apiLoginID;
 let transactionKey;
-let scriptPromise;
 let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
@@ -79,33 +79,21 @@ const log = (...a) => DEBUG && console.log('[AuthorizeNet]', ...a);
 const warn = (...a) => DEBUG && console.warn('[AuthorizeNet]', ...a);
 
 
-function loadAcceptJs() {
-  if (window.Accept) return Promise.resolve();
-  if (scriptPromise) return scriptPromise;
+async function loadAcceptJs() {
+  if (window.Accept) return;
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
     window.Accept = { dispatchData: () => {} };
-    return Promise.resolve();
+    return;
   }
-  scriptPromise = new Promise(resolve => {
-    let script = document.querySelector('script[data-smoothr-accept]');
-    if (!script) {
-      script = document.createElement('script');
-      const env = getConfig().env?.toLowerCase();
-      const isProd = env === 'production' || env === 'prod';
-      script.src = isProd
-        ? 'https://js.authorize.net/v1/Accept.js'
-        : 'https://jstest.authorize.net/v1/Accept.js';
-      script.type = 'text/javascript';
-      script.setAttribute('data-smoothr-accept', '');
-      script.addEventListener('load', () => resolve());
-      document.head.appendChild(script);
-    } else if (window.Accept) {
-      resolve();
-    } else {
-      script.addEventListener('load', () => resolve());
-    }
-  });
-  return scriptPromise;
+  const env = getConfig().env?.toLowerCase();
+  const isProd = env === 'production' || env === 'prod';
+  const src = isProd
+    ? 'https://js.authorize.net/v1/Accept.js'
+    : 'https://jstest.authorize.net/v1/Accept.js';
+  await loadScriptOnce(src);
+  acceptReady = true;
+  updateDebug();
+  log('Accept.js ready');
 }
 
 async function resolveCredentials() {

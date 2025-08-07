@@ -2,24 +2,10 @@ import { getPublicCredential } from '../getPublicCredential.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import { disableButton, enableButton } from '../utils/cartHash.js';
 import { getConfig } from '../../config/globalConfig.js';
+import loadScriptOnce from '../../../utils/loadScriptOnce.js';
 
 let mounted = false;
 let isSubmitting = false;
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
-      existing.addEventListener('load', () => resolve());
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = src;
-    script.addEventListener('load', () => resolve());
-    script.addEventListener('error', reject);
-    document.head.appendChild(script);
-  });
-}
 
 export function initPayPal(opts) {
   console.log('[Smoothr][PayPal] initPayPal called with', opts);
@@ -43,7 +29,7 @@ export async function mountCardFields() {
     return;
   }
 
-  await loadScript(`https://www.paypal.com/sdk/js?client-id=${clientId}`);
+  await loadScriptOnce(`https://www.paypal.com/sdk/js?client-id=${clientId}`);
 
   const apiBase = getConfig().apiBase || '';
 
