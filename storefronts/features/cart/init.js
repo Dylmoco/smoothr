@@ -1,6 +1,6 @@
 import { mergeConfig } from '../config/globalConfig.js';
 import * as cart from './index.js';
-import { initCartBindings as bindAddToCartButtons } from './addToCart.js';
+import { bindAddToCartButtons } from './addToCart.js';
 import { renderCart } from './renderCart.js';
 
 let initialized = false;
