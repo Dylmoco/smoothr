@@ -100,6 +100,6 @@ describe("gateway loader", () => {
     const { loadScriptMock } = setupEnv(provider, path);
     const { init } = await import("../../features/checkout/init.js");
     await init({ active_payment_gateway: provider, storeId: "1" });
-    expect(loadScriptMock).toHaveBeenCalledWith(url);
+    expect(loadScriptMock).toHaveBeenCalledWith(url, expect.any(Object));
   });
 });
