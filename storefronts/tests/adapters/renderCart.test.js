@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { init as initSDK } from '../../features/currency/index.js';
+import { init as initSDK } from '../../features/currency/init.js';
 
 let container;
 let template;
