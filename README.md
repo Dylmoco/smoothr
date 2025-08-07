@@ -76,10 +76,7 @@ The storefront SDK publishes lightweight bundles that can be loaded directly:
 
 ```html
 <!-- Core Smoothr SDK bundle -->
-<script
-  type="module"
-  src="https://sdk.smoothr.io/smoothr-sdk.js"
-></script>
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
 
 <!-- Checkout bundle -->
 <script type="module" src="https://sdk.smoothr.io/features/checkout/checkout-core.js"></script>
@@ -296,9 +293,8 @@ successful deployment with the commit hash and UTC timestamp.
 
 All pushes to the `main` branch trigger the workflow defined at
 `.github/workflows/build-and-deploy.yml`. The workflow uses Node.js 20,
-installs dependencies, runs tests, builds the storefront SDK, performs the
-postbuild check (including a scan for any `import.meta.env` references), and
-deploys `storefronts/dist` to Cloudflare Pages.
+installs dependencies, runs tests, builds the storefront SDK, and deploys
+`storefronts/dist` to Cloudflare Pages.
 
 To configure deployment secrets go to **Settings → Secrets and variables →
 Actions** in GitHub and add:
