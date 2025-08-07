@@ -1,5 +1,6 @@
 export {
   setSelectedCurrency,
   getSelectedCurrency,
-  init as initCmsCurrency
 } from './index.js';
+
+export { init as initCmsCurrency } from './init.js';
