@@ -40,7 +40,7 @@ export async function mountCardFields() {
   return configPromise
 }
 
-export async function mountCheckout(config) {
+export function mountCheckout(config) {
   if (hasMounted) return configPromise
   return mountCardFields(config)
 }
@@ -90,6 +90,9 @@ function waitForCollectJS(timeout = 15000) {
       setTimeout(check, 100)
     }
     check()
+  }).catch(err => {
+    if (getConfig().debug) console.error('[NMI] CollectJS timed out')
+    throw err
   })
 }
 
