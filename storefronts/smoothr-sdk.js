@@ -72,6 +72,22 @@ if (!scriptEl || !storeId) {
     } catch (err) {
       debug && console.warn('[Smoothr SDK] Currency init failed', err);
     }
+
+    const hasCartTrigger =
+      document.querySelector('[data-smoothr="add-to-cart"]') ||
+      document.querySelector('[data-smoothr-add]');
+
+    if (hasCartTrigger) {
+      try {
+        log('Initializing cart feature');
+        const cart = await import('./features/cart/init.js');
+        await cart.init(config);
+      } catch (err) {
+        debug && console.warn('[Smoothr SDK] Cart init failed', err);
+      }
+    } else {
+      log('No cart triggers found, skipping cart initialization');
+    }
   })();
 }
 

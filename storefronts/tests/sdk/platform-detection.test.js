@@ -25,6 +25,7 @@ describe("platform detection", () => {
       readyState: "complete",
       addEventListener: vi.fn(),
       querySelectorAll: vi.fn(() => []),
+      querySelector: vi.fn(() => null),
       getElementById: vi.fn(() => scriptEl),
     };
   });
