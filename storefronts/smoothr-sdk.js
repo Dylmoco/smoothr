@@ -67,7 +67,8 @@ if (!scriptEl || !storeId) {
 
     try {
       log('Initializing currency feature');
-      await import('./features/currency/init.js').then(m => m.init(config));
+      const currency = await import('./features/currency/index.js');
+      await currency.init(config);
     } catch (err) {
       debug && console.warn('[Smoothr SDK] Currency init failed', err);
     }
