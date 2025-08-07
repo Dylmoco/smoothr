@@ -10,6 +10,10 @@ beforeEach(() => {
   delete global.window.__SMOOTHR_CHECKOUT_BOUND__;
   originalFetch = global.fetch;
 
+  vi.doMock('../../utils/loadScriptOnce.js', () => ({
+    default: vi.fn(async () => {})
+  }));
+
   const list = document.createElement('div');
   list.setAttribute('data-smoothr-list', '');
   const template = document.createElement('div');

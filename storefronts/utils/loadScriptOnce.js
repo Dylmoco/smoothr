@@ -8,7 +8,6 @@ export default function loadScriptOnce(src, opts = {}) {
   if (scriptPromises.has(src)) return scriptPromises.get(src);
 
   const debug = typeof window !== 'undefined' && getConfig().debug;
-  const warn = (...args) => debug && console.warn('[Smoothr Script]', ...args);
 
   const promise = new Promise((resolve, reject) => {
     let script = document.querySelector(`script[src="${src}"]`);
@@ -40,7 +39,8 @@ export default function loadScriptOnce(src, opts = {}) {
 
     const onError = e => {
       cleanup();
-      warn('Failed to load script', src, e?.message || e);
+      if (debug) console.warn(`[Smoothr] Failed to load ${src}`);
+      scriptPromises.delete(src);
       reject(e || new Error(`Failed to load script: ${src}`));
     };
 
@@ -63,7 +63,8 @@ export default function loadScriptOnce(src, opts = {}) {
 
     timeoutId = setTimeout(() => {
       cleanup();
-      warn('Script load timed out', src);
+      if (debug) console.warn(`[Smoothr] Script load timed out ${src}`);
+      scriptPromises.delete(src);
       reject(new Error(`Script load timed out: ${src}`));
     }, timeout);
   });
