@@ -265,7 +265,7 @@ describe('checkout', () => {
     const init = await loadCheckout();
     await init();
     expect(console.error).toHaveBeenCalledWith(
-      '[Smoothr Checkout] Failed to load gateway script',
+      '[Smoothr Checkout] Failed to load Stripe SDK',
       expect.any(Error)
     );
     expect(console.warn).toHaveBeenCalledWith(
