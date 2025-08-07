@@ -22,6 +22,19 @@ export function formatCartPrice(baseAmount, Smoothr, currency) {
   return { displayAmount, text };
 }
 
+export function bindRemoveFromCartButtons() {
+  if (typeof document === 'undefined') return;
+  const Smoothr = window.Smoothr || window.smoothr;
+  if (!Smoothr?.cart) return;
+
+  document.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
+    if (btn.__smoothrBound) return;
+    const id = btn.getAttribute('data-smoothr-remove');
+    btn.addEventListener('click', () => Smoothr.cart.removeItem(id));
+    btn.__smoothrBound = true;
+  });
+}
+
 export function renderCart() {
   const { debug } = getConfig();
   if (debug) console.log('🎨 renderCart() triggered');
@@ -135,12 +148,7 @@ export function renderCart() {
     });
   });
 
-  document.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
-    if (btn.__smoothrBound) return;
-    const id = btn.getAttribute('data-smoothr-remove');
-    btn.addEventListener('click', () => Smoothr.cart.removeItem(id));
-    btn.__smoothrBound = true;
-  });
+  bindRemoveFromCartButtons();
 }
 
 
