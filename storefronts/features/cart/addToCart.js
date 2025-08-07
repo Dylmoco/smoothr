@@ -1,18 +1,4 @@
-import * as cart from '../../features/cart/index.js';
 import { getConfig } from '../config/globalConfig.js';
-
-// Ensure the cart module is available on the global Smoothr object before any
-// DOM bindings are attached. This prevents addItem calls from failing when the
-// module isn't imported elsewhere.
-if (typeof window !== 'undefined') {
-  window.Smoothr = window.Smoothr || {};
-  // Use a shallow copy so the cart object remains extensible
-  window.Smoothr.cart = {
-    ...cart,
-    addButtonPollingRetries: 0,
-    addButtonPollingDisabled: false
-  };
-}
 
 let initLogShown = false;
 let noButtonsWarned = false;
@@ -25,9 +11,9 @@ const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Cart]', ...args);
 
-export function initCartBindings() {
+export function bindAddToCartButtons() {
   if (debug && !initLogShown) {
-    log('🧩 initCartBindings loaded and executing');
+    log('🧩 bindAddToCartButtons loaded and executing');
     initLogShown = true;
   }
   if (typeof document === 'undefined') return;
@@ -61,7 +47,7 @@ export function initCartBindings() {
       warn('no buttons found; retrying...');
       noButtonsWarned = true;
     }
-    setTimeout(initCartBindings, 500);
+    setTimeout(bindAddToCartButtons, 500);
     return;
   }
 
@@ -120,20 +106,9 @@ export function initCartBindings() {
         } else {
           warn('renderCart not found');
         }
-      } catch (err) {
-        err('addToCart failed', err);
+      } catch (error) {
+        err('addToCart failed', error);
       }
     });
   });
-}
-
-export function initAddToCart() {
-  document.addEventListener('DOMContentLoaded', () => {
-    log('✅ DOM ready – calling initCartBindings');
-    initCartBindings();
-  });
-}
-
-if (typeof window !== 'undefined') {
-  initAddToCart();
 }

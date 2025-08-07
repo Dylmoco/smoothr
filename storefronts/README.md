@@ -119,11 +119,11 @@ Helpers for rendering the cart and binding `[data-smoothr-add]` buttons live in
 
 ```javascript
 import { renderCart } from './features/cart/renderCart.js';
-import { initCartBindings } from './features/cart/addToCart.js';
+import { bindAddToCartButtons } from './features/cart/addToCart.js';
 ```
 
 Call `renderCart()` after page load to display items and totals. Use
-`initCartBindings()` to attach click handlers for adding products.
+`bindAddToCartButtons()` to attach click handlers for adding products.
 
 ## Checkout
 

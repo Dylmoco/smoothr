@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-let initAddToCart;
+let bindAddToCartButtons;
 
 class CustomEvt {
   constructor(type, init) {
@@ -58,9 +58,6 @@ describe("webflow add-to-cart binding", () => {
       global.window.dispatchEvent(new CustomEvt('smoothr:cart:updated'));
     });
     global.document = {
-      addEventListener: vi.fn((evt, cb) => {
-        if (evt === "DOMContentLoaded") cb();
-      }),
       querySelectorAll: vi.fn(() => [btn]),
     };
     global.window = {
@@ -70,23 +67,24 @@ describe("webflow add-to-cart binding", () => {
       }),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      location: { pathname: "" },
     };
     global.window.SMOOTHR_CONFIG = { debug: true };
     global.CustomEvent = CustomEvt;
-    ({ initAddToCart } = await import("../../features/cart/addToCart.js"));
+    ({ bindAddToCartButtons } = await import("../../features/cart/addToCart.js"));
     // Override cart methods after module initializes
     global.window.Smoothr.cart.addItem = addItemMock;
     global.window.Smoothr.cart.getCart = vi.fn(() => ({}));
   });
 
   it("binds click handler once", () => {
-    initAddToCart();
-    initAddToCart();
+    bindAddToCartButtons();
+    bindAddToCartButtons();
     expect(btn.addEventListener).toHaveBeenCalledTimes(1);
   });
 
   it("adds item and dispatches update", () => {
-    initAddToCart();
+    bindAddToCartButtons();
     events.click();
     expect(addItemMock).toHaveBeenCalledWith({
       product_id: "1",
@@ -109,7 +107,7 @@ describe("webflow add-to-cart binding", () => {
     };
     wrapper.parentElement = ancestor;
 
-    initAddToCart();
+    bindAddToCartButtons();
     events.click();
 
     expect(addItemMock).toHaveBeenCalledWith({
@@ -128,7 +126,7 @@ describe("webflow add-to-cart binding", () => {
     wrapper.querySelector.mockImplementation(() => null);
     wrapper.parentElement = null;
 
-    initAddToCart();
+    bindAddToCartButtons();
     events.click();
 
     expect(addItemMock).toHaveBeenCalledWith({
@@ -147,7 +145,7 @@ describe("webflow add-to-cart binding", () => {
   it("detects wrapper when button is nested deeply", () => {
     // simulate button nested inside two levels of divs within wrapper
     btn.parentElement = { matches: vi.fn(() => false), parentElement: wrapper };
-    initAddToCart();
+    bindAddToCartButtons();
     events.click();
 
     expect(btn.closest).toHaveBeenCalledWith("[data-smoothr-product]");
@@ -168,7 +166,7 @@ describe("webflow add-to-cart binding", () => {
     const warnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => {});
-    initAddToCart();
+    bindAddToCartButtons();
     for (let i = 0; i < 10; i++) {
       vi.runOnlyPendingTimers();
     }
