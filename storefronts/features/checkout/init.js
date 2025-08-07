@@ -84,6 +84,9 @@ export async function init(config = {}) {
     try {
       await loadScriptOnce(sdkUrls[provider]);
     } catch (e) {
+      if (getConfig().debug) {
+        console.error('[Smoothr Checkout] Failed to load gateway script', e);
+      }
       warn('Failed to load gateway SDK:', e?.message || e);
       return;
     }
@@ -143,16 +146,25 @@ export async function init(config = {}) {
   if (!emailField) emailField = await select('[data-smoothr-email]');
   const totalEl = await select('[data-smoothr-total]');
 
-  // attempt to mount card fields (for non-NMI gateways too)
-  let attempts = 0;
-  while (attempts < 2 && !gateway.isMounted()) {
-    try {
-      await gateway.mountCardFields();
-    } catch (e) {
-      warn('Mount failed:', e.message);
-    }
-    attempts++;
+  try {
+    await gateway.mountCheckout(config);
+  } catch (e) {
+    warn('Mount failed:', e?.message || e);
+    return;
   }
+
+  if (typeof gateway.ready === 'function') {
+    try {
+      await Promise.race([
+        Promise.resolve(gateway.ready()),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+      ]);
+    } catch (_) {
+      console.warn('[Smoothr Checkout] Gateway timed out');
+      return;
+    }
+  }
+
   if (!gateway.isMounted()) {
     warn('Gateway mount failed');
     return;
@@ -206,6 +218,21 @@ export async function init(config = {}) {
         return;
       }
 
+      if (typeof gateway.ready === 'function') {
+        try {
+          await Promise.race([
+            Promise.resolve(gateway.ready()),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+          ]);
+        } catch (_) {
+          console.warn('[Smoothr Checkout] Gateway timed out');
+          showUserMessage('Payment system loading, please wait.', 'error');
+          forEachPayButton(enableButton);
+          isSubmitting = false;
+          return;
+        }
+      }
+
       const cart = window.Smoothr.cart.getCart() || { items: [] };
       const items = Array.isArray(cart.items) ? cart.items : [];
       const total = Math.round(
@@ -221,13 +248,6 @@ export async function init(config = {}) {
       const last = JSON.parse(localStorage.getItem('smoothr_last_submission') || '{}');
       if (last.hash === cartHash && last.success && Date.now() - last.timestamp < 60000) {
         showUserMessage("You've already submitted this order.", 'warning');
-        forEachPayButton(enableButton);
-        isSubmitting = false;
-        return;
-      }
-
-      if (!gateway.ready()) {
-        showUserMessage('Payment system loading, please wait.', 'error');
         forEachPayButton(enableButton);
         isSubmitting = false;
         return;
