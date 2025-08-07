@@ -1,22 +1,25 @@
 import { getConfig } from '../config/globalConfig.js';
 
-function getSelectedCurrency(Smoothr) {
-  if (typeof window === 'undefined') {
-    return Smoothr?.currency?.baseCurrency || 'USD';
-  }
-  return (
-    localStorage.getItem('smoothr:currency') ||
-    Smoothr?.currency?.baseCurrency ||
-    'USD'
-  );
-}
-
-
-function hideTemplatesGlobally() {
+export function hideTemplatesGlobally() {
   if (typeof document === 'undefined') return;
   document
     .querySelectorAll('[data-smoothr-template]')
     .forEach(el => (el.style.display = 'none'));
+}
+
+export function formatCartPrice(baseAmount, Smoothr, currency) {
+  const code =
+    currency ||
+    Smoothr?.currency?.getCurrency?.() ||
+    Smoothr?.currency?.baseCurrency ||
+    'USD';
+  const displayAmount = Smoothr?.currency?.convertPrice
+    ? Smoothr.currency.convertPrice(baseAmount, code)
+    : baseAmount;
+  const text = Smoothr?.currency?.formatPrice
+    ? Smoothr.currency.formatPrice(displayAmount, code)
+    : String(displayAmount);
+  return { displayAmount, text };
 }
 
 export function renderCart() {
@@ -29,29 +32,17 @@ export function renderCart() {
 
   const cart = Smoothr.cart.getCart();
   const total = Smoothr.cart.getTotal();
-  const formatter =
-    Smoothr.currency?.format ||
-    Smoothr.currency?.formatPrice ||
-    Smoothr.currency?.formatCurrency;
+  const currency =
+    Smoothr?.currency?.getCurrency?.() ||
+    Smoothr?.currency?.baseCurrency ||
+    'USD';
 
   document.querySelectorAll('[data-smoothr-total]').forEach(el => {
     const baseTotal = total / 100;
-    const currencyCode = getSelectedCurrency(Smoothr);
-    let displayTotal = baseTotal;
-    if (Smoothr.currency?.convertPrice) {
-      displayTotal = Smoothr.currency.convertPrice(
-        baseTotal,
-        currencyCode,
-        Smoothr.currency.baseCurrency
-      );
-    }
+    const { displayAmount, text } = formatCartPrice(baseTotal, Smoothr, currency);
     el.dataset.smoothrBase = baseTotal;
-    el.setAttribute('data-smoothr-total', displayTotal);
-    if (formatter) {
-      el.textContent = formatter(displayTotal, currencyCode);
-    } else {
-      el.textContent = String(displayTotal);
-    }
+    el.setAttribute('data-smoothr-total', displayAmount);
+    el.textContent = text;
   });
 
   document.querySelectorAll('[data-smoothr-cart]').forEach(container => {
@@ -64,7 +55,6 @@ export function renderCart() {
       return;
     }
 
-    // Hide the template row so only cloned items are visible
     template.style.display = 'none';
 
     cart.items.forEach(item => {
@@ -95,40 +85,26 @@ export function renderCart() {
 
       clone.querySelectorAll('[data-smoothr-price]').forEach(el => {
         const basePrice = item.price / 100;
-        const currencyCode = getSelectedCurrency(Smoothr);
-        let displayPrice = basePrice;
-        if (Smoothr.currency?.convertPrice) {
-          displayPrice = Smoothr.currency.convertPrice(
-            basePrice,
-            currencyCode,
-            Smoothr.currency.baseCurrency
-          );
-        }
+        const { displayAmount, text } = formatCartPrice(
+          basePrice,
+          Smoothr,
+          currency
+        );
         el.dataset.smoothrBase = basePrice;
-        el.setAttribute('data-smoothr-price', displayPrice);
-        if (formatter) {
-          el.textContent = formatter(displayPrice, currencyCode);
-        } else {
-          el.textContent = String(displayPrice);
-        }
+        el.setAttribute('data-smoothr-price', displayAmount);
+        el.textContent = text;
       });
 
       clone.querySelectorAll('[data-smoothr-subtotal]').forEach(el => {
         const baseSubtotal = (item.price * item.quantity) / 100;
-        const currencyCode = getSelectedCurrency(Smoothr);
-        let displaySubtotal = baseSubtotal;
-        if (Smoothr.currency?.convertPrice) {
-          displaySubtotal = Smoothr.currency.convertPrice(
-            baseSubtotal,
-            currencyCode,
-            Smoothr.currency.baseCurrency
-          );
-        }
+        const { displayAmount, text } = formatCartPrice(
+          baseSubtotal,
+          Smoothr,
+          currency
+        );
         el.dataset.smoothrBase = baseSubtotal;
-        el.setAttribute('data-smoothr-subtotal', displaySubtotal);
-        el.textContent = formatter
-          ? formatter(displaySubtotal, currencyCode)
-          : String(displaySubtotal);
+        el.setAttribute('data-smoothr-subtotal', displayAmount);
+        el.textContent = text;
       });
 
       const imageEl = clone.querySelector('[data-smoothr-image]');
@@ -167,8 +143,4 @@ export function renderCart() {
   });
 }
 
-if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', renderCart);
-  window.addEventListener('smoothr:cart:updated', renderCart);
-  window.renderCart = renderCart;
-}
+
