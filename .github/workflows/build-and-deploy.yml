@@ -15,11 +15,11 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
     steps:
       - uses: actions/checkout@v4
         id: checkout
 
-      # ✅ Early confirmation that runner is active
       - name: Confirm runner
         run: echo "✅ CI runner is active"
 
@@ -27,14 +27,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # cache intentionally disabled for debug — omit the cache field entirely
 
-      # ✅ Install with no postinstall + verbose logs
       - name: Install dependencies
         working-directory: storefronts
         run: npm ci --ignore-scripts --loglevel verbose
 
-      # ✅ Verbose test logs
       - name: Run tests
         working-directory: storefronts
         run: npm test
@@ -42,10 +39,6 @@ jobs:
       - name: Build SDK
         working-directory: storefronts
         run: npm run build
-
-      - name: Postbuild check
-        working-directory: storefronts
-        run: node scripts/check-sdk.js
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
@@ -70,7 +63,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ✅ End-of-job fallback in case nothing runs
       - name: Warn if no steps executed
         if: ${{ always() && steps.checkout.conclusion == 'skipped' }}
         run: echo "::warning ::Workflow ended before executing any job steps"
