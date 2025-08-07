@@ -82,10 +82,15 @@ export async function init(config = {}) {
   }
   if (sdkUrls[provider]) {
     try {
-      await loadScriptOnce(sdkUrls[provider]);
+      const timeout = provider === 'stripe' ? 10000 : undefined;
+      await loadScriptOnce(sdkUrls[provider], { timeout });
     } catch (e) {
       if (getConfig().debug) {
-        console.error('[Smoothr Checkout] Failed to load gateway script', e);
+        const msg =
+          provider === 'stripe'
+            ? '[Smoothr Checkout] Failed to load Stripe SDK'
+            : '[Smoothr Checkout] Failed to load gateway script';
+        console.error(msg, e);
       }
       warn('Failed to load gateway SDK:', e?.message || e);
       return;
@@ -146,13 +151,6 @@ export async function init(config = {}) {
   if (!emailField) emailField = await select('[data-smoothr-email]');
   const totalEl = await select('[data-smoothr-total]');
 
-  try {
-    await gateway.mountCheckout(config);
-  } catch (e) {
-    warn('Mount failed:', e?.message || e);
-    return;
-  }
-
   if (typeof gateway.ready === 'function') {
     try {
       await Promise.race([
@@ -160,9 +158,22 @@ export async function init(config = {}) {
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
       ]);
     } catch (_) {
+      if (provider === 'stripe' && getConfig().debug) {
+        console.error('[Smoothr Checkout] Stripe SDK timed out');
+      }
       console.warn('[Smoothr Checkout] Gateway timed out');
       return;
     }
+  }
+
+  try {
+    await gateway.mountCheckout(config);
+  } catch (e) {
+    if (provider === 'stripe' && getConfig().debug) {
+      console.error('[Smoothr Checkout] Stripe mount failed', e);
+    }
+    warn('Mount failed:', e?.message || e);
+    return;
   }
 
   if (!gateway.isMounted()) {
