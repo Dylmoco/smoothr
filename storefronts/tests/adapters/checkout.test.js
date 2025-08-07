@@ -1,4 +1,23 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+const loadScriptOnceMock = vi.fn(() => Promise.resolve());
+vi.mock('../../utils/loadScriptOnce.js', () => ({
+  default: loadScriptOnceMock
+}));
+
+const supabaseMaybeSingle = vi.fn();
+vi.mock('../../../supabase/supabaseClient.js', () => {
+  const eq = vi.fn(() => ({ eq, maybeSingle: supabaseMaybeSingle }));
+  const select = vi.fn(() => ({ eq }));
+  const from = vi.fn(() => ({ select }));
+  const client = { from };
+  return {
+    supabase: client,
+    default: client,
+    ensureSupabaseSessionAuth: vi.fn()
+  };
+});
+
 let createPaymentMethodMock;
 let submitCheckout;
 let originalFetch;
@@ -10,9 +29,16 @@ beforeEach(() => {
   delete global.window.__SMOOTHR_CHECKOUT_BOUND__;
   originalFetch = global.fetch;
 
-  vi.doMock('../../utils/loadScriptOnce.js', () => ({
-    default: vi.fn(async () => {})
-  }));
+  loadScriptOnceMock.mockReset();
+  loadScriptOnceMock.mockResolvedValue();
+  supabaseMaybeSingle.mockReset();
+  supabaseMaybeSingle.mockResolvedValue({
+    data: { publishable_key: 'pk_test' },
+    error: null
+  });
+
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'error').mockImplementation(() => {});
 
   const list = document.createElement('div');
   list.setAttribute('data-smoothr-list', '');
@@ -149,7 +175,8 @@ beforeEach(() => {
     baseCurrency: 'GBP',
     stripeKey: 'pk_test',
     storeId: 'store-1',
-    active_payment_gateway: 'stripe'
+    active_payment_gateway: 'stripe',
+    debug: true
   };
 
 });
@@ -159,6 +186,7 @@ afterEach(() => {
   delete global.Stripe;
   delete global.window.__SMOOTHR_CHECKOUT_INITIALIZED__;
   global.fetch = originalFetch;
+  vi.restoreAllMocks();
 });
 
 async function loadCheckout() {
@@ -168,6 +196,7 @@ async function loadCheckout() {
 }
 
 describe('checkout', () => {
+  if (vi.setTimeout) vi.setTimeout(20000);
   it('posts cart and currency on click', async () => {
     const init = await loadCheckout();
     await init();
@@ -229,6 +258,34 @@ describe('checkout', () => {
     const init = await loadCheckout();
     await init();
     expect(createPaymentMethodMock).not.toHaveBeenCalled();
+  });
+
+  it('logs warning when gateway script fails to load', async () => {
+    loadScriptOnceMock.mockRejectedValueOnce(new Error('load failed'));
+    const init = await loadCheckout();
+    await init();
+    expect(console.error).toHaveBeenCalledWith(
+      '[Smoothr Checkout] Failed to load gateway script',
+      expect.any(Error)
+    );
+    expect(console.warn).toHaveBeenCalledWith(
+      '[Smoothr Checkout]',
+      'Failed to load gateway SDK:',
+      'load failed'
+    );
+  });
+
+  it('logs supabase credential fetch errors', async () => {
+    supabaseMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockRejectedValueOnce(new Error('db down'));
+    const init = await loadCheckout();
+    await init();
+    expect(console.warn).toHaveBeenCalledWith(
+      '[Smoothr] Credential fetch error:',
+      'db down'
+    );
   });
 
 });
