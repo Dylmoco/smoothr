@@ -15,6 +15,7 @@ describe('webflow adapter domReady', () => {
       readyState: 'loading',
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      querySelectorAll: vi.fn(() => []),
     };
   });
 
