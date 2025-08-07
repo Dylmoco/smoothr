@@ -1,18 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+const loadScriptOnce = vi.fn(() => Promise.resolve());
+vi.mock('../../utils/loadScriptOnce.js', () => ({ default: loadScriptOnce }));
+
 let mountNMI: any;
 let ready: any;
 let getCredMock: any;
-let appendChildSpy: any;
 let getComputedStyleSpy: any;
-let scriptPromise: Promise<any>;
-let resolveScript: any;
 let consoleErrorSpy: any;
 let mountCallback: Function | null = null;
 
 beforeEach(async () => {
   vi.useFakeTimers();
   vi.resetModules();
+  loadScriptOnce.mockReset();
   getComputedStyleSpy = vi
     .spyOn(window, 'getComputedStyle')
     .mockReturnValue({
@@ -48,25 +49,7 @@ beforeEach(async () => {
     if (evt === 'DOMContentLoaded') mountCallback = cb;
   });
 
-  scriptPromise = new Promise(r => (resolveScript = r));
-
   consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-  appendChildSpy = vi.spyOn(document.head, 'appendChild').mockImplementation(el => {
-    const tag = (el as HTMLElement).tagName;
-    if (tag === 'SCRIPT') {
-      window.CollectJS = { configure: vi.fn(), tokenize: vi.fn() } as any;
-      setTimeout(() => {
-        el.dispatchEvent(new Event('load'));
-        resolveScript(el);
-      });
-      return el;
-    }
-    if (tag === 'LINK') {
-      return el;
-    }
-    return HTMLElement.prototype.appendChild.call(document.head, el);
-  });
 
   getCredMock = vi.fn(async () => ({ tokenization_key: 'tok_key' }));
 
@@ -75,6 +58,7 @@ beforeEach(async () => {
   }));
 
   window.SMOOTHR_CONFIG = { storeId: 'store-1', active_payment_gateway: 'nmi' } as any;
+  window.CollectJS = { configure: vi.fn(), tokenize: vi.fn() } as any;
 
   const mod = await import('../../features/checkout/gateways/nmiGateway.js');
   mountNMI = mod.mountNMI;
@@ -83,7 +67,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.useRealTimers();
-  appendChildSpy?.mockRestore();
   getComputedStyleSpy?.mockRestore();
   consoleErrorSpy?.mockRestore();
   window.CollectJS = undefined as any;
@@ -99,17 +82,14 @@ describe('mountNMI', () => {
   async function triggerMount() {
     const p = mountCallback ? mountCallback() : mountNMI();
     await vi.runAllTimersAsync();
-    await scriptPromise;
-    await vi.runAllTimersAsync();
     return p;
   }
 
   it('loads tokenization key and injects script', { timeout: 20000 }, async () => {
     await triggerMount();
-    await vi.runAllTimersAsync();
     expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
-    const script = await scriptPromise;
-    expect(script.getAttribute('data-tokenization-key')).toBe('tok_key');
+    const attrs = loadScriptOnce.mock.calls[0][1].attrs;
+    expect(attrs['data-tokenization-key']).toBe('tok_key');
   });
 
   it('reports ready when CollectJS is configured', { timeout: 20000 }, async () => {
@@ -120,27 +100,19 @@ describe('mountNMI', () => {
 
   it('rejects and logs error if CollectJS fails to load', { timeout: 20000 }, async () => {
     window.SMOOTHR_CONFIG.debug = true as any;
-    appendChildSpy.mockImplementation(el => {
-      const tag = (el as HTMLElement).tagName;
-      if (tag === 'SCRIPT') {
-        setTimeout(() => {
-          el.dispatchEvent(new Event('load'));
-          resolveScript(el);
-        });
-        return el;
-      }
-      if (tag === 'LINK') {
-        return el;
-      }
-      return HTMLElement.prototype.appendChild.call(document.head, el);
-    });
-
+    delete (window as any).CollectJS;
     const readyPromise = mountNMI();
     const expectation = expect(readyPromise).rejects.toThrow('CollectJS failed to load');
-    await vi.runAllTimersAsync();
-    await scriptPromise;
     await vi.advanceTimersByTimeAsync(15000);
     await expectation;
     expect(consoleErrorSpy).toHaveBeenCalled();
+  });
+
+  it('rejects when waitForCollectJS times out', { timeout: 20000 }, async () => {
+    delete (window as any).CollectJS;
+    const readyPromise = mountNMI();
+    const expectation = expect(readyPromise).rejects.toThrow('CollectJS failed to load');
+    await vi.advanceTimersByTimeAsync(15000);
+    await expectation;
   });
 });
