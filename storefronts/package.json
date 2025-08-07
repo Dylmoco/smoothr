@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "postbuild": "node scripts/check-sdk.js",
     "dev": "vite",
     "test": "vitest run --config ../vitest.config.ts"
   },
