@@ -1,6 +1,9 @@
 // Tests for script element and storeId validation
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+vi.mock('../../features/auth/init.js', () => ({ init: vi.fn() }));
+vi.mock('../../features/currency/init.js', () => ({ init: vi.fn() }));
+
 describe('Smoothr SDK script element validation', () => {
   let warnSpy;
   beforeEach(() => {

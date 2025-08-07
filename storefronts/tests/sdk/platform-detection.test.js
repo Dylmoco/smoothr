@@ -1,14 +1,12 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("../../features/auth/index.js", () => {
-  const auth = { init: vi.fn() };
-  return { default: auth, ...auth };
-});
-vi.mock("../../features/currency/index.js", () => {
-  const currency = { init: vi.fn() };
-  return { default: currency, ...currency };
-});
+vi.mock("../../features/auth/init.js", () => ({
+  init: vi.fn(),
+}));
+vi.mock("../../features/currency/init.js", () => ({
+  init: vi.fn(),
+}));
 
 describe("platform detection", () => {
   let scriptEl;

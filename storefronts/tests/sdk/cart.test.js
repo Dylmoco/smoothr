@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 vi.mock("../../features/auth/index.js", () => {
-  const authMock = { init: vi.fn().mockResolvedValue() };
+  const authMock = {
+    init: vi.fn().mockResolvedValue(),
+    lookupRedirectUrl: vi.fn(),
+    lookupDashboardHomeUrl: vi.fn(),
+  };
   return { default: authMock, ...authMock };
 });
 
