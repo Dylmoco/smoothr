@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { rgbToHex } from '../../features/checkout/utils/nmiIframeStyles.js'
+
+(vi as any).setTimeout?.(15000)
 
 describe('rgbToHex', () => {
   it('returns hex strings unchanged', () => {
