@@ -1,5 +1,4 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
-import { initCurrencyDom } from '../../adapters/webflow/currencyDomAdapter.js';
 import { mountNMI } from '../../features/checkout/gateways/nmiGateway.js';
 
 async function initCheckout() {
@@ -39,8 +38,6 @@ async function initCheckout() {
     console.warn('[Smoothr Checkout] Pay div not found');
   }
 
-  // Initialize shared DOM price formatter
-  initCurrencyDom();
 }
 
 // Run init on load
