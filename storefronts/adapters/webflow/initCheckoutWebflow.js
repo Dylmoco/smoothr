@@ -31,9 +31,9 @@
   console.log('[NMI] performance hints injected');
 })();
 
-import { initCheckout } from '../core/checkout-adapter.js';
+import { init } from '../core/checkout-adapter.js';
 
-export { initCheckout };
+export { init, init as initCheckout };
 
 // ✅ Set platform
 window.SMOOTHR_CONFIG = window.SMOOTHR_CONFIG || {};
@@ -43,12 +43,10 @@ const waitForStoreId = () => {
   const config = window.SMOOTHR_CONFIG;
   if (config?.storeId) {
     if (window.SMOOTHR_CONFIG?.active_payment_gateway) {
-      console.log('[Smoothr] initCheckout ready — mounting');
-      initCheckout();
+      console.log('[Smoothr] init ready — mounting');
+      init();
     } else {
-      console.warn(
-        '[Smoothr Checkout] Skipping initCheckout — no active gateway'
-      );
+      console.warn('[Smoothr Checkout] Skipping init — no active gateway');
     }
   } else {
     console.log('[Smoothr] Waiting for storeId...');

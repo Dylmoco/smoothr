@@ -23,10 +23,15 @@ import * as returns from '../../features/returns/index.js';
 import * as reviews from '../../features/reviews/index.js';
 import * as subscriptions from '../../features/subscriptions/index.js';
 
-// Lazy re-export of initCheckout to avoid bundling gateway code until used
+// Lazy re-export of init to avoid bundling gateway code until used
+export async function init(config) {
+  const mod = await import('./init.js');
+  return mod.init(config);
+}
+
+// Backward compatibility
 export async function initCheckout(config) {
-  const mod = await import('./initCheckout.js');
-  return mod.initCheckout(config);
+  return init(config);
 }
 
 // Re-export utility for resolving active payment gateway

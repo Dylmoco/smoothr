@@ -1,7 +1,7 @@
 // Smoothr Checkout Script for Webflow with integrated NMI
 import { mountNMI } from '../../features/checkout/gateways/nmiGateway.js';
 
-async function initCheckout() {
+async function init() {
   if (!window.SMOOTHR_CONFIG) {
     console.error('[Smoothr Checkout] Config not found');
     return;
@@ -45,11 +45,9 @@ async function initCheckout() {
 // Run init on load
 document.addEventListener('DOMContentLoaded', () => {
   if (window.SMOOTHR_CONFIG?.active_payment_gateway) {
-    initCheckout();
+    init();
   } else {
-    console.error(
-      '[Smoothr Checkout] Skipping initCheckout — no active gateway'
-    );
+    console.error('[Smoothr Checkout] Skipping init — no active gateway');
   }
 });
 
