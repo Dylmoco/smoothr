@@ -144,7 +144,7 @@ describe('checkout payload', () => {
     if (domReadyCb) {
       await domReadyCb();
     }
-    if (mod.initCheckout) await mod.initCheckout();
+    if (mod.init) await mod.init();
     await flushPromises();
 
 

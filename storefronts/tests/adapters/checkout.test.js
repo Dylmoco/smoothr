@@ -160,13 +160,13 @@ afterEach(() => {
 async function loadCheckout() {
   const mod = await import('../../adapters/webflow/initCheckoutWebflow.js');
   window.Smoothr.checkout.submit = submitCheckout;
-  return mod.initCheckout;
+  return mod.init;
 }
 
 describe('checkout', () => {
   it('posts cart and currency on click', async () => {
-    const initCheckout = await loadCheckout();
-    await initCheckout();
+    const init = await loadCheckout();
+    await init();
 
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -200,8 +200,8 @@ describe('checkout', () => {
   it('posts cart for non-Stripe provider', async () => {
     global.window.SMOOTHR_CONFIG.active_payment_gateway = 'authorizeNet';
 
-    const initCheckout = await loadCheckout();
-    await initCheckout();
+    const init = await loadCheckout();
+    await init();
 
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -222,8 +222,8 @@ describe('checkout', () => {
 
   it('mounts gateway when initialized', async () => {
     global.window.SMOOTHR_CONFIG.active_payment_gateway = 'authorizeNet';
-    const initCheckout = await loadCheckout();
-    await initCheckout();
+    const init = await loadCheckout();
+    await init();
     expect(createPaymentMethodMock).not.toHaveBeenCalled();
   });
 

@@ -127,7 +127,7 @@ Call `renderCart()` after page load to display items and totals. Use
 
 ## Checkout
 
-`initCheckout` now mounts Stripe card fields automatically. Provide elements
+`init` now mounts Stripe card fields automatically. Provide elements
 with the attributes `data-smoothr-card-number`, `data-smoothr-card-expiry` and
 `data-smoothr-card-cvc` where the fields should render. If any target is missing
 the script only attempts to mount once and logs a warning if it fails. Attach
@@ -137,13 +137,13 @@ the SDK listens for the `submit` event so clicks on child elements won't start
 checkout. Avoid adding the attribute to generic containers to prevent unwanted
 triggers.
 
-The `[data-smoothr-pay]` element must exist in the DOM before `initCheckout`
-runs. If the trigger is inserted asynchronously, delay calling `initCheckout`
+The `[data-smoothr-pay]` element must exist in the DOM before `init`
+runs. If the trigger is inserted asynchronously, delay calling `init`
 or ensure the element is present. When no checkout trigger is found the SDK
 logs a warning and re-attempts initialization after a short delay.
 
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
-active payment gateway. This single endpoint handles all providers. `initCheckout` chooses the gateway by reading
+active payment gateway. This single endpoint handles all providers. `init` chooses the gateway by reading
 `window.SMOOTHR_CONFIG.active_payment_gateway`. When the property isn't defined,
 the SDK fetches `public_store_settings.active_payment_gateway` from Supabase
 using the provided `storeId` and writes the value back to `SMOOTHR_CONFIG`.
@@ -242,7 +242,7 @@ sets `SMOOTHR_CONFIG.platform` and delegates all logic to the shared
 ```
 
 The adapter simply sets `SMOOTHR_CONFIG.platform = 'webflow'` and loads the
-shared checkout module. `initCheckout` runs automatically once the DOM is ready,
+shared checkout module. `init` runs automatically once the DOM is ready,
 so no polling logic is required.
 
 For pages that only need authentication and user management, include the
