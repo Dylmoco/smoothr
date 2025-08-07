@@ -6,22 +6,24 @@ async function initCheckout() {
     console.error('[Smoothr Checkout] Config not found');
     return;
   }
-  console.log('[Smoothr Checkout] SDK initialized');
-  console.log('[Smoothr Checkout] SMOOTHR_CONFIG', window.SMOOTHR_CONFIG);
+  const debug = Boolean(window.SMOOTHR_CONFIG?.debug);
+  if (debug) {
+    console.log('[Smoothr Checkout] SDK initialized');
+    console.log('[Smoothr Checkout] SMOOTHR_CONFIG', window.SMOOTHR_CONFIG);
+  }
 
   const gateway = window.SMOOTHR_CONFIG.active_payment_gateway;
   if (gateway === undefined) {
-    console.warn(
-      '[Smoothr Checkout] No active payment gateway configured'
-    );
+    console.error('[Smoothr Checkout] No active payment gateway configured');
     return;
   }
-  console.log('[Smoothr Checkout] Using gateway:', gateway);
+  if (debug) console.log('[Smoothr Checkout] Using gateway:', gateway);
 
-  console.log(
-    '[Smoothr Checkout] checkout trigger found',
-    document.querySelector('[data-smoothr-pay]')
-  );
+  if (debug)
+    console.log(
+      '[Smoothr Checkout] checkout trigger found',
+      document.querySelector('[data-smoothr-pay]')
+    );
 
   if (gateway === 'nmi') {
     try {
@@ -33,9 +35,9 @@ async function initCheckout() {
 
   const payButton = document.querySelector('[data-smoothr-pay]');
   if (payButton) {
-    console.log('[Smoothr Checkout] Pay div found and bound');
+    if (debug) console.log('[Smoothr Checkout] Pay div found and bound');
   } else {
-    console.warn('[Smoothr Checkout] Pay div not found');
+    console.error('[Smoothr Checkout] Pay div not found');
   }
 
 }
@@ -45,7 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.SMOOTHR_CONFIG?.active_payment_gateway) {
     initCheckout();
   } else {
-    console.warn('[Smoothr Checkout] Skipping initCheckout — no active gateway');
+    console.error(
+      '[Smoothr Checkout] Skipping initCheckout — no active gateway'
+    );
   }
 });
 
