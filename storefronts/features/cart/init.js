@@ -1,7 +1,7 @@
 import { mergeConfig } from '../config/globalConfig.js';
 import * as cart from './index.js';
 import { bindAddToCartButtons } from './addToCart.js';
-import { renderCart } from './renderCart.js';
+import { renderCart, bindRemoveFromCartButtons } from './renderCart.js';
 
 let initialized = false;
 
@@ -22,6 +22,7 @@ export async function init(config = {}) {
 
   bindAddToCartButtons();
   renderCart();
+  bindRemoveFromCartButtons();
 
   initialized = true;
   return typeof window !== 'undefined' ? window.Smoothr.cart : undefined;
