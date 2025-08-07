@@ -12,43 +12,61 @@ describe('loadScriptOnce retry behavior', () => {
   });
 
   it('retries after error', async () => {
+    vi.useFakeTimers();
+    const retries = 2;
     const createSpy = vi.spyOn(document, 'createElement');
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const promise1 = loadScriptOnce(srcError);
-    const script1 = document.querySelector(`script[src="${srcError}"]`);
-    script1.dispatchEvent(new Event('error'));
-    await expect(promise1).rejects.toThrow();
-    expect(warnSpy).toHaveBeenCalledWith(`[Smoothr] Failed to load ${srcError}`);
+    const promise = loadScriptOnce(srcError, { timeout: 1, retries, retryDelay: 1 });
+    const expectPromise = expect(promise).rejects.toThrow();
 
-    script1.remove();
+    for (let i = 0; i < retries; i++) {
+      const script = document.querySelector(`script[src="${srcError}"]`);
+      script.dispatchEvent(new Event('error'));
+      vi.advanceTimersByTime(1);
+      await vi.runAllTimersAsync();
+    }
 
-    const promise2 = loadScriptOnce(srcError);
-    const script2 = document.querySelector(`script[src="${srcError}"]`);
-    expect(createSpy).toHaveBeenCalledTimes(2);
-    expect(script2).not.toBe(script1);
-    script2.dispatchEvent(new Event('load'));
-    await expect(promise2).resolves.toBeUndefined();
-  });
+    const finalScript = document.querySelector(`script[src="${srcError}"]`);
+    finalScript.dispatchEvent(new Event('error'));
+    await vi.runAllTimersAsync();
+    await expectPromise;
+
+    const retryWarnings = warnSpy.mock.calls.filter(([msg]) => msg.startsWith('[Smoothr] Retry loading'));
+    const expectedRetryMessages = Array.from({ length: retries }, (_, i) => [`[Smoothr] Retry loading ${srcError} (${i + 1}/${retries + 1})`]);
+    expect(retryWarnings).toEqual(expectedRetryMessages);
+    expect(warnSpy).toHaveBeenLastCalledWith(`[Smoothr] Failed to load ${srcError}`);
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(createSpy).toHaveBeenCalledTimes(retries + 1);
+  }, 20000);
 
   it('retries after timeout', async () => {
     vi.useFakeTimers();
+    const retries = 2;
     const createSpy = vi.spyOn(document, 'createElement');
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const promise1 = loadScriptOnce(srcTimeout, { timeout: 50 });
-    vi.advanceTimersByTime(51);
-    await expect(promise1).rejects.toThrow();
-    expect(warnSpy).toHaveBeenCalledWith(`[Smoothr] Script load timed out ${srcTimeout}`);
+    const promise = loadScriptOnce(srcTimeout, { timeout: 1, retries, retryDelay: 1 });
+    const expectPromise = expect(promise).rejects.toThrow();
 
-    const script1 = document.querySelector(`script[src="${srcTimeout}"]`);
-    script1.remove();
+    for (let i = 0; i < retries; i++) {
+      vi.advanceTimersByTime(1);
+      await vi.runAllTimersAsync();
+      vi.advanceTimersByTime(1);
+      await vi.runAllTimersAsync();
+    }
 
-    const promise2 = loadScriptOnce(srcTimeout, { timeout: 50 });
-    const script2 = document.querySelector(`script[src="${srcTimeout}"]`);
-    expect(createSpy).toHaveBeenCalledTimes(2);
-    expect(script2).not.toBe(script1);
-    script2.dispatchEvent(new Event('load'));
-    await expect(promise2).resolves.toBeUndefined();
-  });
+    vi.advanceTimersByTime(1);
+    await vi.runAllTimersAsync();
+    await expectPromise;
+
+    const retryWarnings = warnSpy.mock.calls.filter(([msg]) => msg.startsWith('[Smoothr] Retry loading'));
+    const expectedRetryMessages = Array.from({ length: retries }, (_, i) => [`[Smoothr] Retry loading ${srcTimeout} (${i + 1}/${retries + 1})`]);
+    expect(retryWarnings).toEqual(expectedRetryMessages);
+    expect(warnSpy).toHaveBeenLastCalledWith(`[Smoothr] Failed to load ${srcTimeout}`);
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(createSpy).toHaveBeenCalledTimes(retries + 1);
+  }, 20000);
 });
