@@ -1,7 +1,9 @@
 export function rgbToHex(rgb) {
-  if (typeof rgb !== 'string') return rgb;
+  if (typeof rgb !== 'string') return '#000000';
+  const hexRegex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  if (hexRegex.test(rgb)) return rgb;
   const parts = rgb.match(/\d+/g);
-  if (!parts || parts.length < 3) return rgb;
+  if (!parts || parts.length < 3) return '#000000';
   const [r, g, b] = parts.map(Number);
   return (
     `#${r.toString(16).padStart(2, '0')}` +
