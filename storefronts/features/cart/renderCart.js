@@ -30,7 +30,12 @@ export function bindRemoveFromCartButtons() {
   document.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
     if (btn.__smoothrBound) return;
     const id = btn.getAttribute('data-smoothr-remove');
-    btn.addEventListener('click', () => Smoothr.cart.removeItem(id));
+    btn.addEventListener('click', async () => {
+      await Smoothr.cart.removeItem(id);
+      if (typeof Smoothr.cart.renderCart === 'function') {
+        await Smoothr.cart.renderCart();
+      }
+    });
     btn.__smoothrBound = true;
   });
 }
@@ -139,7 +144,12 @@ export function renderCart() {
       clone.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
         btn.setAttribute('data-smoothr-remove', item.product_id);
         if (!btn.__smoothrBound) {
-          btn.addEventListener('click', () => Smoothr.cart.removeItem(item.product_id));
+          btn.addEventListener('click', async () => {
+            await Smoothr.cart.removeItem(item.product_id);
+            if (typeof Smoothr.cart.renderCart === 'function') {
+              await Smoothr.cart.renderCart();
+            }
+          });
           btn.__smoothrBound = true;
         }
       });
