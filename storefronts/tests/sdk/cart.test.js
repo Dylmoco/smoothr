@@ -4,9 +4,6 @@ vi.mock("../../features/auth/index.js", () => {
   const authMock = { init: vi.fn().mockResolvedValue() };
   return { default: authMock, ...authMock };
 });
-vi.mock("../../features/auth/sdk-auth-entry.js", () => ({
-  default: { auth: {}, loadConfig: vi.fn(), storeRedirects: {}, currency: {} },
-}));
 
 import * as auth from "../../features/auth/index.js";
 
@@ -59,7 +56,7 @@ beforeEach(async () => {
       dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
     })),
   };
-  await import("../../features/auth/sdk-auth-entry.js");
+  await import("../../features/auth/init.js");
   await auth.init({
     storeId: "00000000-0000-0000-0000-000000000000",
     baseCurrency: "USD",

@@ -75,17 +75,17 @@ manual build step is required.
 The storefront SDK publishes lightweight bundles that can be loaded directly:
 
 ```html
-<!-- SDK auth entry bundle -->
+<!-- Core Smoothr SDK bundle -->
 <script
   type="module"
-  src="https://sdk.smoothr.io/features/auth/sdk-auth-entry.js"
+  src="https://sdk.smoothr.io/smoothr-sdk.js"
 ></script>
 
 <!-- Checkout bundle -->
 <script type="module" src="https://sdk.smoothr.io/features/checkout/checkout-core.js"></script>
 ```
 
-`sdk-auth-entry.js` initializes authentication and currency helpers without any
+`smoothr-sdk.js` initializes authentication and currency helpers without any
 checkout logic. `checkout-core.js` provides the checkout flow and can be paired with
 platform adapters like `./adapters/webflow/initCheckoutWebflow.js`.
 

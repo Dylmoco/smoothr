@@ -7,6 +7,21 @@ import { loadPublicConfig } from '../config/sdkConfig.ts';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
+// Legacy helpers
+const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
+export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
+
+if (typeof globalThis.setSelectedCurrency !== 'function') {
+  globalThis.setSelectedCurrency = () => {};
+}
+
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.storeRedirects = storeRedirects;
+  window.smoothr = window.smoothr || window.Smoothr;
+  window.smoothr.storeRedirects = storeRedirects;
+}
+
 const authModule = authExports.default || authExports;
 let authInit = () => {};
 if (Object.prototype.hasOwnProperty.call(authExports, 'init')) {
