@@ -1,6 +1,11 @@
 import { supabase } from '../supabase/supabaseClient.js';
 import { mergeConfig } from './features/config/globalConfig.js';
 
+// Ensure legacy global currency helper exists
+if (typeof globalThis.setSelectedCurrency !== 'function') {
+  globalThis.setSelectedCurrency = () => {};
+}
+
 const scriptEl = document.getElementById('smoothr-sdk');
 const storeId = scriptEl?.dataset?.storeId || null;
 const platform =

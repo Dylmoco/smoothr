@@ -57,9 +57,10 @@ window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 ### Usage
 
 ```javascript
-import { auth } from './features/auth/sdk-auth-entry.js';
+import * as auth from './features/auth/index.js';
 import { discounts } from './features/checkout/checkout-core.js';
 
+await auth.init();
 discounts; // example access
 ```
 
@@ -245,12 +246,12 @@ shared checkout module. `initCheckout` runs automatically once the DOM is ready,
 so no polling logic is required.
 
 For pages that only need authentication and user management, include the
-lightweight `features/auth/sdk-auth-entry.js` bundle:
+lightweight `smoothr-sdk.js` bundle:
 
 ```html
 <script
   type="module"
-  src="https://sdk.smoothr.io/features/auth/sdk-auth-entry.js?v=dev-final"
+  src="https://sdk.smoothr.io/smoothr-sdk.js?v=dev-final"
 ></script>
 ```
 

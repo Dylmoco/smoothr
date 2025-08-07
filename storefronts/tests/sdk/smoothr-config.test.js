@@ -40,9 +40,9 @@ beforeEach(() => {
 
 describe("SMOOTHR_CONFIG integration", () => {
   it("applies base currency and rates on load", async () => {
-    const core = await import("../../features/auth/sdk-auth-entry.js");
+    const currency = await import("../../features/currency/index.js");
+    await currency.init(global.window.SMOOTHR_CONFIG);
     await flushPromises();
-    const { currency } = core;
     expect(currency.baseCurrency).toBe("EUR");
     expect(currency.rates.EUR).toBe(0.8);
     expect(global.fetch).toHaveBeenCalled();
