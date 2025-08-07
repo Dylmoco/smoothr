@@ -99,7 +99,11 @@ export async function init(config = {}) {
     window.smoothr = window.smoothr || Smoothr;
     Smoothr.currency = {
       setCurrency: setSelectedCurrency,
-      getRates: getRates || (() => ({}))
+      getCurrency: getSelectedCurrency,
+      getRates: getRates || (() => ({})),
+      convertPrice,
+      formatPrice,
+      baseCurrency
     };
     window.smoothr.currency = Smoothr.currency;
   }
