@@ -14,6 +14,7 @@ export async function init(config = {}) {
     const Smoothr = (window.Smoothr = window.Smoothr || {});
     Smoothr.cart = {
       ...cart,
+      renderCart,
       addButtonPollingRetries: 0,
       addButtonPollingDisabled: false
     };

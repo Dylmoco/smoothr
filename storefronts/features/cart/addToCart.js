@@ -100,9 +100,13 @@ export function bindAddToCartButtons() {
           image
         };
         Smoothr.cart.addItem(item);
-        if (typeof window.renderCart === 'function') {
+        if (typeof Smoothr.cart?.renderCart === 'function') {
           if (debug) log('🧼 Calling renderCart() to update UI');
-          window.renderCart();
+          try {
+            Smoothr.cart.renderCart();
+          } catch (error) {
+            warn('renderCart failed', error);
+          }
         } else {
           warn('renderCart not found');
         }
