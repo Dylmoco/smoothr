@@ -20,7 +20,11 @@ the chosen currency in `localStorage`.
   <option value="EUR">EUR</option>
 </select>
 <script type="module">
-  import { setSelectedCurrency } from '../adapters/webflow/currencyDomAdapter.js';
+  import {
+    setSelectedCurrency,
+    initCurrencyDom
+  } from '../adapters/webflow/currencyDomAdapter.js';
+  initCurrencyDom();
   document
     .getElementById('currency-select')
     .addEventListener('change', e => setSelectedCurrency(e.target.value));
@@ -32,8 +36,7 @@ updated when the currency changes so you can access the converted amount via
 JavaScript.
 
 All elements with price attributes, including `[data-product-price]`, are
-formatted automatically when `initCurrencyDom()` runs on page load and whenever
-the currency changes.
+formatted when `initCurrencyDom()` runs and whenever the currency changes.
 
 ### Automatic price detection
 
