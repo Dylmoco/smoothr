@@ -2,8 +2,9 @@ import { getConfig } from '../features/config/globalConfig.js';
 
 const scriptPromises = new Map();
 
-export default function loadScriptOnce(src) {
+export default function loadScriptOnce(src, opts = {}) {
   if (!src) return Promise.reject(new Error('Missing script URL'));
+  const { attrs = {}, timeout = 15000 } = opts || {};
   if (scriptPromises.has(src)) return scriptPromises.get(src);
 
   const debug = typeof window !== 'undefined' && getConfig().debug;
@@ -13,6 +14,10 @@ export default function loadScriptOnce(src) {
     let script = document.querySelector(`script[src="${src}"]`);
 
     if (script && script.getAttribute('data-loaded') === 'true') {
+      // ensure attributes are applied even if already loaded
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (v !== undefined) script.setAttribute(k, String(v));
+      });
       resolve();
       return;
     }
@@ -43,7 +48,14 @@ export default function loadScriptOnce(src) {
       script = document.createElement('script');
       script.src = src;
       script.async = true;
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (v !== undefined) script.setAttribute(k, String(v));
+      });
       document.head.appendChild(script);
+    } else {
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (v !== undefined) script.setAttribute(k, String(v));
+      });
     }
 
     script.addEventListener('load', onLoad);
@@ -53,7 +65,7 @@ export default function loadScriptOnce(src) {
       cleanup();
       warn('Script load timed out', src);
       reject(new Error(`Script load timed out: ${src}`));
-    }, 15000);
+    }, timeout);
   });
 
   scriptPromises.set(src, promise);

@@ -5,6 +5,7 @@ import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js'
 import { disableButton, enableButton } from '../utils/cartHash.js'
 import styleNmiIframes, { getNmiStyles } from '../utils/nmiIframeStyles.js'
 import { getConfig } from '../../config/globalConfig.js'
+import loadScriptOnce from '../../../utils/loadScriptOnce.js'
 
 let hasMounted = false
 let isConfigured = false
@@ -12,6 +13,7 @@ let isLocked = false
 let isSubmitting = false
 let configPromise
 let resolveConfig
+let rejectConfig
 
 /**
  * Public entry: fetch tokenization key and initialize NMI
@@ -20,14 +22,17 @@ let resolveConfig
 export async function mountCardFields() {
   if (hasMounted) return configPromise
   hasMounted = true
-  configPromise = new Promise(resolve => { resolveConfig = resolve })
+  configPromise = new Promise((resolve, reject) => {
+    resolveConfig = resolve
+    rejectConfig = reject
+  })
 
   const storeId = getConfig().storeId
   const tokenKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
   if (!tokenKey) {
     console.warn('[NMI] Tokenization key missing')
     alert('Payment setup issue. Please try again or contact support.')
-    resolveConfig()
+    rejectConfig(new Error('Tokenization key missing'))
     return configPromise
   }
 
@@ -43,44 +48,57 @@ export async function mountCheckout(config) {
 /**
  * Inject CollectJS and configure
  */
-export function initNMI(tokenKey) {
+export async function initNMI(tokenKey) {
   if (isConfigured) return
+  const debug = !!getConfig().debug
   console.log('[NMI] Appending CollectJS script...')
 
   // Get styles early for script attributes
   const cardNumberDiv = document.querySelector('[data-smoothr-card-number]')
   const { customCssObj, placeholderCssObj, googleFontString } = getNmiStyles()
 
-  const script = document.createElement('script')
-  script.id = 'collectjs-script'
-  script.src = 'https://secure.nmi.com/token/Collect.js'
-  script.async = true
-  script.setAttribute('data-tokenization-key', tokenKey)
-  script.setAttribute('data-custom-css', JSON.stringify(customCssObj))
-  script.setAttribute('data-placeholder-css', JSON.stringify(placeholderCssObj))
-  script.setAttribute('data-style-sniffer', 'true')
-  script.setAttribute('data-google-font', googleFontString)
+  const attrs = {
+    id: 'collectjs-script',
+    'data-tokenization-key': tokenKey,
+    'data-custom-css': JSON.stringify(customCssObj),
+    'data-placeholder-css': JSON.stringify(placeholderCssObj),
+    'data-style-sniffer': 'true',
+    'data-google-font': googleFontString
+  }
   console.log('[NMI] Set data-tokenization-key on script tag:', tokenKey.substring(0, 8) + '…')
 
-  script.onload = () => {
+  try {
+    await loadScriptOnce('https://secure.nmi.com/token/Collect.js', { attrs })
     console.log('[NMI] CollectJS loaded')
+    await waitForCollectJS()
     configureCollectJS()
-  }
-  script.onerror = () => {
-    console.error('[NMI] Failed to load CollectJS')
+  } catch (e) {
+    debug && console.error('[NMI] Failed to load CollectJS', e)
     alert('Unable to load payment system. Please refresh the page.')
-    resolveConfig()
+    rejectConfig(e)
   }
+}
 
-  document.head.appendChild(script)
+function waitForCollectJS(timeout = 15000) {
+  let waited = 0
+  return new Promise((resolve, reject) => {
+    function check() {
+      if (window.CollectJS) return resolve()
+      if (waited >= timeout)
+        return reject(new Error('CollectJS failed to load'))
+      waited += 100
+      setTimeout(check, 100)
+    }
+    check()
+  })
 }
 
 /**
  * Configure fields & click guard
  */
 function configureCollectJS() {
-  if (isLocked || typeof CollectJS === 'undefined') {
-    return setTimeout(configureCollectJS, 500)
+  if (isLocked) {
+    return
   }
   isLocked = true
 
@@ -144,7 +162,7 @@ function configureCollectJS() {
     console.error('[NMI] Config error', e)
     alert('Setup error. Refresh or contact support.')
     resetSubmission(Array.from(document.querySelectorAll('[data-smoothr-pay]')))
-    resolveConfig()
+    rejectConfig(e)
   }
 }
 
@@ -160,7 +178,7 @@ function resetSubmission(buttons) {
 // Exports
 export const mountNMI = mountCheckout
 export function isMounted() { return isConfigured }
-export function ready() { return isConfigured }
+export function ready() { return configPromise }
 export async function createPaymentMethod() { return { error:{message:'use CollectJS callback'}, payment_method:null } }
 export default { mountCardFields, mountCheckout, isMounted, ready, createPaymentMethod }
 
