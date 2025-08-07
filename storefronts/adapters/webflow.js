@@ -3,6 +3,26 @@ import { getConfig } from '../features/config/globalConfig.js';
 
 export function initAdapter(config) {
   // Placeholder for future Webflow-specific setup using `config` if needed.
+
+  const normalizeLegacyAttributes = () => {
+    const mapping = {
+      'data-smoothr-pay': 'pay',
+      'data-smoothr-add': 'add-to-cart',
+      'data-smoothr-remove': 'remove-from-cart',
+      'data-smoothr-login': 'login',
+      'data-smoothr-logout': 'logout',
+      'data-smoothr-currency': 'currency'
+    };
+
+    Object.entries(mapping).forEach(([legacyAttr, canonical]) => {
+      document.querySelectorAll(`[${legacyAttr}]`).forEach((el) => {
+        if (!el.hasAttribute('data-smoothr')) {
+          el.setAttribute('data-smoothr', canonical);
+        }
+      });
+    });
+  };
+
   return {
     domReady: () =>
       new Promise((resolve, reject) => {
@@ -15,6 +35,7 @@ export function initAdapter(config) {
         const run = () => {
           clearTimeout(timeoutId);
           initCurrencyDom();
+          normalizeLegacyAttributes();
           resolve();
         };
 
