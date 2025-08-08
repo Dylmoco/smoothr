@@ -18,9 +18,10 @@ async function init() {
   if (debug) console.log('[Smoothr Checkout] Using gateway:', gateway);
 
   if (debug)
+    // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
     console.log(
       '[Smoothr Checkout] checkout trigger found',
-      document.querySelector('[data-smoothr-pay]')
+      document.querySelector('[data-smoothr="pay"], [data-smoothr-pay]')
     );
 
   if (gateway === 'nmi') {
@@ -31,7 +32,8 @@ async function init() {
     }
   }
 
-  const payButton = document.querySelector('[data-smoothr-pay]');
+  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+  const payButton = document.querySelector('[data-smoothr="pay"], [data-smoothr-pay]');
   if (payButton) {
     if (debug) console.log('[Smoothr Checkout] Pay div found and bound');
   } else {
