@@ -1,4 +1,4 @@
-import { getPublicCredential } from '../getPublicCredential.js';
+import { getGatewayCredential } from '../core/credentials.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import { disableButton, enableButton } from '../utils/cartHash.js';
 import { getConfig } from '../../config/globalConfig.js';
@@ -23,8 +23,9 @@ export async function mountCardFields() {
   container.addEventListener('click', e => e.stopImmediatePropagation(), true);
 
   const storeId = getConfig().storeId;
-  const cred = await getPublicCredential(storeId, 'paypal');
-  const clientId = cred?.settings?.client_id || cred?.api_key || '';
+  const cred = await getGatewayCredential('paypal');
+  const clientId =
+    cred?.client_id ?? cred?.settings?.client_id ?? cred?.api_key ?? '';
   if (!clientId) {
     console.warn('[Smoothr PayPal] Missing client_id');
     return;
