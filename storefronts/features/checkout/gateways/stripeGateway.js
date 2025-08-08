@@ -98,18 +98,11 @@ export async function getElements() {
       const stripeKey = await resolveStripeKey();
       if (!stripeKey) return { stripe: null, elements: null };
       log('Using Stripe key', stripeKey);
-      let StripeCtor =
+      log('Loading Stripe.js script');
+      await loadScriptOnce('https://js.stripe.com/v3', { globalVar: 'Stripe' });
+      const StripeCtor =
         (typeof window !== 'undefined' && window.Stripe) ||
         (typeof globalThis !== 'undefined' && globalThis.Stripe);
-      if (!StripeCtor) {
-        log('Loading Stripe.js script');
-        await loadScriptOnce('https://js.stripe.com/v3');
-        StripeCtor =
-          (typeof window !== 'undefined' && window.Stripe) ||
-          (typeof globalThis !== 'undefined' && globalThis.Stripe);
-      } else {
-        log('Stripe.js already present on window');
-      }
       if (!stripeInvoked && StripeCtor) {
         stripe = StripeCtor(stripeKey);
         stripeInvoked = true;

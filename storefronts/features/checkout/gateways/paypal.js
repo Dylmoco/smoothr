@@ -31,7 +31,9 @@ export async function mountCardFields() {
     return;
   }
 
-  await loadScriptOnce(`https://www.paypal.com/sdk/js?client-id=${clientId}`);
+  await loadScriptOnce(`https://www.paypal.com/sdk/js?client-id=${clientId}`, {
+    globalVar: 'paypal'
+  });
 
   const apiBase = getConfig().apiBase || '';
 

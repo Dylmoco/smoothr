@@ -80,9 +80,8 @@ const warn = (...a) => DEBUG && console.warn('[AuthorizeNet]', ...a);
 
 
 async function loadAcceptJs() {
-  if (window.Accept) return;
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-    window.Accept = { dispatchData: () => {} };
+    window.Accept = window.Accept || { dispatchData: () => {} };
     return;
   }
   const env = getConfig().env?.toLowerCase();
@@ -90,7 +89,7 @@ async function loadAcceptJs() {
   const src = isProd
     ? 'https://js.authorize.net/v1/Accept.js'
     : 'https://jstest.authorize.net/v1/Accept.js';
-  await loadScriptOnce(src);
+  await loadScriptOnce(src, { globalVar: 'Accept' });
   acceptReady = true;
   updateDebug();
   log('Accept.js ready');
