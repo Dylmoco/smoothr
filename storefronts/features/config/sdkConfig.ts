@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import supabase from '../../../supabase/supabaseClient.js';
 import { getConfig } from './globalConfig.js';
 
@@ -7,8 +8,8 @@ const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...ar
 export async function loadPublicConfig(storeId: string) {
   if (!storeId) return null;
 
-  const fetchSettings = async () =>
-    await supabase
+  const fetchSettings = async (client = supabase) =>
+    await client
       .from('public_store_settings')
       .select('*')
       .eq('store_id', storeId)
@@ -28,13 +29,21 @@ export async function loadPublicConfig(storeId: string) {
       }
       ({ data, error } = await fetchSettings());
       if (error && (error.code === '403' || /jwt|token/i.test(error.message))) {
-        warn('Retry failed, clearing session and retrying anonymously');
+        warn('Retry failed, fetching anonymously');
         try {
-          await supabase.auth.signOut();
-        } catch {
-          // ignore sign out errors
+          const anon = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          );
+          ({ data, error } = await fetchSettings(anon));
+          if (error) {
+            warn('Anonymous retry failed:', error.message || error);
+            return null;
+          }
+        } catch (e: any) {
+          warn('Anonymous fetch error:', e?.message || e);
+          return null;
         }
-        ({ data, error } = await fetchSettings());
       }
     }
 
