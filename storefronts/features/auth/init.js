@@ -77,38 +77,8 @@ async function domReady() {
   }
 }
 
-export async function init(config = {}) {
-  if (initialized) return window.Smoothr?.auth;
-
-  const script =
-    typeof document !== 'undefined'
-      ? document.currentScript || document.getElementById('smoothr-sdk')
-      : null;
-  const storeId =
-    config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
-
-  mergeConfig({ ...config, storeId });
-
-  if (!storeId) {
-    console.warn(
-      '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
-    );
-  }
-
-  if (
-    typeof window !== 'undefined' &&
-    window.location?.hash?.includes('access_token')
-  ) {
-    const { error } = await authClient.auth.getSessionFromUrl({
-      storeSession: true
-    });
-    if (error) {
-      console.warn('[Smoothr SDK] Error parsing session from URL:', error);
-    }
-  }
-
+export async function waitForSessionReady() {
   await ensureSupabaseSessionAuth();
-
   try {
     const {
       data: { session }
@@ -145,6 +115,39 @@ export async function init(config = {}) {
   } catch {
     // ignore session check errors
   }
+}
+
+export async function init(config = {}) {
+  if (initialized) return window.Smoothr?.auth;
+
+  const script =
+    typeof document !== 'undefined'
+      ? document.currentScript || document.getElementById('smoothr-sdk')
+      : null;
+  const storeId =
+    config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
+
+  mergeConfig({ ...config, storeId });
+
+  if (!storeId) {
+    console.warn(
+      '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
+    );
+  }
+
+  if (
+    typeof window !== 'undefined' &&
+    window.location?.hash?.includes('access_token')
+  ) {
+    const { error } = await authClient.auth.getSessionFromUrl({
+      storeSession: true
+    });
+    if (error) {
+      console.warn('[Smoothr SDK] Error parsing session from URL:', error);
+    }
+  }
+
+  await waitForSessionReady();
 
   try {
     await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');
