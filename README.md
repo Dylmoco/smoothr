@@ -11,7 +11,7 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 - **/smoothr/** – Next.js admin dashboard application.
   - **/admin-modules/** – Admin views for orders, returns, reviews, analytics, discounts, currency, affiliates, cart, dashboard, abandoned cart, and subscriptions.
 - **/scripts/** – Repository-level Node scripts like the postinstall hook.
-- **/supabase/** – Supabase functions, migrations, and database helpers, including `supabase/supabaseClient.js` for initializing the client.
+- **/supabase/** – Supabase functions, migrations, and database helpers, including `supabase/browserClient.js` for initializing the client.
 - **.gitignore** – Ignore Node modules, logs, env files, and build output.
 
 The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience.

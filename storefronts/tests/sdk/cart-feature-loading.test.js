@@ -13,7 +13,7 @@ describe("cart feature loading", () => {
     cartInitMock.mockReset();
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
     global.console = { log: vi.fn(), warn: vi.fn() };
-    vi.doMock("../../supabase/supabaseClient.js", () => ({
+    vi.doMock("../../supabase/browserClient.js", () => ({
       supabase: {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
@@ -28,7 +28,7 @@ describe("cart feature loading", () => {
   });
 
   afterEach(() => {
-    vi.doUnmock("../../supabase/supabaseClient.js");
+    vi.doUnmock("../../supabase/browserClient.js");
     vi.doUnmock("../../features/auth/init.js");
     vi.doUnmock("../../features/currency/index.js");
     vi.doUnmock("../../features/cart/init.js");

@@ -12,7 +12,7 @@ vi.mock('@supabase/supabase-js', () => {
   const from = vi.fn(() => ({ select }));
   return { createClient: vi.fn(() => ({ from })) };
 });
-vi.mock('../../../supabase/supabaseClient.js', () => {
+vi.mock('../../../supabase/browserClient.js', () => {
   const eq = vi.fn(() => ({ eq, maybeSingle: supabaseMaybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));

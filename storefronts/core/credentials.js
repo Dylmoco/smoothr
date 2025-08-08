@@ -1,4 +1,4 @@
-import supabase, { ensureSupabaseSessionAuth } from '../../supabase/supabaseClient.js';
+import supabase, { ensureSupabaseSessionAuth } from '../../supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 
 export async function getGatewayCredential(gateway) {

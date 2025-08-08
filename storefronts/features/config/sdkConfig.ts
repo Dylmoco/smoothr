@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../../supabase/browserClient.js';
 import { getConfig } from './globalConfig.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
@@ -7,21 +7,8 @@ const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...ar
 export async function loadPublicConfig(storeId: string) {
   if (!storeId) return null;
 
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        // unique key to avoid collisions with primary client storage
-        storageKey: 'smoothr-anon-client',
-      },
-    }
-  );
-
   try {
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from('public_store_settings')
       .select('*')
       .eq('store_id', storeId)

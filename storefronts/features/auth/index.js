@@ -1,4 +1,4 @@
-import { supabase, ensureSupabaseSessionAuth } from '../../../supabase/supabaseClient.js';
+import { supabase, ensureSupabaseSessionAuth } from '../../../supabase/browserClient.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import {
   initAuth as initAuthHelper,
