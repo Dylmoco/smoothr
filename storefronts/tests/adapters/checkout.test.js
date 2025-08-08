@@ -24,6 +24,11 @@ vi.mock('../../../supabase/supabaseClient.js', () => {
   };
 });
 
+let getCredMock;
+vi.mock('../../features/checkout/core/credentials.js', () => ({
+  getGatewayCredential: (...args) => getCredMock(...args)
+}));
+
 let createPaymentMethodMock;
 let submitCheckout;
 let originalFetch;
@@ -42,6 +47,7 @@ beforeEach(() => {
     data: { publishable_key: 'pk_test' },
     error: null
   });
+  getCredMock = vi.fn(async () => ({ publishable_key: 'pk_test' }));
 
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -281,15 +287,13 @@ describe('checkout', () => {
     );
   });
 
-  it('logs supabase credential fetch errors', async () => {
-    supabaseMaybeSingle
-      .mockResolvedValueOnce({ data: null, error: null })
-      .mockResolvedValueOnce({ data: null, error: null })
-      .mockRejectedValueOnce(new Error('db down'));
+  it('logs credential fetch errors', async () => {
+    getCredMock.mockRejectedValueOnce(new Error('db down'));
     const init = await loadCheckout();
     await init();
     expect(console.warn).toHaveBeenCalledWith(
-      '[Smoothr] Credential fetch error:',
+      '[Smoothr Stripe]',
+      'Credential fetch error:',
       'db down'
     );
   });

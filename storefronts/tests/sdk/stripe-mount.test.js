@@ -9,8 +9,8 @@ vi.mock('../../features/checkout/utils/stripeIframeStyles.js', () => ({
   getFonts: vi.fn(() => []),
   elementStyleFromContainer: vi.fn(() => ({}))
 }));
-vi.mock('../../features/checkout/getPublicCredential.js', () => ({
-  getPublicCredential: (...args) => getCredMock(...args)
+vi.mock('../../features/checkout/core/credentials.js', () => ({
+  getGatewayCredential: (...args) => getCredMock(...args)
 }));
 
 let domReadyCb;
@@ -73,7 +73,7 @@ describe('stripe element mounting', () => {
     await vi.advanceTimersByTimeAsync(500);
     vi.useRealTimers();
 
-    expect(getCredMock).toHaveBeenCalledWith('store-1', 'stripe', 'stripe');
+    expect(getCredMock).toHaveBeenCalledWith('stripe');
 
     expect(elementsCreate).toHaveBeenCalledWith(
       'cardNumber',

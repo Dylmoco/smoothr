@@ -4,7 +4,7 @@ import forceStripeIframeStyle, {
   initStripeStyles
 } from '../utils/stripeIframeStyles.js';
 
-import { getPublicCredential } from '../getPublicCredential.js';
+import { getGatewayCredential } from '../core/credentials.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import { getConfig } from '../../config/globalConfig.js';
 let fieldsMounted = false;
@@ -53,9 +53,7 @@ export async function waitForInteractable(el, timeout = 1500) {
 
 async function resolveStripeKey() {
   if (cachedKey) return cachedKey;
-  const cfg = getConfig();
-  const storeId = cfg?.storeId;
-  const config = cfg || {};
+  const config = getConfig() || {};
   if (
     config.active_payment_gateway &&
     config.active_payment_gateway !== 'stripe'
@@ -64,18 +62,16 @@ async function resolveStripeKey() {
     return null;
   }
   let key;
-  if (storeId) {
-    try {
-      const cred = await getPublicCredential(storeId, 'stripe', 'stripe');
-      if (cred) {
-        key = cred.publishable_key || '';
-        if (key) {
-          log('✅ Stripe key resolved, mounting gateway...');
-        }
+  try {
+    const cred = await getGatewayCredential('stripe');
+    if (cred) {
+      key = cred.publishable_key || '';
+      if (key) {
+        log('✅ Stripe key resolved, mounting gateway...');
       }
-    } catch (e) {
-      warn('Integration fetch error:', e?.message || e);
     }
+  } catch (e) {
+    warn('Credential fetch error:', e?.message || e);
   }
   if (!key) {
     warn('❌ Stripe key not found — aborting Stripe mount.');
