@@ -68,7 +68,10 @@ export async function initNMI(tokenKey) {
   console.log('[NMI] Set data-tokenization-key on script tag:', tokenKey.substring(0, 8) + '…')
 
   try {
-    await loadScriptOnce('https://secure.nmi.com/token/Collect.js', { attrs })
+    await loadScriptOnce('https://secure.nmi.com/token/Collect.js', {
+      attrs,
+      globalVar: 'CollectJS'
+    })
     console.log('[NMI] CollectJS loaded')
     await waitForCollectJS()
     configureCollectJS()

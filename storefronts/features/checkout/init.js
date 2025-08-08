@@ -31,6 +31,12 @@ const sdkUrls = {
   nmi: 'https://secure.nmi.com/token/Collect.js'
 };
 
+const sdkGlobals = {
+  stripe: 'Stripe',
+  authorizeNet: 'Accept',
+  nmi: 'CollectJS'
+};
+
 const gatewayModules = {
   stripe: () => import('./gateways/stripeGateway.js'),
   authorizeNet: () => import('./gateways/authorizeNet.js'),
@@ -74,7 +80,10 @@ export async function init(config = {}) {
   if (sdkUrls[provider]) {
     try {
       const timeout = provider === 'stripe' ? 10000 : undefined;
-      await loadScriptOnce(sdkUrls[provider], { timeout });
+      await loadScriptOnce(sdkUrls[provider], {
+        timeout,
+        globalVar: sdkGlobals[provider]
+      });
     } catch (e) {
       if (getConfig().debug) {
         const msg =

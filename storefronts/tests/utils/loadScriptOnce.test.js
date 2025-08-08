@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
 
 const srcError = 'https://example.com/error.js';
 const srcTimeout = 'https://example.com/timeout.js';
+const srcLoaded = 'https://example.com/loaded.js';
 
 describe('loadScriptOnce retry behavior', () => {
   afterEach(() => {
@@ -20,16 +21,15 @@ describe('loadScriptOnce retry behavior', () => {
 
     const promise = loadScriptOnce(srcError, { timeout: 1, retries, retryDelay: 1 });
     const expectPromise = expect(promise).rejects.toThrow();
+    await Promise.resolve();
 
     for (let i = 0; i < retries; i++) {
       const script = document.querySelector(`script[src="${srcError}"]`);
-      script.dispatchEvent(new Event('error'));
+      script && script.dispatchEvent(new Event('error'));
       vi.advanceTimersByTime(1);
       await vi.runAllTimersAsync();
     }
 
-    const finalScript = document.querySelector(`script[src="${srcError}"]`);
-    finalScript.dispatchEvent(new Event('error'));
     await vi.runAllTimersAsync();
     await expectPromise;
 
@@ -69,4 +69,41 @@ describe('loadScriptOnce retry behavior', () => {
     expect(errorSpy).not.toHaveBeenCalled();
     expect(createSpy).toHaveBeenCalledTimes(retries + 1);
   }, 20000);
+});
+
+describe('loadScriptOnce existing script handling', () => {
+  beforeEach(() => {
+    window.SMOOTHR_CONFIG = { debug: true };
+  });
+
+  afterEach(() => {
+    document.querySelectorAll(`script[src="${srcLoaded}"]`).forEach(s => s.remove());
+    delete window.Foo;
+  });
+
+  it('skips reloading when script tag already loaded', async () => {
+    const script = document.createElement('script');
+    script.src = srcLoaded;
+    script.setAttribute('data-loaded', 'true');
+    document.head.appendChild(script);
+    const initial = document.querySelectorAll(`script[src="${srcLoaded}"]`).length;
+
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+    await loadScriptOnce(srcLoaded);
+
+    const final = document.querySelectorAll(`script[src="${srcLoaded}"]`).length;
+    expect(final).toBe(initial);
+    expect(debugSpy).toHaveBeenCalled();
+
+    debugSpy.mockRestore();
+  });
+
+  it('skips loading when global variable exists', async () => {
+    window.Foo = {};
+    const createSpy = vi.spyOn(document, 'createElement');
+    await loadScriptOnce(srcLoaded, { globalVar: 'Foo' });
+    expect(createSpy).not.toHaveBeenCalledWith('script');
+    createSpy.mockRestore();
+  });
 });

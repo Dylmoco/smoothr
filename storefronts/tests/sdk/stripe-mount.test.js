@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 let styleSpy = vi.fn();
 let getCredMock;
 
+const loadScriptOnce = vi.fn(() => Promise.resolve());
+vi.mock('../../utils/loadScriptOnce.js', () => ({ default: loadScriptOnce }));
+
 vi.mock('../../features/checkout/utils/stripeIframeStyles.js', () => ({
 
   default: (...args) => styleSpy(...args),
