@@ -19,7 +19,10 @@ import loadScriptOnce from '../../utils/loadScriptOnce.js';
 let initialized = false;
 
 function forEachPayButton(fn) {
-  document.querySelectorAll('[data-smoothr-pay]').forEach(fn);
+  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+  document
+    .querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]')
+    .forEach(fn);
 }
 
 function showLoginPopup() {
@@ -103,18 +106,20 @@ export async function init(config = {}) {
   log(`Using gateway: ${provider}`);
 
   // mount fields common to all gateways
-  await select('[data-smoothr-pay]');
-  let payButtons = document.querySelectorAll('[data-smoothr-pay]');
+  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+  await select('[data-smoothr="pay"], [data-smoothr-pay]');
+  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+  let payButtons = document.querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]');
   if (debug) console.log('[Smoothr] Found pay buttons:', payButtons.length);
   if (!payButtons.length) {
     const path = window.location?.pathname || '';
     const isCheckoutPath = /checkout|cart/.test(path);
     if (debug) {
-      warn('No checkout trigger found. Add a [data-smoothr-pay] element or delay init.');
+      warn('No checkout trigger found. Add a [data-smoothr="pay"] element or delay init.');
     } else if (isCheckoutPath) {
       console.warn(
         '[Smoothr Checkout]',
-        'No checkout trigger found. Add a [data-smoothr-pay] element or delay init.'
+        'No checkout trigger found. Add a [data-smoothr="pay"] element or delay init.'
       );
     }
     return;
@@ -209,7 +214,7 @@ export async function init(config = {}) {
       isSubmitting = true;
       forEachPayButton(disableButton);
       clearErrorMessages();
-      log('[data-smoothr-pay] triggered');
+      log('[data-smoothr="pay"] triggered');
 
       const {
         email,
