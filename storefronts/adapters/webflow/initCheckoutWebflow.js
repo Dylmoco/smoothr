@@ -1,3 +1,6 @@
+// Add ?smoothr-debug to the URL to enable debug logging
+const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
+
 ;(function addNmiPerformanceHints() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   if (window.__NMI_PERF_HINTS__) return;
@@ -28,7 +31,7 @@
     fetch(script, { method: 'HEAD', mode: 'no-cors' }).catch(() => {});
   } catch {}
 
-  console.log('[NMI] performance hints injected');
+  if (debug) console.log('[NMI] performance hints injected');
 })();
 
 import { init } from '../core/checkout-adapter.js';
@@ -43,13 +46,13 @@ const waitForStoreId = () => {
   const config = window.SMOOTHR_CONFIG;
   if (config?.storeId) {
     if (window.SMOOTHR_CONFIG?.active_payment_gateway) {
-      console.log('[Smoothr] init ready — mounting');
+      if (debug) console.log('[Smoothr] init ready — mounting');
       init();
     } else {
-      console.warn('[Smoothr Checkout] Skipping init — no active gateway');
+      if (debug) console.warn('[Smoothr Checkout] Skipping init — no active gateway');
     }
   } else {
-    console.log('[Smoothr] Waiting for storeId...');
+    if (debug) console.log('[Smoothr] Waiting for storeId...');
     setTimeout(waitForStoreId, 50);
   }
 };
