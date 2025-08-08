@@ -7,6 +7,7 @@ import forceStripeIframeStyle, {
 import { getGatewayCredential } from '../core/credentials.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import { getConfig } from '../../config/globalConfig.js';
+import loadScriptOnce from '../../../utils/loadScriptOnce.js';
 let fieldsMounted = false;
 let mountAttempts = 0;
 let stripe;
@@ -15,8 +16,14 @@ let initPromise;
 let cachedKey;
 let cardNumberElement;
 let mountPromise;
+let stripeInvoked = false;
 
-const debug = getConfig().debug;
+const debug =
+  getConfig().debug ||
+  (typeof window !== 'undefined' &&
+    window.location &&
+    typeof window.location.search === 'string' &&
+    new URLSearchParams(window.location.search).has('smoothr-debug'));
 const log = (...args) => debug && console.log('[Smoothr Stripe]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Stripe]', ...args);
 
@@ -91,7 +98,22 @@ export async function getElements() {
       const stripeKey = await resolveStripeKey();
       if (!stripeKey) return { stripe: null, elements: null };
       log('Using Stripe key', stripeKey);
-      stripe = Stripe(stripeKey);
+      let StripeCtor =
+        (typeof window !== 'undefined' && window.Stripe) ||
+        (typeof globalThis !== 'undefined' && globalThis.Stripe);
+      if (!StripeCtor) {
+        log('Loading Stripe.js script');
+        await loadScriptOnce('https://js.stripe.com/v3');
+        StripeCtor =
+          (typeof window !== 'undefined' && window.Stripe) ||
+          (typeof globalThis !== 'undefined' && globalThis.Stripe);
+      } else {
+        log('Stripe.js already present on window');
+      }
+      if (!stripeInvoked && StripeCtor) {
+        stripe = StripeCtor(stripeKey);
+        stripeInvoked = true;
+      }
 
       const fonts = getFonts();
 
@@ -143,16 +165,16 @@ export async function mountCardFields() {
   if (numberTarget && !existingNumber) {
     await waitForInteractable(numberTarget);
     const numStyle = elementStyleFromContainer(numberTarget);
-    console.log('[Stripe] cardNumber style', numStyle);
+    log('cardNumber style', numStyle);
     const el = elements.create('cardNumber', { style: numStyle });
     el.mount('[data-smoothr-card-number]');
-    console.log('[Stripe] Mounted iframe');
+    log('Mounted iframe');
     setTimeout(() => {
       const iframe = document.querySelector('[data-smoothr-card-number] iframe');
       const width = iframe?.getBoundingClientRect().width;
-      console.log('[Stripe] iframe bbox', width);
+      log('iframe bbox', width);
       if (iframe && width < 10) {
-        console.warn('[Stripe] iframe dead → remounting now...');
+        warn('iframe dead → remounting now...');
         cardNumberElement?.unmount?.();
         cardNumberElement = elements.create('cardNumber', { style: numStyle });
         cardNumberElement.mount('[data-smoothr-card-number]');
@@ -166,16 +188,16 @@ export async function mountCardFields() {
   if (expiryTarget && !existingExpiry) {
     await waitForInteractable(expiryTarget);
     const expiryStyle = elementStyleFromContainer(expiryTarget);
-    console.log('[Stripe] cardExpiry style', expiryStyle);
+    log('cardExpiry style', expiryStyle);
     const el = elements.create('cardExpiry', { style: expiryStyle });
     el.mount('[data-smoothr-card-expiry]');
-    console.log('[Stripe] Mounted iframe');
+    log('Mounted iframe');
     setTimeout(() => {
       const iframe = document.querySelector('[data-smoothr-card-expiry] iframe');
       const width = iframe?.getBoundingClientRect().width;
-      console.log('[Stripe] iframe bbox', width);
+      log('iframe bbox', width);
       if (iframe && width < 10) {
-        console.warn('[Stripe] iframe dead → remounting now...');
+        warn('iframe dead → remounting now...');
         el?.unmount?.();
         const remount = elements.create('cardExpiry', { style: expiryStyle });
         remount.mount('[data-smoothr-card-expiry]');
@@ -188,16 +210,16 @@ export async function mountCardFields() {
   if (cvcTarget && !existingCvc) {
     await waitForInteractable(cvcTarget);
     const cvcStyle = elementStyleFromContainer(cvcTarget);
-    console.log('[Stripe] cardCvc style', cvcStyle);
+    log('cardCvc style', cvcStyle);
     const el = elements.create('cardCvc', { style: cvcStyle });
     el.mount('[data-smoothr-card-cvc]');
-    console.log('[Stripe] Mounted iframe');
+    log('Mounted iframe');
     setTimeout(() => {
       const iframe = document.querySelector('[data-smoothr-card-cvc] iframe');
       const width = iframe?.getBoundingClientRect().width;
-      console.log('[Stripe] iframe bbox', width);
+      log('iframe bbox', width);
       if (iframe && width < 10) {
-        console.warn('[Stripe] iframe dead → remounting now...');
+        warn('iframe dead → remounting now...');
         el?.unmount?.();
         const remount = elements.create('cardCvc', { style: cvcStyle });
         remount.mount('[data-smoothr-card-cvc]');
