@@ -53,8 +53,8 @@ beforeEach(async () => {
 
   getCredMock = vi.fn(async () => ({ tokenization_key: 'tok_key' }));
 
-  vi.mock('../../features/checkout/getPublicCredential.js', () => ({
-    getPublicCredential: getCredMock
+  vi.mock('../../features/checkout/core/credentials.js', () => ({
+    getGatewayCredential: (...args: any[]) => getCredMock(...args)
   }));
 
   window.SMOOTHR_CONFIG = { storeId: 'store-1', active_payment_gateway: 'nmi' } as any;
@@ -87,7 +87,7 @@ describe('mountNMI', () => {
 
   it('loads tokenization key and injects script', { timeout: 20000 }, async () => {
     await triggerMount();
-    expect(getCredMock).toHaveBeenCalledWith('store-1', 'nmi', 'nmi');
+    expect(getCredMock).toHaveBeenCalledWith('nmi');
     const attrs = loadScriptOnce.mock.calls[0][1].attrs;
     expect(attrs['data-tokenization-key']).toBe('tok_key');
   });

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let styleSpy = vi.fn();
+let getCredMock;
 
 vi.mock('../../features/checkout/utils/authorizeNetIframeStyles.js', async () => {
   const actual = await vi.importActual('../../features/checkout/utils/authorizeNetIframeStyles.js');
@@ -13,17 +14,9 @@ vi.mock('../../features/checkout/utils/authorizeNetIframeStyles.js', async () =>
   };
 });
 
-vi.mock('../../../supabase/supabaseClient.js', () => {
-  const maybeSingle = vi.fn(async () => ({
-    data: { settings: { client_key: 'client', api_login_id: 'id' } },
-    error: null
-  }));
-  const eq2 = vi.fn(() => ({ maybeSingle }));
-  const eq1 = vi.fn(() => ({ eq: eq2 }));
-  const select = vi.fn(() => ({ eq: eq1 }));
-  const from = vi.fn(() => ({ select }));
-  return { supabase: { from }, ensureSupabaseSessionAuth: vi.fn() };
-});
+vi.mock('../../features/checkout/core/credentials.js', () => ({
+  getGatewayCredential: (...args) => getCredMock(...args)
+}));
 
 let createPaymentMethod;
 let mountCardFields;
@@ -34,7 +27,12 @@ beforeEach(async () => {
   vi.resetModules();
   styleSpy = vi.fn();
   document.body.innerHTML = '';
-  window.SMOOTHR_CONFIG = { storeId: 'store-1', debug: true };
+  getCredMock = vi.fn(async () => ({
+    client_key: 'client',
+    api_login_id: 'id',
+    transaction_key: 'tkey'
+  }));
+  window.SMOOTHR_CONFIG = { debug: true };
 
   ['card-number', 'card-expiry', 'card-cvc'].forEach(attr => {
     const div = document.createElement('div');

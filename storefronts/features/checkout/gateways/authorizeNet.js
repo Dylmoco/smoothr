@@ -1,4 +1,4 @@
-import { getPublicCredential } from '../getPublicCredential.js';
+import { getGatewayCredential } from '../core/credentials.js';
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js';
 import {
   applyAcceptStyles,
@@ -99,12 +99,20 @@ async function loadAcceptJs() {
 async function resolveCredentials() {
   if (clientKey && apiLoginID && transactionKey !== undefined)
     return { clientKey, apiLoginID };
-  const storeId = getConfig().storeId;
-  if (!storeId) return { clientKey: null, apiLoginID: null };
-  const cred = await getPublicCredential(storeId, 'authorizeNet');
-  clientKey = cred?.settings?.client_key || '';
-  apiLoginID = cred?.settings?.api_login_id || cred?.api_key || '';
-  transactionKey = cred?.settings?.transaction_key || '';
+  let cred = null;
+  try {
+    cred = await getGatewayCredential('authorizeNet');
+  } catch (e) {
+    warn('Credential fetch error:', e?.message || e);
+  }
+  clientKey = cred?.client_key ?? cred?.settings?.client_key ?? '';
+  apiLoginID =
+    cred?.api_login_id ?? cred?.settings?.api_login_id ?? cred?.api_key ?? '';
+  transactionKey =
+    cred?.transaction_key ?? cred?.settings?.transaction_key ?? '';
+  if (!clientKey) warn('Missing Authorize.Net client_key');
+  if (!apiLoginID) warn('Missing Authorize.Net api_login_id');
+  if (!transactionKey) warn('Missing Authorize.Net transaction_key');
   return { clientKey, apiLoginID };
 }
 
