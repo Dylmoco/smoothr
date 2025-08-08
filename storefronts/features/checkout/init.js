@@ -25,18 +25,6 @@ function forEachPayButton(fn) {
     .forEach(fn);
 }
 
-function showLoginPopup() {
-  const fn =
-    window?.Smoothr?.auth?.showLoginPopup ||
-    window?.smoothr?.auth?.showLoginPopup;
-  if (typeof fn === 'function') {
-    fn();
-  } else {
-    console.warn('[Smoothr] showLoginPopup not implemented');
-  }
-}
-
-
 const sdkUrls = {
   stripe: 'https://js.stripe.com/v3/',
   authorizeNet: 'https://jstest.authorize.net/v1/Accept.js',
@@ -200,11 +188,6 @@ export async function init(config = {}) {
       e.preventDefault();
       e.stopPropagation();
 
-      const { data } = await window.supabaseAuth.auth.getSession();
-      if (!data?.session) {
-        showLoginPopup();
-        return;
-      }
       const provider = getConfig().active_payment_gateway;
 
       if (isSubmitting) {

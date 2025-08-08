@@ -6,12 +6,38 @@ const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...ar
 
 export async function loadPublicConfig(storeId: string) {
   if (!storeId) return null;
-  try {
-    const { data, error } = await supabase
+
+  const fetchSettings = async () =>
+    await supabase
       .from('public_store_settings')
       .select('*')
       .eq('store_id', storeId)
       .maybeSingle();
+
+  try {
+    let { data, error } = await fetchSettings();
+
+    const authError =
+      error && (error.code === '403' || /jwt|token/i.test(error.message));
+    if (authError) {
+      warn('Config fetch returned 403, attempting session refresh');
+      try {
+        await supabase.auth.refreshSession();
+      } catch {
+        // ignore refresh errors
+      }
+      ({ data, error } = await fetchSettings());
+      if (error && (error.code === '403' || /jwt|token/i.test(error.message))) {
+        warn('Retry failed, clearing session and retrying anonymously');
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // ignore sign out errors
+        }
+        ({ data, error } = await fetchSettings());
+      }
+    }
+
     if (error) {
       warn('Store settings lookup failed:', error.message || error);
       return null;
