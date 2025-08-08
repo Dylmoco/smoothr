@@ -2,7 +2,7 @@
  * Handles order workflows and UI widgets for the storefront.
  */
 
-import { supabase } from '../../../supabase/supabaseClient.js';
+import { supabase } from '../../../supabase/browserClient.js';
 import { getConfig } from '../config/globalConfig.js';
 
 const { debug } = getConfig();

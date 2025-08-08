@@ -1,7 +1,7 @@
 import {
   supabase as authClient,
   ensureSupabaseSessionAuth
-} from '../../../supabase/supabaseClient.js';
+} from '../../../supabase/browserClient.js';
 import * as authExports from './index.js';
 import { loadPublicConfig } from '../config/sdkConfig.ts';
 import * as currency from '../currency/index.js';
