@@ -1,4 +1,4 @@
-import { getPublicCredential } from '../getPublicCredential.js';
+import { getGatewayCredential } from '../core/credentials.js';
 import { getConfig } from '../../config/globalConfig.js';
 
 let cachedKey;
@@ -9,13 +9,11 @@ const warn = (...a) => DEBUG && console.warn('[NMI]', ...a);
 
 export async function resolveTokenizationKey() {
   if (cachedKey !== undefined) return cachedKey;
-  const storeId = getConfig().storeId;
-  if (!storeId) return null;
 
   const gateway = getConfig().active_payment_gateway || 'nmi';
 
   try {
-    const cred = await getPublicCredential(storeId, 'nmi', gateway);
+    const cred = await getGatewayCredential(gateway);
     if (cred?.api_key) {
       cachedKey = cred.api_key;
     } else if (cred?.tokenization_key) {
