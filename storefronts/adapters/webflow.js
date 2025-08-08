@@ -1,27 +1,43 @@
 import { initCurrencyDom } from './webflow/currencyDomAdapter.js';
 import { getConfig } from '../features/config/globalConfig.js';
 
-export function initAdapter(config) {
-  // Placeholder for future Webflow-specific setup using `config` if needed.
+const legacyMap = {
+  'data-smoothr-pay': 'pay',
+  'data-smoothr-add': 'add-to-cart',
+  'data-smoothr-remove': 'remove-from-cart',
+  'data-smoothr-login': 'login',
+  'data-smoothr-logout': 'logout',
+  'data-smoothr-currency': 'currency'
+};
 
-  const normalizeLegacyAttributes = () => {
-    const mapping = {
-      'data-smoothr-pay': 'pay',
-      'data-smoothr-add': 'add-to-cart',
-      'data-smoothr-remove': 'remove-from-cart',
-      'data-smoothr-login': 'login',
-      'data-smoothr-logout': 'logout',
-      'data-smoothr-currency': 'currency'
-    };
+function normalizeLegacyAttributes(root = document) {
+  Object.entries(legacyMap).forEach(([legacyAttr, canonical]) => {
+    root.querySelectorAll(`[${legacyAttr}]`).forEach((el) => {
+      if (!el.hasAttribute('data-smoothr')) {
+        el.setAttribute('data-smoothr', canonical);
+        if (getConfig().debug)
+          console.log(
+            `[Smoothr Webflow] normalized ${legacyAttr} -> data-smoothr="${canonical}"`
+          );
+      }
+    });
+  });
+}
 
-    Object.entries(mapping).forEach(([legacyAttr, canonical]) => {
-      document.querySelectorAll(`[${legacyAttr}]`).forEach((el) => {
-        if (!el.hasAttribute('data-smoothr')) {
-          el.setAttribute('data-smoothr', canonical);
-        }
+function observeDOMChanges() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) normalizeLegacyAttributes(node);
       });
     });
-  };
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  return observer;
+}
+
+export function initAdapter(config) {
+  // Placeholder for future Webflow-specific setup using `config` if needed.
 
   return {
     domReady: () =>
@@ -44,7 +60,8 @@ export function initAdapter(config) {
         } else {
           document.addEventListener('DOMContentLoaded', run, { once: true });
         }
-      })
+      }),
+    observeDOMChanges,
   };
 }
 
