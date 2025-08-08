@@ -1,0 +1,64 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+const getSessionMock = vi.fn();
+const ensureMock = vi.fn();
+
+vi.mock('../../../supabase/browserClient.js', () => ({
+  default: { auth: { getSession: getSessionMock }, supabaseUrl: 'https://supabase.test' },
+  ensureSupabaseSessionAuth: ensureMock
+}));
+
+vi.mock('../../features/config/globalConfig.js', () => ({
+  getConfig: () => ({ storeId: 'store-1' })
+}));
+
+describe('credential helper', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon';
+  });
+
+  it('sends anonymous headers for guest session', async () => {
+    getSessionMock.mockResolvedValue({ data: { session: null } });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ publishable_key: 'pk' }) });
+    global.fetch = fetchMock;
+
+    const { getGatewayCredential } = await import('../../core/credentials.js');
+    await getGatewayCredential('stripe');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://supabase.test/functions/v1/get_gateway_credentials');
+    expect(opts.headers).toEqual({
+      'Content-Type': 'application/json',
+      apikey: 'anon'
+    });
+    expect(opts.body).toBe(JSON.stringify({ store_id: 'store-1', gateway: 'stripe' }));
+  });
+
+  it('includes bearer token when session exists', async () => {
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'token-123' } } });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ publishable_key: 'pk' }) });
+    global.fetch = fetchMock;
+
+    const { getGatewayCredential } = await import('../../core/credentials.js');
+    await getGatewayCredential('stripe');
+
+    const [, opts] = fetchMock.mock.calls[0];
+    expect(opts.headers.Authorization).toBe('Bearer token-123');
+  });
+
+  it('returns empty credentials on non-200 response', async () => {
+    getSessionMock.mockResolvedValue({ data: { session: null } });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ message: 'fail' })
+    });
+    global.fetch = fetchMock;
+
+    const { getGatewayCredential } = await import('../../core/credentials.js');
+    const res = await getGatewayCredential('stripe');
+    expect(res).toEqual({ publishable_key: null, tokenization_key: null });
+  });
+});
