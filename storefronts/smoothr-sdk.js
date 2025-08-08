@@ -10,7 +10,7 @@ const scriptEl = document.getElementById('smoothr-sdk');
 const storeId = scriptEl?.dataset?.storeId || null;
 const platform =
   scriptEl?.dataset?.platform || scriptEl?.getAttribute?.('platform') || null;
-const debug = new URLSearchParams(window.location.search).get('smoothr-debug') === 'true';
+const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
 
 if (!scriptEl || !storeId) {
   if (debug) {

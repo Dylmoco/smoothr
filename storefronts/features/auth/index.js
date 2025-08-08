@@ -387,7 +387,7 @@ const auth = {
 
   const debugQuery =
     typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('smoothr-debug') === 'true';
+    new URLSearchParams(window.location.search).has('smoothr-debug');
   debug =
     typeof config.debug === 'boolean'
       ? config.debug
