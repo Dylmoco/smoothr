@@ -4,6 +4,13 @@ Adapters for Webflow, Framer, Webstudio, and other platforms.
 
 Cart DOM helpers like `addToCart.js` and `renderCart.js` now live in `../features/cart`.
 
+## Legacy Attribute Normalization
+
+The Webflow adapter upgrades deprecated attributes like `data-smoothr-pay` or
+`data-smoothr-add` to their modern `data-smoothr` equivalents on DOM ready. A
+`MutationObserver` watches for elements inserted later and normalizes them as
+well. Set `window.SMOOTHR_CONFIG.debug = true` to log each normalized element.
+
 ## Currency dropdown
 
 `currencyDomAdapter.js` replaces any element marked with `data-smoothr-price` or
