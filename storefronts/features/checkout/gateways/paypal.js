@@ -14,7 +14,8 @@ export function initPayPal(opts) {
 
 export async function mountCardFields() {
   if (mounted) return;
-  const container = document.querySelector('[data-smoothr-pay]');
+  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+  const container = document.querySelector('[data-smoothr="pay"], [data-smoothr-pay]');
   if (!container) return;
   mounted = true;
 
@@ -114,9 +115,12 @@ export async function mountCardFields() {
       onError: err => console.error('[Smoothr PayPal]', err)
     });
 
-  document.querySelectorAll('[data-smoothr-pay]').forEach(el => {
-    paypalButtons.render(el);
-  });
+  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+  document
+    .querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]')
+    .forEach(el => {
+      paypalButtons.render(el);
+    });
 
   // --- Hosted Fields Integration ---
   // After the Buttons render, check if the HostedFields API is available.
@@ -166,8 +170,11 @@ export async function mountCardFields() {
       }
     })
       .then(hostedFields => {
-        // Attach click handlers to any element with [data-smoothr-pay]
-        document.querySelectorAll('[data-smoothr-pay]').forEach(btn => {
+        // Attach click handlers to any element with [data-smoothr="pay"] or [data-smoothr-pay]
+        // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+        document
+          .querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]')
+          .forEach(btn => {
           btn.addEventListener('click', async ev => {
             ev.preventDefault();
             if (isSubmitting) return;

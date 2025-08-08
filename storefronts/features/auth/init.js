@@ -77,6 +77,46 @@ async function domReady() {
   }
 }
 
+export async function waitForSessionReady() {
+  await ensureSupabaseSessionAuth();
+  try {
+    const {
+      data: { session }
+    } = await authClient.auth.getSession();
+    if (!session) {
+      let hasGhostTokens = false;
+      try {
+        const raw = authClient.auth.storage?.getItem?.(
+          authClient.auth.storageKey
+        );
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const tokenHolder = parsed?.currentSession || parsed;
+          hasGhostTokens = Boolean(
+            tokenHolder?.access_token || tokenHolder?.refresh_token
+          );
+        }
+      } catch {
+        // ignore JSON/storage errors
+      }
+      if (hasGhostTokens) {
+        console.warn(
+          '[Smoothr] Detected ghost session — clearing broken Supabase state'
+        );
+        try {
+          await authClient.auth.signOut({ scope: 'local' });
+        } catch {
+          // ignore signOut errors
+        }
+      }
+    } else {
+      console.log('[Smoothr] Auth restored');
+    }
+  } catch {
+    // ignore session check errors
+  }
+}
+
 export async function init(config = {}) {
   if (initialized) return window.Smoothr?.auth;
 
@@ -107,7 +147,7 @@ export async function init(config = {}) {
     }
   }
 
-  await ensureSupabaseSessionAuth();
+  await waitForSessionReady();
 
   try {
     await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');

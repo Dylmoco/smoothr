@@ -174,7 +174,7 @@ describe("webflow add-to-cart binding", () => {
     expect(window.Smoothr.cart.addButtonPollingRetries).toBe(10);
     expect(warnSpy).toHaveBeenLastCalledWith(
       "[Smoothr Cart]",
-      "No [data-smoothr-add] elements after 10 attempts—feature disabled"
+      "No [data-smoothr=\"add-to-cart\"] elements after 10 attempts—feature disabled"
     );
     warnSpy.mockRestore();
     vi.useRealTimers();

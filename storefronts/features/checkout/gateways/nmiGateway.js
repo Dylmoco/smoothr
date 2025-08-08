@@ -131,7 +131,10 @@ function configureCollectJS() {
         ])
       },
       callback(response) {
-        const buttons = Array.from(document.querySelectorAll('[data-smoothr-pay]'))
+        // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+        const buttons = Array.from(
+          document.querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]')
+        )
         if (!response.token) {
           console.error('[NMI] Tokenization failed', response.reason)
           alert('Please check your payment details and try again.')
@@ -144,7 +147,10 @@ function configureCollectJS() {
     })
 
     // Guarded click handler
-    const buttons = Array.from(document.querySelectorAll('[data-smoothr-pay]'))
+    // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+    const buttons = Array.from(
+      document.querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]')
+    )
     const tokenFn = CollectJS.tokenize || CollectJS.requestToken || CollectJS.startPaymentRequest || null
     buttons.forEach(btn => {
       btn.addEventListener('click', ev => {
@@ -164,7 +170,12 @@ function configureCollectJS() {
   } catch (e) {
     console.error('[NMI] Config error', e)
     alert('Setup error. Refresh or contact support.')
-    resetSubmission(Array.from(document.querySelectorAll('[data-smoothr-pay]')))
+    // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
+    resetSubmission(
+      Array.from(
+        document.querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]')
+      )
+    )
     rejectConfig(e)
   }
 }

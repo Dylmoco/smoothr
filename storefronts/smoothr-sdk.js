@@ -1,5 +1,6 @@
-import { supabase } from '../supabase/supabaseClient.js';
 import { mergeConfig } from './features/config/globalConfig.js';
+import { loadPublicConfig } from './features/config/sdkConfig.ts';
+import { waitForSessionReady } from './features/auth/init.js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
@@ -36,12 +37,9 @@ if (!scriptEl || !storeId) {
   (async () => {
     if (storeId) {
       try {
+        await waitForSessionReady();
         log('Fetching store settings');
-        const { data } = await supabase
-          .from('public_store_settings')
-          .select('active_payment_gateway')
-          .eq('store_id', storeId)
-          .maybeSingle();
+        const data = await loadPublicConfig(storeId);
         config.settings = { ...(config.settings || {}), ...(data || {}) };
         log('Store settings loaded', config.settings);
       } catch (err) {
@@ -79,7 +77,6 @@ if (!scriptEl || !storeId) {
     const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
     const hasCartTrigger =
       document.querySelector('[data-smoothr="add-to-cart"]') ||
-      document.querySelector('[data-smoothr-add]') ||
       document.querySelector('[data-smoothr-total]') ||
       document.querySelector('[data-smoothr-cart]');
 

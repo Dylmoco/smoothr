@@ -5,11 +5,16 @@ let button;
 describe('remove button binding', () => {
   beforeEach(() => {
     vi.resetModules();
-    button = { addEventListener: vi.fn(), getAttribute: vi.fn(() => '1') };
+    button = {
+      addEventListener: vi.fn(),
+      getAttribute: vi.fn(attr => (attr === 'data-product-id' ? '1' : null))
+    };
     global.console = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
     global.window = { Smoothr: { cart: { removeItem: vi.fn(), renderCart: vi.fn() } } };
     global.document = {
-      querySelectorAll: vi.fn(sel => (sel === '[data-smoothr-remove]' ? [button] : []))
+      querySelectorAll: vi.fn(sel =>
+        sel === '[data-smoothr="remove-from-cart"]' ? [button] : []
+      )
     };
   });
 

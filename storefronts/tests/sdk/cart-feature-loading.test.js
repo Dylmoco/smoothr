@@ -37,7 +37,6 @@ describe("cart feature loading", () => {
 
   it.each([
     '[data-smoothr="add-to-cart"]',
-    '[data-smoothr-add]',
     '[data-smoothr-total]',
     '[data-smoothr-cart]'
   ])("initializes cart when trigger %s exists", async selector => {

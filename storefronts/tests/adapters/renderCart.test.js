@@ -37,7 +37,7 @@ beforeEach(async () => {
   imageEl.setAttribute('data-smoothr-image', '');
 
   const removeBtn = document.createElement('button');
-  removeBtn.setAttribute('data-smoothr-remove', '');
+  removeBtn.setAttribute('data-smoothr', 'remove-from-cart');
 
   template.append(
     imageEl,
@@ -125,7 +125,9 @@ describe('renderCart', () => {
   it('remove buttons trigger cart.removeItem', async () => {
     const renderCart = await loadRenderCart();
     renderCart();
-    const btn = container.querySelector('.cart-rendered [data-smoothr-remove]');
+    const btn = container.querySelector(
+      '.cart-rendered [data-smoothr="remove-from-cart"]'
+    );
     btn.click();
     expect(removeItemMock).toHaveBeenCalledWith('p2');
   });

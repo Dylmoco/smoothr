@@ -41,6 +41,21 @@ function updateGlobalAuth() {
   }
 }
 
+function showLoginPopup() {
+  const fn =
+    window?.Smoothr?.auth?.showLoginPopup ||
+    window?.smoothr?.auth?.showLoginPopup;
+  if (typeof fn === 'function') {
+    fn();
+  } else {
+    window.dispatchEvent(
+      new CustomEvent('smoothr:open-auth', {
+        detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
+      })
+    );
+  }
+}
+
 async function login(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -337,12 +352,8 @@ function bindAuthElements(root = document) {
         log('Redirecting to dashboard:', url);
         window.location.href = url;
       } else {
-        log("Dispatching 'smoothr:open-auth' event");
-        window.dispatchEvent(
-          new CustomEvent('smoothr:open-auth', {
-            detail: { targetSelector: '[data-smoothr="auth-wrapper"]' }
-          })
-        );
+        log('Opening login popup');
+        showLoginPopup();
       }
     };
     document.addEventListener('click', document.__smoothrAccountAccessHandler);
