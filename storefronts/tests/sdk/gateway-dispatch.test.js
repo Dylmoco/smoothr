@@ -51,14 +51,23 @@ function setupEnv(modulePath) {
     default: vi.fn()
   }));
 
-  const payBtn = { tagName: "button", addEventListener: vi.fn() };
+  const payBtn = {
+    tagName: "button",
+    addEventListener: vi.fn(),
+    dataset: { smoothr: "pay" }
+  };
   global.document = {
     querySelector: vi.fn(sel => {
-      if (sel === "[data-smoothr-pay]") return payBtn;
+      if (sel === "[data-smoothr=\"pay\"]") return payBtn;
+      if (sel === "[data-smoothr=\"pay\"], [data-smoothr-pay]") return payBtn;
       if (sel === "#smoothr-card-styles") return null;
       return null;
     }),
-    querySelectorAll: vi.fn(sel => (sel === "[data-smoothr-pay]" ? [payBtn] : [])),
+    querySelectorAll: vi.fn(sel =>
+      sel === "[data-smoothr=\"pay\"], [data-smoothr-pay]" || sel === "[data-smoothr=\"pay\"]"
+        ? [payBtn]
+        : []
+    ),
     createElement: vi.fn(() => ({ style: {}, id: "", textContent: "" })),
     head: { appendChild: vi.fn() }
   };
