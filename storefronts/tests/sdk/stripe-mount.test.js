@@ -9,7 +9,7 @@ vi.mock('../../features/checkout/utils/stripeIframeStyles.js', () => ({
   getFonts: vi.fn(() => []),
   elementStyleFromContainer: vi.fn(() => ({}))
 }));
-vi.mock('../../features/checkout/core/credentials.js', () => ({
+vi.mock('../../core/credentials.js', () => ({
   getGatewayCredential: (...args) => getCredMock(...args)
 }));
 
@@ -114,6 +114,19 @@ describe('stripe element mounting', () => {
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-number]', cardNumberEl);
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-expiry]', cardExpiryEl);
     expect(styleSpy).toHaveBeenCalledWith('[data-smoothr-card-cvc]', cardCvcEl);
+  });
+
+  it('warns and aborts when credential lookup returns null', async () => {
+    getCredMock.mockResolvedValue(null);
+    global.window.SMOOTHR_CONFIG.debug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { mountCardFields } = await import('../../features/checkout/gateways/stripeGateway.js');
+    await mountCardFields();
+    await vi.advanceTimersByTimeAsync(500);
+    vi.useRealTimers();
+    expect(warnSpy).toHaveBeenCalled();
+    expect(elementsCreate).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it('waitForVisible resolves when width becomes visible', async () => {

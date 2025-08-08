@@ -53,7 +53,7 @@ beforeEach(async () => {
 
   getCredMock = vi.fn(async () => ({ tokenization_key: 'tok_key' }));
 
-  vi.mock('../../features/checkout/core/credentials.js', () => ({
+  vi.mock('../../core/credentials.js', () => ({
     getGatewayCredential: (...args: any[]) => getCredMock(...args)
   }));
 
@@ -96,6 +96,18 @@ describe('mountNMI', () => {
     await triggerMount();
     await expect(ready()).resolves.toBeUndefined();
     expect(window.CollectJS.configure).toHaveBeenCalled();
+  });
+
+  it('warns and rejects when tokenization key is missing', { timeout: 20000 }, async () => {
+    getCredMock.mockResolvedValue(null);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const readyPromise = mountNMI();
+    await expect(readyPromise).rejects.toThrow('Tokenization key missing');
+    expect(warnSpy).toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+    alertSpy.mockRestore();
   });
 
   it('rejects and logs error if CollectJS fails to load', { timeout: 20000 }, async () => {
