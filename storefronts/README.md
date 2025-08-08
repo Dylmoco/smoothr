@@ -114,7 +114,7 @@ persisted in `localStorage`.
 
 ## Cart UI helpers
 
-Helpers for rendering the cart and binding `[data-smoothr-add]` buttons live in
+Helpers for rendering the cart and binding `[data-smoothr="add-to-cart"]` buttons live in
 `./features/cart`. Import them as needed:
 
 ```javascript

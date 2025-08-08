@@ -27,17 +27,19 @@ export function bindRemoveFromCartButtons() {
   const Smoothr = window.Smoothr || window.smoothr;
   if (!Smoothr?.cart) return;
 
-  document.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
-    if (btn.__smoothrBound) return;
-    const id = btn.getAttribute('data-smoothr-remove');
-    btn.addEventListener('click', async () => {
+  document
+    .querySelectorAll('[data-smoothr="remove-from-cart"]')
+    .forEach(btn => {
+      if (btn.__smoothrBound) return;
+      const id = btn.getAttribute('data-product-id');
+      btn.addEventListener('click', async () => {
       await Smoothr.cart.removeItem(id);
       if (typeof Smoothr.cart.renderCart === 'function') {
         await Smoothr.cart.renderCart();
       }
+      });
+      btn.__smoothrBound = true;
     });
-    btn.__smoothrBound = true;
-  });
 }
 
 export function renderCart() {
@@ -141,18 +143,20 @@ export function renderCart() {
         }
       }
 
-      clone.querySelectorAll('[data-smoothr-remove]').forEach(btn => {
-        btn.setAttribute('data-smoothr-remove', item.product_id);
-        if (!btn.__smoothrBound) {
-          btn.addEventListener('click', async () => {
-            await Smoothr.cart.removeItem(item.product_id);
-            if (typeof Smoothr.cart.renderCart === 'function') {
-              await Smoothr.cart.renderCart();
-            }
-          });
-          btn.__smoothrBound = true;
+      clone.querySelectorAll('[data-smoothr="remove-from-cart"]').forEach(
+        btn => {
+          btn.setAttribute('data-product-id', item.product_id);
+          if (!btn.__smoothrBound) {
+            btn.addEventListener('click', async () => {
+              await Smoothr.cart.removeItem(item.product_id);
+              if (typeof Smoothr.cart.renderCart === 'function') {
+                await Smoothr.cart.renderCart();
+              }
+            });
+            btn.__smoothrBound = true;
+          }
         }
-      });
+      );
 
       template.parentNode.insertBefore(clone, template.nextSibling);
     });

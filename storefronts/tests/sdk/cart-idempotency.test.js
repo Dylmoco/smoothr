@@ -21,7 +21,7 @@ describe("cart init idempotency", () => {
     };
     global.document = {
       querySelectorAll: vi.fn((sel) =>
-        sel === "[data-smoothr-add]" ? [button] : []
+        sel === "[data-smoothr=\"add-to-cart\"]" ? [button] : []
       ),
     };
   });

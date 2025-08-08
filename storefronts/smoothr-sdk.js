@@ -79,7 +79,6 @@ if (!scriptEl || !storeId) {
     const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
     const hasCartTrigger =
       document.querySelector('[data-smoothr="add-to-cart"]') ||
-      document.querySelector('[data-smoothr-add]') ||
       document.querySelector('[data-smoothr-total]') ||
       document.querySelector('[data-smoothr-cart]');
 

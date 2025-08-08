@@ -41,7 +41,6 @@ describe("cart DOM trigger", () => {
 
   it.each([
     '[data-smoothr="add-to-cart"]',
-    '[data-smoothr-add]',
     '[data-smoothr-total]',
     '[data-smoothr-cart]'
   ])("imports cart when %s is present", async selector => {

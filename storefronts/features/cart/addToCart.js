@@ -23,9 +23,9 @@ export function bindAddToCartButtons() {
     return;
   }
 
-  const buttons = document.querySelectorAll('[data-smoothr-add]');
+  const buttons = document.querySelectorAll('[data-smoothr="add-to-cart"]');
   if (debug && !foundLogShown)
-    log(`found ${buttons.length} [data-smoothr-add] elements`);
+    log(`found ${buttons.length} [data-smoothr="add-to-cart"] elements`);
   foundLogShown = true;
 
   if (buttons.length === 0) {
@@ -38,7 +38,7 @@ export function bindAddToCartButtons() {
     Smoothr.cart.addButtonPollingRetries = pollAttempts;
     if (pollAttempts >= MAX_POLL_ATTEMPTS) {
       warn(
-        `No [data-smoothr-add] elements after ${MAX_POLL_ATTEMPTS} attempts—feature disabled`
+        `No [data-smoothr="add-to-cart"] elements after ${MAX_POLL_ATTEMPTS} attempts—feature disabled`
       );
       Smoothr.cart.addButtonPollingDisabled = true;
       return;
@@ -52,7 +52,7 @@ export function bindAddToCartButtons() {
   }
 
     buttons.forEach(btn => {
-      if (debug) log('🔗 binding [data-smoothr-add] button', btn);
+      if (debug) log('🔗 binding [data-smoothr="add-to-cart"] button', btn);
       if (btn.__smoothrBound) return;
       btn.__smoothrBound = true;
 
