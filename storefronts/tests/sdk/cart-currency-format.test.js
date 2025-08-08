@@ -11,7 +11,7 @@ describe("cart totals use currency formatter", () => {
         if (sel === "[data-smoothr-total]") return [totalEl];
         if (sel === "[data-smoothr-template]") return [];
         if (sel === "[data-smoothr-cart]") return [];
-        if (sel === "[data-smoothr-remove]") return [];
+        if (sel === "[data-smoothr=\"remove-from-cart\"]") return [];
         return [];
       }),
     };

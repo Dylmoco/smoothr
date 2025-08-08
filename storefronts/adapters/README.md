@@ -68,7 +68,7 @@ item. Fields inside the template can use the following bindings:
 - `data-smoothr-price`
 - `data-smoothr-subtotal`
 - `data-smoothr-image`
-- `data-smoothr-remove`
+- `data-smoothr="remove-from-cart"`
 - `data-smoothr-total` (outside the template)
 
 When `renderCart()` runs it removes previously rendered rows, clones the
@@ -82,7 +82,7 @@ styles.
     <img data-smoothr-image />
     <span data-smoothr-name></span>
     <span data-smoothr-price></span>
-    <button data-smoothr-remove>Remove</button>
+    <button data-smoothr="remove-from-cart">Remove</button>
   </div>
 </div>
 <div>Total: <span data-smoothr-total></span></div>
