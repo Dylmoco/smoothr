@@ -1,0 +1,81 @@
+name: Supabase Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+
+permissions:
+  contents: read
+
+jobs:
+  supabase-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    env:
+      SUPABASE_ACCESS_TOKEN_PROD: ${{ secrets.SUPABASE_ACCESS_TOKEN_PROD }}
+      SUPABASE_PROJECT_REF_PROD: ${{ secrets.SUPABASE_PROJECT_REF_PROD }}
+      STORE_UUID: ${{ secrets.STORE_UUID_PROD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run tests
+        run: npm test
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Supabase login
+        run: supabase login --token "$SUPABASE_ACCESS_TOKEN_PROD"
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD"
+
+      - name: Run guard script
+        run: bash scripts/supabase-guard.sh
+
+      - name: Push database migrations
+        run: supabase db push
+
+      - name: Deploy Edge Functions
+        run: |
+          for dir in supabase/functions/*; do
+            if [ -d "$dir" ]; then
+              name="$(basename "$dir")"
+              supabase functions deploy "$name" --no-verify-jwt
+            fi
+          done
+
+      - name: Run smoke tests
+        env:
+          SUPABASE_PROJECT_REF_PROD: ${{ secrets.SUPABASE_PROJECT_REF_PROD }}
+          STORE_UUID: ${{ secrets.STORE_UUID_PROD }}
+        run: |
+          set -euo pipefail
+          base_url="https://${SUPABASE_PROJECT_REF_PROD}.functions.supabase.co"
+          test_fn() {
+            local endpoint=$1
+            local payload=$2
+            http_code=$(curl -sS -o resp.json -w "%{http_code}" -X POST "$base_url/$endpoint" -H "Content-Type: application/json" -d "$payload")
+            if [ "$http_code" != "200" ]; then
+              echo "$endpoint returned status $http_code"
+              cat resp.json
+              exit 1
+            fi
+            if jq -e 'to_entries | any(.key | test("secret|password"))' resp.json >/dev/null; then
+              echo "$endpoint response contains forbidden fields"
+              cat resp.json
+              exit 1
+            fi
+            rm resp.json
+          }
+          test_fn get_public_store_settings "{\"store_id\":\"$STORE_UUID\"}"
+          test_fn get_gateway_credentials "{\"store_id\":\"$STORE_UUID\",\"gateway\":\"nmi\"}"
+
