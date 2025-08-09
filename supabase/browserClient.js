@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 const storageKey = 'smoothr-browser-client';
 const globalKey = `__supabaseAuthClient${storageKey}`;
 
+const globalScope = typeof window !== 'undefined' ? window : globalThis;
+const debug = (globalScope.SMOOTHR_CONFIG || {}).debug;
+
 const supabase =
   globalThis[globalKey] ||
   (globalThis[globalKey] = createClient(
@@ -23,7 +26,7 @@ async function ensureSupabaseSessionAuth() {
 
     if (access_token && refresh_token) {
       await supabase.auth.setSession({ access_token, refresh_token });
-    } else {
+    } else if (debug && !access_token && !refresh_token) {
       console.warn('[Smoothr] Missing access or refresh token — skipping session restore');
     }
   } catch {
