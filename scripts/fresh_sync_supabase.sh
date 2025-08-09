@@ -38,7 +38,7 @@ echo "==> Linking Supabase project"
 supabase link --project-ref "$PROJECT_REF"
 
 echo "==> Pulling live schema into supabase/schema.sql"
-supabase db pull --yes
+supabase db pull
 git add supabase/schema.sql
 git commit -m "chore(supabase): pull live schema.sql from prod (baseline)" || true
 
