@@ -1,3 +1,28 @@
+create or replace function public.get_public_store_settings(p_store_id uuid)
+returns public.public_store_settings
+language sql
+security definer
+set search_path = public
+as $$
+  select * from public_store_settings where store_id = p_store_id;
+$$;
+
+create or replace function public.get_public_gateway_credentials(store_id uuid, gateway text)
+returns table(publishable_key text, tokenization_key text)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    settings->>'publishable_key' as publishable_key,
+    settings->>'tokenization_key' as tokenization_key
+  from store_integrations
+  where store_id = get_public_gateway_credentials.store_id
+    and sandbox = false
+    and coalesce(gateway, settings->>'gateway') = get_public_gateway_credentials.gateway
+  limit 1;
+$$;
+
 drop policy if exists "customer_payment_profiles_admin" on "public"."customer_payment_profiles";
 create policy "customer_payment_profiles_admin"
 on "public"."customer_payment_profiles"
@@ -450,3 +475,12 @@ with check (((customer_id = auth.uid()) OR (EXISTS ( SELECT 1
   WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
 
 
+
+-- revoke privileges
+revoke all on function public.get_public_store_settings(uuid) from public;
+revoke all on function public.get_public_gateway_credentials(uuid, text) from public;
+
+-- grant privileges
+grant execute on function public.get_public_store_settings(uuid) to anon;
+grant execute on function public.get_public_store_settings(uuid) to authenticated;
+grant execute on function public.get_public_gateway_credentials(uuid, text) to anon;
