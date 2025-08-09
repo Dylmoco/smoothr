@@ -32,11 +32,14 @@
 --   discounts_admin_write: all (public) 
 
 -- Table: notifications
---   notifications_admin_select: select (public) 
---   notifications_admin_write: all (public) 
+--   notifications_admin_select: select (public)
+--   notifications_admin_write: all (public)
+
+-- Table: public_store_settings
+--   public_read: select (anon, authenticated)
 
 -- Table: order_items
---   order_items_customer_select: select (public) 
+--   order_items_customer_select: select (public)
 
 -- Table: orders
 --   orders_customer_select_insert: select, insert (public) 

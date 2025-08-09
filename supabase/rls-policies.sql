@@ -314,9 +314,18 @@ for select
 to public
 using (((referrer_id = auth.uid()) OR (EXISTS ( SELECT 1
    FROM user_stores us
-  WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
+   WHERE ((us.customer_id = auth.uid()) AND (us.role = 'admin'::text))))));
 
+drop policy if exists "public_read" on "public"."public_store_settings";
+create policy "public_read"
+on "public"."public_store_settings"
+as permissive
+for select
+to anon, authenticated
+using ((store_id = current_setting('request.jwt.claim.store_id', true)::uuid));
 
+grant select on table "public"."public_store_settings" to "anon";
+grant select on table "public"."public_store_settings" to "authenticated";
 drop policy if exists "referrals_admin_write" on "public"."referrals";
 create policy "referrals_admin_write"
 on "public"."referrals"

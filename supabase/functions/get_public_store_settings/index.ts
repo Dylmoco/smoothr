@@ -97,7 +97,7 @@ serve(async (req)=>{
         });
       }
     }
-    const { data, error } = await supabase.from("public_store_settings").select("*").eq("store_id", store_id).maybeSingle();
+    const { data, error } = await supabase.rpc("get_public_store_settings", { p_store_id: store_id }).maybeSingle();
     if (error) {
       errorLog("Query error", error);
       return new Response(JSON.stringify({
