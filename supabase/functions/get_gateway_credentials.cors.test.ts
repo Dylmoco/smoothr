@@ -14,14 +14,8 @@ beforeEach(() => {
   handler = undefined as any;
   (globalThis as any).Deno = { env: { get: () => '' } };
   createClientMock = vi.fn(() => ({
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          eq: () => ({
-            maybeSingle: async () => ({ data: null, error: { message: 'nope' } }),
-          }),
-        }),
-      }),
+    rpc: () => ({
+      maybeSingle: async () => ({ data: null, error: { message: 'nope' } }),
     }),
   }));
 
