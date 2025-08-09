@@ -1,7 +1,9 @@
 [functions.proxy-live-rates]
+enabled = true
 verify_jwt = false
 
 [functions.webflow-order-handler]
+enabled = true
 verify_jwt = false
 
 [functions.get_gateway_credentials]
