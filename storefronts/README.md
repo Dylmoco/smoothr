@@ -192,7 +192,7 @@ setting on the client by defining the following snippet before loading the SDK:
 A Network Merchants (NMI) integration is also supported. Create a new record in
 `store_integrations` with either `gateway` or `settings.gateway` set to `nmi`
 and place your credentials in the `settings` JSON column. The
-`public_store_integration_credentials` view coalesces the `gateway` column with
+`get_public_gateway_credentials` function coalesces the `gateway` column with
 `settings.gateway` so either approach works:
 
 ```json
@@ -201,15 +201,12 @@ and place your credentials in the `settings` JSON column. The
   "tokenization_key": "<TOKENIZATION_KEY>"
 }
 ```
-The tokenization key can be fetched anonymously from the
-`public_store_integration_credentials` view:
+The tokenization key can be fetched anonymously via the
+`get_public_gateway_credentials` function:
 
 ```js
 const { data } = await supabase
-  .from('public_store_integration_credentials')
-  .select('tokenization_key')
-  .eq('store_id', '<store-id>')
-  .eq('gateway', 'nmi')
+  .rpc('get_public_gateway_credentials', { store_id: '<store-id>', gateway: 'nmi' })
   .maybeSingle();
 const key = data?.tokenization_key;
 ```

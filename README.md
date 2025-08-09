@@ -189,8 +189,8 @@ the `publishable_key` and `secret_key` under the `settings` column:
 }
 ```
 
-The checkout SDK reads `publishable_key` from the
-`public_store_integration_credentials` view when fetching configuration for a
+The checkout SDK reads `publishable_key` via the
+`get_public_gateway_credentials` function when fetching configuration for a
 store. Activate the gateway by setting
 `public_store_settings.active_payment_gateway` to `stripe` (or override it on
 the client via `window.SMOOTHR_CONFIG.active_payment_gateway`).
@@ -200,7 +200,7 @@ the client via `window.SMOOTHR_CONFIG.active_payment_gateway`).
 To enable NMI create a row in the `store_integrations` table with `gateway`
 set to `nmi` (or set `settings.gateway` to `nmi`) and store both the API key
 and tokenization key under the `settings` column. The tokenization key is
-exposed anonymously through the `public_store_integration_credentials` view,
+exposed anonymously via the `get_public_gateway_credentials` function,
 which coalesces the `gateway` column with `settings.gateway`:
 
 ```json
@@ -214,10 +214,7 @@ Retrieve the key with Supabase:
 
 ```js
 const { data } = await supabase
-  .from('public_store_integration_credentials')
-  .select('tokenization_key')
-  .eq('store_id', '<store-id>')
-  .eq('gateway', 'nmi')
+  .rpc('get_public_gateway_credentials', { store_id: '<store-id>', gateway: 'nmi' })
   .maybeSingle();
 const key = data?.tokenization_key;
 ```
