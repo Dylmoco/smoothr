@@ -73,43 +73,10 @@ serve(async (req)=>{
         }
       });
     }
-    const authHeader = req.headers.get("Authorization");
-    const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_ANON_KEY"), authHeader ? {
-      global: {
-        headers: {
-          Authorization: authHeader
-        }
-      }
-    } : undefined);
-    if (authHeader) {
-      const { data: user, error } = await supabase.auth.getUser();
-      if (error || !user?.user) {
-        return new Response(JSON.stringify({
-          error: "invalid_request",
-          message: "invalid token"
-        }), {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        });
-      }
-      const claimStoreId = user.user.user_metadata?.store_id;
-      if (claimStoreId && claimStoreId !== store_id) {
-        return new Response(JSON.stringify({
-          error: "invalid_request",
-          message: "store_id claim mismatch"
-        }), {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        });
-      }
-    }
-    const { data, error } = await supabase.from("public_store_integration_credentials").select("publishable_key, tokenization_key, gateway, store_id").eq("store_id", store_id).eq("gateway", gateway).maybeSingle();
+    const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_ANON_KEY"));
+    const { data, error } = await supabase
+      .rpc("get_public_gateway_credentials", { store_id, gateway })
+      .maybeSingle();
     if (error) {
       errorLog("Query error", error);
       return new Response(JSON.stringify({
