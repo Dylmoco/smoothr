@@ -6,7 +6,7 @@ This document describes available Edge Functions, their inputs, outputs, CORS ru
 - **Method:** POST
 - **Input:** JSON body `{ "store_id": "<uuid>" }`
 - **Output:** Public store settings object with null values removed.
-- **CORS:** `Access-Control-Allow-Origin: https://smoothr-cms.webflow.io`
+- **CORS:** configurable via `FUNCTION_ALLOWED_ORIGINS`; defaults to `*` outside production and `https://smoothr-cms.webflow.io` in production
 - **Sample:**
   ```bash
   curl -X POST \
@@ -19,7 +19,7 @@ This document describes available Edge Functions, their inputs, outputs, CORS ru
 - **Method:** POST
 - **Input:** JSON body `{ "store_id": "<uuid>", "gateway": "<gateway>" }`
 - **Output:** `{ publishable_key, tokenization_key, gateway, store_id }`
-- **CORS:** `Access-Control-Allow-Origin: https://smoothr-cms.webflow.io`
+- **CORS:** configurable via `FUNCTION_ALLOWED_ORIGINS`; defaults to `*` outside production and `https://smoothr-cms.webflow.io` in production
 - **Sample:**
   ```bash
   curl -X POST \

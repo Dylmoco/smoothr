@@ -4,10 +4,14 @@ let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;
 
 function expectCors(res: Response) {
-  expect(res.headers.get('access-control-allow-origin')).toBe('https://smoothr-cms.webflow.io');
+  expect(res.headers.get('access-control-allow-origin')).toBe('*');
   expect(res.headers.get('access-control-allow-methods')).toBe('POST, OPTIONS');
   expect(res.headers.get('access-control-allow-headers')).toBe('authorization, apikey, content-type');
   expect(res.headers.get('vary')).toBe('Origin');
+  if (res.status !== 204) {
+    expect(res.headers.get('content-type')).toBe('application/json');
+    expect(res.headers.get('cache-control')).toBe('public, max-age=60, stale-while-revalidate=600');
+  }
 }
 
 beforeEach(() => {
