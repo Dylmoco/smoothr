@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import * as core from '../../features/auth/init.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+vi.stubEnv('NODE_ENV', 'production');
 
 vi.mock('../../features/auth/index.js', () => {
   const authMock = {
@@ -15,31 +16,19 @@ vi.mock('../../features/auth/index.js', () => {
   return { default: authMock, ...authMock };
 });
 
+let from;
 vi.mock('../../../supabase/browserClient.js', () => {
   const getSession = vi.fn().mockResolvedValue({
-    data: { session: { access_token: 'test-token' } }
+    data: { session: { access_token: 'test-token' } },
   });
-
-  const setSession = vi.fn();
   const ensureSupabaseSessionAuth = vi.fn().mockResolvedValue();
-
-  const single = vi.fn(() =>
-    Promise.resolve({
-      data: { api_base: 'https://example.com' },
-      error: null
-    })
-  );
-  const eq = vi.fn(() => ({ single }));
-  const select = vi.fn(() => ({ eq }));
-  const from = vi.fn(() => ({ select }));
-
-  return {
-    supabase: {
-      auth: { getSession, setSession },
-      from
-    },
-    ensureSupabaseSessionAuth
+  from = vi.fn();
+  const client = {
+    auth: { getSession },
+    from,
+    supabaseUrl: 'https://mock.supabase.co',
   };
+  return { supabase: client, default: client, ensureSupabaseSessionAuth };
 });
 
 beforeEach(() => {
@@ -49,7 +38,7 @@ beforeEach(() => {
     SMOOTHR_CONFIG: { storeId: '00000000-0000-0000-0000-000000000000' },
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
-    removeEventListener: vi.fn()
+    removeEventListener: vi.fn(),
   };
 
   global.document = {
@@ -62,7 +51,7 @@ beforeEach(() => {
         attr === 'data-store-id'
           ? '00000000-0000-0000-0000-000000000000'
           : null
-      )
+      ),
     })),
     currentScript: {
       dataset: { storeId: '00000000-0000-0000-0000-000000000000' },
@@ -70,36 +59,52 @@ beforeEach(() => {
         attr === 'data-store-id'
           ? '00000000-0000-0000-0000-000000000000'
           : null
-      )
-    }
+      ),
+    },
   };
 
   global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ api_base: 'https://example.com' }),
+    })
   );
 
   global.localStorage = {
     getItem: vi.fn(),
     setItem: vi.fn(),
-    removeItem: vi.fn()
+    removeItem: vi.fn(),
   };
 
   console.log('Test setup: SMOOTHR_CONFIG=', global.window.SMOOTHR_CONFIG);
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe('loadConfig api_base mapping', () => {
   it('sets apiBase from supabase config', async () => {
     console.log('Starting test: loadConfig api_base mapping');
-    const { loadConfig } = await import(
-      '../../features/auth/init.js'
+    const { loadPublicConfig } = await import(
+      '../../features/config/sdkConfig.ts'
     );
-    await loadConfig('00000000-0000-0000-0000-000000000000');
-
-    console.log(
-      'SMOOTHR_CONFIG after loadConfig:',
-      global.window.SMOOTHR_CONFIG
+    const { mergeConfig } = await import(
+      '../../features/config/globalConfig.js'
     );
+    const data = await loadPublicConfig(
+      '00000000-0000-0000-0000-000000000000'
+    );
+    const updates = {};
+    for (const [key, value] of Object.entries(data || {})) {
+      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      updates[camelKey] = value;
+    }
+    updates.storeId = '00000000-0000-0000-0000-000000000000';
+    mergeConfig(updates);
 
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(global.window.SMOOTHR_CONFIG.apiBase).toBe('https://example.com');
+    expect(from).not.toHaveBeenCalled();
   }, 5000);
 });
