@@ -326,6 +326,7 @@ using ((store_id = current_setting('request.jwt.claim.store_id', true)::uuid));
 
 grant select on table "public"."public_store_settings" to "anon";
 grant select on table "public"."public_store_settings" to "authenticated";
+revoke select on table "public"."public_store_integration_credentials" from "anon";
 drop policy if exists "referrals_admin_write" on "public"."referrals";
 create policy "referrals_admin_write"
 on "public"."referrals"
