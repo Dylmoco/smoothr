@@ -1,0 +1,96 @@
+name: Supabase PR
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  supabase-pr:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN_STAGING: ${{ secrets.SUPABASE_ACCESS_TOKEN_STAGING }}
+      SUPABASE_PROJECT_REF_STAGING: ${{ secrets.SUPABASE_PROJECT_REF_STAGING }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run tests
+        run: npm test
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Supabase login
+        run: supabase login --token "$SUPABASE_ACCESS_TOKEN_STAGING"
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING"
+
+      - name: Run guard script
+        run: bash scripts/supabase-guard.sh
+
+      - name: Push database migrations
+        id: dbpush
+        run: supabase db push | tee db-push.log
+
+      - name: Deploy Edge Functions
+        id: deployfunctions
+        run: |
+          for dir in supabase/functions/*; do
+            if [ -d "$dir" ]; then
+              name="$(basename "$dir")"
+              supabase functions deploy "$name" --no-verify-jwt
+              echo "$name" >> deployed-functions.txt
+            fi
+          done
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        env:
+          SUPABASE_PROJECT_REF_STAGING: ${{ secrets.SUPABASE_PROJECT_REF_STAGING }}
+        with:
+          script: |
+            const fs = require('fs');
+            const migrations = fs.existsSync('db-push.log')
+              ? fs.readFileSync('db-push.log', 'utf8')
+                  .split('\n')
+                  .filter(l => l.includes('Applied migration'))
+                  .join('\n')
+              : '';
+            const functions = fs.existsSync('deployed-functions.txt')
+              ? fs.readFileSync('deployed-functions.txt', 'utf8')
+                  .split('\n')
+                  .filter(Boolean)
+              : [];
+            const projectRef = process.env.SUPABASE_PROJECT_REF_STAGING;
+            let body = '### Supabase Deployment Summary\n';
+            body += '\n**Applied migrations:**\n';
+            if (migrations) {
+              body += '```\n' + migrations + '\n```\n';
+            } else {
+              body += 'None\n';
+            }
+            body += '\n**Deployed functions:**\n';
+            if (functions.length) {
+              body += functions.map(f => `- ${f}`).join('\n');
+              body += '\n\n**Smoke test commands:**\n';
+              body += functions.map(f => `- curl https://${projectRef}.functions.supabase.co/${f}`).join('\n');
+            } else {
+              body += 'None';
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
