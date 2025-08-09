@@ -15,6 +15,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN_STAGING: ${{ secrets.SUPABASE_ACCESS_TOKEN_STAGING }}
       SUPABASE_PROJECT_REF_STAGING: ${{ secrets.SUPABASE_PROJECT_REF_STAGING }}
+      FUNCTION_ALLOWED_ORIGINS: ${{ secrets.FUNCTION_ALLOWED_ORIGINS }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +35,10 @@ jobs:
 
       - name: Link Supabase project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING"
+
+      - name: Set function allowed origins
+        if: env.FUNCTION_ALLOWED_ORIGINS != ''
+        run: supabase secrets set FUNCTION_ALLOWED_ORIGINS="$FUNCTION_ALLOWED_ORIGINS"
 
       - name: Run guard script
         run: bash scripts/supabase-guard.sh
