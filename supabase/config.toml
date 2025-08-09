@@ -14,3 +14,9 @@ entrypoint = "./functions/get_gateway_credentials/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/get_gateway_credentials/*.html" ]
+
+[functions.get_public_store_settings]
+enabled = true
+verify_jwt = true
+import_map = "./functions/get_public_store_settings/deno.json"
+entrypoint = "./functions/get_public_store_settings/index.ts"

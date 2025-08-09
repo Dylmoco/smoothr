@@ -40,6 +40,9 @@ if (!scriptEl || !storeId) {
         await waitForSessionReady();
         log('Fetching store settings');
         const data = await loadPublicConfig(storeId);
+        if (!data && debug) {
+          console.warn('[Smoothr SDK] Store settings request failed');
+        }
         config.settings = { ...(config.settings || {}), ...(data || {}) };
         log('Store settings loaded', config.settings);
       } catch (err) {
