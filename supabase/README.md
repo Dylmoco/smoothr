@@ -4,11 +4,10 @@ This directory contains the Supabase database schema and edge functions for Smoo
 
 ## Creating migrations
 
-1. Start from the template at `supabase/templates/migration.sql`.
-2. Copy it into `supabase/migrations/<timestamp>_<description>.sql`.
-3. Fill in the `Author`, `Date`, and `Reason` fields and place your SQL in the
+1. Create a new file at `supabase/migrations/<timestamp>_<description>.sql`.
+2. Fill in the `Author`, `Date`, and `Reason` fields and place your SQL in the
    appropriate sections (`REVOKE`, `CREATE/ALTER`, `RLS POLICIES`, `GRANTS`).
-4. Check the file into version control – *never* run loose SQL outside of a
+3. Check the file into version control – *never* run loose SQL outside of a
    migration file.
 
 ## Local testing
