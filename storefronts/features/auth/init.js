@@ -77,44 +77,49 @@ async function domReady() {
   }
 }
 
-export async function waitForSessionReady() {
-  await ensureSupabaseSessionAuth();
-  try {
-    const {
-      data: { session }
-    } = await authClient.auth.getSession();
-    if (!session) {
-      let hasGhostTokens = false;
-      try {
-        const raw = authClient.auth.storage?.getItem?.(
-          authClient.auth.storageKey
-        );
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const tokenHolder = parsed?.currentSession || parsed;
-          hasGhostTokens = Boolean(
-            tokenHolder?.access_token || tokenHolder?.refresh_token
-          );
-        }
-      } catch {
-        // ignore JSON/storage errors
-      }
-      if (hasGhostTokens) {
-        console.warn(
-          '[Smoothr] Detected ghost session — clearing broken Supabase state'
-        );
+let sessionReadyPromise;
+export function waitForSessionReady() {
+  if (sessionReadyPromise) return sessionReadyPromise;
+  sessionReadyPromise = (async () => {
+    await ensureSupabaseSessionAuth();
+    try {
+      const {
+        data: { session }
+      } = await authClient.auth.getSession();
+      if (!session) {
+        let hasGhostTokens = false;
         try {
-          await authClient.auth.signOut({ scope: 'local' });
+          const raw = authClient.auth.storage?.getItem?.(
+            authClient.auth.storageKey
+          );
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const tokenHolder = parsed?.currentSession || parsed;
+            hasGhostTokens = Boolean(
+              tokenHolder?.access_token || tokenHolder?.refresh_token
+            );
+          }
         } catch {
-          // ignore signOut errors
+          // ignore JSON/storage errors
         }
+        if (hasGhostTokens) {
+          console.warn(
+            '[Smoothr] Detected ghost session — clearing broken Supabase state'
+          );
+          try {
+            await authClient.auth.signOut({ scope: 'local' });
+          } catch {
+            // ignore signOut errors
+          }
+        }
+      } else {
+        console.log('[Smoothr] Auth restored');
       }
-    } else {
-      console.log('[Smoothr] Auth restored');
+    } catch {
+      // ignore session check errors
     }
-  } catch {
-    // ignore session check errors
-  }
+  })();
+  return sessionReadyPromise;
 }
 
 export async function init(config = {}) {

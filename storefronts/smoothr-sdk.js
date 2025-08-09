@@ -1,6 +1,5 @@
 import { mergeConfig } from './features/config/globalConfig.js';
 import { loadPublicConfig } from './features/config/sdkConfig.ts';
-import { waitForSessionReady } from './features/auth/init.js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
@@ -37,7 +36,6 @@ if (!scriptEl || !storeId) {
   (async () => {
     if (storeId) {
       try {
-        await waitForSessionReady();
         log('Fetching store settings');
         const data = await loadPublicConfig(storeId);
         if (!data && debug) {
@@ -65,7 +63,8 @@ if (!scriptEl || !storeId) {
 
     try {
       log('Initializing auth feature');
-      await import('./features/auth/init.js').then(m => m.init(config));
+      const auth = await import('./features/auth/init.js');
+      await auth.init(config);
     } catch (err) {
       debug && console.warn('[Smoothr SDK] Auth init failed', err);
     }
