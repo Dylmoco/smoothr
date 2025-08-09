@@ -20,6 +20,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN_PROD: ${{ secrets.SUPABASE_ACCESS_TOKEN_PROD }}
       SUPABASE_PROJECT_REF_PROD: ${{ secrets.SUPABASE_PROJECT_REF_PROD }}
       STORE_UUID: ${{ secrets.STORE_UUID_PROD }}
+      FUNCTION_ALLOWED_ORIGINS: ${{ secrets.FUNCTION_ALLOWED_ORIGINS }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +43,10 @@ jobs:
 
       - name: Link Supabase project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD"
+
+      - name: Set function allowed origins
+        if: env.FUNCTION_ALLOWED_ORIGINS != ''
+        run: supabase secrets set FUNCTION_ALLOWED_ORIGINS="$FUNCTION_ALLOWED_ORIGINS"
 
       - name: Run guard script
         run: bash scripts/supabase-guard.sh
