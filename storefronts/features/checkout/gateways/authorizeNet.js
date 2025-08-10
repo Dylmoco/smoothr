@@ -12,7 +12,6 @@ let fieldsMounted = false;
 let mountPromise;
 let clientKey;
 let apiLoginID;
-let transactionKey;
 let authorizeNetReady = false;
 let acceptReady = false;
 let submitting = false;
@@ -69,8 +68,7 @@ function checkAcceptFieldPresence() {
 function getAcceptCredentials() {
   return {
     clientKey,
-    apiLoginId: apiLoginID,
-    transactionKey
+    apiLoginId: apiLoginID
   };
 }
 
@@ -96,22 +94,17 @@ async function loadAcceptJs() {
 }
 
 async function resolveCredentials() {
-  if (clientKey && apiLoginID && transactionKey !== undefined)
-    return { clientKey, apiLoginID };
+  if (clientKey && apiLoginID) return { clientKey, apiLoginID };
   let cred = null;
   try {
     cred = await getGatewayCredential('authorizeNet');
   } catch (e) {
     warn('Credential fetch error:', e?.message || e);
   }
-  clientKey = cred?.client_key ?? cred?.settings?.client_key ?? '';
-  apiLoginID =
-    cred?.api_login_id ?? cred?.settings?.api_login_id ?? cred?.api_key ?? '';
-  transactionKey =
-    cred?.transaction_key ?? cred?.settings?.transaction_key ?? '';
+  clientKey = cred?.hosted_fields?.client_key ?? '';
+  apiLoginID = cred?.hosted_fields?.api_login_id ?? '';
   if (!clientKey) warn('Missing Authorize.Net client_key');
   if (!apiLoginID) warn('Missing Authorize.Net api_login_id');
-  if (!transactionKey) warn('Missing Authorize.Net transaction_key');
   return { clientKey, apiLoginID };
 }
 

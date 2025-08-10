@@ -1,7 +1,11 @@
 import supabase, { ensureSupabaseSessionAuth } from '../../supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 
+const cache = {};
+
 export async function getGatewayCredential(gateway) {
+  if (cache[gateway]) return cache[gateway];
+
   const debug =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).has('smoothr-debug');
@@ -13,7 +17,8 @@ export async function getGatewayCredential(gateway) {
     const access_token = session?.access_token;
 
     const { storeId: store_id } = getConfig();
-    const supabaseUrl = supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl =
+      supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
     const headers = {
       'Content-Type': 'application/json',
@@ -22,7 +27,13 @@ export async function getGatewayCredential(gateway) {
     if (access_token) {
       headers.Authorization = `Bearer ${access_token}`;
     }
-    const body = JSON.stringify({ store_id, gateway });
+
+    const gatewayMap = { authorizeNet: 'authorize' };
+    const body = JSON.stringify({
+      store_id,
+      gateway: gatewayMap[gateway] || gateway
+    });
+
     let res = await fetch(
       `${supabaseUrl}/functions/v1/get_gateway_credentials`,
       {
@@ -51,13 +62,36 @@ export async function getGatewayCredential(gateway) {
       data = null;
     }
     if (!res.ok) {
-      console.warn('[Smoothr] Credential fetch failed:', res.status, data?.message);
-      return { publishable_key: null, tokenization_key: null };
+      console.warn('[Smoothr] Credential fetch failed:', res.status, data);
+      return {
+        publishable_key: null,
+        tokenization_key: null,
+        hosted_fields: null,
+        active: false
+      };
     }
+
+    cache[gateway] = data;
+
+    if (gateway === 'stripe' && !data.publishable_key) {
+      console.warn('[Smoothr] Missing publishable_key in credentials response');
+    }
+    if (gateway === 'nmi' && !data.tokenization_key) {
+      console.warn('[Smoothr] Missing tokenization_key in credentials response');
+    }
+    if (gateway === 'authorizeNet' && !data?.hosted_fields?.client_key) {
+      console.warn('[Smoothr] Missing client key in credentials response');
+    }
+
     return data;
   } catch (e) {
     console.warn('[Smoothr] Credential fetch error:', e?.message || e);
-    return { publishable_key: null, tokenization_key: null };
+    return {
+      publishable_key: null,
+      tokenization_key: null,
+      hosted_fields: null,
+      active: false
+    };
   }
 }
 
