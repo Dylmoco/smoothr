@@ -15,9 +15,13 @@
     "verify:server-imports": "node scripts/verify-server-imports.mjs",
     "verify:sdk-imports": "node scripts/verify-sdk-imports.mjs",
     "prebuild": "npm run verify:server-imports && npm run verify:sdk-imports",
-    "build": "npm -ws run build"
+    "build": "npm -ws run build",
+    "supabase:validate-config": "node scripts/supabase/validate-config.mjs",
+    "supabase:check-imports": "node scripts/supabase/check-imports.mjs",
+    "supabase:lint-fx": "deno fmt --check supabase/functions && deno lint supabase/functions"
   },
   "devDependencies": {
+    "@iarna/toml": "^2.2.5",
     "@supabase/supabase-js": "^2.52.1",
     "vitest": "^1.5.0"
   }
