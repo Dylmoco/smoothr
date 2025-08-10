@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-import { createServerSupabaseClient } from '../../../shared/supabase/serverClient.js';
-import { getStoreIntegration } from '../../../shared/checkout/getStoreIntegration.js';
-import { applyCors } from '../../../shared/utils/applyCors.js';
+import { createServerSupabaseClient } from 'shared/supabase/serverClient';
+import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
+import { applyCors } from 'shared/utils/applyCors';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[create-checkout]', ...args);

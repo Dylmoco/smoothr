@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase, testMarker } from '../supabase/serverClient.js';
-import { findOrCreateCustomer } from '../lib/findOrCreateCustomer.js';
+import { supabase, testMarker } from '../supabase/serverClient';
+import { findOrCreateCustomer } from '../lib/findOrCreateCustomer';
 import crypto from 'crypto';
-import { validateCheckoutPayload } from './utils/validateCheckoutPayload.js';
-import { dedupeOrders } from './utils/dedupeOrders.js';
+import { validateCheckoutPayload } from './utils/validateCheckoutPayload';
+import { dedupeOrders } from './utils/dedupeOrders';
 
 interface CheckoutPayload {
   order_number?: string;

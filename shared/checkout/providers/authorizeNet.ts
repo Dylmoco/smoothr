@@ -1,4 +1,4 @@
-import { getStoreIntegration } from '../getStoreIntegration.js';
+import { getStoreIntegration } from '../getStoreIntegration';
 
 const env = process.env.AUTHNET_ENV === 'production' ? 'production' : 'sandbox';
 const baseUrl =

@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '../supabase/serverClient.js';
+import { createServerSupabaseClient } from '../supabase/serverClient';
 
 // Add ?smoothr-debug to the URL to enable debug logging
 const debug =

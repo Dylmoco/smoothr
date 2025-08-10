@@ -1,4 +1,4 @@
-import { getStoreIntegration } from '../getStoreIntegration.js';
+import { getStoreIntegration } from '../getStoreIntegration';
 
 const env = process.env.PAYPAL_ENV === 'live' ? 'live' : 'sandbox';
 const baseUrl =

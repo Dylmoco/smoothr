@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import crypto from 'crypto';
-import { getStoreIntegration } from '../getStoreIntegration.js';
-import { createServerSupabaseClient } from '../../supabase/serverClient.js';
+import { getStoreIntegration } from '../getStoreIntegration';
+import { createServerSupabaseClient } from '../../supabase/serverClient';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout Stripe]', ...args);

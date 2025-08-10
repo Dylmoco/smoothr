@@ -4,7 +4,7 @@ const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout NMI]', ...args);
 const err = (...args: any[]) => debug && console.error('[Checkout NMI]', ...args);
 
-import { getStoreIntegration } from '../getStoreIntegration.js';
+import { getStoreIntegration } from '../getStoreIntegration';
 
 interface NmiPayload {
   payment_token?: string;
