@@ -35,7 +35,7 @@ function setupEnv(provider, modulePath) {
   trackMock("../../features/checkout/utils/inputFormatters.js", () => ({
     default: vi.fn()
   }));
-  trackMock("../../features/config/sdkConfig.ts", () => ({
+  trackMock("../../features/config/sdkConfig.js", () => ({
     loadPublicConfig: vi.fn(async () => null)
   }));
   trackMock("../../features/config/globalConfig.js", () => {

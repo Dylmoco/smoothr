@@ -11,7 +11,11 @@
   "scripts": {
     "test": "npm --workspace storefronts test && npm run test:supabase",
     "test:supabase": "vitest run supabase/functions",
-    "postinstall": "node scripts/postinstall.js"
+    "postinstall": "node scripts/postinstall.js",
+    "verify:server-imports": "node scripts/verify-server-imports.mjs",
+    "verify:sdk-imports": "node scripts/verify-sdk-imports.mjs",
+    "prebuild": "npm run verify:server-imports && npm run verify:sdk-imports",
+    "build": "npm -ws run build"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.52.1",

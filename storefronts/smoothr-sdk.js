@@ -1,5 +1,5 @@
 import { mergeConfig } from './features/config/globalConfig.js';
-import { loadPublicConfig } from './features/config/sdkConfig.ts';
+import { loadPublicConfig } from './features/config/sdkConfig.js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {

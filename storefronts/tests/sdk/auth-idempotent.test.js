@@ -14,7 +14,7 @@ vi.mock('../../features/auth/index.js', () => {
   return { default: authMock, ...authMock };
 });
 
-vi.mock('../../features/config/sdkConfig.ts', () => ({
+vi.mock('../../features/config/sdkConfig.js', () => ({
   loadPublicConfig: vi.fn().mockResolvedValue({}),
 }));
 
