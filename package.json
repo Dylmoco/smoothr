@@ -9,6 +9,8 @@
     "shared"
   ],
   "scripts": {
+    "bootstrap:full": "npm ci && npm run verify:server-imports && npm run verify:sdk-imports && npm run build",
+    "bootstrap:fast": "npm ci && npm run supabase:check-imports && echo \"[FAST] Skipping builds/tests; use bootstrap:full for anything requiring compiled outputs\"",
     "test": "npm --workspace storefronts test && npm run test:supabase",
     "test:supabase": "vitest run supabase/functions",
     "postinstall": "node scripts/postinstall.js",
@@ -16,10 +18,10 @@
     "verify:sdk-imports": "node scripts/verify-sdk-imports.mjs",
     "prebuild": "npm run verify:server-imports && npm run verify:sdk-imports",
     "build": "npm -ws run build",
-    "supabase:validate-config": "node scripts/supabase/validate-config.mjs",
-    "supabase:check-imports": "node scripts/supabase/check-imports.mjs",
     "supabase:lint-fx": "node scripts/supabase/deno-run.mjs fmt --check supabase/functions && node scripts/supabase/deno-run.mjs lint supabase/functions",
-    "supabase:fmt": "node scripts/supabase/deno-run.mjs fmt supabase/functions"
+    "supabase:fmt": "node scripts/supabase/deno-run.mjs fmt supabase/functions",
+    "supabase:validate-config": "node scripts/supabase/validate-config.mjs",
+    "supabase:check-imports": "node scripts/supabase/check-imports.mjs"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
