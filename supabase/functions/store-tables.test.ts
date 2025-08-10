@@ -7,7 +7,7 @@ let integrationsBuilder: any
 
 async function loadClient() {
 
-  supabase = (await import('../../shared/supabase/serverClient')).supabase
+  supabase = (await import('../../shared/supabase/serverClient.js')).supabase
 
 }
 
