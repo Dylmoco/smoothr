@@ -1,8 +1,8 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PayPal from '@paypal/checkout-server-sdk';
-import { handleCheckout } from 'shared/checkout/handleCheckout';
-import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
+import { handleCheckout } from '../../../../../shared/checkout/handleCheckout.js';
+import { getStoreIntegration } from '../../../../../shared/checkout/getStoreIntegration.js';
 
 export default async function handler(
   req: NextApiRequest,

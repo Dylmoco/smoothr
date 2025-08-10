@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import PayPal from '@paypal/checkout-server-sdk';
-import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
+import { getStoreIntegration } from '../../../../../shared/checkout/getStoreIntegration.js';
 
 
 

@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from './supabase/serverClient';
+import { createServerSupabaseClient } from './supabase/serverClient.js';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[generateOrderNumber]', ...args);

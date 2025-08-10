@@ -1,4 +1,4 @@
-import { supabase } from '../supabase/serverClient';
+import { supabase } from '../supabase/serverClient.js';
 
 const generateOrderNumber =
   (globalThis as any).generateOrderNumber as ((storeId: string) => Promise<string>) | undefined;

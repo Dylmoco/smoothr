@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
-import { supabase } from "shared/supabase/serverClient";
+import { supabase } from "../../../../shared/supabase/serverClient.js";
 
 const debug = process.env.SMOOTHR_DEBUG === "true";
 const log = (...args: any[]) => debug && console.log("[Stripe Webhook]", ...args);

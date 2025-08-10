@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { supabase } from '../../shared/supabase/serverClient'
+import { supabase } from '../../shared/supabase/serverClient.js'
 
 describe('supabase client headers', () => {
   it('includes default authorization headers', () => {

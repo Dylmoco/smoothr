@@ -1,6 +1,6 @@
 // pages/api/get-payment-key.js
 import { createClient } from '@supabase/supabase-js';
-import { applyCors } from '../../../shared/utils/applyCors';
+import { applyCors } from '../../../shared/utils/applyCors.js';
 
 export default async function handler(req, res) {
   const origin = process.env.CORS_ORIGIN || '*';
