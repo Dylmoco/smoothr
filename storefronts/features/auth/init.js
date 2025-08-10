@@ -32,40 +32,39 @@ let initialized = false;
 
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
-  try {
-    let record;
-    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-      const { data, error } = await authClient
-        .from('public_store_settings')
-        .select('*')
-        .eq('store_id', storeId)
-        .single();
-      if (error) throw error;
-      record = data ?? {};
-    } else {
-      record = (await loadPublicConfig(storeId)) ?? {};
-    }
-    console.debug('[Smoothr Config] Loaded config:', record);
-    if (record.active_payment_gateway == null) {
-      console.debug(
-        '[Smoothr Config] active_payment_gateway is null or undefined (empty settings or RLS issue)'
-      );
-    }
-    const updates = {};
-    for (const [key, value] of Object.entries(record)) {
-      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-      updates[camelKey] = value;
-    }
-    updates.storeId = storeId;
-    mergeConfig(updates);
-    console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', getConfig());
-  } catch (error) {
-    console.warn(
-      '[Smoothr SDK] Failed to load config:',
-      error?.message || error
-    );
-    mergeConfig({ storeId });
+
+  let record;
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+    const { data, error } = await authClient
+      .from('public_store_settings')
+      .select('*')
+      .eq('store_id', storeId)
+      .single();
+    if (error) throw error;
+    record = data ?? {};
+  } else {
+    record = await loadPublicConfig(storeId);
   }
+
+  if (!record) {
+    console.warn('[Smoothr SDK] Failed to load config: no data');
+    throw new Error('Config fetch failed');
+  }
+
+  console.debug('[Smoothr Config] Loaded config:', record);
+  if (record.active_payment_gateway == null) {
+    console.debug(
+      '[Smoothr Config] active_payment_gateway is null or undefined (empty settings or RLS issue)'
+    );
+  }
+  const updates = {};
+  for (const [key, value] of Object.entries(record)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    updates[camelKey] = value;
+  }
+  updates.storeId = storeId;
+  mergeConfig(updates);
+  console.log('[Smoothr SDK] SMOOTHR_CONFIG updated:', getConfig());
 }
 
 async function domReady() {
