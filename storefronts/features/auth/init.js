@@ -3,7 +3,7 @@ import {
   ensureSupabaseSessionAuth
 } from '../../../supabase/browserClient.js';
 import * as authExports from './index.js';
-import { loadPublicConfig } from '../config/sdkConfig.ts';
+import { loadPublicConfig } from '../config/sdkConfig.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 

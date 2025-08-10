@@ -86,7 +86,7 @@ describe('loadConfig merge', () => {
   it('preserves existing config values', async () => {
     console.log('Starting test: loadConfig merge');
     const { loadPublicConfig } = await import(
-      '../../features/config/sdkConfig.ts'
+      '../../features/config/sdkConfig.js'
     );
     const { mergeConfig } = await import(
       '../../features/config/globalConfig.js'

@@ -2,10 +2,10 @@ import supabase from '../../../supabase/browserClient.js';
 import { getConfig } from './globalConfig.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
-const log = (...args: any[]) => debug && console.log('[Smoothr Config]', ...args);
-const warn = (...args: any[]) => debug && console.warn('[Smoothr Config]', ...args);
+const log = (...args) => debug && console.log('[Smoothr Config]', ...args);
+const warn = (...args) => debug && console.warn('[Smoothr Config]', ...args);
 
-export async function loadPublicConfig(storeId: string) {
+export async function loadPublicConfig(storeId) {
   if (!storeId) return null;
 
   try {
@@ -15,7 +15,7 @@ export async function loadPublicConfig(storeId: string) {
     const access_token = session?.access_token;
     const supabaseUrl = supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-    const headers: Record<string, string> = {
+    const headers = {
       'Content-Type': 'application/json',
       apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     };
@@ -37,7 +37,7 @@ export async function loadPublicConfig(storeId: string) {
     const data = await res.json();
     log('Config fetched');
     return data || null;
-  } catch (e: any) {
+  } catch (e) {
     warn('Store settings fetch error:', e?.message || e);
     return null;
   }
