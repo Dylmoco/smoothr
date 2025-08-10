@@ -22,22 +22,41 @@ export async function getGatewayCredential(gateway) {
     if (access_token) {
       headers.Authorization = `Bearer ${access_token}`;
     }
+    const body = JSON.stringify({ store_id, gateway });
+    let res = await fetch(
+      `${supabaseUrl}/functions/v1/get_gateway_credentials`,
+      {
+        method: 'POST',
+        headers,
+        body
+      }
+    );
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/get_gateway_credentials`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ store_id, gateway })
-    });
+    if ((res.status === 401 || res.status === 403) && headers.Authorization) {
+      console.warn(
+        '[Smoothr] Credential fetch unauthorized, retrying anon:',
+        res.status
+      );
+      delete headers.Authorization;
+      res = await fetch(
+        `${supabaseUrl}/functions/v1/get_gateway_credentials`,
+        { method: 'POST', headers, body }
+      );
+    }
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
     if (!res.ok) {
-      debug &&
-        console.warn('[Smoothr] Credential fetch failed:', res.status, data?.message);
+      console.warn('[Smoothr] Credential fetch failed:', res.status, data?.message);
       return { publishable_key: null, tokenization_key: null };
     }
     return data;
   } catch (e) {
-    debug && console.warn('[Smoothr] Credential fetch error:', e?.message || e);
+    console.warn('[Smoothr] Credential fetch error:', e?.message || e);
     return { publishable_key: null, tokenization_key: null };
   }
 }

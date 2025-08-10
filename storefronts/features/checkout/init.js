@@ -15,6 +15,7 @@ import { loadPublicConfig } from '../config/sdkConfig.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
+import supabase from '../../supabase/browserClient.js';
 
 let initialized = false;
 
@@ -58,9 +59,11 @@ export async function init(config = {}) {
   const { log, warn, err, select, q } = checkoutLogger();
 
   const publicConfig = await loadPublicConfig(getConfig().storeId);
-  if (publicConfig) {
-    mergeConfig(publicConfig);
+  if (!publicConfig) {
+    warn('Public config fetch failed. Aborting checkout init.');
+    return;
   }
+  mergeConfig(publicConfig);
 
   log('SDK initialized');
   log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
@@ -168,6 +171,13 @@ export async function init(config = {}) {
     }
   }
 
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+  log(
+    `Mounting gateway (${provider}) as`,
+    session ? 'logged-in user' : 'anon user'
+  );
   try {
     await gateway.mountCheckout(config);
   } catch (e) {
