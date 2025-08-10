@@ -18,7 +18,8 @@
     "build": "npm -ws run build",
     "supabase:validate-config": "node scripts/supabase/validate-config.mjs",
     "supabase:check-imports": "node scripts/supabase/check-imports.mjs",
-    "supabase:lint-fx": "deno fmt --check supabase/functions && deno lint supabase/functions"
+    "supabase:lint-fx": "deno fmt --check supabase/functions && deno lint supabase/functions",
+    "supabase:fmt": "deno fmt supabase/functions"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
