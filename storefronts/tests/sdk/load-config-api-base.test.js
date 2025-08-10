@@ -87,7 +87,7 @@ describe('loadConfig api_base mapping', () => {
   it('sets apiBase from supabase config', async () => {
     console.log('Starting test: loadConfig api_base mapping');
     const { loadPublicConfig } = await import(
-      '../../features/config/sdkConfig.ts'
+      '../../features/config/sdkConfig.js'
     );
     const { mergeConfig } = await import(
       '../../features/config/globalConfig.js'

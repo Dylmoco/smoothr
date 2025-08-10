@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import 'shared/init';
 import { createServerSupabaseClient } from 'shared/supabase/serverClient';
 import { createOrder } from 'shared/checkout/createOrder';
-import { applyCors } from '../../../shared/utils/applyCors.js';
+import { applyCors } from 'shared/utils/applyCors';
 
 export default async function handler(
   req: NextApiRequest,

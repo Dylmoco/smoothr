@@ -1,8 +1,8 @@
 // For example `/api/checkout/nmi` resolves to this dynamic route.
 import type { NextApiRequest, NextApiResponse } from 'next';
-import '../../../../shared/init';
-import { handleCheckout } from '../../../../shared/checkout/handleCheckout';
-import { applyCors } from '../../../../shared/utils/applyCors.js';
+import 'shared/init';
+import { handleCheckout } from 'shared/checkout/handleCheckout';
+import { applyCors } from 'shared/utils/applyCors';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const origin = process.env.CORS_ORIGIN || '*';
