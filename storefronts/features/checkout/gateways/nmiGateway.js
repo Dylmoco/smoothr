@@ -1,6 +1,6 @@
 // src/checkout/gateways/nmiGateway.js
 
-import { resolveTokenizationKey } from '../providers/nmiProvider.js'
+import { getGatewayCredential } from '../core/credentials.js'
 import { handleSuccessRedirect } from '../utils/handleSuccessRedirect.js'
 import { disableButton, enableButton } from '../utils/cartHash.js'
 import styleNmiIframes, { getNmiStyles } from '../utils/nmiIframeStyles.js'
@@ -27,8 +27,8 @@ export async function mountCardFields() {
     rejectConfig = reject
   })
 
-  const storeId = getConfig().storeId
-  const tokenKey = await resolveTokenizationKey(storeId, 'nmi', 'nmi')
+  const cred = await getGatewayCredential('nmi')
+  const tokenKey = cred?.tokenization_key || ''
   if (!tokenKey) {
     console.warn('[NMI] Tokenization key missing')
     alert('Payment setup issue. Please try again or contact support.')

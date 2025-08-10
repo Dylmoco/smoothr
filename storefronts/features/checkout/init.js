@@ -16,6 +16,7 @@ import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
 import { supabase, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
+import { getGatewayCredential } from './core/credentials.js';
 
 let initialized = false;
 
@@ -171,13 +172,27 @@ export async function init(config = {}) {
     }
   }
 
-  const {
-    data: { session }
+  const { 
+    data: { session } 
   } = await supabase.auth.getSession();
   log(
     `Mounting gateway (${provider}) as`,
     session ? 'logged-in user' : 'anon user'
   );
+
+  const cred = await getGatewayCredential(provider);
+  const hasKey =
+    provider === 'stripe'
+      ? !!cred.publishable_key
+      : provider === 'nmi'
+      ? !!cred.tokenization_key
+      : provider === 'authorizeNet'
+      ? !!cred?.hosted_fields?.client_key
+      : true;
+  if (!hasKey) {
+    console.warn('[Smoothr] Skipping gateway mount – missing client key');
+    return;
+  }
   try {
     await gateway.mountCheckout(config);
   } catch (e) {
