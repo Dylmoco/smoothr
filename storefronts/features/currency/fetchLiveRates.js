@@ -1,13 +1,15 @@
 import { getConfig } from '../config/globalConfig.js';
+import sdkConfig from '../config/sdkConfig.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Rates]', ...args);
 
 function getSupabaseUrl() {
   return (
-    (typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.supabaseUrl) ||
     (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) ||
-    (typeof process !== 'undefined' && process.env.SUPABASE_URL)
+    (typeof process !== 'undefined' && process.env.SUPABASE_URL) ||
+    getConfig().supabaseUrl ||
+    sdkConfig?.supabaseUrl
   );
 }
 
@@ -22,7 +24,7 @@ function resolveDefaultSource() {
   if (envRate) return envRate;
   const supabase = getSupabaseUrl();
   return supabase
-    ? `${supabase.replace('.co', '.co/functions')}/proxy-live-rates`
+    ? `${supabase.replace('.supabase.co', '.functions.supabase.co')}/proxy-live-rates`
     : null;
 }
 
@@ -70,7 +72,10 @@ export async function fetchExchangeRates(
     }
     try {
       const proxyEndpoint = getSupabaseUrl()
-        ? `${getSupabaseUrl().replace('.co', '.co/functions')}/proxy-live-rates`
+        ? `${getSupabaseUrl().replace(
+            '.supabase.co',
+            '.functions.supabase.co'
+          )}/proxy-live-rates`
         : null;
       const { hostname, pathname } = new URL(url);
       if (proxyEndpoint) {
@@ -80,7 +85,9 @@ export async function fetchExchangeRates(
             (typeof import.meta !== 'undefined' &&
               import.meta.env?.VITE_SUPABASE_ANON_KEY) ||
             (typeof process !== 'undefined' &&
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
+            getConfig().anonKey ||
+            sdkConfig?.anonKey;
           if (anonKey) {
             headers.Authorization = `Bearer ${anonKey}`;
           }
