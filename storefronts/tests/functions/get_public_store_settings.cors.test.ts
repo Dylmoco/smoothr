@@ -21,10 +21,9 @@ function expectCors(res: Response) {
 
 beforeEach(() => {
   handler = undefined as any;
-  (globalThis as any).Deno = {
-    env: { get: (k: string) => (k === "ALLOWED_ORIGINS" ? testOrigin : "") },
-  };
+  (globalThis as any).Deno = { env: { get: () => "" } };
   createClientMock = vi.fn(() => ({
+    rpc: vi.fn(async () => ({ data: [testOrigin], error: null })),
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -56,7 +55,10 @@ describe("get_public_store_settings CORS", () => {
       "../../../supabase/functions/get_public_store_settings/index.ts"
     );
     const res = await handler(
-      new Request("http://localhost", { method: "OPTIONS", headers: { Origin: testOrigin } }),
+      new Request("http://localhost?store_id=s1", {
+        method: "OPTIONS",
+        headers: { Origin: testOrigin },
+      }),
     );
     expect(res.status).toBe(204);
     expectCors(res);
