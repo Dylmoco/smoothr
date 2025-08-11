@@ -1,4 +1,4 @@
-import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
+import { getClient } from '../../../shared/supabase/browserClient.js';
 import { loadPublicConfig } from '../config/sdkConfig.js';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;

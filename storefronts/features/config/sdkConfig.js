@@ -1,4 +1,4 @@
-import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
+import { getClient } from '../../../shared/supabase/browserClient.js';
 import { getConfig } from './globalConfig.js';
 
 export const SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';

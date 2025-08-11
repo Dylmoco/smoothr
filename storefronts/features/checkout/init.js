@@ -15,7 +15,7 @@ import { loadPublicConfig } from '../config/sdkConfig.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
-import supabase, { getClient, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
+import { getClient } from '../../../shared/supabase/browserClient.js';
 import { getGatewayCredential } from './core/credentials.js';
 
 let initialized = false;
