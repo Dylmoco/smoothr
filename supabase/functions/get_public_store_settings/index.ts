@@ -2,6 +2,19 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { hostFromOrigin, preflight, withCors } from "../_shared/cors.ts";
 
+function parseStoreIdHeader(header: string | null): string | null {
+  if (!header) return null;
+  try {
+    const parsed = JSON.parse(header);
+    if (parsed && typeof parsed.store_id === "string") {
+      return parsed.store_id;
+    }
+  } catch {
+    // ignore JSON parse errors and fall back to raw header
+  }
+  return header;
+}
+
 serve(async (req) => {
   const origin = req.headers.get("Origin") || "";
   const originHost = hostFromOrigin(origin);
@@ -15,7 +28,7 @@ serve(async (req) => {
   try {
     if (req.method === "OPTIONS") {
       const storeId = url.searchParams.get("store_id") ||
-        req.headers.get("X-Store-Id");
+        parseStoreIdHeader(req.headers.get("X-Store-Id"));
       if (typeof storeId !== "string" || !storeId) {
         return withCors(
           new Response(
@@ -68,13 +81,17 @@ serve(async (req) => {
           .map((h: string) => hostFromOrigin(h))
           .filter((h): h is string => !!h),
       );
-      if (!originHost || !allowedHosts.has(originHost)) {
-        return withCors(
+      const allowedOrigin =
+        originHost && allowedHosts.has(originHost) ? origin : "";
+      if (!allowedOrigin) {
+        const res = withCors(
           new Response("Origin not allowed", { status: 403 }),
-          origin,
+          "",
         );
+        res.headers.delete("Access-Control-Allow-Origin");
+        return res;
       }
-      return preflight(origin);
+      return preflight(allowedOrigin);
     }
 
     if (req.method !== "POST") {
@@ -205,11 +222,15 @@ serve(async (req) => {
         .map((h: string) => hostFromOrigin(h))
         .filter((h): h is string => !!h),
     );
-    if (!originHost || !allowedHosts.has(originHost)) {
-      return withCors(
+    const allowedOrigin =
+      originHost && allowedHosts.has(originHost) ? origin : "";
+    if (!allowedOrigin) {
+      const res = withCors(
         new Response("Origin not allowed", { status: 403 }),
-        origin,
+        "",
       );
+      res.headers.delete("Access-Control-Allow-Origin");
+      return res;
     }
 
     const { data, error } = await supabase
@@ -228,7 +249,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin,
+        allowedOrigin,
       );
     }
 
@@ -242,7 +263,7 @@ serve(async (req) => {
       new Response(JSON.stringify(sanitized), {
         headers: { "Content-Type": "application/json" },
       }),
-      origin,
+      allowedOrigin,
     );
   } catch (err) {
     errorLog("Unexpected error", err);
