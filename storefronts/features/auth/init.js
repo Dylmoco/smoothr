@@ -1,7 +1,4 @@
-import supabase, {
-  getClient,
-  ensureSupabaseSessionAuth
-} from '../../../shared/supabase/browserClient.js';
+import { getClient } from '../../../shared/supabase/browserClient.js';
 import * as authExports from './index.js';
 import { loadPublicConfig } from '../config/sdkConfig.js';
 import * as currency from '../currency/index.js';
@@ -82,7 +79,6 @@ let sessionReadyPromise;
 export function waitForSessionReady() {
   if (sessionReadyPromise) return sessionReadyPromise;
   sessionReadyPromise = (async () => {
-    await ensureSupabaseSessionAuth();
     try {
       const {
         data: { session }

@@ -1,4 +1,4 @@
-import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
+import { getClient } from '../../../shared/supabase/browserClient.js';
 import { getConfig } from '../config/globalConfig.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;

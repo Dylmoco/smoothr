@@ -1,4 +1,4 @@
-import supabase, { getClient, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
+import { getClient } from '../../../shared/supabase/browserClient.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import {
   initAuth as initAuthHelper,
@@ -66,7 +66,6 @@ async function login(email, password) {
   if (!error) {
     user.value = data.user || null;
     updateGlobalAuth();
-    await ensureSupabaseSessionAuth();
   }
   return { data, error };
 }
@@ -81,7 +80,6 @@ async function signup(email, password) {
   if (!error) {
     user.value = data.user || null;
     updateGlobalAuth();
-    await ensureSupabaseSessionAuth();
   }
   return { data, error };
 }
@@ -348,7 +346,6 @@ function bindAuthElements(root = document) {
       const el = evt.target.closest('[data-smoothr="account-access"]');
       if (!el) return;
       evt.preventDefault();
-      await ensureSupabaseSessionAuth();
       const userRef = window.smoothr?.auth?.user;
       const isLoggedIn = userRef?.value !== null;
       log('Resolved login state:', isLoggedIn ? 'authenticated' : 'not authenticated');
@@ -389,7 +386,9 @@ const auth = {
   getSession: () => getClient().auth.getSession(),
   initAuth,
   user,
-  client: supabase
+  get client() {
+    return getClient();
+  }
 };
 
   async function init(config = {}) {
@@ -414,7 +413,6 @@ const auth = {
   registerDOMBindings(bindAuthElements, bindSignOutButtons);
 
   await initAuth();
-  await ensureSupabaseSessionAuth();
 
   updateGlobalAuth();
 
