@@ -1,21 +1,10 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  getAllowedHostsForStore,
-  hostFromOrigin,
-  isAllowedOrigin,
-  preflight,
-  withCors,
-} from "../_shared/cors.ts";
+import { hostFromOrigin, preflight, withCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
   const origin = req.headers.get("Origin") || "";
   const originHost = hostFromOrigin(origin);
-  const allowlist = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((s) => hostFromOrigin(s.trim()))
-    .filter((s): s is string => !!s);
-  const wildcard = Deno.env.get("ALLOW_ORIGIN_WILDCARD") === "true";
 
   const url = new URL(req.url);
   const debug = url.searchParams.has("smoothr-debug");
@@ -26,11 +15,38 @@ serve(async (req) => {
 
   try {
     if (req.method === "OPTIONS") {
-      if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
+      const storeId =
+        url.searchParams.get("store_id") || req.headers.get("X-Store-Id");
+      if (typeof storeId !== "string" || !storeId) {
         return withCors(
-          new Response("origin not allowed", { status: 403 }),
+          new Response(
+            JSON.stringify({
+              error: "invalid_request",
+              message: "store_id is required",
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
           origin || "*",
         );
+      }
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+      );
+      const { data: allowedHostsData } = await supabase.rpc(
+        "get_allowed_hosts",
+        { p_store_id: storeId },
+      );
+      const allowedHosts = new Set<string>(
+        (allowedHostsData ?? [])
+          .map((h: string) => hostFromOrigin(h))
+          .filter((h): h is string => !!h),
+      );
+      if (!originHost || !allowedHosts.has(originHost)) {
+        return new Response("Origin not allowed", { status: 403 });
       }
       return preflight(origin || "*");
     }
@@ -155,14 +171,17 @@ serve(async (req) => {
       }
     }
 
-    if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
-      const allowed = await getAllowedHostsForStore(store_id, supabase);
-      if (allowed.size === 0 || !isAllowedOrigin(originHost, allowed)) {
-        return withCors(
-          new Response("Origin not allowed", { status: 403 }),
-          origin || "*",
-        );
-      }
+    const { data: allowedHostsData } = await supabase.rpc(
+      "get_allowed_hosts",
+      { p_store_id: store_id },
+    );
+    const allowedHosts = new Set<string>(
+      (allowedHostsData ?? [])
+        .map((h: string) => hostFromOrigin(h))
+        .filter((h): h is string => !!h),
+    );
+    if (!originHost || !allowedHosts.has(originHost)) {
+      return new Response("Origin not allowed", { status: 403 });
     }
 
     const { data, error } = await supabase

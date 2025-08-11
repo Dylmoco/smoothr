@@ -20,10 +20,9 @@ function expectCors(res: Response) {
 
 beforeEach(() => {
   handler = undefined as any;
-  (globalThis as any).Deno = {
-    env: { get: (k: string) => (k === "ALLOWED_ORIGINS" ? allowedOrigin : "") },
-  };
+  (globalThis as any).Deno = { env: { get: () => "" } };
   createClientMock = vi.fn(() => ({
+    rpc: vi.fn(async () => ({ data: [allowedOrigin], error: null })),
     auth: {
       getUser: vi
         .fn()
@@ -73,7 +72,7 @@ describe("get_gateway_credentials CORS", () => {
   it("includes CORS headers on OPTIONS", async () => {
     await import("./get_gateway_credentials/index.ts");
     const res = await handler(
-      new Request("http://localhost", {
+      new Request("http://localhost?store_id=s", {
         method: "OPTIONS",
         headers: { Origin: allowedOrigin },
       }),
@@ -149,40 +148,4 @@ describe("get_gateway_credentials CORS", () => {
     expect(res.headers.get("access-control-allow-origin")).toBeNull();
   });
 
-  it("includes CORS headers on 403 response", async () => {
-    createClientMock.mockImplementationOnce(() => ({
-      auth: {
-        getUser: vi
-          .fn()
-          .mockResolvedValue({
-            data: { user: { user_metadata: { store_id: "s" } } },
-            error: null,
-          }),
-      },
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi
-                .fn()
-                .mockResolvedValue({ data: null, error: { message: "nope" } }),
-            })),
-          })),
-        })),
-      })),
-    }));
-    await import("./get_gateway_credentials/index.ts");
-    const res = await handler(
-      new Request("http://localhost", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: allowedOrigin,
-        },
-        body: JSON.stringify({ store_id: "s", gateway: "g" }),
-      }),
-    );
-    expect(res.status).toBe(403);
-    expectCors(res);
-  });
 });

@@ -24,8 +24,6 @@ export function assertOrigin(
   return undefined;
 }
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 export function hostFromOrigin(origin: string | null): string | null {
   if (!origin) return null;
   try {
@@ -34,35 +32,4 @@ export function hostFromOrigin(origin: string | null): string | null {
     const raw = origin.replace(/^https?:\/\//i, "").toLowerCase();
     return raw.split("/")[0] || null;
   }
-}
-
-export async function getAllowedHostsForStore(
-  storeId: string,
-  client: SupabaseClient,
-): Promise<Set<string>> {
-  const { data, error } = await client
-    .from("stores")
-    .select("store_domain, live_domain, public_store_settings!inner(api_base)")
-    .eq("id", storeId)
-    .single();
-  if (error) return new Set();
-  const allowed = new Set<string>();
-  const push = (v?: string | null) => {
-    if (v) {
-      const host = v.replace(/^https?:\/\//i, "").toLowerCase().split("/")[0];
-      if (host) allowed.add(host);
-    }
-  };
-  push(data?.store_domain);
-  push(data?.live_domain);
-  push(data?.public_store_settings?.api_base);
-  return allowed;
-}
-
-export function isAllowedOrigin(
-  requestOriginHost: string | null,
-  allowedHosts: Set<string>,
-): boolean {
-  if (!requestOriginHost) return false;
-  return allowedHosts.has(requestOriginHost);
 }
