@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
-// Resolve repo root based on this config file location
 const repoRoot = __dirname;
 
 export default defineConfig({
@@ -9,18 +8,20 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './vitest.setup.ts',
     testTimeout: 10000,
+    deps: {
+      inline: ['@supabase/supabase-js'], // Enable npm imports
+      resolver: 'node', // Force Node resolver for npm packages
+    },
+    resolve: {
+      conditions: ['module'], // Ensure ES module resolution
+    },
   },
   resolve: {
     alias: {
       '@': path.resolve(repoRoot, 'smoothr'),
-      '@/lib/findOrCreateCustomer': path.resolve(
-        repoRoot,
-        'shared/lib/findOrCreateCustomer.ts'
-      ),
-      // Admin/server shared code referenced by storefront tests
+      '@/lib/findOrCreateCustomer': path.resolve(repoRoot, 'shared/lib/findOrCreateCustomer.ts'),
       shared: path.resolve(repoRoot, 'shared'),
       'shared/*': path.resolve(repoRoot, 'shared'),
-      // Optional: if any tests import admin app files by alias later
       smoothr: path.resolve(repoRoot, 'smoothr'),
       'smoothr/*': path.resolve(repoRoot, 'smoothr'),
     },
