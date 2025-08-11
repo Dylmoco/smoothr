@@ -15,8 +15,8 @@ describe("cart DOM trigger", () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
     );
     global.console = { log: vi.fn(), warn: vi.fn() };
-    vi.doMock("../../shared/supabase/browserClient.js", () => ({
-      supabase: {
+    vi.doMock("../../shared/supabase/browserClient.js", () => {
+      const client = {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -24,8 +24,9 @@ describe("cart DOM trigger", () => {
             }))
           }))
         }))
-      }
-    }));
+      };
+      return { default: client, getClient: () => client };
+    });
     vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
     vi.doMock("../../features/cart/init.js", () => ({ init: cartInitMock }));

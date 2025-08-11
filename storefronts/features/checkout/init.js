@@ -15,7 +15,7 @@ import { loadPublicConfig } from '../config/sdkConfig.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
-import { supabase, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
+import supabase, { getClient, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
 import { getGatewayCredential } from './core/credentials.js';
 
 let initialized = false;
@@ -172,9 +172,10 @@ export async function init(config = {}) {
     }
   }
 
-  const { 
-    data: { session } 
-  } = await supabase.auth.getSession();
+  const client = getClient();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
   log(
     `Mounting gateway (${provider}) as`,
     session ? 'logged-in user' : 'anon user'

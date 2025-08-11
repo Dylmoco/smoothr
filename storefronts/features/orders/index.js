@@ -2,7 +2,7 @@
  * Handles order workflows and UI widgets for the storefront.
  */
 
-import { supabase } from '../../../shared/supabase/browserClient.js';
+import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
 import { getConfig } from '../config/globalConfig.js';
 
 const { debug } = getConfig();
@@ -13,7 +13,8 @@ const err = (...args) => debug && console.error('[Smoothr Orders]', ...args);
 export async function fetchOrderHistory(customer_id) {
   if (!customer_id) return [];
   try {
-    const { data, error } = await supabase
+    const client = getClient();
+    const { data, error } = await client
       .from('orders')
       .select('*, customers(email, name)')
       .eq('customer_id', customer_id)

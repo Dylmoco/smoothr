@@ -1,4 +1,4 @@
-import { supabase, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
+import supabase, { getClient, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import {
   initAuth as initAuthHelper,
@@ -57,7 +57,8 @@ function showLoginPopup() {
 }
 
 async function login(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const client = getClient();
+  const { data, error } = await client.auth.signInWithPassword({
     email,
     password,
     options: { data: { store_id: SMOOTHR_CONFIG.storeId } }
@@ -71,7 +72,8 @@ async function login(email, password) {
 }
 
 async function signup(email, password) {
-  const { data, error } = await supabase.auth.signUp({
+  const client = getClient();
+  const { data, error } = await client.auth.signUp({
     email,
     password,
     options: { data: { store_id: SMOOTHR_CONFIG.storeId } }
@@ -89,10 +91,11 @@ async function resetPassword(email) {
 }
 
 async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const client = getClient();
+  const { error } = await client.auth.signOut();
   const {
     data: { user: currentUser }
-  } = await supabase.auth.getUser();
+  } = await client.auth.getUser();
   user.value = currentUser || null;
   updateGlobalAuth();
   if (typeof window !== 'undefined') {
@@ -122,7 +125,8 @@ function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
     if (access_token && refresh_token) {
-      supabase.auth.setSession({ access_token, refresh_token });
+      const client = getClient();
+      client.auth.setSession({ access_token, refresh_token });
     }
     document
       .querySelectorAll('[data-smoothr="password-reset-confirm"]')
@@ -153,7 +157,8 @@ function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
             }
             setLoading(trigger, true);
             try {
-                const { data, error } = await supabase.auth.updateUser({ password });
+                const client = getClient();
+                const { data, error } = await client.auth.updateUser({ password });
                 if (error) {
                   showError(form, error.message || 'Password update failed', trigger, trigger);
                 } else {
@@ -381,7 +386,7 @@ const auth = {
   resetPassword,
   signOut,
   logout: signOut,
-  getSession: () => supabase.auth.getSession(),
+  getSession: () => getClient().auth.getSession(),
   initAuth,
   user,
   client: supabase
@@ -413,7 +418,8 @@ const auth = {
 
   updateGlobalAuth();
 
-  supabase.auth.onAuthStateChange((_event, session) => {
+  const client = getClient();
+  client.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user || null;
     updateGlobalAuth();
   });

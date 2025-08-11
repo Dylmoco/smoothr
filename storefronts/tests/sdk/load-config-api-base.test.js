@@ -19,16 +19,16 @@ vi.mock('../../features/auth/index.js', () => {
 let from;
 vi.mock('../../../shared/supabase/browserClient.js', () => {
   const getSession = vi.fn().mockResolvedValue({
-    data: { session: { access_token: 'test-token' } },
+    data: { session: { access_token: 'test-token' } }
   });
   const ensureSupabaseSessionAuth = vi.fn().mockResolvedValue();
   from = vi.fn();
   const client = {
     auth: { getSession },
     from,
-    supabaseUrl: 'https://mock.supabase.co',
+    supabaseUrl: 'https://mock.supabase.co'
   };
-  return { supabase: client, default: client, ensureSupabaseSessionAuth };
+  return { default: client, getClient: () => client, ensureSupabaseSessionAuth };
 });
 
 beforeEach(() => {

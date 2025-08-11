@@ -1,5 +1,5 @@
-import {
-  supabase as authClient,
+import supabase, {
+  getClient,
   ensureSupabaseSessionAuth
 } from '../../../shared/supabase/browserClient.js';
 import * as authExports from './index.js';
@@ -27,6 +27,8 @@ let authInit = () => {};
 if (Object.prototype.hasOwnProperty.call(authExports, 'init')) {
   authInit = authExports.init;
 }
+
+const authClient = getClient();
 
 let initialized = false;
 

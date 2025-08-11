@@ -1,4 +1,4 @@
-import { supabase } from '../../shared/supabase/browserClient.js';
+import supabase, { getClient } from '../../shared/supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 import '../features/config/sdkConfig.js';
 
@@ -14,8 +14,9 @@ export async function getGatewayCredential(gateway) {
   try {
     const { storeId: store_id, supabaseUrl: cfgUrl, anonKey: cfgAnon } =
       getConfig();
+    const client = getClient();
     const supabaseUrl =
-      cfgUrl || supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
+      cfgUrl || client.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
     const anonKey =
       cfgAnon || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
