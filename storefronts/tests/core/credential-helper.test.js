@@ -2,9 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const getSessionMock = vi.fn();
 
-vi.mock('../../../shared/supabase/browserClient.js', () => ({
-  supabase: { auth: { getSession: getSessionMock }, supabaseUrl: 'https://supabase.test' }
-}));
+vi.mock('../../../shared/supabase/browserClient.js', () => {
+  const client = {
+    auth: { getSession: getSessionMock },
+    supabaseUrl: 'https://supabase.test'
+  };
+  return { default: client, getClient: () => client };
+});
 
 vi.mock('../../features/config/globalConfig.js', () => ({
   getConfig: () => ({ storeId: 'store-1' })

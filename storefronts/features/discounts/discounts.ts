@@ -1,4 +1,4 @@
-import { supabase } from '../../../shared/supabase/browserClient.js';
+import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
 import { getConfig } from '../config/globalConfig.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
@@ -21,7 +21,8 @@ export interface DiscountRecord {
 export async function validateDiscount(code: string): Promise<DiscountRecord | null> {
   if (!code) return null;
   try {
-    const { data, error } = await supabase
+    const client = getClient();
+    const { data, error } = await client
       .from('discounts')
       .select('*')
       .ilike('code', code)

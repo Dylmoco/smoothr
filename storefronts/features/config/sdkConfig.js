@@ -1,4 +1,4 @@
-import { supabase } from '../../../shared/supabase/browserClient.js';
+import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
 import { getConfig } from './globalConfig.js';
 
 export const SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';
@@ -20,14 +20,15 @@ export async function loadPublicConfig(storeId) {
   if (!storeId) return null;
 
   try {
+    const client = getClient();
     const {
       data: { session }
-    } = await supabase.auth.getSession();
+    } = await client.auth.getSession();
     const access_token = session?.access_token;
     const cfg = getConfig();
     const supabaseUrl =
       cfg.supabaseUrl ||
-      supabase.supabaseUrl ||
+      client.supabaseUrl ||
       process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey =
       cfg.anonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

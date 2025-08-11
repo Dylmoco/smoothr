@@ -7,7 +7,7 @@ const repoRoot = __dirname;
 export default defineConfig({
   test: {
     environment: 'jsdom',
-    setupFiles: './vitest.setup.ts',
+    setupFiles: ['./vitest.setup.ts', 'storefronts/tests/setup/supabaseMock.ts'],
     testTimeout: 10000,
   },
   resolve: {

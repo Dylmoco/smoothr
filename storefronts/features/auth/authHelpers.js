@@ -1,4 +1,4 @@
-import { supabase } from '../../../shared/supabase/browserClient.js';
+import supabase, { getClient } from '../../../shared/supabase/browserClient.js';
 import { loadPublicConfig } from '../config/sdkConfig.js';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
@@ -165,7 +165,8 @@ export async function lookupDashboardHomeUrl() {
 }
 
 export function initAuth() {
-  const p = supabase.auth.getUser().then(async ({ data: { user } }) => {
+  const client = getClient();
+  const p = client.auth.getUser().then(async ({ data: { user } }) => {
     if (typeof window !== 'undefined') {
       window.smoothr = window.smoothr || {};
       window.smoothr.auth = { user: user || null };
@@ -215,7 +216,8 @@ export async function signInWithGoogle() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
-  await supabase.auth.signInWithOAuth({
+  const client = getClient();
+  await client.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: getOAuthRedirectUrl() }
   });
@@ -226,14 +228,16 @@ export async function signInWithApple() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
-  await supabase.auth.signInWithOAuth({
+  const client = getClient();
+  await client.auth.signInWithOAuth({
     provider: 'apple',
     options: { redirectTo: getOAuthRedirectUrl() }
   });
 }
 
 export async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({
+  const client = getClient();
+  const { data, error } = await client.auth.signUp({
     email,
     password,
     options: { data: { store_id: SMOOTHR_CONFIG.storeId } }
@@ -246,7 +250,8 @@ export async function signUp(email, password) {
 }
 
 export async function requestPasswordReset(email) {
-  return await supabase.auth.resetPasswordForEmail(email, {
+  const client = getClient();
+  return await client.auth.resetPasswordForEmail(email, {
     redirectTo: getPasswordResetRedirectUrl()
   });
 }
@@ -257,7 +262,8 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
     if (access_token && refresh_token) {
-      supabase.auth.setSession({ access_token, refresh_token });
+      const client = getClient();
+      client.auth.setSession({ access_token, refresh_token });
     }
     document
       .querySelectorAll('[data-smoothr="password-reset-confirm"]')
@@ -288,7 +294,8 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
             }
             setLoading(trigger, true);
             try {
-              const { data, error } = await supabase.auth.updateUser({ password });
+              const client = getClient();
+              const { data, error } = await client.auth.updateUser({ password });
               if (error) {
                 showError(form, error.message || 'Password update failed', trigger, trigger);
               } else {
