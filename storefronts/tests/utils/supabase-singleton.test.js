@@ -12,12 +12,12 @@ describe('supabase browser client singleton', () => {
   });
 
   it('creates client only once across imports', async () => {
-    const mod1 = await import('../../../supabase/browserClient.js');
-    const client1 = mod1.default;
+    const mod1 = await import('../../../shared/supabase/browserClient.js');
+    const client1 = mod1.supabase;
     vi.resetModules();
     vi.mock('@supabase/supabase-js', () => ({ createClient }));
-    const mod2 = await import('../../../supabase/browserClient.js');
-    const client2 = mod2.default;
+    const mod2 = await import('../../../shared/supabase/browserClient.js');
+    const client2 = mod2.supabase;
     expect(createClient).toHaveBeenCalledTimes(1);
     expect(client1).toBe(client2);
   });

@@ -22,7 +22,7 @@ const getSessionMock = vi.fn().mockResolvedValue({
   data: { session: {} },
 });
 
-vi.mock('../../../supabase/browserClient.js', () => ({
+vi.mock('../../../shared/supabase/browserClient.js', () => ({
   supabase: {
     auth: { getSession: getSessionMock },
     from: vi.fn(),
