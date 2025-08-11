@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
+  getAllowedHostsForStore,
+  hostFromOrigin,
+  isAllowedOrigin,
   preflight,
   withCors,
-  hostFromOrigin,
-  getAllowedHostsForStore,
-  isAllowedOrigin,
 } from "../_shared/cors.ts";
 
 serve(async (req) => {
@@ -27,7 +27,10 @@ serve(async (req) => {
   try {
     if (req.method === "OPTIONS") {
       if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
-        return new Response("origin not allowed", { status: 403 });
+        return withCors(
+          new Response("origin not allowed", { status: 403 }),
+          origin || "*",
+        );
       }
       return preflight(origin || "*");
     }
@@ -42,9 +45,9 @@ serve(async (req) => {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         ),
-        origin || "*"
+        origin || "*",
       );
     }
 
@@ -62,9 +65,9 @@ serve(async (req) => {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         ),
-        origin || "*"
+        origin || "*",
       );
     }
 
@@ -86,9 +89,9 @@ serve(async (req) => {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         ),
-        origin || "*"
+        origin || "*",
       );
     }
 
@@ -102,9 +105,9 @@ serve(async (req) => {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         ),
-        origin || "*"
+        origin || "*",
       );
     }
 
@@ -114,7 +117,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       authHeader
         ? { global: { headers: { Authorization: authHeader } } }
-        : undefined
+        : undefined,
     );
 
     if (authHeader) {
@@ -129,7 +132,7 @@ serve(async (req) => {
             {
               status: 401,
               headers: { "Content-Type": "application/json" },
-            }
+            },
           ),
           origin || "*",
         );
@@ -145,8 +148,8 @@ serve(async (req) => {
             {
               status: 400,
               headers: { "Content-Type": "application/json" },
-            }
-            ),
+            },
+          ),
           origin || "*",
         );
       }
@@ -155,7 +158,10 @@ serve(async (req) => {
     if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
       const allowed = await getAllowedHostsForStore(store_id, supabase);
       if (allowed.size === 0 || !isAllowedOrigin(originHost, allowed)) {
-        return new Response("Origin not allowed", { status: 403 });
+        return withCors(
+          new Response("Origin not allowed", { status: 403 }),
+          origin || "*",
+        );
       }
     }
 
