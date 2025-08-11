@@ -12,3 +12,14 @@ export function withCors(res: Response, origin: string = "*"): Response {
 export function preflight(origin: string = "*"): Response {
   return withCors(new Response(null, { status: 204 }), origin);
 }
+
+export function assertOrigin(
+  origin: string,
+  allowlist: string[] = [],
+  wildcard = false,
+): Response | undefined {
+  if (allowlist.length > 0 && !allowlist.includes(origin) && !wildcard) {
+    return new Response("origin not allowed", { status: 403 });
+  }
+  return undefined;
+}

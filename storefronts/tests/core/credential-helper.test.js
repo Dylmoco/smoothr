@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const getSessionMock = vi.fn();
-const ensureMock = vi.fn();
 
 vi.mock('../../../supabase/browserClient.js', () => ({
-  default: { auth: { getSession: getSessionMock }, supabaseUrl: 'https://supabase.test' },
-  ensureSupabaseSessionAuth: ensureMock
+  default: { auth: { getSession: getSessionMock }, supabaseUrl: 'https://supabase.test' }
 }));
 
 vi.mock('../../features/config/globalConfig.js', () => ({
@@ -14,6 +12,7 @@ vi.mock('../../features/config/globalConfig.js', () => ({
 
 describe('credential helper', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.resetAllMocks();
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon';
   });
@@ -59,6 +58,11 @@ describe('credential helper', () => {
 
     const { getGatewayCredential } = await import('../../core/credentials.js');
     const res = await getGatewayCredential('stripe');
-    expect(res).toEqual({ publishable_key: null, tokenization_key: null });
+    expect(res).toEqual({
+      publishable_key: null,
+      tokenization_key: null,
+      hosted_fields: null,
+      active: false
+    });
   });
 });

@@ -51,7 +51,7 @@ Smoothr resolves all service URLs and credentials from environment variables so 
 - `VITE_SUPABASE_URL` – injected into the storefront build.
 - `VITE_CDN_BASE_URL` – optional base URL for hosted SDK assets.
 - `LIVE_RATES_URL` / `VITE_LIVE_RATES_URL` – override the currency rates endpoint.
-- `ALLOWED_ORIGINS` – comma-separated list of domains allowed to call Supabase functions.
+- `ALLOWED_ORIGINS` – comma-separated list of domains allowed to call Supabase functions. `get_gateway_credentials` permits anonymous requests from these origins or from the store's own domains.
 - `ALLOW_ORIGIN_WILDCARD` – set to `true` to permit any origin (development only).
 
 ### Multi-store readiness

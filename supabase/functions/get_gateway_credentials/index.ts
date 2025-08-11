@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { preflight, withCors } from "../_shared/cors.ts";
+import { preflight, withCors, assertOrigin } from "../_shared/cors.ts";
 
 serve(async (req) => {
   const reqOrigin = req.headers.get("Origin") ?? "";
@@ -18,11 +18,13 @@ serve(async (req) => {
     debug && console.error("[get_gateway_credentials]", ...args);
 
   try {
+    const originError = assertOrigin(reqOrigin, allowlist, wildcard);
     if (req.method === "OPTIONS") {
-      if (allowlist.length > 0 && !allowlist.includes(reqOrigin) && !wildcard) {
-        return new Response("origin not allowed", { status: 403 });
-      }
-      return preflight(reqOrigin);
+      return originError ?? preflight(reqOrigin);
+    }
+
+    if (originError) {
+      return originError;
     }
 
     if (req.method !== "POST") {
@@ -146,13 +148,22 @@ serve(async (req) => {
     }
 
     if (allowlist.length === 0 && !wildcard) {
+      const { data: storeDomains } = await supabase
+        .from("stores")
+        .select("live_domain, store_domain")
+        .eq("id", store_id)
+        .maybeSingle();
       const { data: storeSettings } = await supabase
         .from("public_store_settings")
         .select("api_base")
         .eq("store_id", store_id)
         .maybeSingle();
-      const domain = storeSettings?.api_base || "";
-      if (domain && !reqOrigin.endsWith(domain)) {
+      const domains = [
+        storeDomains?.live_domain,
+        storeDomains?.store_domain,
+        storeSettings?.api_base,
+      ].filter(Boolean);
+      if (domains.length > 0 && !domains.some((d) => reqOrigin.endsWith(d))) {
         return new Response("origin not allowed", { status: 403 });
       }
     }

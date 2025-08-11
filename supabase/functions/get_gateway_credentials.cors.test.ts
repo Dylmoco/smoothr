@@ -31,6 +31,10 @@ beforeEach(() => {
               error: { message: "nope" },
             }),
           }),
+          maybeSingle: async () => ({
+            data: null,
+            error: { message: "nope" },
+          }),
         }),
       }),
     }),
@@ -82,5 +86,21 @@ describe("get_gateway_credentials CORS", () => {
     );
     expect(res.status).toBe(403);
     expectCors(res);
+  });
+
+  it("denies requests from disallowed origins", async () => {
+    await import("./get_gateway_credentials/index.ts");
+    const res = await handler(
+      new Request("http://localhost", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://bad.test",
+        },
+        body: JSON.stringify({ store_id: "s", gateway: "g" }),
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
   });
 });

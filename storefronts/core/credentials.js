@@ -1,7 +1,8 @@
-import supabase, { ensureSupabaseSessionAuth } from '../../supabase/browserClient.js';
+import supabase from '../../supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 
 const cache = {};
+const missingLogged = {};
 
 export async function getGatewayCredential(gateway) {
   if (cache[gateway]) return cache[gateway];
@@ -10,7 +11,6 @@ export async function getGatewayCredential(gateway) {
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).has('smoothr-debug');
   try {
-    await ensureSupabaseSessionAuth();
     const {
       data: { session }
     } = await supabase.auth.getSession();
@@ -73,13 +73,20 @@ export async function getGatewayCredential(gateway) {
 
     cache[gateway] = data;
 
-    if (gateway === 'stripe' && !data.publishable_key) {
+    if (gateway === 'stripe' && !data.publishable_key && !missingLogged.stripe) {
+      missingLogged.stripe = true;
       console.warn('[Smoothr] Missing publishable_key in credentials response');
     }
-    if (gateway === 'nmi' && !data.tokenization_key) {
+    if (gateway === 'nmi' && !data.tokenization_key && !missingLogged.nmi) {
+      missingLogged.nmi = true;
       console.warn('[Smoothr] Missing tokenization_key in credentials response');
     }
-    if (gateway === 'authorizeNet' && !data?.hosted_fields?.client_key) {
+    if (
+      gateway === 'authorizeNet' &&
+      !data?.hosted_fields?.client_key &&
+      !missingLogged.authorizeNet
+    ) {
+      missingLogged.authorizeNet = true;
       console.warn('[Smoothr] Missing client key in credentials response');
     }
 
