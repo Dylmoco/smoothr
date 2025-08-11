@@ -1,181 +1,369 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { preflight, withCors } from "../_shared/cors.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.38.4";
 
-const origin = "https://smoothr-cms.webflow.io";
+// Helper function to extract host from origin
+function hostFromOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  try {
+    return new URL(origin).host.toLowerCase();
+  } catch {
+    const raw = origin.replace(/^https?:\/\//i, "").toLowerCase();
+    return raw.split("/")[0] || null;
+  }
+}
 
-serve(async (req) => {
+// Add CORS headers to response
+function withCors(res: Response, origin: string = "*"): Response {
+  const headers = new Headers(res.headers);
+  headers.set("Access-Control-Allow-Origin", origin);
+  headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "authorization, x-client-info, apikey, content-type, x-store-id, user-agent"
+  );
+  headers.set("Access-Control-Allow-Credentials", "true");
+  headers.set("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
+  return new Response(res.body, { status: res.status, headers });
+}
+
+// Create preflight response
+function preflight(origin: string = "*"): Response {
+  return withCors(new Response(null, { status: 204 }), origin);
+}
+
+// Debug helper function
+function debugLog(debug: boolean, prefix: string, ...args: any[]) {
+  if (debug) {
+    console.log(`[${prefix}]`, ...args);
+  }
+}
+
+console.info('get_gateway_credentials function started');
+
+// List of allowed test domains
+const ALLOWED_TEST_DOMAINS = [
+  'smoothr-cms.webflow.io',
+  'localhost',
+  '127.0.0.1',
+  'smoothr.vercel.app'
+];
+
+Deno.serve(async (req: Request) => {
+  const origin = req.headers.get("Origin") || "";
+  const originHost = hostFromOrigin(origin);
   const url = new URL(req.url);
-  const debug = url.searchParams.has("smoothr-debug");
-  const log = (...args: any[]) =>
-    debug && console.log("[get_gateway_credentials]", ...args);
-  const errorLog = (...args: any[]) =>
-    debug && console.error("[get_gateway_credentials]", ...args);
+  const debug = url.searchParams.has("smoothr-debug") || true; // Enable debug by default
+  
+  const log = (...args: any[]) => debugLog(debug, "get_gateway_credentials", ...args);
+  
+  // For OPTIONS requests, always return 204 with CORS headers immediately
+  if (req.method === "OPTIONS") {
+    log("Handling OPTIONS request from:", originHost);
+    return preflight(origin);
+  }
 
   try {
-    if (req.method === "OPTIONS") {
-      return preflight(origin);
+    // Get store_id from various sources
+    let storeId = url.searchParams.get("store_id");
+    
+    // Get from X-Store-Id header (case insensitive)
+    if (!storeId) {
+      for (const [key, value] of req.headers.entries()) {
+        if (key.toLowerCase() === 'x-store-id' && value) {
+          storeId = value;
+          log("Found store_id in header:", key, value);
+          break;
+        }
+      }
     }
 
-    if (req.method !== "POST") {
+    // Log all headers for debugging
+    const headerObj: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      headerObj[key.toLowerCase()] = value;
+    });
+    
+    log("Request headers:", headerObj);
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Handle POST request body
+    if (!storeId && req.method === "POST") {
+      let body = {};
+      
+      try {
+        // Clone the request to keep the original body readable
+        const clonedReq = req.clone();
+        const contentType = req.headers.get("content-type") || "";
+        
+        if (contentType.includes("application/json")) {
+          try {
+            const requestText = await clonedReq.text();
+            log("Request body text:", requestText);
+            
+            body = JSON.parse(requestText);
+            log("Parsed JSON body:", body);
+            
+            // Try all possible locations for store_id
+            storeId = body?.store_id || body?.storeId || 
+                     body?.data?.store_id || body?.data?.storeId || 
+                     body?.config?.storeId || null;
+                     
+            if (storeId) {
+              log("Found store_id in body:", storeId);
+            }
+          } catch (e) {
+            log("Error parsing JSON:", e);
+          }
+        }
+      } catch (err) {
+        log("Error processing request body:", err);
+      }
+    }
+
+    // The specific store ID for testing
+    const testStoreId = "a3fea30b-8a63-4a72-9040-6049d88545d0";
+    
+    // If we're coming from an allowed test domain and still don't have store_id, 
+    // use the test store ID for development
+    if (!storeId && originHost && ALLOWED_TEST_DOMAINS.some(domain => originHost.includes(domain))) {
+      storeId = testStoreId;
+      log("Using test store ID for test domain:", storeId);
+    }
+
+    // If still no store_id, reject the request
+    if (!storeId) {
+      log("No store_id found in request");
       return withCors(
         new Response(
-          JSON.stringify({
-            error: "invalid_request",
-            message: "method must be POST",
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
+          JSON.stringify({ 
+            error: "invalid_request", 
+            message: "store_id is required (not found in query params, headers, or request body)",
+            debug: {
+              requestUrl: req.url,
+              headers: headerObj
+            }
+          }), 
+          { 
+            status: 400, 
+            headers: { "Content-Type": "application/json" } 
+          }
         ),
-        origin,
+        origin
       );
     }
 
-    let body: any;
-    try {
-      body = await req.json();
-    } catch (err) {
-      errorLog("Invalid JSON", err);
+    // Get gateway from query params, body or use default
+    let gateway = url.searchParams.get("gateway");
+    
+    if (!gateway && req.method === "POST") {
+      try {
+        // Clone the request to keep the original body readable
+        const clonedReq = req.clone();
+        const contentType = req.headers.get("content-type") || "";
+        
+        if (contentType.includes("application/json")) {
+          try {
+            const body = await clonedReq.json().catch(() => ({}));
+            gateway = body?.gateway || null;
+            
+            if (gateway) {
+              log("Found gateway in body:", gateway);
+            }
+          } catch (e) {
+            log("Error parsing JSON for gateway:", e);
+          }
+        }
+      } catch (err) {
+        log("Error processing request body for gateway:", err);
+      }
+    }
+
+    // Default gateway if not provided
+    if (!gateway && originHost && ALLOWED_TEST_DOMAINS.some(domain => originHost.includes(domain))) {
+      gateway = "braintree";  // Default for testing
+      log("Using default gateway for test domain:", gateway);
+    }
+    
+    // If still no gateway, reject the request
+    if (!gateway) {
+      log("No gateway specified");
       return withCors(
         new Response(
-          JSON.stringify({
-            error: "invalid_request",
-            message: "invalid JSON body",
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
+          JSON.stringify({ 
+            error: "invalid_request", 
+            message: "gateway is required"
+          }), 
+          { 
+            status: 400, 
+            headers: { "Content-Type": "application/json" } 
+          }
         ),
-        origin,
+        origin
       );
     }
 
-    const { store_id, gateway } = body ?? {};
-
-    if (typeof store_id !== "string" || !store_id) {
-      return withCors(
-        new Response(
-          JSON.stringify({
-            error: "invalid_request",
-            message: "store_id is required",
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-        origin,
-      );
+    // For test domains, skip origin validation
+    let skipOriginValidation = false;
+    if (originHost && ALLOWED_TEST_DOMAINS.some(domain => originHost.includes(domain))) {
+      log("Test domain detected, skipping origin validation:", originHost);
+      skipOriginValidation = true;
     }
 
-    if (typeof gateway !== "string" || !gateway) {
-      return withCors(
-        new Response(
-          JSON.stringify({
-            error: "invalid_request",
-            message: "gateway is required",
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-        origin,
+    // For non-test domains, validate origin
+    if (!skipOriginValidation) {
+      log("Validating origin:", originHost, "for store:", storeId);
+      
+      const { data: allowedHostsData, error: allowedHostsError } = 
+        await supabase.rpc("get_allowed_hosts", { p_store_id: storeId });
+
+      if (allowedHostsError) {
+        log("RPC error:", allowedHostsError);
+        return withCors(
+          new Response(
+            JSON.stringify({ 
+              error: "server_error", 
+              message: allowedHostsError.message 
+            }), 
+            { 
+              status: 500, 
+              headers: { "Content-Type": "application/json" } 
+            }
+          ),
+          origin
+        );
+      }
+
+      // Convert allowed hosts to a normalized set
+      const allowedHosts = new Set<string>(
+        (allowedHostsData ?? [])
+          .map((h: string) => {
+            const host = hostFromOrigin(h);
+            log("Normalized host:", h, "->", host);
+            return host;
+          })
+          .filter((h): h is string => !!h)
       );
+
+      // More lenient matching for development
+      const isAllowed = originHost && (
+        allowedHosts.has(originHost) || 
+        Array.from(allowedHosts).some(h => originHost?.includes(h) || h?.includes(originHost))
+      );
+      
+      log("Origin validation result:", {
+        originHost,
+        allowedHosts: Array.from(allowedHosts),
+        isAllowed
+      });
+
+      // Reject if origin is not allowed
+      if (!isAllowed) {
+        return withCors(
+          new Response(
+            JSON.stringify({ 
+              error: "forbidden", 
+              message: `Origin ${originHost} not allowed for store ${storeId}`,
+              debug: {
+                originHost,
+                allowedHosts: Array.from(allowedHosts)
+              } 
+            }), 
+            { 
+              status: 403, 
+              headers: { "Content-Type": "application/json" } 
+            }
+          ),
+          origin
+        );
+      }
     }
 
-    const authHeader = req.headers.get("Authorization");
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      authHeader
-        ? { global: { headers: { Authorization: authHeader } } }
-        : undefined,
+    // Create a custom header for RLS policy
+    const customHeaders = {
+      "x-store-id": storeId,
+      "Content-Type": "application/json"
+    };
+
+    // Set up the client with the headers
+    const supabaseWithHeaders = createClient(
+      supabaseUrl, 
+      supabaseAnonKey, 
+      {
+        global: {
+          headers: customHeaders
+        }
+      }
     );
 
-    if (authHeader) {
-      const { data: user, error } = await supabase.auth.getUser();
-      if (error || !user?.user) {
-        return withCors(
-          new Response(
-            JSON.stringify({
-              error: "invalid_request",
-              message: "invalid token",
-            }),
-            {
-              status: 401,
-              headers: { "Content-Type": "application/json" },
-            },
-          ),
-          origin,
-        );
-      }
-      const claimStoreId = user.user.user_metadata?.store_id;
-      if (claimStoreId && claimStoreId !== store_id) {
-        return withCors(
-          new Response(
-            JSON.stringify({
-              error: "invalid_request",
-              message: "store_id claim mismatch",
-            }),
-            {
-              status: 400,
-              headers: { "Content-Type": "application/json" },
-            },
-          ),
-          origin,
-        );
-      }
-    }
-
-    const { data, error } = await supabase
+    // Query credentials
+    log("Querying gateway credentials for store:", storeId, "and gateway:", gateway);
+    
+    const { data, error } = await supabaseWithHeaders
       .from("public_store_integration_credentials")
       .select("publishable_key, tokenization_key, gateway, store_id")
-      .eq("store_id", store_id)
+      .eq("store_id", storeId)
       .eq("gateway", gateway)
       .maybeSingle();
 
     if (error) {
-      errorLog("Query error", error);
+      log("Query error:", error);
       return withCors(
         new Response(
-          JSON.stringify({ error: "forbidden", message: error.message }),
-          {
-            status: 403,
-            headers: { "Content-Type": "application/json" },
-          },
+          JSON.stringify({ 
+            error: "database_error", 
+            message: error.message 
+          }), 
+          { 
+            status: 500, 
+            headers: { "Content-Type": "application/json" } 
+          }
         ),
-        origin,
+        origin
       );
     }
 
-    const responsePayload = {
-      publishable_key: data?.publishable_key ?? null,
-      tokenization_key: data?.tokenization_key ?? null,
-      gateway: data?.gateway ?? gateway,
-      store_id: data?.store_id ?? store_id,
+    // Prepare response data
+    const responseData = {
+      publishable_key: data?.publishable_key || null,
+      tokenization_key: data?.tokenization_key || null,
+      gateway: data?.gateway || gateway,
+      store_id: data?.store_id || storeId
     };
-
-    log("response", responsePayload);
+    
+    log("Response data:", {
+      ...responseData,
+      publishable_key: responseData.publishable_key ? "[MASKED]" : null,
+      tokenization_key: responseData.tokenization_key ? "[MASKED]" : null
+    });
 
     return withCors(
-      new Response(JSON.stringify(responsePayload), {
-        headers: { "Content-Type": "application/json" },
-      }),
-      origin,
+      new Response(
+        JSON.stringify(responseData), 
+        { headers: { "Content-Type": "application/json" } }
+      ),
+      origin
     );
+    
   } catch (err) {
-    errorLog("Unexpected error", err);
+    console.error("Unexpected error:", err);
     const message = err instanceof Error ? err.message : String(err);
     return withCors(
-      new Response(JSON.stringify({ error: "server_error", message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }),
-      origin,
+      new Response(
+        JSON.stringify({ 
+          error: "server_error", 
+          message,
+          stack: err instanceof Error ? err.stack : undefined
+        }), 
+        { 
+          status: 500, 
+          headers: { "Content-Type": "application/json" } 
+        }
+      ),
+      origin
     );
   }
 });
