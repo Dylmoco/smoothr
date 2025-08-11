@@ -20,6 +20,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(repoRoot, 'smoothr'),
       '@/lib/findOrCreateCustomer': path.resolve(repoRoot, 'shared/lib/findOrCreateCustomer.ts'),
+      'npm:@supabase/supabase-js@2.38.4': '@supabase/supabase-js',
       shared: path.resolve(repoRoot, 'shared'),
       'shared/*': path.resolve(repoRoot, 'shared'),
       smoothr: path.resolve(repoRoot, 'smoothr'),
