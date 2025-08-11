@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const testOrigin = process.env.TEST_ALLOWED_ORIGIN || "https://www.example-live.com";
+const disallowedOrigin = "https://evil.example";
 
 let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;
@@ -111,5 +112,23 @@ describe("get_public_store_settings CORS", () => {
     );
     expect(res.status).toBe(400);
     expectCors(res);
+  });
+
+  it("returns 403 for disallowed origin", async () => {
+    await import(
+      "../../../supabase/functions/get_public_store_settings/index.ts",
+    );
+    const res = await handler(
+      new Request("http://localhost", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: disallowedOrigin,
+        },
+        body: JSON.stringify({ store_id: "s1" }),
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
   });
 });
