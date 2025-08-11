@@ -36,10 +36,27 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
       );
-      const { data: allowedHostsData } = await supabase.rpc(
-        "get_allowed_hosts",
-        { p_store_id: storeId },
-      );
+      const { data: allowedHostsData, error: allowedHostsError } =
+        await supabase.rpc(
+          "get_allowed_hosts",
+          { p_store_id: storeId },
+        );
+      if (allowedHostsError) {
+        errorLog("RPC error", allowedHostsError);
+        return withCors(
+          new Response(
+            JSON.stringify({
+              error: "server_error",
+              message: allowedHostsError.message,
+            }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+          origin || "*",
+        );
+      }
       const allowedHosts = new Set<string>(
         (allowedHostsData ?? [])
           .map((h: string) => hostFromOrigin(h))
@@ -171,10 +188,27 @@ serve(async (req) => {
       }
     }
 
-    const { data: allowedHostsData } = await supabase.rpc(
-      "get_allowed_hosts",
-      { p_store_id: store_id },
-    );
+    const { data: allowedHostsData, error: allowedHostsError } =
+      await supabase.rpc(
+        "get_allowed_hosts",
+        { p_store_id: store_id },
+      );
+    if (allowedHostsError) {
+      errorLog("RPC error", allowedHostsError);
+      return withCors(
+        new Response(
+          JSON.stringify({
+            error: "server_error",
+            message: allowedHostsError.message,
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+        origin || "*",
+      );
+    }
     const allowedHosts = new Set<string>(
       (allowedHostsData ?? [])
         .map((h: string) => hostFromOrigin(h))
