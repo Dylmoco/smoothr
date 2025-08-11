@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const testOrigin = process.env.TEST_ALLOWED_ORIGIN || "http://example.test";
+const testOrigin = process.env.TEST_ALLOWED_ORIGIN || "https://www.example-live.com";
 
 let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;

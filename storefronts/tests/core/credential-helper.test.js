@@ -65,4 +65,26 @@ describe('credential helper', () => {
       active: false
     });
   });
+
+  it.each([
+    ['stripe', { publishable_key: null }, '[Smoothr] Missing publishable_key in credentials response'],
+    ['nmi', { tokenization_key: null }, '[Smoothr] Missing tokenization_key in credentials response'],
+    [
+      'authorizeNet',
+      { hosted_fields: {} },
+      '[Smoothr] Missing client key in credentials response'
+    ]
+  ])('logs missing key only once for %s', async (gateway, response, message) => {
+    getSessionMock.mockResolvedValue({ data: { session: null } });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: () => Promise.resolve(response) });
+    global.fetch = fetchMock;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { getGatewayCredential } = await import('../../core/credentials.js');
+    await getGatewayCredential(gateway);
+    await getGatewayCredential(gateway);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(message);
+  });
 });
