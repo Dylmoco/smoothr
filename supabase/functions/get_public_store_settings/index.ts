@@ -1,22 +1,10 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  preflight,
-  withCors,
-  hostFromOrigin,
-  getAllowedHostsForStore,
-  isAllowedOrigin,
-} from "../_shared/cors.ts";
+import { preflight, withCors, hostFromOrigin } from "../_shared/cors.ts";
 
 serve(async (req) => {
   const origin = req.headers.get("Origin") || "";
   const originHost = hostFromOrigin(origin);
-  const allowlist = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((s) => hostFromOrigin(s.trim()))
-    .filter((s): s is string => !!s);
-  const wildcard = Deno.env.get("ALLOW_ORIGIN_WILDCARD") === "true";
-
   const url = new URL(req.url);
   const debug = url.searchParams.has("smoothr-debug");
   const log = (...args: any[]) =>
@@ -26,10 +14,43 @@ serve(async (req) => {
 
   try {
     if (req.method === "OPTIONS") {
-      if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
-        return new Response("origin not allowed", { status: 403 });
+      const storeId =
+        url.searchParams.get("store_id") || req.headers.get("X-Store-Id");
+      if (typeof storeId !== "string" || !storeId) {
+        return withCors(
+          new Response(
+            JSON.stringify({
+              error: "invalid_request",
+              message: "store_id is required",
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+          origin,
+        );
       }
-      return preflight(origin || "*");
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+      );
+      const { data: allowedHostsData } = await supabase.rpc(
+        "get_allowed_hosts",
+        { p_store_id: storeId },
+      );
+      const allowedHosts = new Set<string>(
+        (allowedHostsData ?? [])
+          .map((h: string) => hostFromOrigin(h))
+          .filter((h): h is string => !!h),
+      );
+      if (!originHost || !allowedHosts.has(originHost)) {
+        return withCors(
+          new Response("Origin not allowed", { status: 403 }),
+          origin,
+        );
+      }
+      return preflight(origin);
     }
 
     if (req.method !== "POST") {
@@ -44,7 +65,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -64,7 +85,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -82,7 +103,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -109,7 +130,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin || "*",
+          origin,
         );
       }
       const claimStoreId = user.user.user_metadata?.store_id;
@@ -125,16 +146,25 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin || "*",
+          origin,
         );
       }
     }
 
-    if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
-      const allowed = await getAllowedHostsForStore(store_id, supabase);
-      if (allowed.size === 0 || !isAllowedOrigin(originHost, allowed)) {
-        return new Response("Origin not allowed", { status: 403 });
-      }
+    const { data: allowedHostsData } = await supabase.rpc(
+      "get_allowed_hosts",
+      { p_store_id: store_id },
+    );
+    const allowedHosts = new Set<string>(
+      (allowedHostsData ?? [])
+        .map((h: string) => hostFromOrigin(h))
+        .filter((h): h is string => !!h),
+    );
+    if (!originHost || !allowedHosts.has(originHost)) {
+      return withCors(
+        new Response("Origin not allowed", { status: 403 }),
+        origin,
+      );
     }
 
     const { data, error } = await supabase
@@ -153,7 +183,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -167,7 +197,7 @@ serve(async (req) => {
       new Response(JSON.stringify(sanitized), {
         headers: { "Content-Type": "application/json" },
       }),
-      origin || "*",
+      origin,
     );
   } catch (err) {
     errorLog("Unexpected error", err);
@@ -177,7 +207,8 @@ serve(async (req) => {
         status: 500,
         headers: { "Content-Type": "application/json" },
       }),
-      origin || "*",
+      origin,
     );
   }
 });
+
