@@ -28,12 +28,19 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin || "*",
+          origin,
         );
       }
       const supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
+        {
+          global: {
+            headers: {
+              "x-store-id": JSON.stringify({ store_id: storeId }),
+            },
+          },
+        },
       );
       const { data: allowedHostsData } = await supabase.rpc(
         "get_allowed_hosts",
@@ -47,10 +54,10 @@ serve(async (req) => {
       if (!originHost || !allowedHosts.has(originHost)) {
         return withCors(
           new Response("Origin not allowed", { status: 403 }),
-          origin || "*",
+          origin,
         );
       }
-      return preflight(origin || "*");
+      return preflight(origin);
     }
 
     if (req.method !== "POST") {
@@ -65,7 +72,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -85,7 +92,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -103,17 +110,21 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
     const authHeader = req.headers.get("Authorization");
+    const headers: Record<string, string> = {
+      "x-store-id": JSON.stringify({ store_id }),
+    };
+    if (authHeader) {
+      headers.Authorization = authHeader;
+    }
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      authHeader
-        ? { global: { headers: { Authorization: authHeader } } }
-        : undefined,
+      { global: { headers } },
     );
 
     if (authHeader) {
@@ -129,9 +140,9 @@ serve(async (req) => {
               status: 401,
               headers: { "Content-Type": "application/json" },
             },
-          ),
-          origin || "*",
-        );
+        ),
+        origin,
+      );
       }
       const claimStoreId = user.user.user_metadata?.store_id;
       if (claimStoreId && claimStoreId !== store_id) {
@@ -146,7 +157,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin || "*",
+          origin,
         );
       }
     }
@@ -163,7 +174,7 @@ serve(async (req) => {
     if (!originHost || !allowedHosts.has(originHost)) {
       return withCors(
         new Response("Origin not allowed", { status: 403 }),
-        origin || "*",
+        origin,
       );
     }
 
@@ -183,7 +194,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin || "*",
+        origin,
       );
     }
 
@@ -197,7 +208,7 @@ serve(async (req) => {
       new Response(JSON.stringify(sanitized), {
         headers: { "Content-Type": "application/json" },
       }),
-      origin || "*",
+      origin,
     );
   } catch (err) {
     errorLog("Unexpected error", err);
@@ -207,7 +218,7 @@ serve(async (req) => {
         status: 500,
         headers: { "Content-Type": "application/json" },
       }),
-      origin || "*",
+      origin,
     );
   }
 });
