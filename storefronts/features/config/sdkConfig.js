@@ -1,6 +1,17 @@
 import supabase from '../../../supabase/browserClient.js';
 import { getConfig } from './globalConfig.js';
 
+export const SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';
+export const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdXFyenZva3JvYXp3bHJpY2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTM2MzQsImV4cCI6MjA2NTI4OTYzNH0.bIItSJMzdx9BgXm5jOtTFI03yq94CLVHepiPQ0Xl_lU';
+
+const sdkConfig = {
+  supabaseUrl: SUPABASE_URL,
+  anonKey: SUPABASE_ANON_KEY
+};
+
+Object.assign(getConfig(), sdkConfig);
+
 const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Config]', ...args);
 const warn = (...args) => console.warn('[Smoothr Config]', ...args);
@@ -13,9 +24,13 @@ export async function loadPublicConfig(storeId) {
       data: { session }
     } = await supabase.auth.getSession();
     const access_token = session?.access_token;
+    const cfg = getConfig();
     const supabaseUrl =
-      supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      cfg.supabaseUrl ||
+      supabase.supabaseUrl ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey =
+      cfg.anonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     const headers = {
       'Content-Type': 'application/json',
@@ -62,3 +77,5 @@ export async function loadPublicConfig(storeId) {
     return null;
   }
 }
+
+export default sdkConfig;
