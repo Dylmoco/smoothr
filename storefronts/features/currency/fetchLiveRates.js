@@ -3,13 +3,6 @@ import { getConfig } from '../config/globalConfig.js';
 const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Rates]', ...args);
 
-function getAuthToken() {
-  return (
-    (typeof window !== 'undefined' && getConfig().liveRatesToken) ||
-    (typeof process !== 'undefined' && process.env.LIVE_RATES_AUTH_TOKEN)
-  );
-}
-
 function getSupabaseUrl() {
   return (
     (typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.supabaseUrl) ||
@@ -83,9 +76,13 @@ export async function fetchExchangeRates(
       if (proxyEndpoint) {
         const proxyUrl = new URL(proxyEndpoint);
         if (hostname === proxyUrl.hostname && pathname === proxyUrl.pathname) {
-          const token = getAuthToken();
-          if (token) {
-            headers.Authorization = `Token ${token}`;
+          const anonKey =
+            (typeof import.meta !== 'undefined' &&
+              import.meta.env?.VITE_SUPABASE_ANON_KEY) ||
+            (typeof process !== 'undefined' &&
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+          if (anonKey) {
+            headers.Authorization = `Bearer ${anonKey}`;
           }
         }
       }

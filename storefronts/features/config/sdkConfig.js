@@ -15,14 +15,13 @@ export async function loadPublicConfig(storeId) {
     const access_token = session?.access_token;
     const supabaseUrl =
       supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     const headers = {
       'Content-Type': 'application/json',
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      apikey: anonKey,
+      Authorization: `Bearer ${access_token || anonKey}`
     };
-    if (access_token) {
-      headers.Authorization = `Bearer ${access_token}`;
-    }
 
     const body = JSON.stringify({ store_id: storeId });
     let res = await fetch(
@@ -34,12 +33,12 @@ export async function loadPublicConfig(storeId) {
       }
     );
 
-    if ((res.status === 401 || res.status === 403) && headers.Authorization) {
+    if ((res.status === 401 || res.status === 403) && access_token) {
       warn(
         'Store settings lookup failed with auth header:',
         res.status
       );
-      delete headers.Authorization;
+      headers.Authorization = `Bearer ${anonKey}`;
       res = await fetch(
         `${supabaseUrl}/functions/v1/get_public_store_settings`,
         { method: 'POST', headers, body }

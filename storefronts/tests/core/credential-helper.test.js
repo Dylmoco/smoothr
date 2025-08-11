@@ -30,7 +30,8 @@ describe('credential helper', () => {
     expect(url).toBe('https://supabase.test/functions/v1/get_gateway_credentials');
     expect(opts.headers).toEqual({
       'Content-Type': 'application/json',
-      apikey: 'anon'
+      apikey: 'anon',
+      Authorization: 'Bearer anon'
     });
     expect(opts.body).toBe(JSON.stringify({ store_id: 'store-1', gateway: 'stripe' }));
   });
