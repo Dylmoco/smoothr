@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOG } from "../../utils/logger.js";
 
 const cartInitMock = vi.fn();
 const globalKey = '__supabaseAuthClientsmoothr-browser-client';
@@ -12,7 +13,7 @@ describe("cart feature loading", () => {
     vi.resetModules();
     cartInitMock.mockReset();
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    global.console = { log: vi.fn(), warn: vi.fn() };
+    global.console = { log: vi.fn(), warn: vi.fn(), info: vi.fn() };
     vi.doMock("../../shared/supabase/browserClient.js", () => {
       const client = {
         from: vi.fn(() => ({
@@ -59,6 +60,9 @@ describe("cart feature loading", () => {
     await import("../../smoothr-sdk.js");
     await flushPromises();
     expect(cartInitMock).toHaveBeenCalled();
+    expect(global.console.info).toHaveBeenCalledWith(
+      LOG.FEATURE_LOADED('cart')
+    );
   });
 
   it("logs when cart triggers are absent", async () => {

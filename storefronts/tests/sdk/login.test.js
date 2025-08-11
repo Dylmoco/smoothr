@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { getClient } from "../../../shared/supabase/browserClient.js";
 
 var signInMock;
 var getUserMock;
@@ -114,7 +115,8 @@ describe("login form", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
-    await global.window.Smoothr.auth.client.auth.getSession();
+    const client = getClient();
+    await client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
   });
 });

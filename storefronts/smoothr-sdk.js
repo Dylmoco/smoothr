@@ -1,5 +1,6 @@
 import { mergeConfig } from './features/config/globalConfig.js';
 import { loadPublicConfig } from './features/config/sdkConfig.js';
+import { LOG, info, warn, groupStart, groupEnd } from './utils/logger.js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
@@ -12,18 +13,12 @@ const platform =
   scriptEl?.dataset?.platform || scriptEl?.getAttribute?.('platform') || null;
 const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
 
-if (!scriptEl || !storeId) {
-  if (debug) {
-    console.warn(
-      !scriptEl
-        ? '[Smoothr SDK] initialization aborted: #smoothr-sdk script element not found'
-        : '[Smoothr SDK] initialization aborted: data-store-id attribute missing'
-    );
-  }
+if (!scriptEl || !storeId || !platform) {
+  warn(LOG.INIT_SKIPPED);
 } else {
   const config = mergeConfig({ storeId, platform, debug });
   if (config.platform === 'webflow-ecom') {
-    console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
+    warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
     config.platform = 'webflow';
   }
   const Smoothr = (window.Smoothr = window.Smoothr || {});
@@ -39,12 +34,12 @@ if (!scriptEl || !storeId) {
         log('Fetching store settings');
         const data = await loadPublicConfig(storeId);
         if (!data && debug) {
-          console.warn('[Smoothr SDK] Store settings request failed');
+          warn('[Smoothr SDK] Store settings request failed');
         }
         config.settings = { ...(config.settings || {}), ...(data || {}) };
         log('Store settings loaded', config.settings);
       } catch (err) {
-        debug && console.warn('[Smoothr SDK] Failed to fetch store settings', err);
+        debug && warn('[Smoothr SDK] Failed to fetch store settings');
       }
     }
 
@@ -57,7 +52,7 @@ if (!scriptEl || !storeId) {
         await instance?.domReady?.();
         log('Adapter initialized');
       } catch (err) {
-        debug && console.warn('[Smoothr SDK] Failed to load adapter', err);
+        debug && warn('[Smoothr SDK] Failed to load adapter');
       }
     }
 
@@ -66,7 +61,7 @@ if (!scriptEl || !storeId) {
       const auth = await import('./features/auth/init.js');
       await auth.init(config);
     } catch (err) {
-      debug && console.warn('[Smoothr SDK] Auth init failed', err);
+      debug && warn('[Smoothr SDK] Auth init failed');
     }
 
     try {
@@ -74,7 +69,7 @@ if (!scriptEl || !storeId) {
       const currency = await import('./features/currency/index.js');
       await currency.init(config);
     } catch (err) {
-      debug && console.warn('[Smoothr SDK] Currency init failed', err);
+      debug && warn('[Smoothr SDK] Currency init failed');
     }
     const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
     const hasCartTrigger =
@@ -87,8 +82,9 @@ if (!scriptEl || !storeId) {
         log('Initializing checkout feature');
         const { init } = await import('./features/checkout/init.js');
         await init(config);
+        info(LOG.FEATURE_LOADED('checkout'));
       } catch (err) {
-        debug && console.warn('[Smoothr SDK] Checkout init failed', err);
+        debug && warn('[Smoothr SDK] Checkout init failed');
       }
     } else {
       log('No checkout triggers found, skipping checkout initialization');
@@ -99,11 +95,16 @@ if (!scriptEl || !storeId) {
         log('Initializing cart feature');
         const cart = await import('./features/cart/init.js');
         await cart.init(config);
+        info(LOG.FEATURE_LOADED('cart'));
       } catch (err) {
-        debug && console.warn('[Smoothr SDK] Cart init failed', err);
+        debug && warn('[Smoothr SDK] Cart init failed');
       }
     } else {
       log('No cart triggers found, skipping cart initialization');
+    }
+    if (debug) {
+      groupStart(LOG.DEBUG_SUMMARY_TITLE);
+      groupEnd();
     }
   })();
 }

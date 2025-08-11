@@ -3,6 +3,7 @@ import * as authExports from './index.js';
 import { loadPublicConfig } from '../config/sdkConfig.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
+import { LOG, info } from '../../utils/logger.js';
 
 // Legacy helpers
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
@@ -25,11 +26,11 @@ if (Object.prototype.hasOwnProperty.call(authExports, 'init')) {
   authInit = authExports.init;
 }
 
-const authClient = getClient();
 
 let initialized = false;
 
 export async function loadConfig(storeId) {
+  const authClient = getClient();
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
 
   let record;
@@ -79,6 +80,7 @@ let sessionReadyPromise;
 export function waitForSessionReady() {
   if (sessionReadyPromise) return sessionReadyPromise;
   sessionReadyPromise = (async () => {
+    const authClient = getClient();
     try {
       const {
         data: { session }
@@ -110,7 +112,7 @@ export function waitForSessionReady() {
           }
         }
       } else {
-        console.log('[Smoothr] Auth restored');
+        info(LOG.AUTH_SESSION_RESTORED);
       }
     } catch {
       // ignore session check errors
@@ -122,6 +124,7 @@ export function waitForSessionReady() {
 export async function init(config = {}) {
   if (initialized) return window.Smoothr?.auth;
 
+  const authClient = getClient();
   const script =
     typeof document !== 'undefined'
       ? document.currentScript || document.getElementById('smoothr-sdk')
@@ -175,8 +178,10 @@ export async function init(config = {}) {
   if (cfg.rates) currency.updateRates(cfg.rates);
 
   await domReady();
+  await Promise.resolve();
 
   await authInit(config);
+  await Promise.resolve();
 
   const authAPI = {
     login: authModule.login,

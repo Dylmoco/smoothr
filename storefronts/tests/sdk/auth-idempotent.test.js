@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, vi, expect } from 'vitest';
+import { LOG } from '../../utils/logger.js';
 
 vi.mock('../../features/auth/index.js', () => {
   const authMock = {
@@ -58,11 +59,11 @@ beforeEach(() => {
 describe('auth init session restoration', () => {
   it('restores session only once', async () => {
     const mod = await import('../../features/auth/init.js');
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     await mod.init({ storeId: 's1' });
     await mod.init({ storeId: 's1' });
     expect(getSessionMock).toHaveBeenCalledTimes(1);
-    expect(logSpy.mock.calls.filter((c) => c[0] === '[Smoothr] Auth restored').length).toBe(1);
+    expect(logSpy.mock.calls.filter((c) => c[0] === LOG.AUTH_SESSION_RESTORED).length).toBe(1);
   });
 });
 

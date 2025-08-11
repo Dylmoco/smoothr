@@ -37,5 +37,7 @@ beforeAll(() => {
 });
 
 const noop = () => {};
+vi.spyOn(console, 'groupCollapsed').mockImplementation(noop);
+vi.spyOn(console, 'groupEnd').mockImplementation(noop);
 // vi.spyOn(console, 'warn').mockImplementation(noop);
 // vi.spyOn(console, 'info').mockImplementation(noop);

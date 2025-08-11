@@ -17,8 +17,10 @@ import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
 import { getClient } from '../../../shared/supabase/browserClient.js';
 import { getGatewayCredential } from './core/credentials.js';
+import { LOG, info } from '../../utils/logger.js';
 
 let initialized = false;
+let activeGateway = null;
 
 function forEachPayButton(fn) {
   // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
@@ -73,6 +75,7 @@ export async function init(config = {}) {
   try {
     const cfg = getConfig();
     provider = resolveGateway(cfg, cfg.settings);
+    activeGateway = provider;
   } catch (e) {
     warn('Gateway resolution failed:', e?.message || e);
     return;
@@ -345,6 +348,8 @@ export async function init(config = {}) {
     });
   });
   log('pay button handlers attached');
+  await Promise.resolve();
+  info(LOG.CHECKOUT_READY(activeGateway));
 }
 
 // collects form data, supports billing same-as-shipping
@@ -469,3 +474,10 @@ function handleCheckoutSuccess(resp) {
   if (cfg.successUrl) window.location.href = cfg.successUrl;
   window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: resp }));
 }
+
+export async function submit(opts = {}) {
+  if (!activeGateway) return { ok: false, error: 'no-gateway' };
+  return { ok: true, gateway: activeGateway };
+}
+
+export default { init, submit };

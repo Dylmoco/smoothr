@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOG } from "../../utils/logger.js";
 
 const checkoutInitMock = vi.fn();
 const globalKey = "__supabaseAuthClientsmoothr-browser-client";
@@ -12,7 +13,7 @@ describe("checkout DOM trigger", () => {
     vi.resetModules();
     checkoutInitMock.mockReset();
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    global.console = { log: vi.fn(), warn: vi.fn() };
+    global.console = { log: vi.fn(), warn: vi.fn(), info: vi.fn() };
     vi.doMock("../../shared/supabase/browserClient.js", () => {
       const client = {
         from: vi.fn(() => ({
@@ -26,7 +27,11 @@ describe("checkout DOM trigger", () => {
     vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
     vi.doMock("../../features/cart/init.js", () => ({ init: vi.fn() }));
-    vi.doMock("../../features/checkout/init.js", () => ({ init: checkoutInitMock }));
+    vi.doMock("../../features/checkout/init.js", () => ({
+      init: checkoutInitMock.mockImplementation(() => {
+        console.info(LOG.CHECKOUT_READY("stripe"));
+      }),
+    }));
   });
 
   afterEach(() => {
@@ -59,6 +64,9 @@ describe("checkout DOM trigger", () => {
     await import("../../smoothr-sdk.js");
     await flushPromises();
     expect(checkoutInitMock).toHaveBeenCalled();
+    expect(global.console.info).toHaveBeenCalledWith(
+      LOG.CHECKOUT_READY("stripe")
+    );
   });
 
   it("skips checkout when trigger absent", async () => {

@@ -32,6 +32,7 @@ vi.mock("@supabase/supabase-js", () => {
 });
 
 import * as auth from "../../features/auth/index.js";
+import { getClient } from "../../../shared/supabase/browserClient.js";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -59,8 +60,8 @@ describe("auth state change", () => {
     const user = { id: "42", email: "test@example.com" };
     onAuthStateChangeHandler("SIGNED_IN", { user });
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
-    expect(global.window.Smoothr.auth.client).toBeDefined();
-    await global.window.Smoothr.auth.client.auth.getSession();
+    const client = getClient();
+    await client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
   });
 });

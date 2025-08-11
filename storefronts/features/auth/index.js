@@ -377,18 +377,30 @@ function bindSignOutButtons() {
   });
 }
 
+export function getSession() {
+  const s = getClient();
+  return s.auth.getSession();
+}
+
+export async function logout() {
+  const s = getClient();
+  return s.auth.signOut();
+}
+
+export async function loginWithGoogle() {
+  const s = getClient();
+  return s.auth.signInWithOAuth({ provider: 'google' });
+}
+
 const auth = {
   login,
   signup,
   resetPassword,
-  signOut,
-  logout: signOut,
-  getSession: () => getClient().auth.getSession(),
+  logout,
+  signOut: logout,
+  getSession,
   initAuth,
-  user,
-  get client() {
-    return getClient();
-  }
+  user
 };
 
   async function init(config = {}) {
@@ -442,7 +454,10 @@ export {
   login,
   signup,
   resetPassword,
-  signOut,
+  logout,
+  logout as signOut,
+  getSession,
+  loginWithGoogle,
   user
 };
 

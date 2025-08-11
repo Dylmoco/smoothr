@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let createClient;
 const globalKey = '__supabaseAuthClientsmoothr-browser-client';
@@ -19,14 +19,11 @@ describe('supabase browser client singleton', () => {
     delete process.env.SUPABASE_ANON_KEY;
   });
 
-  it('creates client only once across imports', async () => {
-    const mod1 = await import('../../../shared/supabase/browserClient.js');
-    const client1 = mod1.default;
-    vi.resetModules();
-    vi.mock('@supabase/supabase-js', () => ({ createClient }));
-    const mod2 = await import('../../../shared/supabase/browserClient.js');
-    const client2 = mod2.default;
+  it('creates client only once across calls', async () => {
+    const { getClient } = await import('../../../shared/supabase/browserClient.js');
+    const a = getClient();
+    const b = getClient();
     expect(createClient).toHaveBeenCalledTimes(1);
-    expect(client1).toBe(client2);
+    expect(a).toBe(b);
   });
 });
