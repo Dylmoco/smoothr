@@ -1,6 +1,0 @@
-.temp/
-.env.local
-functions/**/dist/
-functions/**/.deno_dir/
-types/database.types.ts
-seeds/*.sql

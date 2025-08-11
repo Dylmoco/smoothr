@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const getSessionMock = vi.fn();
 
-vi.mock('../../../supabase/browserClient.js', () => ({
-  default: { auth: { getSession: getSessionMock }, supabaseUrl: 'https://supabase.test' }
+vi.mock('../../../shared/supabase/browserClient.js', () => ({
+  supabase: { auth: { getSession: getSessionMock }, supabaseUrl: 'https://supabase.test' }
 }));
 
 vi.mock('../../features/config/globalConfig.js', () => ({

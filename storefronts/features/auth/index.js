@@ -1,4 +1,4 @@
-import { supabase, ensureSupabaseSessionAuth } from '../../../supabase/browserClient.js';
+import { supabase, ensureSupabaseSessionAuth } from '../../../shared/supabase/browserClient.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import {
   initAuth as initAuthHelper,
@@ -16,7 +16,7 @@ import {
   showSuccess,
   registerDOMBindings,
   findMessageContainer
-} from '../../../supabase/authHelpers.js';
+} from './authHelpers.js';
 
 const SMOOTHR_CONFIG = getConfig();
 

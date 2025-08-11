@@ -1,4 +1,4 @@
-import supabase from '../../supabase/browserClient.js';
+import { supabase } from '../../shared/supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 import '../features/config/sdkConfig.js';
 

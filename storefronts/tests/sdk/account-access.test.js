@@ -77,7 +77,7 @@ describe("account access trigger", () => {
 
     beforeEach(async () => {
       vi.resetModules();
-      authHelpers = await import("../../../supabase/authHelpers.js");
+      authHelpers = await import("../../features/auth/authHelpers.js");
       vi
         .spyOn(authHelpers, "lookupDashboardHomeUrl")
         .mockResolvedValue("/dashboard");
@@ -102,7 +102,7 @@ describe("account access trigger", () => {
     beforeEach(async () => {
       vi.resetModules();
       getUserMock.mockResolvedValueOnce({ data: { user: null } });
-      authHelpers = await import("../../../supabase/authHelpers.js");
+      authHelpers = await import("../../features/auth/authHelpers.js");
       const { init } = await import("../../features/auth/index.js");
       await init({});
       await flushPromises();

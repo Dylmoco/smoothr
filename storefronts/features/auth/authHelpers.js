@@ -1,5 +1,5 @@
-import { supabase } from './browserClient.js';
-import { loadPublicConfig } from '../../storefronts/features/config/sdkConfig.js';
+import { supabase } from '../../../shared/supabase/browserClient.js';
+import { loadPublicConfig } from '../config/sdkConfig.js';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
