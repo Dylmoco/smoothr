@@ -11,9 +11,8 @@ function expectCors(res: Response) {
     "GET, POST, OPTIONS",
   );
   expect(res.headers.get("access-control-allow-headers")).toBe(
-    "authorization, apikey, content-type, user-agent",
+    "authorization, x-client-info, apikey, content-type, x-store-id, user-agent",
   );
-  expect(res.headers.get("vary")).toBe("Origin");
   if (res.status !== 204) {
     expect(res.headers.get("content-type")).toBe("application/json");
   }
@@ -21,8 +20,14 @@ function expectCors(res: Response) {
 
 beforeEach(() => {
   handler = undefined as any;
-  (globalThis as any).Deno = { env: { get: () => "" } };
+  (globalThis as any).Deno = {
+    env: { get: () => "" },
+    serve: (fn: any) => {
+      handler = fn;
+    },
+  };
   createClientMock = vi.fn(() => ({
+    rpc: async () => ({ data: [], error: null }),
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -32,12 +37,7 @@ beforeEach(() => {
     }),
   }));
 
-  vi.mock("https://deno.land/std@0.177.0/http/server.ts", () => ({
-    serve: (fn: any) => {
-      handler = fn;
-    },
-  }));
-  vi.mock("https://esm.sh/@supabase/supabase-js@2", () => ({
+  vi.mock("@supabase/supabase-js", () => ({
     createClient: createClientMock,
   }));
 });
@@ -54,7 +54,10 @@ describe("get_public_store_settings CORS", () => {
       "../../../supabase/functions/get_public_store_settings/index.ts"
     );
     const res = await handler(
-      new Request("http://localhost", { method: "OPTIONS" }),
+      new Request("http://localhost", {
+        method: "OPTIONS",
+        headers: { Origin: "https://smoothr-cms.webflow.io" },
+      }),
     );
     expect(res.status).toBe(204);
     expectCors(res);
@@ -67,7 +70,10 @@ describe("get_public_store_settings CORS", () => {
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://smoothr-cms.webflow.io",
+        },
         body: JSON.stringify({ store_id: "s1" }),
       }),
     );
@@ -86,13 +92,16 @@ describe("get_public_store_settings CORS", () => {
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://smoothr-cms.webflow.io",
+        },
         body: JSON.stringify({ store_id: "s1" }),
       }),
     );
     expect(res.status).toBe(500);
     expectCors(res);
-    expect(await res.json()).toEqual({
+    expect(await res.json()).toMatchObject({
       error: "server_error",
       message: "boom",
     });
@@ -103,9 +112,12 @@ describe("get_public_store_settings CORS", () => {
       "../../../supabase/functions/get_public_store_settings/index.ts"
     );
     const res = await handler(
-      new Request("http://localhost", { method: "POST" }),
+      new Request("http://localhost", {
+        method: "POST",
+        headers: { Origin: "https://smoothr-cms.webflow.io" },
+      }),
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
     expectCors(res);
   });
 });

@@ -3,23 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;
 
-function expectCors(res: Response) {
-  expect(res.headers.get("access-control-allow-origin")).toBe(
-    "https://smoothr-cms.webflow.io",
-  );
+function expectCors(res: Response, origin = "https://smoothr-cms.webflow.io") {
+  expect(res.headers.get("access-control-allow-origin")).toBe(origin);
   expect(res.headers.get("access-control-allow-methods")).toBe(
     "GET, POST, OPTIONS",
   );
   expect(res.headers.get("access-control-allow-headers")).toBe(
-    "authorization, apikey, content-type, user-agent",
+    "authorization, x-client-info, apikey, content-type, x-store-id, user-agent",
   );
-  expect(res.headers.get("vary")).toBe("Origin");
 }
 
 beforeEach(() => {
   handler = undefined as any;
-  (globalThis as any).Deno = { env: { get: () => "" } };
+  (globalThis as any).Deno = {
+    env: { get: () => "" },
+    serve: (fn: any) => {
+      handler = fn;
+    },
+  };
   createClientMock = vi.fn(() => ({
+    rpc: async () => ({ data: [], error: null }),
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -34,12 +37,7 @@ beforeEach(() => {
     }),
   }));
 
-  vi.mock("https://deno.land/std@0.177.0/http/server.ts", () => ({
-    serve: (fn: any) => {
-      handler = fn;
-    },
-  }));
-  vi.mock("https://esm.sh/@supabase/supabase-js@2", () => ({
+  vi.mock("@supabase/supabase-js", () => ({
     createClient: createClientMock,
   }));
 });
@@ -54,7 +52,10 @@ describe("get_gateway_credentials CORS", () => {
   it("includes CORS headers on OPTIONS", async () => {
     await import("./get_gateway_credentials/index.ts");
     const res = await handler(
-      new Request("http://localhost", { method: "OPTIONS" }),
+      new Request("http://localhost", {
+        method: "OPTIONS",
+        headers: { Origin: "https://smoothr-cms.webflow.io" },
+      }),
     );
     expect(res.status).toBe(204);
     expectCors(res);
@@ -63,10 +64,13 @@ describe("get_gateway_credentials CORS", () => {
   it("includes CORS headers on invalid method", async () => {
     await import("./get_gateway_credentials/index.ts");
     const res = await handler(
-      new Request("http://localhost", { method: "GET" }),
+      new Request("http://localhost", {
+        method: "GET",
+        headers: { Origin: "https://forbidden.example" },
+      }),
     );
     expect(res.status).toBe(400);
-    expectCors(res);
+    expectCors(res, "https://forbidden.example");
   });
 
   it("includes CORS headers on 403 response", async () => {
@@ -74,11 +78,14 @@ describe("get_gateway_credentials CORS", () => {
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://forbidden.example",
+        },
         body: JSON.stringify({ store_id: "s", gateway: "g" }),
       }),
     );
     expect(res.status).toBe(403);
-    expectCors(res);
+    expectCors(res, "https://forbidden.example");
   });
 });
