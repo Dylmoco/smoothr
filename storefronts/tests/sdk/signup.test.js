@@ -35,7 +35,8 @@ function setupSupabaseMock() {
 }
 
 let auth;
-const config = { storeId: "00000000-0000-0000-0000-000000000000" };
+const testStoreId = process.env.TEST_STORE_ID || 'store-1';
+const config = { storeId: testStoreId };
 
 function flushPromises() {
   return new Promise(setImmediate);

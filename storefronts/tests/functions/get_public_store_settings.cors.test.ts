@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const testOrigin = process.env.TEST_ALLOWED_ORIGIN || "http://example.test";
+
 let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;
 
 function expectCors(res: Response) {
-  expect(res.headers.get("access-control-allow-origin")).toBe(
-    "https://smoothr-cms.webflow.io",
-  );
+  expect(res.headers.get("access-control-allow-origin")).toBe(testOrigin);
   expect(res.headers.get("access-control-allow-methods")).toBe(
     "GET, POST, OPTIONS",
   );
@@ -21,7 +21,9 @@ function expectCors(res: Response) {
 
 beforeEach(() => {
   handler = undefined as any;
-  (globalThis as any).Deno = { env: { get: () => "" } };
+  (globalThis as any).Deno = {
+    env: { get: (k: string) => (k === "ALLOWED_ORIGINS" ? testOrigin : "") },
+  };
   createClientMock = vi.fn(() => ({
     from: () => ({
       select: () => ({
@@ -54,7 +56,7 @@ describe("get_public_store_settings CORS", () => {
       "../../../supabase/functions/get_public_store_settings/index.ts"
     );
     const res = await handler(
-      new Request("http://localhost", { method: "OPTIONS" }),
+      new Request("http://localhost", { method: "OPTIONS", headers: { Origin: testOrigin } }),
     );
     expect(res.status).toBe(204);
     expectCors(res);
@@ -67,7 +69,7 @@ describe("get_public_store_settings CORS", () => {
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Origin: testOrigin },
         body: JSON.stringify({ store_id: "s1" }),
       }),
     );
@@ -86,7 +88,7 @@ describe("get_public_store_settings CORS", () => {
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Origin: testOrigin },
         body: JSON.stringify({ store_id: "s1" }),
       }),
     );
@@ -103,7 +105,7 @@ describe("get_public_store_settings CORS", () => {
       "../../../supabase/functions/get_public_store_settings/index.ts"
     );
     const res = await handler(
-      new Request("http://localhost", { method: "POST" }),
+      new Request("http://localhost", { method: "POST", headers: { Origin: testOrigin } }),
     );
     expect(res.status).toBe(400);
     expectCors(res);

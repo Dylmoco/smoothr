@@ -43,6 +43,21 @@ syntax and require **Node.js 20 or later**. Update any local builds or
 Cloudflare/Vercel deploy commands that specify a Node version to ensure they
 use Node 20+.
 
+## Environment Variables
+
+Smoothr resolves all service URLs and credentials from environment variables so deployments can support multiple stores without code changes.
+
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY` – connection details for your Supabase project.
+- `VITE_SUPABASE_URL` – injected into the storefront build.
+- `VITE_CDN_BASE_URL` – optional base URL for hosted SDK assets.
+- `LIVE_RATES_URL` / `VITE_LIVE_RATES_URL` – override the currency rates endpoint.
+- `ALLOWED_ORIGINS` – comma-separated list of domains allowed to call Supabase functions.
+- `ALLOW_ORIGIN_WILDCARD` – set to `true` to permit any origin (development only).
+
+### Multi-store readiness
+
+Edge functions now check `ALLOWED_ORIGINS` and fall back to the requesting store’s domain. Currency rate sources resolve in the following order: `SMOOTHR_CONFIG.settings.rateSource`, `VITE_LIVE_RATES_URL`/`LIVE_RATES_URL`, then `${SUPABASE_URL.replace('.co', '.co/functions')}/proxy-live-rates`. Providing the appropriate environment variables ensures Smoothr works across all stores and environments without hardcoded URLs.
+
 ## Running the Admin Dashboard
 
 The admin dashboard lives in `/smoothr`. After installing dependencies you can

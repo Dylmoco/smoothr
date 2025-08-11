@@ -3,6 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { preflight, withCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  const reqOrigin = req.headers.get("Origin") ?? "";
+  const allowlist = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const wildcard = Deno.env.get("ALLOW_ORIGIN_WILDCARD") === "true";
+
   const url = new URL(req.url);
   const debug = url.searchParams.has("smoothr-debug");
   const log = (...args: any[]) =>
@@ -10,28 +17,12 @@ serve(async (req) => {
   const errorLog = (...args: any[]) =>
     debug && console.error("[get_gateway_credentials]", ...args);
 
-  // Determine origin dynamically
-  const requestOrigin = req.headers.get("origin") || "*";
-  const allowedOriginsEnv = Deno.env.get("ALLOWED_ORIGINS"); // optional, comma-separated
-  const allowedOrigins = allowedOriginsEnv ? allowedOriginsEnv.split(",") : null;
-  const origin =
-    !allowedOrigins || allowedOrigins.includes(requestOrigin)
-      ? requestOrigin
-      : null;
-
-  if (!origin) {
-    return new Response(
-      JSON.stringify({
-        error: "forbidden",
-        message: "Origin not allowed",
-      }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
   try {
     if (req.method === "OPTIONS") {
-      return preflight(origin);
+      if (allowlist.length > 0 && !allowlist.includes(reqOrigin) && !wildcard) {
+        return new Response("origin not allowed", { status: 403 });
+      }
+      return preflight(reqOrigin);
     }
 
     if (req.method !== "POST") {
@@ -46,7 +37,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           }
         ),
-        origin
+        reqOrigin
       );
     }
 
@@ -66,7 +57,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           }
         ),
-        origin
+        reqOrigin
       );
     }
 
@@ -90,7 +81,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           }
         ),
-        origin
+        reqOrigin
       );
     }
 
@@ -106,7 +97,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           }
         ),
-        origin
+        reqOrigin
       );
     }
 
@@ -133,7 +124,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             }
           ),
-          origin
+          reqOrigin
         );
       }
       const claimStoreId = user.user.user_metadata?.store_id;
@@ -148,9 +139,21 @@ serve(async (req) => {
               status: 400,
               headers: { "Content-Type": "application/json" },
             }
-          ),
-          origin
+            ),
+          reqOrigin
         );
+      }
+    }
+
+    if (allowlist.length === 0 && !wildcard) {
+      const { data: storeSettings } = await supabase
+        .from("public_store_settings")
+        .select("api_base")
+        .eq("store_id", store_id)
+        .maybeSingle();
+      const domain = storeSettings?.api_base || "";
+      if (domain && !reqOrigin.endsWith(domain)) {
+        return new Response("origin not allowed", { status: 403 });
       }
     }
 
@@ -171,7 +174,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           }
         ),
-        origin
+        reqOrigin
       );
     }
 
@@ -188,7 +191,7 @@ serve(async (req) => {
       new Response(JSON.stringify(responsePayload), {
         headers: { "Content-Type": "application/json" },
       }),
-      origin
+      reqOrigin
     );
   } catch (err) {
     errorLog("Unexpected error", err);
@@ -198,7 +201,7 @@ serve(async (req) => {
         status: 500,
         headers: { "Content-Type": "application/json" },
       }),
-      origin
+      reqOrigin
     );
   }
 });
