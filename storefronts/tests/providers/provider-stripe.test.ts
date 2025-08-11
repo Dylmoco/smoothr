@@ -5,13 +5,17 @@ let createMock: any;
 let integrationMock: any;
 let supabaseMock: any;
 
+const publishable = process.env.TEST_STRIPE_PUBLISHABLE || 'pk_test';
+const secret = process.env.TEST_STRIPE_SECRET || 'sk_test';
+const testStoreId = process.env.TEST_STORE_ID || 'store-1';
+
 vi.mock('stripe', () => {
   createMock = vi.fn();
   return { default: class { paymentIntents = { create: createMock }; constructor() {} } };
 });
 
 vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
-  integrationMock = vi.fn(async () => ({ api_key: 'sk_test' }));
+  integrationMock = vi.fn(async () => ({ api_key: secret }));
   return { getStoreIntegration: integrationMock };
 });
 
@@ -23,7 +27,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               maybeSingle: vi.fn(async () => ({
-                data: { settings: { stripe_secret_key: 'sk_supabase' } },
+                data: { settings: { stripe_secret_key: secret } },
                 error: null
               }))
             }))
@@ -61,7 +65,7 @@ const basePayload = {
   currency: 'USD',
   description: 'Test',
   metaCartString: 'cart',
-  store_id: 'store-1'
+  store_id: testStoreId
 };
 
 beforeEach(async () => {

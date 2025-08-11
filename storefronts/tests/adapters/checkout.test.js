@@ -43,11 +43,12 @@ beforeEach(() => {
   loadScriptOnceMock.mockReset();
   loadScriptOnceMock.mockResolvedValue();
   supabaseMaybeSingle.mockReset();
+  const publishable = process.env.TEST_STRIPE_PUBLISHABLE || 'pk_test';
   supabaseMaybeSingle.mockResolvedValue({
-    data: { publishable_key: 'pk_test' },
+    data: { publishable_key: publishable },
     error: null
   });
-  getCredMock = vi.fn(async () => ({ publishable_key: 'pk_test' }));
+  getCredMock = vi.fn(async () => ({ publishable_key: publishable }));
 
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -183,10 +184,11 @@ beforeEach(() => {
       });
     }
   };
+  const storeId = process.env.TEST_STORE_ID || 'store-1';
   global.window.SMOOTHR_CONFIG = {
     baseCurrency: 'GBP',
-    stripeKey: 'pk_test',
-    storeId: 'store-1',
+    stripeKey: publishable,
+    storeId,
     active_payment_gateway: 'stripe',
     debug: true
   };

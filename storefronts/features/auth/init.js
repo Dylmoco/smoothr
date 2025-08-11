@@ -129,14 +129,17 @@ export async function init(config = {}) {
       ? document.currentScript || document.getElementById('smoothr-sdk')
       : null;
   const storeId =
-    config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
+    config.storeId ||
+    window.SMOOTHR_CONFIG?.storeId ||
+    script?.getAttribute?.('data-store-id') ||
+    script?.dataset?.storeId;
 
   mergeConfig({ ...config, storeId });
 
   if (!storeId) {
-    console.warn(
-      '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
-    );
+    console.warn('[Smoothr Auth] Missing storeId – auth disabled');
+    initialized = true;
+    return {};
   }
 
   if (
@@ -154,7 +157,7 @@ export async function init(config = {}) {
   await waitForSessionReady();
 
   try {
-    await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');
+    await loadConfig(storeId);
   } catch (err) {
     if (
       typeof process !== 'undefined' &&

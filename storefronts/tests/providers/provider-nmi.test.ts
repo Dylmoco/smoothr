@@ -5,9 +5,11 @@ let fetchMock: any;
 let integrationMock: any;
 const originalFetch = global.fetch;
 const originalKey = process.env.NMI_SECURITY_KEY;
+const testStoreId = process.env.TEST_STORE_ID || 'store-1';
+const testNmiKey = process.env.TEST_NMI_KEY || 'key';
 
 vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
-  integrationMock = vi.fn(async () => ({ api_key: 'key' }));
+  integrationMock = vi.fn(async () => ({ api_key: testNmiKey }));
   return { getStoreIntegration: integrationMock };
 });
 
@@ -19,7 +21,7 @@ async function loadModule() {
 const basePayload = {
   amount: 100,
   payment_token: 'tok_test',
-  store_id: 'store-1',
+  store_id: testStoreId,
   cart: []
 };
 
@@ -47,7 +49,7 @@ describe('handleNmi', () => {
     expect(res.success).toBe(true);
     expect(res.transaction_id).toBe('tx1');
     expect(res.customer_vault_id).toBeNull();
-    expect(integrationMock).toHaveBeenCalledWith('store-1', 'nmi');
+    expect(integrationMock).toHaveBeenCalledWith(testStoreId, 'nmi');
     const body = fetchMock.mock.calls[0][1].body;
     const params = new URLSearchParams(body);
     expect(params.get('security_key')).toBe('key');

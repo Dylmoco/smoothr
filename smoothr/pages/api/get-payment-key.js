@@ -18,14 +18,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceKey) {
-      console.error('[API] SUPABASE_SERVICE_ROLE_KEY not set');
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error('[API] Missing SUPABASE_URL or SUPABASE_ANON_KEY');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('[API] Querying store_integrations for store:', storeId, 'provider:', provider);
     const { data, error } = await supabase
       .from('store_integrations')

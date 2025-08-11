@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    base: 'https://sdk.smoothr.io/',
+    base: env.VITE_CDN_BASE_URL || (mode === 'development' ? 'http://localhost:4173/' : '/'),
     optimizeDeps: {
       include: ['@supabase/supabase-js']
     },
@@ -24,9 +24,7 @@ export default defineConfig(({ mode }) => {
       ),
 
       // ✅ Live rates API for dynamic currency conversions
-      'process.env.LIVE_RATES_URL': JSON.stringify(
-        'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates'
-      )
+      'process.env.LIVE_RATES_URL': JSON.stringify(env.VITE_LIVE_RATES_URL)
     },
     build: {
       target: 'esnext', // ✅ Enables top-level await

@@ -24,6 +24,9 @@ These variables are injected at build time so the final SDK has no
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL=your-redirect-url
+VITE_SUPABASE_URL=your-project-url
+VITE_LIVE_RATES_URL=https://example.com/custom-rates
+VITE_CDN_BASE_URL=https://sdk.smoothr.io/
 ```
 
 An `.env.example` file is included for reference.
@@ -111,6 +114,10 @@ a dropdown and mark prices using `data-smoothr-price`:
 
 Prices update automatically when the currency changes and the selection is
 persisted in `localStorage`.
+
+### Multi-store readiness
+
+All storefront helpers resolve URLs and credentials from environment variables or per-store settings. Set `ALLOWED_ORIGINS` on your functions to allow specific domains and configure currency rate sources via `SMOOTHR_CONFIG.settings.rateSource`, `VITE_LIVE_RATES_URL`/`LIVE_RATES_URL`, or fall back to `${SUPABASE_URL}/functions/proxy-live-rates`.
 
 ## Cart UI helpers
 

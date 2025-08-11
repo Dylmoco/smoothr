@@ -10,17 +10,28 @@ function getAuthToken() {
   );
 }
 
+function getSupabaseUrl() {
+  return (
+    (typeof window !== 'undefined' && window.SMOOTHR_CONFIG?.supabaseUrl) ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) ||
+    (typeof process !== 'undefined' && process.env.SUPABASE_URL)
+  );
+}
 
-// Default endpoint used when no custom rateSource is provided. This proxies
-// requests through a Supabase Edge Function to avoid Cloudflare redirect
-// issues.
-const DEFAULT_RATE_SOURCE =
-  (typeof process !== 'undefined' && process.env.LIVE_RATES_URL) ||
-  'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
-
-// Endpoint requiring auth token
-const PROXY_LIVE_RATES_ENDPOINT =
-  'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates';
+function resolveDefaultSource() {
+  const cfgRate =
+    typeof window !== 'undefined' &&
+    window.SMOOTHR_CONFIG?.settings?.rateSource;
+  const envRate =
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_LIVE_RATES_URL) ||
+    (typeof process !== 'undefined' && process.env.LIVE_RATES_URL);
+  if (cfgRate) return cfgRate;
+  if (envRate) return envRate;
+  const supabase = getSupabaseUrl();
+  return supabase
+    ? `${supabase.replace('.co', '.co/functions')}/proxy-live-rates`
+    : null;
+}
 
 export async function fetchExchangeRates(
   base = 'GBP',
@@ -42,7 +53,11 @@ export async function fetchExchangeRates(
   }
 
   try {
-    const source = rateSource || DEFAULT_RATE_SOURCE;
+    const source = rateSource || resolveDefaultSource();
+    if (!source) {
+      console.warn('[Smoothr Rates] Missing live rates URL; skipping fetch');
+      return null;
+    }
     let url = source;
     const params = [];
     if (!/[?&]base=/.test(source)) {
@@ -61,14 +76,17 @@ export async function fetchExchangeRates(
       headers['User-Agent'] = 'SmoothrCurrencyBot/1.0';
     }
     try {
+      const proxyEndpoint = getSupabaseUrl()
+        ? `${getSupabaseUrl().replace('.co', '.co/functions')}/proxy-live-rates`
+        : null;
       const { hostname, pathname } = new URL(url);
-      if (
-        hostname.endsWith('.functions.supabase.co') &&
-        pathname === '/proxy-live-rates'
-      ) {
-        const token = getAuthToken();
-        if (token) {
-          headers.Authorization = `Token ${token}`;
+      if (proxyEndpoint) {
+        const proxyUrl = new URL(proxyEndpoint);
+        if (hostname === proxyUrl.hostname && pathname === proxyUrl.pathname) {
+          const token = getAuthToken();
+          if (token) {
+            headers.Authorization = `Token ${token}`;
+          }
         }
       }
     } catch {}
