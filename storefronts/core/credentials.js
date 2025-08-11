@@ -20,13 +20,12 @@ export async function getGatewayCredential(gateway) {
     const supabaseUrl =
       supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const headers = {
       'Content-Type': 'application/json',
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      apikey: anonKey,
+      Authorization: `Bearer ${access_token || anonKey}`
     };
-    if (access_token) {
-      headers.Authorization = `Bearer ${access_token}`;
-    }
 
     const gatewayMap = { authorizeNet: 'authorize' };
     const body = JSON.stringify({
@@ -43,12 +42,12 @@ export async function getGatewayCredential(gateway) {
       }
     );
 
-    if ((res.status === 401 || res.status === 403) && headers.Authorization) {
+    if ((res.status === 401 || res.status === 403) && access_token) {
       console.warn(
         '[Smoothr] Credential fetch unauthorized, retrying anon:',
         res.status
       );
-      delete headers.Authorization;
+      headers.Authorization = `Bearer ${anonKey}`;
       res = await fetch(
         `${supabaseUrl}/functions/v1/get_gateway_credentials`,
         { method: 'POST', headers, body }

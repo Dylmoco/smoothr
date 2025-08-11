@@ -1,13 +1,20 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { preflight, withCors } from "../_shared/cors.ts";
+import {
+  preflight,
+  withCors,
+  hostFromOrigin,
+  getAllowedHostsForStore,
+  isAllowedOrigin,
+} from "../_shared/cors.ts";
 
 serve(async (req) => {
-  const reqOrigin = req.headers.get("Origin") ?? "";
+  const origin = req.headers.get("Origin") || "";
+  const originHost = hostFromOrigin(origin);
   const allowlist = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
     .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+    .map((s) => hostFromOrigin(s.trim()))
+    .filter((s): s is string => !!s);
   const wildcard = Deno.env.get("ALLOW_ORIGIN_WILDCARD") === "true";
 
   const url = new URL(req.url);
@@ -19,10 +26,10 @@ serve(async (req) => {
 
   try {
     if (req.method === "OPTIONS") {
-      if (allowlist.length > 0 && !allowlist.includes(reqOrigin) && !wildcard) {
+      if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
         return new Response("origin not allowed", { status: 403 });
       }
-      return preflight(reqOrigin);
+      return preflight(origin || "*");
     }
 
     if (req.method !== "POST") {
@@ -37,7 +44,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        reqOrigin,
+        origin || "*",
       );
     }
 
@@ -57,7 +64,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        reqOrigin,
+        origin || "*",
       );
     }
 
@@ -75,7 +82,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        reqOrigin,
+        origin || "*",
       );
     }
 
@@ -102,7 +109,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          reqOrigin,
+          origin || "*",
         );
       }
       const claimStoreId = user.user.user_metadata?.store_id;
@@ -118,8 +125,15 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          reqOrigin,
+          origin || "*",
         );
+      }
+    }
+
+    if (!wildcard && (!originHost || !allowlist.includes(originHost))) {
+      const allowed = await getAllowedHostsForStore(store_id, supabase);
+      if (allowed.size === 0 || !isAllowedOrigin(originHost, allowed)) {
+        return new Response("Origin not allowed", { status: 403 });
       }
     }
 
@@ -139,7 +153,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        reqOrigin,
+        origin || "*",
       );
     }
 
@@ -147,25 +161,13 @@ serve(async (req) => {
       ? Object.fromEntries(Object.entries(data).filter(([, v]) => v != null))
       : {};
 
-    let allowedOrigin = reqOrigin;
-    if (allowlist.length > 0) {
-      if (!allowlist.includes(reqOrigin)) {
-        return new Response("origin not allowed", { status: 403 });
-      }
-    } else if (!wildcard) {
-      const domain = sanitized.api_base || "";
-      if (domain && !reqOrigin.endsWith(domain)) {
-        return new Response("origin not allowed", { status: 403 });
-      }
-    }
-
     log("response", sanitized);
 
     return withCors(
       new Response(JSON.stringify(sanitized), {
         headers: { "Content-Type": "application/json" },
       }),
-      allowedOrigin,
+      origin || "*",
     );
   } catch (err) {
     errorLog("Unexpected error", err);
@@ -175,7 +177,7 @@ serve(async (req) => {
         status: 500,
         headers: { "Content-Type": "application/json" },
       }),
-      reqOrigin,
+      origin || "*",
     );
   }
 });
