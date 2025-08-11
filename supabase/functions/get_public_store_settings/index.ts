@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { preflight, withCors, hostFromOrigin } from "../_shared/cors.ts";
+import { hostFromOrigin, preflight, withCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
   const origin = req.headers.get("Origin") || "";
@@ -14,8 +14,8 @@ serve(async (req) => {
 
   try {
     if (req.method === "OPTIONS") {
-      const storeId =
-        url.searchParams.get("store_id") || req.headers.get("X-Store-Id");
+      const storeId = url.searchParams.get("store_id") ||
+        req.headers.get("X-Store-Id");
       if (typeof storeId !== "string" || !storeId) {
         return withCors(
           new Response(
@@ -28,7 +28,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin,
+          origin || "*",
         );
       }
       const supabase = createClient(
@@ -47,10 +47,10 @@ serve(async (req) => {
       if (!originHost || !allowedHosts.has(originHost)) {
         return withCors(
           new Response("Origin not allowed", { status: 403 }),
-          origin,
+          origin || "*",
         );
       }
-      return preflight(origin);
+      return preflight(origin || "*");
     }
 
     if (req.method !== "POST") {
@@ -65,7 +65,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin,
+        origin || "*",
       );
     }
 
@@ -85,7 +85,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin,
+        origin || "*",
       );
     }
 
@@ -103,7 +103,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin,
+        origin || "*",
       );
     }
 
@@ -130,7 +130,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin,
+          origin || "*",
         );
       }
       const claimStoreId = user.user.user_metadata?.store_id;
@@ -146,7 +146,7 @@ serve(async (req) => {
               headers: { "Content-Type": "application/json" },
             },
           ),
-          origin,
+          origin || "*",
         );
       }
     }
@@ -163,7 +163,7 @@ serve(async (req) => {
     if (!originHost || !allowedHosts.has(originHost)) {
       return withCors(
         new Response("Origin not allowed", { status: 403 }),
-        origin,
+        origin || "*",
       );
     }
 
@@ -183,7 +183,7 @@ serve(async (req) => {
             headers: { "Content-Type": "application/json" },
           },
         ),
-        origin,
+        origin || "*",
       );
     }
 
@@ -197,7 +197,7 @@ serve(async (req) => {
       new Response(JSON.stringify(sanitized), {
         headers: { "Content-Type": "application/json" },
       }),
-      origin,
+      origin || "*",
     );
   } catch (err) {
     errorLog("Unexpected error", err);
@@ -207,8 +207,7 @@ serve(async (req) => {
         status: 500,
         headers: { "Content-Type": "application/json" },
       }),
-      origin,
+      origin || "*",
     );
   }
 });
-
