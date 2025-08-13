@@ -3,7 +3,7 @@
  */
 
 import { getConfig } from '../config/globalConfig.js';
-import { apiFetch } from '../../../shared/utils/apiFetch.ts';
+import { apiFetch } from '../../../shared/utils/apiFetch.js';
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Orders]', ...args);
