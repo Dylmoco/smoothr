@@ -72,7 +72,8 @@ async function validateDiscountCode(
   client: SupabaseClient,
   storeId: string,
   code: string,
-  total?: number
+  total?: number,
+  customerId?: string | null
 ) {
   const { data: disc, error } = await client
     .from('discounts')
@@ -94,7 +95,9 @@ async function validateDiscountCode(
     const { count: totalUses, error: usesErr } = await client
       .from('discount_usages')
       .select('id', { head: true, count: 'exact' })
-      .eq('discount_id', disc.id);
+      .eq('discount_id', disc.id)
+      .eq('store_id', storeId)
+      .eq('customer_id', customerId);
     if (usesErr) return { isValid: false };
     if (typeof totalUses === 'number' && totalUses >= disc.usage_limit) {
       return { isValid: false };
@@ -212,7 +215,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       supabase,
       store_id,
       discount_code,
-      total
+      total,
+      customer_id
     );
     res.status(200).json({ isValid, summary });
     return;
@@ -253,7 +257,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       supabase,
       store_id,
       discount_code,
-      total
+      total,
+      customerId
     );
     if (result.isValid && result.record) {
       discountRecord = result.record;
@@ -499,7 +504,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
   }
 
-  const paymentIntentId = providerResult?.transaction_id || null;
+  const paymentIntentId =
+    providerResult?.transaction_id || orderData.payment_intent_id || null;
   if (paymentIntentId) {
     await supabase
       .from('orders')
@@ -536,7 +542,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
         order_id: orderData.order_id,
         customer_id: customerId,
         discount_id: discountRecord.id,
-        used_at: new Date().toISOString()
+        used_at: new Date().toISOString(),
+        store_id
       });
     if (usageErr) {
       console.error('[Supabase ERROR] Failed to log discount usage:', usageErr.message);

@@ -29,14 +29,16 @@ export default async function handler(
 
   let stripeSecret = "";
   let webhookSecret = "";
+  let storeId: string | null = null;
   try {
     const { data } = await supabase
       .from("store_settings")
-      .select("settings")
+      .select("settings, store_id")
       .limit(1)
       .maybeSingle();
     stripeSecret = data?.settings?.stripe_secret_key || "";
     webhookSecret = data?.settings?.stripe_webhook_secret || "";
+    storeId = data?.store_id || null;
   } catch {
     // Store settings lookup failed
   }
@@ -66,6 +68,9 @@ export default async function handler(
             .eq('name', `${data.provider_key}_webhook_secret_${data.store_id}`)
             .maybeSingle();
           webhookSecret = (webhookData as any)?.secret || "";
+        }
+        if (!storeId) {
+          storeId = data.store_id;
         }
       }
     } catch {
@@ -122,7 +127,8 @@ export default async function handler(
         const { error } = await supabase
           .from("orders")
           .update(updatePayload)
-          .eq("payment_intent_id", paymentIntent.id);
+          .eq("payment_intent_id", paymentIntent.id)
+          .eq("store_id", storeId);
         if (error) throw error;
       } catch {
         res.status(400).send("Webhook processing error");
