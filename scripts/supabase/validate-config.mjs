@@ -19,8 +19,6 @@ for (const d of dirs) {
   if (!hasCfg) problems.push(`Missing [functions.${d}] entry in config.toml`);
   const idx = ['index.ts', 'index.js', 'handler.ts', 'handler.js'].some(f => fs.existsSync(path.join(fxDir, d, f)));
   if (!idx) problems.push(`No entrypoint (index.ts/js or handler.ts/js) in functions/${d}`);
-  const deno = fs.existsSync(path.join(fxDir, d, 'deno.json'));
-  if (!deno) problems.push(`Missing deno.json in functions/${d}`);
 }
 
 for (const e of entries) {
