@@ -16,16 +16,15 @@ vi.mock('../../features/auth/index.js', () => {
 
 let from;
 vi.mock('../../../supabase/browserClient.js', () => {
-  const getSession = vi.fn().mockResolvedValue({
-    data: { session: { access_token: 'test-token' } },
-  });
   const ensureSupabaseSessionAuth = vi.fn().mockResolvedValue();
-  from = vi.fn();
-  const client = {
-    auth: { getSession },
-    from,
-    supabaseUrl: process.env.SUPABASE_URL,
-  };
+  const maybeSingle = vi.fn(async () => ({
+    data: { api_base: 'https://example.com', foo: 'bar' },
+    error: null,
+  }));
+  const eq = vi.fn(() => ({ maybeSingle }));
+  const select = vi.fn(() => ({ eq }));
+  from = vi.fn(() => ({ select }));
+  const client = { from };
   return { supabase: client, default: client, ensureSupabaseSessionAuth };
 });
 
@@ -65,9 +64,7 @@ beforeEach(() => {
     },
   };
 
-  global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({ foo: 'bar' }) })
-  );
+  global.fetch = vi.fn();
 
   global.localStorage = {
     getItem: vi.fn(),
@@ -102,7 +99,7 @@ describe('loadConfig merge', () => {
     updates.storeId = '00000000-0000-0000-0000-000000000000';
     mergeConfig(updates);
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).not.toHaveBeenCalled();
     expect(global.window.SMOOTHR_CONFIG).toEqual(
       expect.objectContaining({
         apiBase: 'https://example.com',
@@ -110,6 +107,6 @@ describe('loadConfig merge', () => {
         storeId: '00000000-0000-0000-0000-000000000000',
       })
     );
-    expect(from).not.toHaveBeenCalled();
+    expect(from).toHaveBeenCalledTimes(1);
   }, 5000);
 });

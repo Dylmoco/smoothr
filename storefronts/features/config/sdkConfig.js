@@ -9,32 +9,17 @@ export async function loadPublicConfig(storeId) {
   if (!storeId) return null;
 
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const access_token = session?.access_token;
-    const supabaseUrl = supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const { data, error } = await supabase
+      .from('v_public_store')
+      .select('*')
+      .eq('id', storeId)
+      .maybeSingle();
 
-    const headers = {
-      'Content-Type': 'application/json',
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    };
-    if (access_token) {
-      headers.Authorization = `Bearer ${access_token}`;
-    }
-
-    const res = await fetch(`${supabaseUrl}/functions/v1/get_public_store_settings`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ store_id: storeId }),
-    });
-
-    if (!res.ok) {
-      warn('Store settings lookup failed:', res.status);
+    if (error) {
+      warn('Store settings lookup failed:', error.message);
       return null;
     }
 
-    const data = await res.json();
     log('Config fetched');
     return data || null;
   } catch (e) {

@@ -32,10 +32,11 @@ let initialized = false;
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
-    const { data, error } = await authClient.functions.invoke(
-      'get_public_store_settings',
-      { body: { store_id: storeId } }
-    );
+    const { data, error } = await authClient
+      .from('v_public_store')
+      .select('*')
+      .eq('id', storeId)
+      .maybeSingle();
     if (error) throw error;
     const record = data ?? {};
     console.debug('[Smoothr Config] Loaded config:', record);
