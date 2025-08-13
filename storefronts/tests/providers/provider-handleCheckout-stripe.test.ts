@@ -34,6 +34,8 @@ vi.mock('../../../shared/supabase/client', () => {
     obj.eq = vi.fn(() => obj);
     obj.limit = vi.fn(() => obj);
     obj.select = vi.fn(() => obj);
+    obj.insert = vi.fn(async () => ({ error: null }));
+    obj.update = vi.fn(() => obj);
     obj.maybeSingle = vi.fn(async () => ({ data: result.data, error: null }));
     obj.single = vi.fn(async () => ({ data: result.data, error: null }));
     return obj;
@@ -76,16 +78,20 @@ vi.mock('../../../shared/supabase/client', () => {
         return {
           update: vi.fn((payload: any) => {
             updateCalls.push(payload);
-            const chainObj: any = {};
-            chainObj.eq = vi.fn(() => chainObj);
-            return chainObj;
+            return chain();
           }),
+          select: vi.fn(() => chain()),
         };
       }
-      if (table === 'order_items' || table === 'discount_usages') {
+      if (table === 'discount_usages') {
         return {
           insert: vi.fn().mockResolvedValue({ error: null }),
-          select: vi.fn(() => ({ count: 0, error: null, eq: vi.fn(function () { return this; }) })),
+          select: vi.fn(() => chain({ count: 0, data: [], error: null })),
+        };
+      }
+      if (table === 'order_items') {
+        return {
+          insert: vi.fn().mockResolvedValue({ error: null }),
         };
       }
       return {
