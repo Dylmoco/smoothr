@@ -62,7 +62,7 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
 
     try {
       creds = await getStoreIntegration(payload.store_id, 'authorizeNet');
-      log('🧩 Raw store_integrations:', creds);
+      log('🧩 Raw integrations:', creds);
     } catch (e) {
       err('❌ getStoreIntegration() threw:', e);
       return {
@@ -77,23 +77,23 @@ export default async function handleAuthorizeNet(payload: AuthorizeNetPayload) {
     let loginIdSource = '';
     if (typeof settings.api_login_id === 'string' && settings.api_login_id.trim()) {
       loginId = settings.api_login_id.trim();
-      loginIdSource = 'store_integrations.settings';
+      loginIdSource = 'integrations.settings';
     } else if (typeof creds?.api_login_id === 'string' && creds.api_login_id.trim()) {
       loginId = creds.api_login_id.trim();
-      loginIdSource = 'store_integrations';
+      loginIdSource = 'integrations';
     } else if (typeof (creds as any)?.api_key === 'string' && (creds as any).api_key.trim()) {
       loginId = (creds as any).api_key.trim();
-      loginIdSource = 'store_integrations.api_key';
+      loginIdSource = 'integrations.publishable_key';
     }
 
     let transactionKey = '';
     let transactionKeySource = '';
     if (typeof settings.transaction_key === 'string' && settings.transaction_key.trim()) {
       transactionKey = settings.transaction_key.trim();
-      transactionKeySource = 'store_integrations.settings';
+      transactionKeySource = 'integrations.settings';
     } else if (typeof creds?.transaction_key === 'string' && creds.transaction_key.trim()) {
       transactionKey = creds.transaction_key.trim();
-      transactionKeySource = 'store_integrations';
+      transactionKeySource = 'integrations';
     }
 
     log('🧾 Final credentials used:', {

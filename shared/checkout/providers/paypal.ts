@@ -24,8 +24,15 @@ export default async function handlePayPal(payload: PayPalPayload) {
   try {
     const integration = await getStoreIntegration(payload.store_id, 'paypal');
     if (integration) {
-      clientId = integration.settings?.client_id || integration.api_key || clientId;
-      clientSecret = integration.settings?.secret || clientSecret;
+      clientId =
+        integration.publishable_key ||
+        integration.api_key ||
+        integration.settings?.client_id ||
+        clientId;
+      clientSecret =
+        integration.secret_key ||
+        integration.settings?.secret ||
+        clientSecret;
     }
   } catch (e) {
     err('Credential lookup failed:', e);

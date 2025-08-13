@@ -3,7 +3,6 @@ import {
   ensureSupabaseSessionAuth
 } from '../../../supabase/browserClient.js';
 import * as authExports from './index.js';
-import { loadPublicConfig } from '../config/sdkConfig.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
@@ -33,18 +32,12 @@ let initialized = false;
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
-    let record;
-    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-      const { data, error } = await authClient
-        .from('public_store_settings')
-        .select('*')
-        .eq('store_id', storeId)
-        .single();
-      if (error) throw error;
-      record = data ?? {};
-    } else {
-      record = (await loadPublicConfig(storeId)) ?? {};
-    }
+    const { data, error } = await authClient.functions.invoke(
+      'get_public_store_settings',
+      { body: { store_id: storeId } }
+    );
+    if (error) throw error;
+    const record = data ?? {};
     console.debug('[Smoothr Config] Loaded config:', record);
     if (record.active_payment_gateway == null) {
       console.debug(

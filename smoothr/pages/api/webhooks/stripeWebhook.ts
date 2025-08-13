@@ -44,16 +44,29 @@ export default async function handler(
   if (!stripeSecret || !webhookSecret) {
     try {
       const { data } = await supabase
-        .from("store_integrations")
-        .select("api_key, settings")
-        .eq("gateway", "stripe")
+        .from("integrations")
+        .select("provider_key, store_id")
+        .eq("provider_key", "stripe")
         .limit(1)
         .maybeSingle();
-      if (!stripeSecret) {
-        stripeSecret = data?.settings?.secret_key || data?.api_key || "";
-      }
-      if (!webhookSecret) {
-        webhookSecret = data?.settings?.webhook_secret || "";
+
+      if (data?.provider_key && data?.store_id) {
+        if (!stripeSecret) {
+          const { data: secretData } = await supabase
+            .from('vault.decrypted_secrets')
+            .select('secret')
+            .eq('name', `${data.provider_key}_secret_key_${data.store_id}`)
+            .maybeSingle();
+          stripeSecret = (secretData as any)?.secret || "";
+        }
+        if (!webhookSecret) {
+          const { data: webhookData } = await supabase
+            .from('vault.decrypted_secrets')
+            .select('secret')
+            .eq('name', `${data.provider_key}_webhook_secret_${data.store_id}`)
+            .maybeSingle();
+          webhookSecret = (webhookData as any)?.secret || "";
+        }
       }
     } catch {
       // Store integration lookup failed
