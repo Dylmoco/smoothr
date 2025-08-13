@@ -13,14 +13,17 @@ vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
 }));
 
 vi.mock('../../../shared/supabase/client', () => {
+  const chain = (result: any = { data: null, error: null }) => {
+    const obj: any = { ...result };
+    obj.eq = vi.fn(() => obj);
+    obj.select = vi.fn(() => obj);
+    obj.maybeSingle = vi.fn(async () => ({ data: result.data, error: null }));
+    return obj;
+  };
   const client = {
     from: (table: string) => {
       if (table === 'stores') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({ data: [{ id: 'store-1' }], error: null })),
-          })),
-        };
+        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ data: [{ id: 'store-1' }], error: null })) })) };
       }
       if (table === 'discounts') {
         return {
@@ -28,10 +31,17 @@ vi.mock('../../../shared/supabase/client', () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn(async () => {
-                  const base = { id: 'disc1', code: 'SAVE', type: 'percent', percent: 10, starts_at: null, ends_at: null, usage_limit: null, min_order_value_cents: null } as any;
+                  const base = {
+                    id: 'disc1',
+                    code: 'SAVE',
+                    type: 'percent',
+                    percent: 10,
+                    starts_at: null,
+                    ends_at: null,
+                    usage_limit: scenario === 'usage' ? 1 : null,
+                    min_order_value_cents: scenario === 'min' ? 200 : null,
+                  } as any;
                   if (scenario === 'expired') base.ends_at = new Date(Date.now() - 1000).toISOString();
-                  if (scenario === 'usage') base.usage_limit = 1;
-                  if (scenario === 'min') base.min_order_value_cents = 200;
                   return { data: base, error: null };
                 }),
               })),
@@ -40,17 +50,11 @@ vi.mock('../../../shared/supabase/client', () => {
         };
       }
       if (table === 'discount_usages') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({ count: scenario === 'usage' ? 1 : 0, error: null })),
-          })),
-        };
+        return chain({ data: { count: scenario === 'usage' ? 2 : 0 } });
       }
       return {
         select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn(async () => ({ data: null, error: null })),
-          })),
+          eq: vi.fn(() => ({ maybeSingle: vi.fn(async () => ({ data: null, error: null })) })),
         })),
       };
     },
@@ -101,7 +105,10 @@ describe('discount validation', () => {
   it('usage limit exceeded', async () => {
     scenario = 'usage';
     const result = await runCase('SAVE', 100);
-    expect(result).toEqual({ isValid: false, summary: undefined });
+    expect(result).toEqual({
+      isValid: false,
+      summary: { error: 'Discount usage limit exceeded' }
+    });
   });
 
   it('min order not met', async () => {

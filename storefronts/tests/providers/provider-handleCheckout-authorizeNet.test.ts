@@ -12,70 +12,76 @@ vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
   findOrCreateCustomer: vi.fn().mockResolvedValue('test_customer_id'),
 }));
 
+vi.mock('../../../shared/checkout/createOrder.ts', () => ({
+  createOrder: vi.fn(async () => ({ order_id: 'order-1', payment_intent_id: null })),
+}));
+
 
 vi.mock('../../../shared/supabase/client', () => {
+  const chain = (result: any = { data: null, error: null }) => {
+    const obj: any = { ...result };
+    obj.eq = vi.fn(() => obj);
+    obj.select = vi.fn(() => obj);
+    obj.limit = vi.fn(() => obj);
+    obj.maybeSingle = vi.fn(async () => ({ data: result.data, error: null }));
+    obj.single = vi.fn(async () => ({ data: result.data, error: null }));
+    return obj;
+  };
   let storeFromCall = 0;
   let ordersCall = 0;
   const client = {
     from: (table: string) => {
-        if (table === 'stores') {
-          storeFromCall++;
-          if (storeFromCall === 1) {
-            return {
-              select: vi.fn(() => ({
-                eq: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
-              }))
-            };
-          }
-          return {};
-        }
-        if (table === 'store_settings') {
+      if (table === 'stores') {
+        storeFromCall++;
+        if (storeFromCall === 1) {
           return {
             select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'authorizeNet' } }, error: null }))
-              }))
+              eq: vi.fn(async () => ({ data: [{ id: 'store-1' }], error: null }))
             }))
           };
         }
-        if (table === 'orders') {
-          ordersCall++;
-          if (ordersCall === 1) {
-            return {
-              select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => ({
-                    maybeSingle: vi.fn(async () => ({ data: { id: 'order-1', raw_data: {} }, error: null }))
-                  }))
-                }))
-              }))
-            };
-          }
-          if (ordersCall === 2) {
-            return {
-              update: vi.fn((payload: any) => {
-                orderPayload = payload;
-                const chain: any = {};
-                chain.eq = vi.fn(() => chain);
-                chain.select = vi.fn(() => ({
-                  single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null }))
-                }));
-                return chain;
-              })
-            };
-          }
-        }
-        if (table === 'order_items' || table === 'discount_usages') {
-          return { insert: vi.fn().mockResolvedValue({ error: null }) };
-        }
+        return {};
+      }
+      if (table === 'store_settings') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              maybeSingle: vi.fn(async () => ({ data: null, error: null }))
+              maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'authorizeNet' } }, error: null }))
             }))
           }))
         };
       }
+      if (table === 'orders') {
+        ordersCall++;
+        if (ordersCall === 1) {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn(async () => ({ data: { id: 'order-1', raw_data: {} }, error: null }))
+                }))
+              }))
+            }))
+          };
+        }
+        if (ordersCall === 2) {
+          return {
+            update: vi.fn((payload: any) => {
+              orderPayload = payload;
+              const ch = chain();
+              ch.select = vi.fn(() => ({
+                single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null }))
+              }));
+              return ch;
+            })
+          };
+        }
+      }
+      if (table === 'order_items' || table === 'discount_usages') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      return { select: vi.fn(() => chain()) };
+    },
   };
   return {
     supabase: client,
