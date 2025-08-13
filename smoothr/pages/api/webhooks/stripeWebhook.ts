@@ -2,13 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { supabase } from 'shared/supabase/serverClient';
 
-const debug = process.env.SMOOTHR_DEBUG === "true";
-const log = (...args: any[]) => debug && console.log("[Stripe Webhook]", ...args);
-const warn = (...args: any[]) => debug && console.warn("[Stripe Webhook]", ...args);
-const err = (...args: any[]) => debug && console.error("[Stripe Webhook]", ...args);
-
-log("🔔 Stripe webhook hit");
-
 export const config = {
   api: {
     bodyParser: false,
@@ -29,10 +22,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  log("📩 Request method:", req.method);
-
   if (req.method !== "POST") {
-    err("⛔️ Invalid method");
     res.status(405).end("Method not allowed");
     return;
   }
@@ -47,8 +37,8 @@ export default async function handler(
       .maybeSingle();
     stripeSecret = data?.settings?.stripe_secret_key || "";
     webhookSecret = data?.settings?.stripe_webhook_secret || "";
-  } catch (e) {
-    err("Store settings lookup failed:", e);
+  } catch {
+    // Store settings lookup failed
   }
 
   if (!stripeSecret || !webhookSecret) {
@@ -65,8 +55,8 @@ export default async function handler(
       if (!webhookSecret) {
         webhookSecret = data?.settings?.webhook_secret || "";
       }
-    } catch (e) {
-      err("Store integration lookup failed:", e);
+    } catch {
+      // Store integration lookup failed
     }
   }
 
@@ -79,34 +69,22 @@ export default async function handler(
 
   stripe = new Stripe(stripeSecret, { apiVersion: "2022-11-15" });
 
-  // Add one more log here to catch unexpected crashes early
-  log("✅ POST method received. Proceeding to read Stripe payload...");
-
   let event: Stripe.Event;
   try {
     const buf = await readBuffer(req);
     const signature = req.headers["stripe-signature"] || "";
-
-    log("🧾 Raw buffer length:", buf.length);
-    log("📫 Stripe signature header:", signature);
-
     event = stripe.webhooks.constructEvent(
       buf,
       signature,
       webhookSecret,
     );
-    log("✅ Stripe event constructed:", event.type);
-  } catch (err: any) {
-    err("❌ Stripe webhook verification failed. Full error:", err);
+  } catch (err: unknown) {
     res
       .status(400)
-      .json({ error: err.message || "Unknown verification failure" });
+      .json({ error: err instanceof Error ? err.message : "Unknown verification failure" });
     return;
   }
-
-  if (process.env.NODE_ENV !== "production") {
-    log("Stripe webhook event:", event.type);
-  }
+  // Stripe webhook event received
 
   if (event.type === "payment_intent.succeeded") {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
@@ -120,20 +98,11 @@ export default async function handler(
         })
         .eq("payment_intent_id", id)
         .select("id");
-      log('🧮 Supabase update result:', { id, data, error });
-      if (process.env.NODE_ENV !== "production") {
-        log("Webhook Supabase Update Result:", { id, data, error });
-      }
       if (error) throw error;
       if (!data || data.length === 0) {
-        if (process.env.NODE_ENV !== "production") {
-          warn(`Order not found for payment_intent ${id}`);
-        }
+        // Order not found for payment_intent
       }
-    } catch (err) {
-      if (process.env.NODE_ENV !== "production") {
-        err("Supabase update error:", err);
-      }
+    } catch (error: unknown) {
       res.status(400).send("Webhook processing error");
       return;
     }

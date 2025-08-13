@@ -13,7 +13,11 @@ export default async function handler(
     return res.status(405).end();
   }
 
-  const { orderID, store_id } = req.body as any;
+  interface CaptureOrderBody {
+    orderID: string;
+    store_id: string;
+  }
+  const { orderID, store_id } = req.body as CaptureOrderBody;
   if (!store_id) {
     return res.status(400).json({ error: 'store_id required' });
   }
@@ -26,8 +30,8 @@ export default async function handler(
       clientId = integration.settings?.client_id || integration.api_key || clientId;
       secret = integration.settings?.secret || secret;
     }
-  } catch (e) {
-    console.error('[PayPal] credential lookup failed', e);
+  } catch {
+    // PayPal credential lookup failed
   }
 
   if (!clientId || !secret) {
@@ -53,8 +57,7 @@ export default async function handler(
 
     // Delegate to your shared checkout handler
     return handleCheckout({ req, res });
-  } catch (err) {
-    console.error('[PayPal Capture Error]', err);
+  } catch (err: unknown) {
     return res
       .status(500)
       .json({ success: false, error: err instanceof Error ? err.message : 'PayPal capture failed' });

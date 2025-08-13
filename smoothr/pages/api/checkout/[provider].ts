@@ -13,17 +13,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   applyCors(res, origin);
 
-  console.log('[API] 🔥 [provider] API route hit');
   if (req.method !== 'POST' && req.method !== 'OPTIONS') {
     res.setHeader('Allow', 'POST, OPTIONS');
     res.status(405).end();
     return;
   }
   try {
-    console.log('[API] invoking handleCheckout...');
     await handleCheckout({ req, res });
-  } catch (err) {
-    console.error('[API] ❌ Crash inside handleCheckout', err);
+  } catch {
     res.status(500).json({ error: 'Internal server error (provider)' });
   }
 }

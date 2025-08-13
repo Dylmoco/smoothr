@@ -22,7 +22,9 @@ export default async function handler(
   }
 
   try {
-    const { store_id } = req.body as any;
+    type CreateOrderInput = Parameters<typeof createOrder>[0];
+    const body = req.body as CreateOrderInput & { store_id: string };
+    const { store_id, ...rest } = body;
     const { data: nextNumber, error } = await supabase.rpc(
       'increment_store_order_number',
       { store_id },
@@ -31,10 +33,10 @@ export default async function handler(
       throw new Error(error?.message || 'Failed to generate order number');
     }
     const order_number = `ORD-${String(nextNumber).padStart(4, '0')}`;
-    const data = await createOrder({ ...req.body, order_number } as any);
+    const payload: CreateOrderInput = { ...rest, order_number } as CreateOrderInput;
+    const data = await createOrder(payload);
     res.status(200).json(data);
-  } catch (err: any) {
-    console.error('[createOrder] failed:', err);
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 }
