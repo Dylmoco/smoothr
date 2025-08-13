@@ -257,31 +257,14 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Create a custom header for RLS policy
-    const customHeaders = {
-      "x-store-id": storeId,
-      "Content-Type": "application/json"
-    };
+    // Query public store configuration
+    log("Querying store settings from v_public_store for:", storeId);
 
-    // Set up the client with the headers
-    const supabaseWithHeaders = createClient(
-      supabaseUrl, 
-      supabaseAnonKey, 
-      {
-        global: {
-          headers: customHeaders
-        }
-      }
-    );
-
-    // Query public_store_settings with RLS headers
-    log("Querying store settings with RLS headers:", customHeaders);
-    
-    const { data, error } = await supabaseWithHeaders
-      .from("public_store_settings")
-      .select("*")
+    const { data, error } = await supabase
+      .from("v_public_store")
+      .select("base_currency, public_settings")
       .eq("store_id", storeId)
-      .maybeSingle();
+      .single();
 
     if (error) {
       log("Query error:", error);

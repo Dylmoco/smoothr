@@ -282,32 +282,15 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Create a custom header for RLS policy
-    const customHeaders = {
-      "x-store-id": storeId,
-      "Content-Type": "application/json"
-    };
+    // Query gateway credentials
+    log("Querying gateway credentials from v_public_store:", { storeId, gateway });
 
-    // Set up the client with the headers
-    const supabaseWithHeaders = createClient(
-      supabaseUrl, 
-      supabaseAnonKey, 
-      {
-        global: {
-          headers: customHeaders
-        }
-      }
-    );
-
-    // Query credentials
-    log("Querying gateway credentials for store:", storeId, "and gateway:", gateway);
-    
-    const { data, error } = await supabaseWithHeaders
-      .from("public_store_integration_credentials")
-      .select("publishable_key, tokenization_key, gateway, store_id")
+    const { data, error } = await supabase
+      .from("v_public_store")
+      .select("publishable_key, tokenization_key, api_login_id")
       .eq("store_id", storeId)
-      .eq("gateway", gateway)
-      .maybeSingle();
+      .eq("active_payment_gateway", gateway)
+      .single();
 
     if (error) {
       log("Query error:", error);
@@ -330,14 +313,14 @@ Deno.serve(async (req: Request) => {
     const responseData = {
       publishable_key: data?.publishable_key || null,
       tokenization_key: data?.tokenization_key || null,
-      gateway: data?.gateway || gateway,
-      store_id: data?.store_id || storeId
+      api_login_id: data?.api_login_id || null
     };
     
     log("Response data:", {
       ...responseData,
       publishable_key: responseData.publishable_key ? "[MASKED]" : null,
-      tokenization_key: responseData.tokenization_key ? "[MASKED]" : null
+      tokenization_key: responseData.tokenization_key ? "[MASKED]" : null,
+      api_login_id: responseData.api_login_id ? "[MASKED]" : null
     });
 
     return withCors(
