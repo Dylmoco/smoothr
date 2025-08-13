@@ -24,6 +24,7 @@
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
     "@supabase/supabase-js": "2.38.4",
+    "jest": "^30.0.5",
     "vitest": "^1.5.0"
   }
 }

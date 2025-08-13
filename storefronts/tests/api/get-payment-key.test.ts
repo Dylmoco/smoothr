@@ -1,28 +1,30 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
-let handler;
-let fromFn;
-let createClientMock;
+const mockSingle = vi.fn();
+const mockEqGateway = vi.fn(() => ({ single: mockSingle }));
+const mockEqStore = vi.fn(() => ({ eq: mockEqGateway }));
+const mockSelect = vi.fn(() => ({ eq: mockEqStore }));
+const mockFrom = vi.fn(() => ({ select: mockSelect }));
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({ from: mockFrom })),
+}));
+
 const originalUrl = process.env.SUPABASE_URL;
 const originalAnon = process.env.SUPABASE_ANON_KEY;
 
-vi.mock('@supabase/supabase-js', () => {
-  createClientMock = vi.fn(() => ({ from: fromFn }));
-  return { createClient: createClientMock };
-});
-
-async function loadModule() {
-  const mod = await import('../../../smoothr/pages/api/get-payment-key.js');
-  handler = mod.default;
-}
-
-beforeEach(async () => {
+beforeEach(() => {
   vi.resetModules();
-  fromFn = vi.fn();
-  process.env.SUPABASE_URL = 'https://example.supabase.co';
-  process.env.SUPABASE_ANON_KEY = 'anon';
-  await loadModule();
+  mockFrom.mockClear();
+  mockSelect.mockClear();
+  mockEqStore.mockClear();
+  mockEqGateway.mockClear();
+  mockSingle.mockClear();
+  process.env.SUPABASE_URL = 'https://mock.supabase.co';
+  process.env.SUPABASE_ANON_KEY = 'mock-anon-key';
 });
 
 afterEach(() => {
@@ -30,54 +32,52 @@ afterEach(() => {
   process.env.SUPABASE_ANON_KEY = originalAnon;
 });
 
-describe('get-payment-key handler', () => {
-  it('returns key on success', async () => {
-      fromFn.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              single: vi.fn(async () => ({
-                data: {
-                  publishable_key: 'pk1',
-                  tokenization_key: 'tk1',
-                  api_login_id: 'api1',
-                },
-                error: null,
-              }))
-            }))
-          }))
-        }))
-      });
+describe('get-payment-key API', () => {
+  it('returns browser-safe keys from v_public_store', async () => {
+    mockSingle.mockResolvedValue({
+      data: {
+        publishable_key: 'pk_test_123',
+        tokenization_key: 'tok_123',
+        api_login_id: 'api_123',
+      },
+      error: null,
+    });
 
-    const req = { method: 'GET', query: { storeId: 's1', provider: 'nmi' } } as Partial<NextApiRequest>;
-    const res: Partial<NextApiResponse> = { status: vi.fn(() => res as any), json: vi.fn(() => res as any), setHeader: vi.fn() };
+    const { default: handler } = await import('../../../smoothr/pages/api/get-payment-key.js');
+    const json = vi.fn();
+    const status = vi.fn(() => ({ json }));
+    const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
+    const req = { query: { store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0', gateway: 'stripe' } } as Partial<NextApiRequest>;
 
     await handler(req as NextApiRequest, res as NextApiResponse);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      publishable_key: 'pk1',
-      tokenization_key: 'tk1',
-      api_login_id: 'api1',
-      message: 'Deprecated - use get_gateway_credentials edge function',
+
+    expect(status).toHaveBeenCalledWith(200);
+    expect(json).toHaveBeenCalledWith({
+      publishable_key: 'pk_test_123',
+      tokenization_key: 'tok_123',
+      api_login_id: 'api_123',
     });
+    expect(mockFrom).toHaveBeenCalledWith('v_public_store');
+    expect(mockSelect).toHaveBeenCalledWith('publishable_key, tokenization_key, api_login_id');
+    expect(mockEqStore).toHaveBeenCalledWith('store_id', 'a3fea30b-8a63-4a72-9040-6049d88545d0');
+    expect(mockEqGateway).toHaveBeenCalledWith('active_payment_gateway', 'stripe');
   });
 
-  it('returns error when query fails', async () => {
-    fromFn.mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(async () => ({ data: null, error: { message: 'fail' } }))
-          }))
-        }))
-      }))
-    });
+  it('returns deprecation message if no data', async () => {
+    mockSingle.mockResolvedValue({ data: null, error: null });
 
-    const req = { method: 'GET', query: { storeId: 's1', provider: 'nmi' } } as Partial<NextApiRequest>;
-    const res: Partial<NextApiResponse> = { status: vi.fn(() => res as any), json: vi.fn(() => res as any), setHeader: vi.fn() };
+    const { default: handler } = await import('../../../smoothr/pages/api/get-payment-key.js');
+    const json = vi.fn();
+    const status = vi.fn(() => ({ json }));
+    const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
+    const req = { query: { store_id: 'invalid', gateway: 'stripe' } } as Partial<NextApiRequest>;
 
     await handler(req as NextApiRequest, res as NextApiResponse);
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch key', detail: 'fail' });
+
+    expect(status).toHaveBeenCalledWith(404);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Deprecated - use get_gateway_credentials edge function',
+    });
   });
 });
+
