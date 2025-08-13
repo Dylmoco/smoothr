@@ -3,10 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;
 
-function expectCors(res: Response) {
-  expect(res.headers.get("access-control-allow-origin")).toBe(
-    "https://smoothr-cms.webflow.io",
-  );
+function expectCors(
+  res: Response,
+  origin = "https://smoothr-cms.webflow.io",
+) {
+  expect(res.headers.get("access-control-allow-origin")).toBe(origin);
   expect(res.headers.get("access-control-allow-methods")).toBe(
     "GET, POST, OPTIONS",
   );
@@ -21,17 +22,24 @@ function expectCors(res: Response) {
 beforeEach(() => {
   handler = undefined as any;
   (globalThis as any).Deno = {
-    env: { get: () => "" },
+    env: {
+      get: vi.fn((key) =>
+        key === "SUPABASE_URL" ? "https://mock.supabase.co" : "mock-anon-key",
+      ),
+    },
     serve: (fn: any) => {
       handler = fn;
     },
   };
   createClientMock = vi.fn(() => ({
-    rpc: async () => ({ data: [], error: null }),
+    rpc: async () => ({ data: ["smoothr-cms.webflow.io"], error: null }),
     from: () => ({
       select: () => ({
         eq: () => ({
-          maybeSingle: async () => ({ data: { foo: "bar" }, error: null }),
+          single: async () => ({
+            data: { base_currency: "USD", public_settings: {} },
+            error: null,
+          }),
         }),
       }),
     }),
@@ -50,9 +58,7 @@ afterEach(() => {
 
 describe("get_public_store_settings CORS", () => {
   it("includes CORS headers on OPTIONS", async () => {
-    await import(
-      "../../../supabase/functions/get_public_store_settings/index.ts"
-    );
+    await import("./get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "OPTIONS",
@@ -64,9 +70,7 @@ describe("get_public_store_settings CORS", () => {
   });
 
   it("includes CORS headers on success", async () => {
-    await import(
-      "../../../supabase/functions/get_public_store_settings/index.ts"
-    );
+    await import("./get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
@@ -86,9 +90,7 @@ describe("get_public_store_settings CORS", () => {
       throw new Error("boom");
     };
 
-    await import(
-      "../../../supabase/functions/get_public_store_settings/index.ts"
-    );
+    await import("./get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
@@ -108,16 +110,14 @@ describe("get_public_store_settings CORS", () => {
   });
 
   it("includes CORS headers on invalid body", async () => {
-    await import(
-      "../../../supabase/functions/get_public_store_settings/index.ts"
-    );
+    await import("./get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
-        headers: { Origin: "https://smoothr-cms.webflow.io" },
+        headers: { Origin: "https://forbidden.example" },
       }),
     );
-    expect(res.status).toBe(200);
-    expectCors(res);
+    expect(res.status).toBe(400);
+    expectCors(res, "https://forbidden.example");
   });
 });
