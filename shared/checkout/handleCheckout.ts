@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabase, testMarker } from '../supabase/client';
+import { createSupabaseClient, testMarker } from '../supabase/client';
 import { findOrCreateCustomer } from '../lib/findOrCreateCustomer';
 import { createOrder } from './createOrder';
 import crypto from 'crypto';
@@ -92,12 +92,14 @@ async function validateDiscountCode(
   if (!startsOk || !endsOk || !minOk) return { isValid: false };
 
   if (disc.usage_limit) {
-    const { count: totalUses, error: usesErr } = await client
+    const usageQuery = client
       .from('discount_usages')
       .select('id', { head: true, count: 'exact' })
       .eq('discount_id', disc.id)
       .eq('store_id', storeId)
       .eq('customer_id', customerId);
+
+    const { count: totalUses, error: usesErr } = await usageQuery;
     if (usesErr) return { isValid: false };
     if (typeof totalUses === 'number' && totalUses >= disc.usage_limit) {
       return { isValid: false };
@@ -115,6 +117,8 @@ async function validateDiscountCode(
 }
 
 export async function handleCheckout({ req, res }: { req: NextApiRequest; res: NextApiResponse; }) {
+  const supabase = createSupabaseClient();
+
   log('[handleCheckout] Invoked');
   log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
   log('[handleCheckout] testMarker:', testMarker);
