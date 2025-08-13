@@ -4,10 +4,6 @@ import { createServerSupabaseClient } from 'shared/supabase/serverClient';
 import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
 import { applyCors } from 'shared/utils/applyCors';
 
-const debug = process.env.SMOOTHR_DEBUG === 'true';
-const log = (...args: any[]) => debug && console.log('[create-checkout]', ...args);
-const err = (...args: any[]) => debug && console.error('[create-checkout]', ...args);
-
 const SUPPORTED_CURRENCIES = new Set([
   'USD', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'NZD', 'SGD',
   'CHF', 'HKD', 'SEK', 'DKK', 'NOK'
@@ -56,8 +52,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('store_id', store_id)
         .maybeSingle();
       stripeSecret = data?.settings?.stripe_secret_key || '';
-    } catch (e) {
-      err('Store settings lookup failed:', e);
+    } catch {
+      // Store settings lookup failed
     }
 
     if (!stripeSecret.trim()) {
@@ -122,8 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     res.status(200).json({ url: session.url });
-  } catch (err: any) {
-    err('❌ Stripe session error:', err);
-    res.status(500).json({ error: err.message || String(err) });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 }

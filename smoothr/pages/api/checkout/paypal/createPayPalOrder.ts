@@ -2,11 +2,15 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import PayPal from '@paypal/checkout-server-sdk';
 import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
 
-
+interface CreatePayPalOrderBody {
+  amount: number;
+  currency: string;
+  store_id: string;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
-  const { amount, currency, store_id } = req.body as any;
+  const { amount, currency, store_id } = req.body as CreatePayPalOrderBody;
   if (!store_id) {
     return res.status(400).json({ error: 'store_id required' });
   }
@@ -19,8 +23,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       clientId = integration.settings?.client_id || integration.api_key || clientId;
       secret = integration.settings?.secret || secret;
     }
-  } catch (e) {
-    console.error('[PayPal] credential lookup failed', e);
+  } catch {
+    // PayPal credential lookup failed
   }
 
   if (!clientId || !secret) {
@@ -42,8 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { result } = await client.execute(request);
     res.status(200).json({ id: result.id });
-  } catch (err) {
-    console.error('[PayPal createPayPalOrder] failed:', err);
+  } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'PayPal order creation failed' });
   }
 }

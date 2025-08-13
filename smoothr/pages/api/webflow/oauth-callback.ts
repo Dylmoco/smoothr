@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -11,7 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -46,11 +47,12 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const tokenData = await tokenRes.json();
-    const { access_token, site_id } = tokenData as {
+    interface TokenData {
       access_token: string;
       site_id: string;
-    };
+    }
+    const tokenData = (await tokenRes.json()) as TokenData;
+    const { access_token, site_id } = tokenData;
 
     if (customer_id) {
       await supabase.from('webflow_connections').insert({
@@ -76,7 +78,7 @@ export default async function handler(req: any, res: any) {
     });
 
     res.status(200).json({ success: true, site_id });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || String(err) });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 }
