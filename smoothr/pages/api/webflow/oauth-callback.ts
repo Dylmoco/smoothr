@@ -1,16 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseClient } from 'shared/supabase/client';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  global: {
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-    },
-  },
-});
+const supabase = createSupabaseClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
-import { supabase } from 'shared/supabase/serverClient';
+import { supabase } from 'shared/supabase/client';
 
 export const config = {
   api: {

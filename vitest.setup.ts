@@ -25,6 +25,7 @@ if (typeof window !== 'undefined') {
 // ————————————————————————————————————————————————————————————————
 process.env.SUPABASE_URL                     ??= 'http://localhost';
 process.env.SUPABASE_SERVICE_ROLE_KEY         ??= 'service-role-key';
+process.env.SUPABASE_ANON_KEY                 ??= 'anon-key';
 process.env.NEXT_PUBLIC_SUPABASE_URL          ??= 'http://localhost';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY     ??= 'anon-key';
 

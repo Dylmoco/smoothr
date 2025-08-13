@@ -13,7 +13,7 @@ vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
 }));
 
 
-vi.mock('../../../shared/supabase/serverClient', () => {
+vi.mock('../../../shared/supabase/client', () => {
   let storeFromCall = 0;
   let ordersCall = 0;
   const client = {
@@ -68,13 +68,19 @@ vi.mock('../../../shared/supabase/serverClient', () => {
         if (table === 'order_items' || table === 'discount_usages') {
           return { insert: vi.fn().mockResolvedValue({ error: null }) };
         }
-        return {};
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(async () => ({ data: null, error: null }))
+            }))
+          }))
+        };
       }
   };
   return {
     supabase: client,
-    createServerSupabaseClient: () => client,
-    testMarker: '✅ serverClient loaded'
+    createSupabaseClient: () => client,
+    testMarker: '✅ supabase client loaded'
   };
 });
 

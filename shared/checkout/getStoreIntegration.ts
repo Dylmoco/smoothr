@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '../supabase/serverClient';
+import { createSupabaseClient } from '../supabase/client';
 
 // Add ?smoothr-debug to the URL to enable debug logging
 const debug =
@@ -7,7 +7,7 @@ const debug =
 
 export async function getStoreIntegration(storeId: string, integrationId: string) {
   if (!storeId || !integrationId) return null;
-  const supabase = createServerSupabaseClient();
+  const supabase = createSupabaseClient();
   if (debug) console.log('[STEP] Fetching integrations...');
   const { data, error } = await supabase
     .from('integrations')

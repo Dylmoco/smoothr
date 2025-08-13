@@ -1,5 +1,5 @@
 import 'shared/init';
-import { createServerSupabaseClient } from 'shared/supabase/serverClient';
+import { createSupabaseClient } from 'shared/supabase/client';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase
       .from('orders')
       .select('*, customers(email, name)')

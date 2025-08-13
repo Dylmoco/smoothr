@@ -9,7 +9,7 @@ vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
   }),
 }));
 
-vi.mock('../../../shared/supabase/serverClient', () => {
+vi.mock('../../../shared/supabase/client', () => {
   const client = {
     from: (table: string) => {
       if (table === 'stores') {
@@ -40,7 +40,7 @@ vi.mock('../../../shared/supabase/serverClient', () => {
       return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(async () => ({ data: null, error: null })) })) })) })) };
     }
   };
-  return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
+  return { supabase: client, createSupabaseClient: () => client, testMarker: '✅ supabase client loaded' };
 });
 
 async function loadModule() {

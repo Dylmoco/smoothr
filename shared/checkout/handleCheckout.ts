@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabase, testMarker } from '../supabase/serverClient';
+import { supabase, testMarker } from '../supabase/client';
 import { findOrCreateCustomer } from '../lib/findOrCreateCustomer';
 import crypto from 'crypto';
 import { validateCheckoutPayload } from './utils/validateCheckoutPayload';
@@ -127,7 +127,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   log('[handleCheckout] Invoked');
   log('[handleCheckout] body:', JSON.stringify(req.body, null, 2));
   log('[handleCheckout] testMarker:', testMarker);
-  log('[DEBUG] SERVICE ROLE LOADED?', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+  log('[DEBUG] ANON KEY LOADED?', !!process.env.SUPABASE_ANON_KEY);
   log('[DEBUG] SUPABASE_URL:', process.env.SUPABASE_URL);
   try {
 
