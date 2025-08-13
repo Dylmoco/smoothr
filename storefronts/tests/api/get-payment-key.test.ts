@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
 
 const mockSingle = vi.fn();
 const mockEqGateway = vi.fn(() => ({ single: mockSingle }));
@@ -13,16 +12,20 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({ from: mockFrom })),
 }));
 
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    headers: { get: () => null },
+  })
+);
+
 const originalUrl = process.env.SUPABASE_URL;
 const originalAnon = process.env.SUPABASE_ANON_KEY;
 
 beforeEach(() => {
-  vi.resetModules();
-  mockFrom.mockClear();
-  mockSelect.mockClear();
-  mockEqStore.mockClear();
-  mockEqGateway.mockClear();
-  mockSingle.mockClear();
+  vi.clearAllMocks();
   process.env.SUPABASE_URL = 'https://mock.supabase.co';
   process.env.SUPABASE_ANON_KEY = 'mock-anon-key';
 });
@@ -47,7 +50,12 @@ describe('get-payment-key API', () => {
     const json = vi.fn();
     const status = vi.fn(() => ({ json }));
     const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
-    const req = { query: { store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0', gateway: 'stripe' } } as Partial<NextApiRequest>;
+    const req = {
+      query: {
+        store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0',
+        gateway: 'stripe',
+      },
+    } as Partial<NextApiRequest>;
 
     await handler(req as NextApiRequest, res as NextApiResponse);
 
@@ -87,7 +95,12 @@ describe('get-payment-key API', () => {
     const json = vi.fn();
     const status = vi.fn(() => ({ json }));
     const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
-    const req = { query: { store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0', gateway: 'stripe' } } as Partial<NextApiRequest>;
+    const req = {
+      query: {
+        store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0',
+        gateway: 'stripe',
+      },
+    } as Partial<NextApiRequest>;
 
     await handler(req as NextApiRequest, res as NextApiResponse);
 
@@ -98,4 +111,3 @@ describe('get-payment-key API', () => {
     });
   });
 });
-
