@@ -13,6 +13,13 @@ vi.mock('../../../shared/checkout/providers/stripeProvider.ts', () => ({
   }),
 }));
 
+vi.mock('../../../shared/checkout/createOrder.ts', () => ({
+  createOrder: vi.fn(async () => {
+    orderInserted = true;
+    return { order_id: 'order-1', payment_intent_id: 'pi_123' };
+  }),
+}));
+
 vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
   findOrCreateCustomer: vi.fn().mockResolvedValue('cust-1'),
 }));
@@ -22,6 +29,15 @@ vi.mock('../../../shared/checkout/utils/dedupeOrders.ts', () => ({
 }));
 
 vi.mock('../../../shared/supabase/client', () => {
+  const chain = (result: any = { data: null, error: null }) => {
+    const obj: any = { ...result };
+    obj.eq = vi.fn(() => obj);
+    obj.limit = vi.fn(() => obj);
+    obj.select = vi.fn(() => obj);
+    obj.maybeSingle = vi.fn(async () => ({ data: result.data, error: null }));
+    obj.single = vi.fn(async () => ({ data: result.data, error: null }));
+    return obj;
+  };
   const client = {
     from: (table: string) => {
       if (table === 'stores') {
@@ -35,36 +51,45 @@ vi.mock('../../../shared/supabase/client', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              maybeSingle: vi.fn(async () => ({ data: { settings: { active_payment_gateway: 'stripe' } }, error: null })),
+              maybeSingle: vi.fn(async () => ({
+                data: { settings: { active_payment_gateway: 'stripe' } },
+                error: null,
+              })),
+            })),
+            limit: vi.fn(() => ({
+              maybeSingle: vi.fn(async () => ({
+                data: {
+                  settings: {
+                    stripe_secret_key: 'sk_test',
+                    stripe_webhook_secret: 'whsec_test',
+                    active_payment_gateway: 'stripe',
+                  },
+                  store_id: 'store-1',
+                },
+                error: null,
+              })),
             })),
           })),
         };
       }
       if (table === 'orders') {
         return {
-          insert: vi.fn((row: any) => {
-            orderInserted = true;
-            return {
-              select: vi.fn(() => ({
-                single: vi.fn(async () => ({ data: { id: 'order-1' }, error: null })),
-              })),
-            };
-          }),
           update: vi.fn((payload: any) => {
             updateCalls.push(payload);
-            return { eq: vi.fn(() => ({})) };
+            const chainObj: any = {};
+            chainObj.eq = vi.fn(() => chainObj);
+            return chainObj;
           }),
         };
       }
       if (table === 'order_items' || table === 'discount_usages') {
-        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+        return {
+          insert: vi.fn().mockResolvedValue({ error: null }),
+          select: vi.fn(() => ({ count: 0, error: null, eq: vi.fn(function () { return this; }) })),
+        };
       }
       return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn(async () => ({ data: null, error: null })),
-          })),
-        })),
+        select: vi.fn(() => chain()),
       };
     },
   };
@@ -77,7 +102,6 @@ vi.mock('stripe', () => {
 });
 
 beforeEach(async () => {
-  vi.resetModules();
   orderInserted = false;
   updateCalls = [];
   mockEvent = null;
@@ -100,7 +124,8 @@ describe('handleCheckout stripe flow', () => {
         cart: [{ product_id: 'p1', quantity: 1, price: 100 }],
         total: 100,
         currency: 'USD',
-        store_id: 'store-1'
+        store_id: 'store-1',
+        same_billing: true
       }
     };
     const res: Partial<NextApiResponse> = {
@@ -113,6 +138,9 @@ describe('handleCheckout stripe flow', () => {
     await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
     expect(orderInserted).toBe(true);
     expect(updateCalls[0]).toEqual({ payment_intent_id: 'pi_123' });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ success: true, order_id: 'order-1', payment_intent_id: 'pi_123' })
+    );
 
     mockEvent = { type: 'payment_intent.succeeded', data: { object: { id: 'pi_123', status: 'succeeded' } } };
     const wReq: any = { method: 'POST', headers: {}, [Symbol.asyncIterator]: async function* () { yield Buffer.from(''); } };
