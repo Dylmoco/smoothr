@@ -2,38 +2,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let handleStripe: any;
 let createMock: any;
-let integrationMock: any;
-let supabaseMock: any;
+let credsMock: any;
 
 vi.mock('stripe', () => {
   createMock = vi.fn();
   return { default: class { paymentIntents = { create: createMock }; constructor() {} } };
 });
 
-vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
-  integrationMock = vi.fn(async () => ({ api_key: 'sk_test' }));
-  return { getStoreIntegration: integrationMock };
-});
-
-vi.mock('../../../shared/supabase/serverClient', () => {
-  supabaseMock = {
-    from: (table: string) => {
-      if (table === 'store_settings') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(async () => ({
-                data: { settings: { stripe_secret_key: 'sk_supabase' } },
-                error: null
-              }))
-            }))
-          }))
-        };
-      }
-      return {} as any;
-    }
-  };
-  return { supabase: supabaseMock, createServerSupabaseClient: () => supabaseMock, testMarker: '✅ serverClient loaded' };
+vi.mock('../../../shared/checkout/getActiveGatewayCreds.ts', () => {
+  credsMock = vi.fn(async () => ({ secret_key: 'sk_test' }));
+  return { getActiveGatewayCreds: credsMock };
 });
 
 async function loadModule() {

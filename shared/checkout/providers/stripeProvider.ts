@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
 import crypto from 'crypto';
-import { getStoreIntegration } from '../getStoreIntegration';
-import { createServerSupabaseClient } from '../../supabase/serverClient';
+import { getActiveGatewayCreds } from '../getActiveGatewayCreds';
 
 const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout Stripe]', ...args);
@@ -32,29 +31,13 @@ interface StripePayload {
 }
 
 export default async function handleStripe(payload: StripePayload) {
-  const supabase = createServerSupabaseClient();
   let stripeSecret = '';
 
   try {
-    const { data, error } = await supabase
-      .from('store_settings')
-      .select('settings')
-      .eq('store_id', payload.store_id)
-      .maybeSingle();
-    if (error) {
-      console.warn('[Checkout Stripe] Store settings error:', error.message);
-    }
-    stripeSecret = data?.settings?.stripe_secret_key || '';
+    const creds = await getActiveGatewayCreds(payload.store_id, 'stripe');
+    stripeSecret = creds?.secret_key || '';
   } catch (e) {
-    console.warn('[Checkout Stripe] Store settings lookup failed:', e);
-  }
-
-  if (!stripeSecret.trim()) {
-    const integration = await getStoreIntegration(payload.store_id, 'stripe');
-    stripeSecret =
-      integration?.settings?.secret_key ||
-      integration?.api_key ||
-      '';
+    console.warn('[Checkout Stripe] Credential lookup failed:', e);
   }
 
   if (!stripeSecret.trim()) {

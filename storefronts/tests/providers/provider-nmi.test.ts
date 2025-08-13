@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let handleNmi: any;
 let fetchMock: any;
-let integrationMock: any;
+let credsMock: any;
 const originalFetch = global.fetch;
 const originalKey = process.env.NMI_SECURITY_KEY;
 
-vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
-  integrationMock = vi.fn(async () => ({ api_key: 'key' }));
-  return { getStoreIntegration: integrationMock };
+vi.mock('../../../shared/checkout/getActiveGatewayCreds.ts', () => {
+  credsMock = vi.fn(async () => ({ secret_key: 'key' }));
+  return { getActiveGatewayCreds: credsMock };
 });
 
 async function loadModule() {
@@ -47,7 +47,7 @@ describe('handleNmi', () => {
     expect(res.success).toBe(true);
     expect(res.transaction_id).toBe('tx1');
     expect(res.customer_vault_id).toBeNull();
-    expect(integrationMock).toHaveBeenCalledWith('store-1', 'nmi');
+    expect(credsMock).toHaveBeenCalledWith('store-1', 'nmi');
     const body = fetchMock.mock.calls[0][1].body;
     const params = new URLSearchParams(body);
     expect(params.get('security_key')).toBe('key');
@@ -55,19 +55,19 @@ describe('handleNmi', () => {
   });
 
   it('falls back to env security key when integration missing', async () => {
-    integrationMock.mockResolvedValue(null);
+    credsMock.mockResolvedValue(null);
     process.env.NMI_SECURITY_KEY = 'envKey';
     const res = await handleNmi(basePayload);
     const params = new URLSearchParams(fetchMock.mock.calls[0][1].body);
     expect(params.get('security_key')).toBe('envKey');
     expect(params.get('amount')).toBe('1.00');
-    expect(integrationMock).toHaveBeenCalled();
+    expect(credsMock).toHaveBeenCalled();
     expect(res.success).toBe(true);
     expect(res.transaction_id).toBe('tx1');
   });
 
   it('returns error when no security key found', async () => {
-    integrationMock.mockResolvedValue(null);
+    credsMock.mockResolvedValue(null);
     const res = await handleNmi(basePayload);
     expect(res).toEqual({ success: false, error: 'Missing security key' });
   });
