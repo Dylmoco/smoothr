@@ -102,7 +102,7 @@ export default async function handler(
       if (!data || data.length === 0) {
         // Order not found for payment_intent
       }
-    } catch (error: unknown) {
+    } catch {
       res.status(400).send("Webhook processing error");
       return;
     }
