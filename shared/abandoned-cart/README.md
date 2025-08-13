@@ -1,3 +1,3 @@
 # abandoned-cart
 
-Cart webhooks and automation utilities.
+Cart webhooks and automation utilities..
