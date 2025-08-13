@@ -7,38 +7,30 @@ export async function getGatewayCredential(gateway) {
     new URLSearchParams(window.location.search).has('smoothr-debug');
   try {
     await ensureSupabaseSessionAuth();
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-    const access_token = session?.access_token;
-
     const { storeId: store_id } = getConfig();
-    const supabaseUrl = supabase.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-    const headers = {
-      'Content-Type': 'application/json',
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    };
-    if (access_token) {
-      headers.Authorization = `Bearer ${access_token}`;
-    }
+    const { data: creds, error } = await supabase.functions.invoke(
+      'get_gateway_credentials',
+      {
+        body: { store_id, gateway }
+      }
+    );
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/get_gateway_credentials`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ store_id, gateway })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
+    if (error) {
       debug &&
-        console.warn('[Smoothr] Credential fetch failed:', res.status, data?.message);
-      return { publishable_key: null, tokenization_key: null };
+        console.warn('[Smoothr] Credential fetch failed:', error.message);
+      return { publishable_key: null, tokenization_key: null, api_login_id: null };
     }
-    return data;
+
+    const {
+      publishable_key = null,
+      tokenization_key = null,
+      api_login_id = null
+    } = creds || {};
+    return { publishable_key, tokenization_key, api_login_id };
   } catch (e) {
     debug && console.warn('[Smoothr] Credential fetch error:', e?.message || e);
-    return { publishable_key: null, tokenization_key: null };
+    return { publishable_key: null, tokenization_key: null, api_login_id: null };
   }
 }
 
