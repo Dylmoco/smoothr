@@ -1,4 +1,3 @@
-// pages/api/get-payment-key.js
 import { createClient } from '@supabase/supabase-js';
 import { applyCors } from 'shared/utils/applyCors';
 
@@ -10,52 +9,56 @@ export default async function handler(req, res) {
   }
 
   applyCors(res, origin);
-  const { storeId, provider } = req.query;
+  const storeId = req.query.store_id || req.query.storeId;
+  const gateway = req.query.gateway || req.query.provider;
 
-  if (!storeId || !provider) {
-    console.error('[API] Missing storeId or provider:', { storeId, provider });
-    return res.status(400).json({ error: 'Missing storeId or provider' });
+  if (!storeId || !gateway) {
+    console.error('[API] Missing store_id or gateway:', { storeId, gateway });
+    return res.status(400).json({ error: 'Missing store_id or gateway' });
   }
 
+  console.warn(
+    '[API] get-payment-key is deprecated; use get_gateway_credentials edge function instead'
+  );
+
   try {
-    const supabaseUrl = 'https://lpuqrzvokroazwlricgn.supabase.co';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceKey) {
-      console.error('[API] SUPABASE_SERVICE_ROLE_KEY not set');
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const anonKey = process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !anonKey) {
+      console.error('[API] Missing Supabase configuration');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
-    console.log('[API] Querying store_integrations for store:', storeId, 'provider:', provider);
+    const supabase = createClient(supabaseUrl, anonKey);
+
     const { data, error } = await supabase
-      .from('store_integrations')
-      .select('api_key')
+      .from('v_public_store')
+      .select('publishable_key, tokenization_key, api_login_id')
       .eq('store_id', storeId)
-      .eq('gateway', provider)
+      .eq('active_payment_gateway', gateway)
       .single();
 
     if (error) {
-      console.error(
-        '[Supabase ERROR] Failed to fetch key:',
-        error.message,
-        error.code,
-        error.details,
-        error.hint
-      );
+      console.error('[Supabase ERROR] Failed to fetch key:', error.message);
+      return res.status(500).json({ error: 'Failed to fetch key', detail: error.message });
+    }
+
+    if (!data) {
       return res
-        .status(500)
-        .json({ error: 'Failed to fetch key', detail: error.message });
+        .status(404)
+        .json({ error: 'Deprecated - use get_gateway_credentials edge function' });
     }
 
-    if (data && data.api_key) {
-      console.log('[API] Key fetched successfully for store:', storeId);
-      return res.status(200).json({ tokenization_key: data.api_key });
-    }
-
-    console.error('[Supabase ERROR] No key found for store:', storeId, 'provider:', provider, 'data:', data);
-    return res.status(404).json({ error: 'No key found', detail: 'Missing integration key' });
+    return res.status(200).json({
+      ...data,
+      message: 'Deprecated - use get_gateway_credentials edge function',
+    });
   } catch (error) {
-    console.error('[Supabase ERROR] Unexpected error:', error.message, error.stack);
-    return res.status(500).json({ error: 'Unexpected server error', detail: error.message });
+    console.error('[Supabase ERROR] Unexpected error:', error.message);
+    return res
+      .status(500)
+      .json({ error: 'Unexpected server error', detail: error.message });
   }
 }
+
