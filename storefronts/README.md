@@ -28,13 +28,16 @@ NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL=your-redirect-url
 
 An `.env.example` file is included for reference.
 
-When the SDK loads it fetches your store settings from Supabase. Any
-`api_base` value returned is automatically mapped to the camel case
-`apiBase` property on `window.SMOOTHR_CONFIG`.
+When the SDK loads it fetches your store settings from Supabase by invoking the
+`get_public_store_settings` edge function. Any `api_base` value returned is
+automatically mapped to the camel case `apiBase` property on
+`window.SMOOTHR_CONFIG`.
 
 ```js
-// public_store_settings row
-{ "api_base": "https://example.com" }
+const { data } = await supabase.functions.invoke('get_public_store_settings', {
+  body: { store_id: '<store-id>' }
+});
+// => { api_base: 'https://example.com' }
 
 // after loadConfig runs
 window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
@@ -76,9 +79,9 @@ smoothr.orders.renderOrders();
 
 Define a global `SMOOTHR_CONFIG` before loading the SDK to set the base
 currency, provide custom exchange rates, or override the live rates endpoint.
-When the SDK initializes it merges settings from your store's
-`public_store_settings` table into the object, so values you define beforehand
-remain in place.
+When the SDK initializes it merges settings fetched via
+`get_public_store_settings` (backed by the `store_settings` table) into the
+object, so values you define beforehand remain in place.
 
 ```html
 <script>
@@ -145,8 +148,9 @@ logs a warning and re-attempts initialization after a short delay.
 The script posts the cart to `/api/checkout/[provider]` where `[provider]` is the
 active payment gateway. This single endpoint handles all providers. `init` chooses the gateway by reading
 `window.SMOOTHR_CONFIG.active_payment_gateway`. When the property isn't defined,
-the SDK fetches `public_store_settings.active_payment_gateway` from Supabase
-using the provided `storeId` and writes the value back to `SMOOTHR_CONFIG`.
+the SDK invokes `get_public_store_settings` to read
+`store_settings.active_payment_gateway` using the provided `storeId` and writes
+the value back to `SMOOTHR_CONFIG`.
 The default provider is `stripe`.
 
 Gateway detection relies on `features/checkout/utils/resolveGateway.js`. It will **throw an
@@ -164,22 +168,26 @@ resolveGateway({});
 // throws 'active_payment_gateway not configured'
 ```
 
-To integrate Authorize.net create a record in the `store_integrations` table
-with `gateway` set to `authorizeNet` and save your credentials in the
-`settings` JSON column:
+To integrate Authorize.net create a record in the `integrations` table with
+`provider_key` set to `authorizeNet` and your `publishable_key`. Store the
+transaction key securely in Vault as `authorizeNet_secret_key_<store_id>`:
 
-```json
-{
-  "api_login_id": "<API_LOGIN_ID>",
-  "transaction_key": "<TRANSACTION_KEY>",
-  "client_key": "<CLIENT_KEY>"
-}
+```js
+await supabase
+  .from('integrations')
+  .insert({
+    store_id: '<store-id>',
+    provider_key: 'authorizeNet',
+    publishable_key: '<CLIENT_KEY>'
+  });
+
+const { data } = await supabase.functions.invoke('get_gateway_credentials', {
+  body: { store_id: '<store-id>', provider_key: 'authorizeNet' }
+});
 ```
 
-Activate the gateway via `public_store_settings.active_payment_gateway`.
-Requests to `/api/checkout/[provider]` must use `authorizeNet` for the
-`[provider]` segment in order to succeed. Alternatively you can override the
-setting on the client by defining the following snippet before loading the SDK:
+Activate the gateway via `store_settings.active_payment_gateway` or override it
+on the client by defining the following snippet before loading the SDK:
 
 ```html
 <script>
@@ -190,31 +198,22 @@ setting on the client by defining the following snippet before loading the SDK:
 ```
 
 A Network Merchants (NMI) integration is also supported. Create a new record in
-`store_integrations` with either `gateway` or `settings.gateway` set to `nmi`
-and place your credentials in the `settings` JSON column. The
-`public_store_integration_credentials` view coalesces the `gateway` column with
-`settings.gateway` so either approach works:
-
-```json
-{
-  "api_key": "<API_KEY>",
-  "tokenization_key": "<TOKENIZATION_KEY>"
-}
-```
-The tokenization key can be fetched anonymously from the
-`public_store_integration_credentials` view:
+`integrations` with `provider_key` set to `nmi` and your `publishable_key`.
+Store the secret API key in Vault as `nmi_secret_key_<store_id>`.
 
 ```js
-const { data } = await supabase
-  .from('public_store_integration_credentials')
-  .select('tokenization_key')
-  .eq('store_id', '<store-id>')
-  .eq('gateway', 'nmi')
-  .maybeSingle();
-const key = data?.tokenization_key;
+await supabase.from('integrations').insert({
+  store_id: '<store-id>',
+  provider_key: 'nmi',
+  publishable_key: '<TOKENIZATION_KEY>'
+});
+
+const { data } = await supabase.functions.invoke('get_gateway_credentials', {
+  body: { store_id: '<store-id>', provider_key: 'nmi' }
+});
 ```
 
-Enable the gateway via `public_store_settings.active_payment_gateway` or set
+Enable the gateway via `store_settings.active_payment_gateway` or set
 `window.SMOOTHR_CONFIG.active_payment_gateway = 'nmi'` on the client. Include
 NMI's Collect.js library on checkout pages. After the Smoothr checkout script
 loads, call `window.Smoothr.mountNMIFields()` to mount the credit card fields.
