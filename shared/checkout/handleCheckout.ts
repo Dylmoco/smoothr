@@ -92,17 +92,18 @@ async function validateDiscountCode(
   if (!startsOk || !endsOk || !minOk) return { isValid: false };
 
   if (disc.usage_limit) {
-    const usageQuery = client
+    const { data: usage, error: usesErr } = await client
       .from('discount_usages')
-      .select('id', { head: true, count: 'exact' })
+      .select('count')
       .eq('discount_id', disc.id)
       .eq('store_id', storeId)
-      .eq('customer_id', customerId);
+      .eq('customer_id', customerId)
+      .maybeSingle();
 
-    const { count: totalUses, error: usesErr } = await usageQuery;
     if (usesErr) return { isValid: false };
-    if (typeof totalUses === 'number' && totalUses >= disc.usage_limit) {
-      return { isValid: false };
+    const totalUses = usage?.count ?? 0;
+    if (typeof totalUses === 'number' && totalUses > disc.usage_limit) {
+      return { isValid: false, summary: { error: 'Discount usage limit exceeded' } };
     }
   }
 
@@ -264,12 +265,12 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       total,
       customerId
     );
+    discountSummary = result.summary;
     if (result.isValid && result.record) {
       discountRecord = result.record;
-      discountSummary = result.summary;
-      const amt = discountSummary.percent
+      const amt = discountSummary?.percent
         ? Math.round(total * (discountSummary.percent / 100))
-        : discountSummary.value_cents || 0;
+        : discountSummary?.value_cents || 0;
       log('Applying discount', discountRecord, amt);
       total = Math.max(0, total - amt);
     }

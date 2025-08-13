@@ -83,11 +83,32 @@ vi.mock('../../../shared/supabase/client', () => {
           select: vi.fn(() => chain()),
         };
       }
-      if (table === 'discount_usages') {
+      if (table === 'discounts') {
         return {
-          insert: vi.fn().mockResolvedValue({ error: null }),
-          select: vi.fn(() => chain({ count: 0, data: [], error: null })),
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(async () => ({
+                  data: {
+                    id: 'disc1',
+                    code: 'SAVE10',
+                    type: 'percent',
+                    percent: 10,
+                    usage_limit: 1,
+                    value_cents: null,
+                    starts_at: null,
+                    ends_at: null,
+                    min_order_value_cents: null,
+                  },
+                  error: null,
+                })),
+              })),
+            })),
+          })),
         };
+      }
+      if (table === 'discount_usages') {
+        return chain({ data: { count: 2 }, error: null });
       }
       if (table === 'order_items') {
         return {
@@ -153,5 +174,39 @@ describe('handleCheckout stripe flow', () => {
     const wRes: any = { status: vi.fn(() => wRes), json: vi.fn(), end: vi.fn() };
     await stripeWebhook(wReq, wRes);
     expect(updateCalls[1].status).toBe('paid');
+  });
+
+  it('returns error when discount usage limit is exceeded', async () => {
+    const req: Partial<NextApiRequest> = {
+      headers: { origin: 'https://shop.example.com' },
+      method: 'POST',
+      body: {
+        discount_code: 'SAVE10',
+        total: 100,
+        email: 'user@example.com',
+        first_name: 'Jane',
+        last_name: 'Doe',
+        shipping: {
+          name: 'Jane Doe',
+          address: { line1: '1 St', city: 'Town', state: 'TS', postal_code: '00000', country: 'US' }
+        },
+        cart: [],
+        currency: 'USD',
+        store_id: 'store-1'
+      }
+    };
+    const res: Partial<NextApiResponse> = {
+      status: vi.fn(() => res as any),
+      json: vi.fn(() => res as any),
+      setHeader: vi.fn(),
+      end: vi.fn()
+    };
+
+    await handleCheckout({ req: req as NextApiRequest, res: res as NextApiResponse });
+
+    expect(res.json).toHaveBeenCalledWith({
+      isValid: false,
+      summary: { error: 'Discount usage limit exceeded' }
+    });
   });
 });
