@@ -13,7 +13,7 @@ describe('v_public_store view', () => {
     builder = {
       select: vi.fn(() => builder),
       eq: vi.fn(() => builder),
-      single: vi.fn(),
+      maybeSingle: vi.fn(),
     };
 
     createClientMock = vi.fn(() => ({
@@ -40,23 +40,21 @@ describe('v_public_store view', () => {
       publishable_key: 'pk_test_123',
       base_currency: 'USD',
     };
-    builder.single.mockResolvedValue({ data: row, error: null });
+    builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
     const { data, error } = await supabase
       .from('v_public_store')
-      .select(
-        'store_id, active_payment_gateway, publishable_key, base_currency'
-      )
+      .select('store_id,active_payment_gateway,publishable_key,base_currency')
       .eq('store_id', storeId)
-      .single();
+      .maybeSingle();
 
     expect(error).toBeNull();
     expect(data).toEqual(row);
     expect(builder.select).toHaveBeenCalledWith(
-      'store_id, active_payment_gateway, publishable_key, base_currency'
+      'store_id,active_payment_gateway,publishable_key,base_currency'
     );
     expect(builder.eq).toHaveBeenCalledWith('store_id', storeId);
-    expect(builder.single).toHaveBeenCalledTimes(1);
+    expect(builder.maybeSingle).toHaveBeenCalledTimes(1);
   });
 });
 

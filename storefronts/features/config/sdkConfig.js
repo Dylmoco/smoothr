@@ -11,21 +11,25 @@ export async function loadPublicConfig(storeId) {
   try {
     const { data, error } = await supabase
       .from('v_public_store')
-      .select(
-        'store_id, active_payment_gateway, publishable_key, base_currency'
-      )
+      .select('store_id,active_payment_gateway,publishable_key,base_currency')
       .eq('store_id', storeId)
       .maybeSingle();
 
     if (error) {
-      warn('Store settings lookup failed:', error.message);
+      warn('Store settings lookup failed:', {
+        status: error.status,
+        message: error.message,
+      });
       return null;
     }
 
     log('Config fetched');
     return data || null;
   } catch (e) {
-    warn('Store settings fetch error:', e?.message || e);
+    warn('Store settings fetch error:', {
+      status: e?.status,
+      message: e?.message || e,
+    });
     return null;
   }
 }
