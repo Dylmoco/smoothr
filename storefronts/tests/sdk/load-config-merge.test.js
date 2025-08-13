@@ -24,7 +24,7 @@ vi.mock('../../../supabase/browserClient.js', () => {
   const client = {
     auth: { getSession },
     from,
-    supabaseUrl: 'https://mock.supabase.co',
+    supabaseUrl: process.env.SUPABASE_URL,
   };
   return { supabase: client, default: client, ensureSupabaseSessionAuth };
 });

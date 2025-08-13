@@ -24,7 +24,7 @@ beforeEach(() => {
   (globalThis as any).Deno = {
     env: {
       get: vi.fn((key) =>
-        key === "SUPABASE_URL" ? "https://mock.supabase.co" : "mock-anon-key",
+        key === "SUPABASE_URL" ? process.env.SUPABASE_URL : "mock-anon-key",
       ),
     },
     serve: (fn: any) => {
