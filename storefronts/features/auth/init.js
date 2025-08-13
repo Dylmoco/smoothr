@@ -34,8 +34,10 @@ export async function loadConfig(storeId) {
   try {
     const { data, error } = await authClient
       .from('v_public_store')
-      .select('*')
-      .eq('id', storeId)
+      .select(
+        'store_id, active_payment_gateway, publishable_key, base_currency'
+      )
+      .eq('store_id', storeId)
       .maybeSingle();
     if (error) throw error;
     const record = data ?? {};
