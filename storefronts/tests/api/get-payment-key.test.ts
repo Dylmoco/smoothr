@@ -79,5 +79,23 @@ describe('get-payment-key API', () => {
       error: 'Deprecated - use get_gateway_credentials edge function',
     });
   });
+
+  it('handles Supabase error', async () => {
+    mockSingle.mockResolvedValue({ data: null, error: { message: 'Query failed' } });
+
+    const { default: handler } = await import('../../../smoothr/pages/api/get-payment-key.js');
+    const json = vi.fn();
+    const status = vi.fn(() => ({ json }));
+    const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
+    const req = { query: { store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0', gateway: 'stripe' } } as Partial<NextApiRequest>;
+
+    await handler(req as NextApiRequest, res as NextApiResponse);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Failed to fetch key',
+      details: 'Query failed',
+    });
+  });
 });
 
