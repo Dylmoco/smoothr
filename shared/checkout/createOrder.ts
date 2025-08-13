@@ -51,18 +51,21 @@ export async function createOrder(payload: CreateOrderPayload) {
     .from('orders')
     .insert({
       order_number: orderNumber,
-      status: 'unpaid',
+      status: 'pending',
       payment_provider: gateway,
       total_price,
       store_id,
       customer_id: payload.customer_id ?? null,
     })
-    .select('*')
+    .select('id, payment_intent_id')
     .single();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return {
+    order_id: data.id,
+    payment_intent_id: data.payment_intent_id,
+  };
 }
