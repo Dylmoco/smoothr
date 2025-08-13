@@ -7,8 +7,9 @@ const originalFetch = global.fetch;
 
 vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
   integrationMock = vi.fn(async () => ({
-    api_login_id: 'fakeLogin',
-    transaction_key: 'fakeKey',
+    provider_key: 'authorizeNet',
+    publishable_key: 'fakeLogin',
+    secret_key: 'fakeKey',
     settings: {
       api_login_id: 'fakeLogin',
       transaction_key: 'fakeKey',
@@ -131,8 +132,11 @@ describe('handleAuthorizeNet', () => {
     });
   });
 
-  it('uses credentials from store_integrations.settings', async () => {
+  it('uses credentials from integrations.settings', async () => {
     integrationMock.mockResolvedValue({
+      provider_key: 'authorizeNet',
+      publishable_key: 'id1',
+      secret_key: 'key1',
       settings: { api_login_id: 'id1', transaction_key: 'key1' }
     });
     fetchMock.mockResolvedValue({
