@@ -32,7 +32,7 @@ describe.skip('webflow-order-handler', () => {
     (globalThis as any).Deno = {
       env: {
         get: (key: string) => {
-          if (key === 'SUPABASE_URL') return 'https://example.supabase.co';
+          if (key === 'SUPABASE_URL') return process.env.SUPABASE_URL;
           if (key === 'SUPABASE_SERVICE_ROLE_KEY') return 'service-key';
           return undefined;
         }
@@ -69,7 +69,7 @@ describe.skip('webflow-order-handler', () => {
       body: JSON.stringify(payload)
     }));
     expect(createClientMock).toHaveBeenCalledWith(
-      'https://example.supabase.co',
+      process.env.SUPABASE_URL,
       'service-key',
       {
         global: {

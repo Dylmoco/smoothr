@@ -26,7 +26,7 @@ vi.mock('../../../supabase/browserClient.js', () => ({
   supabase: {
     auth: { getSession: getSessionMock },
     from: vi.fn(),
-    supabaseUrl: 'https://mock.supabase.co',
+    supabaseUrl: process.env.SUPABASE_URL,
   },
   ensureSupabaseSessionAuth: vi.fn().mockResolvedValue(),
 }));
