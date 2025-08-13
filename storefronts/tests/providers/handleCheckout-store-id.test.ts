@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 let handleCheckout: any;
 
-vi.mock('../../../shared/supabase/serverClient', () => {
+vi.mock('../../../shared/supabase/client', () => {
   const client = {
     from: (table: string) => {
       if (table === 'stores') {
@@ -13,10 +13,16 @@ vi.mock('../../../shared/supabase/serverClient', () => {
           }))
         };
       }
-      return {};
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({ data: null, error: null }))
+          }))
+        }))
+      };
     },
   };
-  return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
+  return { supabase: client, createSupabaseClient: () => client, testMarker: '✅ supabase client loaded' };
 });
 
 vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({

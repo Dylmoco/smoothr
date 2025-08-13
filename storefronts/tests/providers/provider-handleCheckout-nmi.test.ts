@@ -20,7 +20,7 @@ vi.mock('../../../shared/lib/findOrCreateCustomer.ts', () => ({
   findOrCreateCustomer: vi.fn().mockResolvedValue('test_customer_id'),
 }));
 
-vi.mock('../../../shared/supabase/serverClient', () => {
+vi.mock('../../../shared/supabase/client', () => {
   const client = {
     from: (table: string) => {
         if (table === 'stores') {
@@ -87,11 +87,18 @@ vi.mock('../../../shared/supabase/serverClient', () => {
         if (table === 'order_items' || table === 'discount_usages') {
           return { insert: vi.fn().mockResolvedValue({ error: null }) };
         }
-        return {};
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(async () => ({ data: null, error: null }))
+            }))
+          }))
+        };
       }
   };
-  return { supabase: client, createServerSupabaseClient: () => client, testMarker: '✅ serverClient loaded' };
+  return { supabase: client, createSupabaseClient: () => client, testMarker: '✅ supabase client loaded' };
 });
+
 
 async function loadModule() {
   const mod = await import('../../../shared/checkout/handleCheckout.ts');

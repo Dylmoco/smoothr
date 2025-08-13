@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient } from "../../shared/supabase/client.ts";
 import { findOrCreateCustomer } from "../_shared/findOrCreateCustomer.ts";
 
 const debug = Deno.env.get("SMOOTHR_DEBUG") === "true";
@@ -10,10 +10,10 @@ const errorLog = (...args: any[]) =>
   debug && console.error("[webflow-order]", ...args);
 
 export async function handleRequest(req: Request): Promise<Response> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  if (!supabaseUrl || !supabaseKey) {
+  let supabase;
+  try {
+    supabase = createSupabaseClient();
+  } catch {
     return new Response(
       JSON.stringify({ error: "Missing Supabase credentials" }),
       { status: 500, headers: { "Content-Type": "application/json" } },
@@ -41,16 +41,6 @@ export async function handleRequest(req: Request): Promise<Response> {
   log("Payload:", payload);
 
   const { siteId } = payload;
-
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    global: {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-    },
-  });
-
   const email = payload.customerInfo?.email || null;
   let customerId: string | null = null;
 

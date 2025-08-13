@@ -25,9 +25,10 @@ describe('createOrder', () => {
 
     fromMock = vi.fn(() => ({ insert: insertMock }));
 
-    vi.mock('../../shared/supabase/serverClient', () => ({
+    vi.mock('../../shared/supabase/client', () => ({
       supabase: { from: fromMock },
-      createServerSupabaseClient: () => ({ from: fromMock }),
+      createSupabaseClient: () => ({ from: fromMock }),
+      testMarker: '✅ supabase client loaded'
     }));
 
     await loadModule();

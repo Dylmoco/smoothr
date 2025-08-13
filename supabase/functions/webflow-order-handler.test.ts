@@ -33,7 +33,7 @@ describe.skip('webflow-order-handler', () => {
       env: {
         get: (key: string) => {
           if (key === 'SUPABASE_URL') return process.env.SUPABASE_URL;
-          if (key === 'SUPABASE_SERVICE_ROLE_KEY') return 'service-key';
+          if (key === 'SUPABASE_ANON_KEY') return 'anon-key';
           return undefined;
         }
       },
@@ -70,15 +70,7 @@ describe.skip('webflow-order-handler', () => {
     }));
     expect(createClientMock).toHaveBeenCalledWith(
       process.env.SUPABASE_URL,
-      'service-key',
-      {
-        global: {
-          headers: {
-            apikey: 'service-key',
-            Authorization: 'Bearer service-key'
-          }
-        }
-      }
+      'anon-key'
     );
     expect(insertCustomerMock).toHaveBeenCalledWith({ store_id: 'site', email: 'user@example.com' });
     expect(insertOrderMock).toHaveBeenCalledWith({

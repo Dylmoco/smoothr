@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-import { createServerSupabaseClient } from 'shared/supabase/serverClient';
+import { createSupabaseClient } from 'shared/supabase/client';
 import { getStoreIntegration } from 'shared/checkout/getStoreIntegration';
 import { applyCors } from 'shared/utils/applyCors';
 
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = createSupabaseClient();
     let stripeSecret = '';
     try {
       const { data } = await supabase

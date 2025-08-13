@@ -1,9 +1,9 @@
-import { createServerSupabaseClient } from '../supabase/serverClient';
+import { createSupabaseClient } from '../supabase/client';
 
 export async function getActiveGatewayCreds(storeId: string, providerKey: string) {
   if (!storeId || !providerKey) return null;
 
-  const supabase = createServerSupabaseClient();
+  const supabase = createSupabaseClient();
 
   const { data, error } = await supabase
     .from('integrations')

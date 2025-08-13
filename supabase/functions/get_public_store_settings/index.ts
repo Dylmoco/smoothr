@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2.38.4";
+import { createSupabaseClient } from "../../shared/supabase/client.ts";
 
 // Helper function to extract host from origin
 function hostFromOrigin(origin: string | null): string | null {
@@ -86,10 +86,7 @@ Deno.serve(async (req: Request) => {
     log("Request headers:", headerObj);
     
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createSupabaseClient();
 
     // Try to get the store_id from the request body if it's a POST/PUT
     if (!storeId && (req.method === "POST" || req.method === "PUT")) {
