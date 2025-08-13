@@ -4,7 +4,7 @@ const debug = process.env.SMOOTHR_DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[Checkout NMI]', ...args);
 const err = (...args: any[]) => debug && console.error('[Checkout NMI]', ...args);
 
-import { getStoreIntegration } from '../getStoreIntegration';
+import { getActiveGatewayCreds } from '../getActiveGatewayCreds';
 
 interface NmiPayload {
   payment_token?: string;
@@ -50,10 +50,10 @@ export default async function handleNmi(payload: NmiPayload) {
 
   // 1) Try DB integration
   try {
-    const creds = await getStoreIntegration(payload.store_id, 'nmi');
-    securityKey = creds?.settings?.api_key || creds?.api_key || '';
+    const creds = await getActiveGatewayCreds(payload.store_id, 'nmi');
+    securityKey = creds?.secret_key || '';
   } catch (e) {
-    err('getStoreIntegration error:', e);
+    err('getActiveGatewayCreds error:', e);
   }
 
   // 2) Fallback to env var if DB missing

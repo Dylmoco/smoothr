@@ -1,22 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 let handleAuthorizeNet: any;
-let integrationMock: any;
+let credsMock: any;
 let fetchMock: any;
 const originalFetch = global.fetch;
 
-vi.mock('../../../shared/checkout/getStoreIntegration.ts', () => {
-  integrationMock = vi.fn(async () => ({
-    provider_key: 'authorizeNet',
-    publishable_key: 'fakeLogin',
-    secret_key: 'fakeKey',
-    settings: {
-      api_login_id: 'fakeLogin',
-      transaction_key: 'fakeKey',
-      client_key: 'client'
-    }
+vi.mock('../../../shared/checkout/getActiveGatewayCreds.ts', () => {
+  credsMock = vi.fn(async () => ({
+    api_login_id: 'fakeLogin',
+    secret_key: 'fakeKey'
   }));
-  return { getStoreIntegration: integrationMock };
+  return { getActiveGatewayCreds: credsMock };
 });
 
 async function loadModule() {
@@ -69,7 +63,7 @@ describe('handleAuthorizeNet', () => {
       success: true,
       data: { messages: { resultCode: 'Ok' }, transactionResponse: { transId: 't1' } }
     });
-    expect(integrationMock).toHaveBeenCalledWith('store-1', 'authorizeNet');
+    expect(credsMock).toHaveBeenCalledWith('store-1', 'authorizeNet');
   });
 
   it('returns success false on non-Ok result code', async () => {
@@ -133,11 +127,9 @@ describe('handleAuthorizeNet', () => {
   });
 
   it('uses credentials from integrations.settings', async () => {
-    integrationMock.mockResolvedValue({
-      provider_key: 'authorizeNet',
-      publishable_key: 'id1',
-      secret_key: 'key1',
-      settings: { api_login_id: 'id1', transaction_key: 'key1' }
+    credsMock.mockResolvedValue({
+      api_login_id: 'id1',
+      secret_key: 'key1'
     });
     fetchMock.mockResolvedValue({
       ok: true,
@@ -154,7 +146,7 @@ describe('handleAuthorizeNet', () => {
   });
 
   it('returns error when credentials missing', async () => {
-    integrationMock.mockResolvedValue({ settings: {} });
+    credsMock.mockResolvedValue({});
     const res = await handleAuthorizeNet(basePayload);
     expect(res).toEqual({
       success: false,

@@ -1,4 +1,4 @@
-import { getStoreIntegration } from '../getStoreIntegration';
+import { getActiveGatewayCreds } from '../getActiveGatewayCreds';
 
 const env = process.env.PAYPAL_ENV === 'live' ? 'live' : 'sandbox';
 const baseUrl =
@@ -22,17 +22,10 @@ export default async function handlePayPal(payload: PayPalPayload) {
   let clientSecret = '';
 
   try {
-    const integration = await getStoreIntegration(payload.store_id, 'paypal');
-    if (integration) {
-      clientId =
-        integration.publishable_key ||
-        integration.api_key ||
-        integration.settings?.client_id ||
-        clientId;
-      clientSecret =
-        integration.secret_key ||
-        integration.settings?.secret ||
-        clientSecret;
+    const creds = await getActiveGatewayCreds(payload.store_id, 'paypal');
+    if (creds) {
+      clientId = creds.publishable_key || clientId;
+      clientSecret = creds.secret_key || clientSecret;
     }
   } catch (e) {
     err('Credential lookup failed:', e);
