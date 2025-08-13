@@ -1,5 +1,5 @@
 import { getConfig } from '../config/globalConfig.js';
-import { apiFetch } from '../../../shared/utils/apiFetch.ts';
+import { apiFetch } from '../../../shared/utils/apiFetch.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args: any[]) => debug && console.log('[Smoothr Discounts]', ...args);

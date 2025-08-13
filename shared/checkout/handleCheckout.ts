@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase, testMarker } from '../supabase/client';
 import { findOrCreateCustomer } from '../lib/findOrCreateCustomer';
+import { createOrder } from './createOrder';
 import crypto from 'crypto';
 import { validateCheckoutPayload } from './utils/validateCheckoutPayload';
 import { dedupeOrders } from './utils/dedupeOrders';
@@ -200,8 +201,10 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     discount_code,
     discount_id,
     customer_id,
+    platform,
     same_billing  // Use the flag
   } = payload;
+  const orderNumber = payload.order_number;
   let total = payload.total;
 
   if (discount_code && !payment_method) {
@@ -234,6 +237,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   }
 
   let customer_profile_id: string | null = null;
+
+  let orderData: { order_id: string; payment_intent_id: string | null } | null = null;
 
 
   const { name, address } = shipping;
@@ -376,6 +381,26 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   };
   log("Provider payload summary:", providerPayloadSummary);
 
+  try {
+    orderData = await createOrder({
+      email,
+      name: `${first_name} ${last_name}`.trim(),
+      cart,
+      total_price: total,
+      currency,
+      gateway: provider,
+      platform,
+      shipping,
+      billing,
+      store_id,
+      order_number: orderNumber,
+      customer_id: customerId
+    });
+  } catch (e: any) {
+    console.error('[handleCheckout] Order creation failed:', e.message || e);
+    return res.status(500).json({ error: 'Failed to create order', detail: e.message });
+  }
+
   let providerResult;
   try {
     providerResult = await providerHandler({
@@ -479,11 +504,11 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     await supabase
       .from('orders')
       .update({ payment_intent_id: paymentIntentId })
-      .eq('id', orderData.id);
+      .eq('id', orderData.order_id);
   }
 
   const itemRows = cart.map((item: any) => ({
-    order_id: orderData.id,
+    order_id: orderData.order_id,
     sku: item.product_id || item.sku || '',
     product_name: item.name || item.product_name || '',
     quantity: item.quantity,
@@ -508,7 +533,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     const { error: usageErr } = await supabase
       .from('discount_usages')
       .insert({
-        order_id: orderData.id,
+        order_id: orderData.order_id,
         customer_id: customerId,
         discount_id: discountRecord.id,
         used_at: new Date().toISOString()
@@ -525,7 +550,7 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
 
   res.status(200).json({
     success: true,
-    order_id: orderData.id,
+    order_id: orderData.order_id,
     order_number: orderNumber,
     payment_intent_id: paymentIntentId,
     discount: { isValid: !!discountRecord, summary: discountSummary },
