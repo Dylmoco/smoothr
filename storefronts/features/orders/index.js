@@ -2,8 +2,8 @@
  * Handles order workflows and UI widgets for the storefront.
  */
 
-import { supabase } from '../../../supabase/browserClient.js';
 import { getConfig } from '../config/globalConfig.js';
+import { apiFetch } from '../../../shared/utils/apiFetch.ts';
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Orders]', ...args);
@@ -11,18 +11,15 @@ const warn = (...args) => debug && console.warn('[Smoothr Orders]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Orders]', ...args);
 
 export async function fetchOrderHistory(customer_id) {
-  if (!customer_id) return [];
+  const store_id = getConfig().storeId;
+  if (!customer_id || !store_id) return [];
   try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, customers(email, name)')
-      .eq('customer_id', customer_id)
-      .order('order_date', { ascending: false });
-    if (error) {
-      err('fetch error', error);
-      return [];
-    }
-    log(`fetched ${data.length} records`);
+    const apiBase = getConfig().apiBase || '';
+    const data = await apiFetch(`${apiBase}/api/get-orders`, {
+      method: 'POST',
+      body: { store_id, customer_id },
+    });
+    log(`fetched ${data?.length || 0} records`);
     return data || [];
   } catch (err) {
     err('fetch error', err);

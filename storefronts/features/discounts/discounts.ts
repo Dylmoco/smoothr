@@ -1,5 +1,5 @@
-import { supabase } from '../../../supabase/browserClient.js';
 import { getConfig } from '../config/globalConfig.js';
+import { apiFetch } from '../../../shared/utils/apiFetch.ts';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args: any[]) => debug && console.log('[Smoothr Discounts]', ...args);
@@ -18,35 +18,35 @@ export interface DiscountRecord {
   limit_per_customer?: number | null;
 }
 
-export async function validateDiscount(code: string): Promise<DiscountRecord | null> {
+export async function applyDiscount(code: string): Promise<DiscountRecord | null> {
   if (!code) return null;
   try {
-    const { data, error } = await supabase
-      .from('discounts')
-      .select('*')
-      .ilike('code', code)
-      .maybeSingle();
-    if (error) {
-      warn('lookup failed', error.message);
-      return null;
-    }
-    if (!data) return null;
+    const config = getConfig();
+    const store_id = config.storeId;
+    const apiBase = config.apiBase || '';
+    const customer_id = window.smoothr?.auth?.user?.value?.id || null;
+    const total = window.Smoothr?.cart?.getSubtotal?.() || 0;
 
-    const now = Date.now();
-    if (data.active === false) return null;
-    if (data.starts_at && new Date(data.starts_at).getTime() > now) return null;
-    if (data.expires_at && new Date(data.expires_at).getTime() < now) return null;
-    if (
-      typeof data.max_redemptions === 'number' &&
-      typeof data.redemptions === 'number' &&
-      data.max_redemptions > 0 &&
-      data.redemptions >= data.max_redemptions
-    )
-      return null;
-    log('discount valid', data);
-    return data as DiscountRecord;
+    const data = await apiFetch(`${apiBase}/api/checkout`, {
+      method: 'POST',
+      body: { store_id, customer_id, discount_code: code, total },
+    });
+
+    if (data?.valid && data.discount) {
+      window.Smoothr?.cart?.applyDiscount?.({
+        code,
+        type: data.discount.type,
+        amount:
+          typeof data.discount.value_cents === 'number'
+            ? data.discount.value_cents
+            : data.discount.percent,
+      });
+      log('discount valid', data.discount);
+      return { id: '', code, type: data.discount.type, amount: data.discount.value_cents ?? data.discount.percent } as DiscountRecord;
+    }
+    return null;
   } catch (err: any) {
-    warn('validation failed', err?.message || err);
+    warn('applyDiscount failed', err?.message || err);
     return null;
   }
 }

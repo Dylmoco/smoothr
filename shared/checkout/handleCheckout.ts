@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase, testMarker } from '../supabase/serverClient';
 import { findOrCreateCustomer } from '../lib/findOrCreateCustomer';
 import crypto from 'crypto';
@@ -64,6 +65,62 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
     .sort((a, b) => (a.id ?? '').toString().localeCompare((b.id ?? '').toString()));
   const input = `${email}-${total}-${JSON.stringify(normalized)}`;
   return crypto.createHash('sha256').update(input).digest('hex');
+}
+
+async function validateDiscountCode(
+  client: SupabaseClient,
+  storeId: string,
+  customerId: string | null,
+  code: string,
+  total?: number
+) {
+  const { data: disc, error } = await client
+    .from('discounts')
+    .select('*')
+    .eq('store_id', storeId)
+    .eq('code', code)
+    .maybeSingle();
+  if (error || !disc) return { valid: false };
+
+  const now = Date.now();
+  const active = disc.active !== false;
+  const startsOk = !disc.starts_at || new Date(disc.starts_at).getTime() <= now;
+  const endsOk = !disc.expires_at || new Date(disc.expires_at).getTime() >= now;
+  const minOk =
+    !disc.min_order_value_cents ||
+    (typeof total === 'number' && total >= disc.min_order_value_cents);
+  if (!active || !startsOk || !endsOk || !minOk) return { valid: false };
+
+  if (disc.max_redemptions) {
+    const { count: totalUses, error: usesErr } = await client
+      .from('discount_usages')
+      .select('id', { head: true, count: 'exact' })
+      .eq('discount_id', disc.id);
+    if (usesErr) return { valid: false };
+    if (typeof totalUses === 'number' && totalUses >= disc.max_redemptions) {
+      return { valid: false };
+    }
+  }
+
+  if (customerId && disc.limit_per_customer) {
+    const { count: custCount, error: custErr } = await client
+      .from('discount_usages')
+      .select('id', { head: true, count: 'exact' })
+      .eq('discount_id', disc.id)
+      .eq('customer_id', customerId);
+    if (custErr) return { valid: false };
+    if (typeof custCount === 'number' && custCount >= disc.limit_per_customer) {
+      return { valid: false };
+    }
+  }
+
+  const summary = {
+    type: disc.type,
+    value_cents: disc.type === 'percent' ? undefined : disc.amount,
+    percent: disc.type === 'percent' ? disc.amount : undefined,
+  };
+
+  return { valid: true, record: disc, summary };
 }
 
 export async function handleCheckout({ req, res }: { req: NextApiRequest; res: NextApiResponse; }) {
@@ -155,9 +212,22 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     description,
     discount_code,
     discount_id,
+    customer_id,
     same_billing  // Use the flag
   } = payload;
   let total = payload.total;
+
+  if (discount_code && !payment_method) {
+    const { valid, summary } = await validateDiscountCode(
+      supabase,
+      store_id,
+      customer_id ?? null,
+      discount_code,
+      total
+    );
+    res.status(200).json({ valid, discount: summary });
+    return;
+  }
 
   const validationError = validateCheckoutPayload(payload);
   if (validationError) {
@@ -186,79 +256,25 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   // validation handled by validateCheckoutPayload
 
   let discountRecord: any = null;
-  if (discount_id || discount_code) {
-    log('[STEP] Fetching discounts...');
-    const { data: disc, error: discErr } = await supabase
-      .from('discounts')
-      .select('*')
-      .eq(discount_id ? 'id' : 'code', discount_id || discount_code)
-      .maybeSingle();
-    if (discErr) {
-      console.error('[Supabase ERROR] Discount lookup failed:', discErr.message);
-      return res
-        .status(500)
-        .json({ error: 'Discount lookup failed', detail: discErr.message });
+  let discountSummary: any = null;
+  if (discount_code) {
+    const result = await validateDiscountCode(
+      supabase,
+      store_id,
+      customerId,
+      discount_code,
+      total
+    );
+    if (result.valid && result.record) {
+      discountRecord = result.record;
+      discountSummary = result.summary;
+      const amt =
+        discountRecord.type === 'percent'
+          ? Math.round(total * (discountRecord.amount / 100))
+          : discountRecord.amount;
+      log('Applying discount', discountRecord, amt);
+      total = Math.max(0, total - amt);
     }
-    if (!disc) {
-      warn('Discount lookup failed:', discErr?.message);
-    } else {
-      const now = Date.now();
-      const active = disc.active !== false;
-      const startsOk = !disc.starts_at || new Date(disc.starts_at).getTime() <= now;
-      const endsOk = !disc.expires_at || new Date(disc.expires_at).getTime() >= now;
-      if (active && startsOk && endsOk) {
-        log('[STEP] Counting discount usages...');
-        const { count: totalUses, error: usesErr } = await supabase
-          .from('discount_usages')
-          .select('id', { head: true, count: 'exact' })
-          .eq('discount_id', disc.id);
-        if (usesErr) {
-          console.error('[Supabase ERROR] Discount usage count failed:', usesErr.message);
-          return res
-            .status(500)
-            .json({ error: 'Discount usage lookup failed', detail: usesErr.message });
-        }
-        if (
-          disc.max_redemptions &&
-          typeof totalUses === 'number' &&
-          totalUses >= disc.max_redemptions
-        ) {
-          warn('Discount max redemptions reached');
-        } else {
-          let perCustomerOk = true;
-          if (customerId && disc.limit_per_customer) {
-            log('[STEP] Counting customer discount usages...');
-            const { count: custCount, error: custErr } = await supabase
-              .from('discount_usages')
-              .select('id', { head: true, count: 'exact' })
-              .eq('discount_id', disc.id)
-              .eq('customer_id', customerId);
-            if (custErr) {
-              console.error('[Supabase ERROR] Discount usage lookup failed:', custErr.message);
-              return res
-                .status(500)
-                .json({ error: 'Discount usage lookup failed', detail: custErr.message });
-            }
-            if (
-              typeof custCount === 'number' &&
-              custCount >= disc.limit_per_customer
-            ) {
-              perCustomerOk = false;
-            }
-          }
-          if (perCustomerOk) discountRecord = disc;
-        }
-      }
-    }
-  }
-
-  if (discountRecord) {
-    const amt =
-      discountRecord.type === 'percent'
-        ? Math.round(total * (discountRecord.amount / 100))
-        : discountRecord.amount;
-    log('Applying discount', discountRecord, amt);
-    total = Math.max(0, total - amt);
   }
 
   log('[STEP] Fetching store_settings...');
@@ -759,6 +775,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     order_id: orderData?.id,
     order_number: orderNumber,
     payment_intent_id: paymentIntentId,
+    discount_applied: !!discountRecord,
+    discount_summary: discountSummary,
     user_message: 'Order submitted successfully!'
   });
   } catch (e: any) {
