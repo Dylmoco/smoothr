@@ -36,23 +36,24 @@ describe('v_public_store view', () => {
     const storeId = 'store-123';
     const row = {
       store_id: storeId,
-      base_currency: 'USD',
       active_payment_gateway: 'stripe',
       publishable_key: 'pk_test_123',
-      safe: { theme: 'dark' },
+      base_currency: 'USD',
     };
     builder.single.mockResolvedValue({ data: row, error: null });
 
     const { data, error } = await supabase
       .from('v_public_store')
-      .select('store_id, base_currency, active_payment_gateway, publishable_key, safe')
+      .select(
+        'store_id, active_payment_gateway, publishable_key, base_currency'
+      )
       .eq('store_id', storeId)
       .single();
 
     expect(error).toBeNull();
     expect(data).toEqual(row);
     expect(builder.select).toHaveBeenCalledWith(
-      'store_id, base_currency, active_payment_gateway, publishable_key, safe'
+      'store_id, active_payment_gateway, publishable_key, base_currency'
     );
     expect(builder.eq).toHaveBeenCalledWith('store_id', storeId);
     expect(builder.single).toHaveBeenCalledTimes(1);

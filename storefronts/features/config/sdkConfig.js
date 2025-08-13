@@ -11,8 +11,10 @@ export async function loadPublicConfig(storeId) {
   try {
     const { data, error } = await supabase
       .from('v_public_store')
-      .select('*')
-      .eq('id', storeId)
+      .select(
+        'store_id, active_payment_gateway, publishable_key, base_currency'
+      )
+      .eq('store_id', storeId)
       .maybeSingle();
 
     if (error) {
