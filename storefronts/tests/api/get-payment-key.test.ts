@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
 const mockSingle = vi.fn();
 const mockEqGateway = vi.fn(() => ({ single: mockSingle }));
@@ -50,12 +51,7 @@ describe('get-payment-key API', () => {
     const json = vi.fn();
     const status = vi.fn(() => ({ json }));
     const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
-    const req = {
-      query: {
-        store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0',
-        gateway: 'stripe',
-      },
-    } as Partial<NextApiRequest>;
+    const req = { query: { store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0', gateway: 'stripe' } } as Partial<NextApiRequest>;
 
     await handler(req as NextApiRequest, res as NextApiResponse);
 
@@ -64,6 +60,7 @@ describe('get-payment-key API', () => {
       publishable_key: 'pk_test_123',
       tokenization_key: 'tok_123',
       api_login_id: 'api_123',
+      message: 'Deprecated - use get_gateway_credentials edge function',
     });
     expect(mockFrom).toHaveBeenCalledWith('v_public_store');
     expect(mockSelect).toHaveBeenCalledWith('publishable_key, tokenization_key, api_login_id');
@@ -95,19 +92,14 @@ describe('get-payment-key API', () => {
     const json = vi.fn();
     const status = vi.fn(() => ({ json }));
     const res = { status, setHeader: vi.fn() } as Partial<NextApiResponse>;
-    const req = {
-      query: {
-        store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0',
-        gateway: 'stripe',
-      },
-    } as Partial<NextApiRequest>;
+    const req = { query: { store_id: 'a3fea30b-8a63-4a72-9040-6049d88545d0', gateway: 'stripe' } } as Partial<NextApiRequest>;
 
     await handler(req as NextApiRequest, res as NextApiResponse);
 
     expect(status).toHaveBeenCalledWith(500);
     expect(json).toHaveBeenCalledWith({
       error: 'Failed to fetch key',
-      details: 'Query failed',
+      detail: 'Query failed',
     });
   });
 });
