@@ -70,7 +70,6 @@ function hashCartMeta(email: string, total: number, cart: any[]): string {
 async function validateDiscountCode(
   client: SupabaseClient,
   storeId: string,
-  customerId: string | null,
   code: string,
   total?: number
 ) {
@@ -80,47 +79,35 @@ async function validateDiscountCode(
     .eq('store_id', storeId)
     .eq('code', code)
     .maybeSingle();
-  if (error || !disc) return { valid: false };
+  if (error || !disc) return { isValid: false };
 
   const now = Date.now();
-  const active = disc.active !== false;
   const startsOk = !disc.starts_at || new Date(disc.starts_at).getTime() <= now;
-  const endsOk = !disc.expires_at || new Date(disc.expires_at).getTime() >= now;
+  const endsOk = !disc.ends_at || new Date(disc.ends_at).getTime() >= now;
   const minOk =
     !disc.min_order_value_cents ||
     (typeof total === 'number' && total >= disc.min_order_value_cents);
-  if (!active || !startsOk || !endsOk || !minOk) return { valid: false };
+  if (!startsOk || !endsOk || !minOk) return { isValid: false };
 
-  if (disc.max_redemptions) {
+  if (disc.usage_limit) {
     const { count: totalUses, error: usesErr } = await client
       .from('discount_usages')
       .select('id', { head: true, count: 'exact' })
       .eq('discount_id', disc.id);
-    if (usesErr) return { valid: false };
-    if (typeof totalUses === 'number' && totalUses >= disc.max_redemptions) {
-      return { valid: false };
-    }
-  }
-
-  if (customerId && disc.limit_per_customer) {
-    const { count: custCount, error: custErr } = await client
-      .from('discount_usages')
-      .select('id', { head: true, count: 'exact' })
-      .eq('discount_id', disc.id)
-      .eq('customer_id', customerId);
-    if (custErr) return { valid: false };
-    if (typeof custCount === 'number' && custCount >= disc.limit_per_customer) {
-      return { valid: false };
+    if (usesErr) return { isValid: false };
+    if (typeof totalUses === 'number' && totalUses >= disc.usage_limit) {
+      return { isValid: false };
     }
   }
 
   const summary = {
+    code: disc.code,
     type: disc.type,
-    value_cents: disc.type === 'percent' ? undefined : disc.amount,
-    percent: disc.type === 'percent' ? disc.amount : undefined,
+    value_cents: disc.value_cents ?? null,
+    percent: disc.percent ?? null,
   };
 
-  return { valid: true, record: disc, summary };
+  return { isValid: true, record: disc, summary };
 }
 
 export async function handleCheckout({ req, res }: { req: NextApiRequest; res: NextApiResponse; }) {
@@ -218,14 +205,13 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
   let total = payload.total;
 
   if (discount_code && !payment_method) {
-    const { valid, summary } = await validateDiscountCode(
+    const { isValid, summary } = await validateDiscountCode(
       supabase,
       store_id,
-      customer_id ?? null,
       discount_code,
       total
     );
-    res.status(200).json({ valid, discount: summary });
+    res.status(200).json({ isValid, summary });
     return;
   }
 
@@ -261,17 +247,15 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     const result = await validateDiscountCode(
       supabase,
       store_id,
-      customerId,
       discount_code,
       total
     );
-    if (result.valid && result.record) {
+    if (result.isValid && result.record) {
       discountRecord = result.record;
       discountSummary = result.summary;
-      const amt =
-        discountRecord.type === 'percent'
-          ? Math.round(total * (discountRecord.amount / 100))
-          : discountRecord.amount;
+      const amt = discountSummary.percent
+        ? Math.round(total * (discountSummary.percent / 100))
+        : discountSummary.value_cents || 0;
       log('Applying discount', discountRecord, amt);
       total = Math.max(0, total - amt);
     }
@@ -462,8 +446,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       userMessage = 'Insufficient funds. Please try a different payment method.';
     }
 
-    res.status(400).json({ 
-      error: providerResult.error || 'Payment failed', 
+    res.status(400).json({
+      error: providerResult.error || 'Payment failed',
       details: providerResult,
       user_message: userMessage
     });
@@ -490,293 +474,61 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
   }
 
-  let transactionId: string | null = null;
-  let paymentIntentId: string | null = null;
-
-  if (provider === 'authorizeNet') {
-    const transId = providerResult?.data?.transactionResponse?.transId;
-    transactionId = transId || null;
-    paymentIntentId = transId || null;
-  } else {
-    transactionId = providerResult.transaction_id || null;
-    paymentIntentId = transactionId;
-  }
-
-
-  if (provider === 'authorizeNet') {
-    const orderNumber = payload.order_number!;
-    log('[STEP] Checking existing order for Authorize.Net...');
-    const { data: existingOrder, error: lookupError } = await supabase
+  const paymentIntentId = providerResult?.transaction_id || null;
+  if (paymentIntentId) {
+    await supabase
       .from('orders')
-      .select('id')
-      .eq('store_id', store_id)
-      .eq('order_number', orderNumber)
-      .maybeSingle();
-
-    if (lookupError) {
-      console.error('[Supabase ERROR] Order lookup failed:', lookupError.message);
-      res
-        .status(500)
-        .json({ error: 'Order lookup failed', detail: lookupError.message });
-      return;
-    }
-
-    if (!existingOrder) {
-      warn('Order not found for store:', orderNumber, store_id);
-      res.status(404).json({ error: 'Order not found for store' });
-      return;
-    }
-
-    const updatePayload = {
-      status: 'paid',
-      paid_at: new Date().toISOString(),
-      payment_intent_id: paymentIntentId,
-      customer_id: customerId,
-      ...(discountRecord ? { discount_id: discountRecord.id } : {}),
-    } as any;
-
-    if (provider === 'authorizeNet') {
-      const transId = providerResult?.data?.transactionResponse?.transId;
-      if (transId === '0') {
-        warn(
-          '[handleCheckout] \u26A0\uFE0F Received sandbox transId "0" \u2014 skipping insert'
-        );
-      }
-      updatePayload.payment_intent_id = transId && transId !== '0' ? transId : null;
-    }
-
-    log('[handleCheckout] updatePayload:', updatePayload);
-
-    let updated;
-    try {
-      log('[STEP] Updating order (Authorize.Net)...');
-      const { data, error } = await supabase
-        .from('orders')
-        .update(updatePayload)
-        .eq('store_id', store_id)
-        .eq('order_number', orderNumber)
-        .select('id')
-        .single();
-      if (error) {
-        console.error('[Supabase ERROR] Failed to update order:', error.message);
-        return res
-          .status(500)
-          .json({ error: 'Order update failed', detail: error.message });
-      }
-      updated = data;
-    } catch (e: any) {
-      err('Supabase update threw:', e.message || e);
-      err('Update payload:', updatePayload);
-      console.error(e);
-      return res.status(500).json({ error: 'Order update failed' });
-    }
-
-    if (!updated) {
-      warn('Order not updated:', orderNumber);
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    const itemRows = cart.map((item: any) => ({
-      order_id: updated.id,
-      sku: item.product_id || item.sku || '',
-      product_name: item.name || item.product_name || '',
-      quantity: item.quantity,
-      unit_price: item.price || item.unit_price
-    }));
-
-    if (itemRows.length) {
-      log('[STEP] Inserting order_items (Authorize.Net)...');
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(itemRows);
-      if (itemsError) {
-        console.error('[Supabase ERROR] Failed to insert order items:', itemsError.message);
-        return res
-          .status(500)
-          .json({ error: 'Failed to insert order items', detail: itemsError.message });
-      }
-    }
-
-    if (discountRecord) {
-      log('[STEP] Logging discount usage (Authorize.Net)...');
-      const { error: usageErr } = await supabase
-        .from('discount_usages')
-        .insert({
-          order_id: updated.id,
-          customer_id: customerId,
-          discount_id: discountRecord.id,
-          used_at: new Date().toISOString()
-        });
-      if (usageErr) {
-        console.error('[Supabase ERROR] Failed to log discount usage:', usageErr.message);
-        return res
-          .status(500)
-          .json({ error: 'Failed to log discount usage', detail: usageErr.message });
-      }
-    }
-
-    return res.status(200).json({
-      success: true,
-      order_id: updated?.id,
-      order_number: orderNumber,
-      payment_intent_id: paymentIntentId,
-      user_message: 'Order submitted successfully!'
-    });
+      .update({ payment_intent_id: paymentIntentId })
+      .eq('id', orderData.id);
   }
 
-  log('[STEP] Fetching stores...');
-  const { data: storeData, error: storeError } = await supabase
-    .from('stores')
-    .select('prefix, order_sequence')
-    .eq('id', store_id)
-    .maybeSingle();
+  const itemRows = cart.map((item: any) => ({
+    order_id: orderData.id,
+    sku: item.product_id || item.sku || '',
+    product_name: item.name || item.product_name || '',
+    quantity: item.quantity,
+    unit_price: item.price || item.unit_price
+  }));
 
-  if (storeError) {
-    console.error('[Supabase ERROR] Store lookup failed:', storeError.message);
-    res
-      .status(500)
-      .json({ error: 'Failed to fetch store information', detail: storeError.message });
-    return;
-  }
-
-  if (!storeData) {
-    warn('Invalid store_id provided');
-    res.status(400).json({ error: 'Invalid store_id' });
-    return;
-  }
-
-  const { prefix, order_sequence } = storeData as any;
-  if (!prefix || order_sequence === null || order_sequence === undefined) {
-    err('Store configuration invalid');
-    res.status(500).json({ error: 'Store configuration invalid' });
-    return;
-  }
-
-  let orderNumber: string | undefined;
-  try {
-    orderNumber = await generateOrderNumber?.(store_id);
-  } catch (e) {
-    err('[generateOrderNumber] Failed to generate order number:', e.message || e);
-  }
-  if (!orderNumber) {
-    const { data: generatedNumber, error: orderNumErr } = await supabase.rpc(
-      'next_order_number',
-      { store_id },
-    );
-    if (orderNumErr || !generatedNumber) {
-      return res.status(500).json({
-        error: 'Failed to generate order number',
-        detail: orderNumErr?.message,
-      });
-    }
-    orderNumber = generatedNumber as string;
-  }
-
-  log('[debug] Preparing orderPayload. Total:', total, 'Currency:', currency, 'Cart length:', cart.length);
-
-  let orderPayload;
-  try {
-    const paymentConfirmed =
-      (provider === 'authorizeNet' && providerResult?.success !== false) ||
-      providerResult?.success === true;
-
-    orderPayload = {
-      order_number: orderNumber,
-      status: paymentConfirmed ? 'paid' : 'unpaid',
-      ...(paymentConfirmed ? { paid_at: new Date().toISOString() } : {}),
-      payment_provider: provider,
-      cart_meta_hash,
-      total_price: total,
-      store_id,
-      customer_id: customerId,
-      ...(discountRecord ? { discount_id: discountRecord.id } : {}),
-      payment_intent_id: paymentIntentId,
-    };
-    log('[handleCheckout] orderPayload before upsert:', orderPayload);
-  } catch (error) {
-    err('[error] Failed to build orderPayload:', error.message || error);
-    return res.status(500).json({ error: 'Failed to build orderPayload' });
-  }
-
-  log('[debug] Final orderPayload:', orderPayload);
-
-  let orderData;
-  try {
-    log('[STEP] Upserting order record...');
-    const { data, error } = await supabase
-      .from('orders')
-      // Ensure upsert uses the composite unique constraint on (store_id, order_number)
-      .upsert(orderPayload, { onConflict: 'store_id,order_number' })
-      .select('id')
-      .single();
-    if (error) {
-      console.error('[Supabase ERROR] Order insert failed:', error.message);
+  if (itemRows.length) {
+    log('[STEP] Inserting order_items...');
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(itemRows);
+    if (itemsError) {
+      console.error('[Supabase ERROR] Failed to insert order items:', itemsError.message);
       return res
         .status(500)
-        .json({ error: 'Order insert failed', detail: error.message });
-    }
-    orderData = data;
-  } catch (e) {
-    console.error('[Supabase ERROR] Supabase upsert threw:', e.message || e);
-    return res
-      .status(500)
-      .json({ error: 'Order insert failed', detail: e.message || String(e) });
-  }
-
-  log('createOrder result:', JSON.stringify({ data: orderData }, null, 2));
-
-  if (orderData) {
-    const itemRows = cart.map((item: any) => ({
-      order_id: orderData.id,
-      sku: item.product_id || item.sku || '',
-      product_name: item.name || item.product_name || '',
-      quantity: item.quantity,
-      unit_price: item.price || item.unit_price
-    }));
-
-    if (itemRows.length) {
-      log('[STEP] Inserting order_items...');
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(itemRows);
-      if (itemsError) {
-        console.error('[Supabase ERROR] Failed to insert order items:', itemsError.message);
-        return res
-          .status(500)
-          .json({ error: 'Failed to insert order items', detail: itemsError.message });
-      }
-    }
-
-    if (discountRecord) {
-      log('[STEP] Logging discount usage...');
-      const { error: usageErr } = await supabase
-        .from('discount_usages')
-        .insert({
-          order_id: orderData.id,
-          customer_id: customerId,
-          discount_id: discountRecord.id,
-          used_at: new Date().toISOString()
-        });
-      if (usageErr) {
-        console.error('[Supabase ERROR] Failed to log discount usage:', usageErr.message);
-        return res
-          .status(500)
-          .json({ error: 'Failed to log discount usage', detail: usageErr.message });
-      }
+        .json({ error: 'Failed to insert order items', detail: itemsError.message });
     }
   }
 
-
+  if (discountRecord) {
+    log('[STEP] Logging discount usage...');
+    const { error: usageErr } = await supabase
+      .from('discount_usages')
+      .insert({
+        order_id: orderData.id,
+        customer_id: customerId,
+        discount_id: discountRecord.id,
+        used_at: new Date().toISOString()
+      });
+    if (usageErr) {
+      console.error('[Supabase ERROR] Failed to log discount usage:', usageErr.message);
+      return res
+        .status(500)
+        .json({ error: 'Failed to log discount usage', detail: usageErr.message });
+    }
+  }
 
   log('Order creation result:', orderData);
 
   res.status(200).json({
     success: true,
-    order_id: orderData?.id,
+    order_id: orderData.id,
     order_number: orderNumber,
     payment_intent_id: paymentIntentId,
-    discount_applied: !!discountRecord,
-    discount_summary: discountSummary,
+    discount: { isValid: !!discountRecord, summary: discountSummary },
     user_message: 'Order submitted successfully!'
   });
   } catch (e: any) {
@@ -788,8 +540,8 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
       userMessage = 'Database error. Please try again in a moment.';
     }
 
-    return res.status(500).json({ 
-      error: e.message || 'Unknown error', 
+    return res.status(500).json({
+      error: e.message || 'Unknown error',
       details: e,
       user_message: userMessage
     });

@@ -99,25 +99,35 @@ export default async function handler(
   }
   // Stripe webhook event received
 
-  if (event.type === "payment_intent.succeeded") {
+  if (event.type.startsWith("payment_intent.")) {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
-    const id = paymentIntent.id;
-    try {
-      const { data, error } = await supabase
-        .from("orders")
-        .update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-        })
-        .eq("payment_intent_id", id)
-        .select("id");
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        // Order not found for payment_intent
+    let status: string | null = null;
+    if (paymentIntent.status === "succeeded") {
+      status = "paid";
+    } else if (paymentIntent.status === "processing") {
+      status = "pending";
+    } else if (
+      paymentIntent.status === "canceled" ||
+      paymentIntent.status === "requires_payment_method"
+    ) {
+      status = "failed";
+    }
+
+    if (status) {
+      try {
+        const updatePayload: any = { status };
+        if (status === "paid") {
+          updatePayload.paid_at = new Date().toISOString();
+        }
+        const { error } = await supabase
+          .from("orders")
+          .update(updatePayload)
+          .eq("payment_intent_id", paymentIntent.id);
+        if (error) throw error;
+      } catch {
+        res.status(400).send("Webhook processing error");
+        return;
       }
-    } catch {
-      res.status(400).send("Webhook processing error");
-      return;
     }
   }
 
