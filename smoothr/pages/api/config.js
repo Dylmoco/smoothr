@@ -1,17 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      Vary: 'Origin'
-    }
-  });
-}
-
 export default async function handler(req, res) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -44,6 +32,18 @@ export default async function handler(req, res) {
     }
   }
 
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
+    return res.status(204).end();
+  }
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, OPTIONS');
+    return res.status(405).end();
+  }
+
   // Fetch public store config
   const response = await supabase
     .from('v_public_store')
@@ -66,6 +66,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Vary', 'Origin');
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
+  res.setHeader('X-Smoothr-Store', String(req.query.store_id || ''));
 
   const data = response.data || {};
   const {
