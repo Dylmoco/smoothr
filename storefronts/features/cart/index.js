@@ -1,13 +1,10 @@
 // Core cart module for Smoothr SDK
-import { getConfig } from '../config/globalConfig.js';
 const STORAGE_KEY = 'smoothr_cart';
 
-// Resolve the debug flag lazily so that configuration can be loaded
-// before the cart module accesses it. This avoids ReferenceErrors when
-// the module is imported prior to configuration being merged.
-const log = (...args) => getConfig().debug && console.log('[Smoothr Cart]', ...args);
-const warn = (...args) => getConfig().debug && console.warn('[Smoothr Cart]', ...args);
-const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ...args);
+const getDebug = () => window.Smoothr?.config?.debug;
+const log = (...args) => getDebug() && console.log('[Smoothr Cart]', ...args);
+const warn = (...args) => getDebug() && console.warn('[Smoothr Cart]', ...args);
+const err = (...args) => getDebug() && console.error('[Smoothr Cart]', ...args);
 
 // Ensure legacy globals exist and cart storage is initialized.
 try {
