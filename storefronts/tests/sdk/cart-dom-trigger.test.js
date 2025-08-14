@@ -1,12 +1,10 @@
 import { describe, it, beforeEach, afterEach, vi, expect } from "vitest";
 
-const cartInitMock = vi.fn();
 const globalKey = "__supabaseAuthClientsmoothr-browser-client";
 
 describe("cart DOM trigger", () => {
   beforeEach(() => {
     vi.resetModules();
-      cartInitMock.mockReset();
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
@@ -16,18 +14,13 @@ describe("cart DOM trigger", () => {
       );
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.mock("storefronts/features/auth/init.js", () => ({ __esModule: true, default: vi.fn() }));
-    vi.mock("storefronts/features/currency/index.js", () => ({ __esModule: true, init: vi.fn().mockResolvedValue() }));
-    vi.mock("storefronts/features/cart/index.js", () => {
-      cartInitMock();
-      return { __esModule: true };
-    });
+    vi.mock("../../features/auth/init.js", () => ({ __esModule: true, default: vi.fn() }));
+    vi.mock("../../features/currency/index.js", () => ({ __esModule: true, init: vi.fn().mockResolvedValue() }));
   });
 
   afterEach(() => {
-    vi.unmock("storefronts/features/auth/init.js");
-    vi.unmock("storefronts/features/currency/index.js");
-    vi.unmock("storefronts/features/cart/index.js");
+    vi.unmock("../../features/auth/init.js");
+    vi.unmock("../../features/currency/index.js");
     delete globalThis[globalKey];
     document.body.innerHTML = "";
     vi.restoreAllMocks();
@@ -41,15 +34,16 @@ describe("cart DOM trigger", () => {
       Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
       window.addEventListener = vi.fn();
       window.removeEventListener = vi.fn();
-      window.Smoothr = { config: {} };
-      window.smoothr = window.Smoothr;
+    window.Smoothr = { ready: Promise.resolve(), config: {} };
+    window.smoothr = window.Smoothr;
       Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
       const trigger = document.createElement('button');
       trigger.setAttribute('data-smoothr', 'add-to-cart');
       document.body.appendChild(trigger);
       await import("../../smoothr-sdk.js");
       await window.Smoothr.ready;
-      expect(cartInitMock).toHaveBeenCalled();
+      await Promise.resolve();
+      expect(window.Smoothr.cart).toBeDefined();
     });
 
     it("skips cart when no triggers present", async () => {
@@ -60,11 +54,12 @@ describe("cart DOM trigger", () => {
       Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
       window.addEventListener = vi.fn();
       window.removeEventListener = vi.fn();
-      window.Smoothr = { config: {} };
+      window.Smoothr = { ready: Promise.resolve(), config: {} };
       window.smoothr = window.Smoothr;
       Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
       await import("../../smoothr-sdk.js");
       await window.Smoothr.ready;
-      expect(cartInitMock).not.toHaveBeenCalled();
+      await Promise.resolve();
+      expect(window.Smoothr.cart).toBeUndefined();
     });
 });

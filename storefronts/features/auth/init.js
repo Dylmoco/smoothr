@@ -15,6 +15,15 @@ globalThis.Rc = Rc;
 const Lc = globalThis.Lc || {};
 globalThis.Lc = Lc;
 
+// Some builds reference a minified helper `Oc`. Provide a safe fallback.
+let Oc;
+try {
+  Oc = globalThis.Oc || {};
+  globalThis.Oc = Oc;
+} catch {
+  Oc = {};
+}
+
   // Some builds reference a minified helper `Ac`. Provide a safe fallback.
   let Ac;
   try {

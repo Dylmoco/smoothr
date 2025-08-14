@@ -1,12 +1,9 @@
+// vitest globals are available
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-
-const checkoutInitMock = vi.fn();
-
 
 describe("checkout DOM trigger", () => {
   beforeEach(() => {
     vi.resetModules();
-      checkoutInitMock.mockReset();
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
@@ -17,22 +14,18 @@ describe("checkout DOM trigger", () => {
       vi.spyOn(console, 'log').mockImplementation(() => {});
       vi.spyOn(console, 'warn').mockImplementation(() => {});
       vi.spyOn(console, 'error').mockImplementation(() => {});
-      vi.mock("storefronts/features/auth/init.js", () => ({ __esModule: true, default: vi.fn() }));
-      vi.mock("storefronts/features/currency/index.js", () => ({ __esModule: true, init: vi.fn().mockResolvedValue() }));
-      vi.mock("storefronts/features/cart/index.js", () => ({ __esModule: true }));
-    vi.mock("storefronts/features/checkout/init.js", () => {
-      checkoutInitMock();
-      return { __esModule: true };
-    });
-    window.Smoothr = { config: {} };
+      vi.mock("../../features/auth/init.js", () => ({ __esModule: true, default: vi.fn() }));
+      vi.mock("../../features/currency/index.js", () => ({ __esModule: true, init: vi.fn().mockResolvedValue() }));
+      vi.mock("../../features/cart/index.js", () => ({ __esModule: true }));
+    window.Smoothr = { ready: Promise.resolve(), config: {} };
     window.smoothr = window.Smoothr;
   });
 
   afterEach(() => {
-    vi.unmock("storefronts/features/auth/init.js");
-    vi.unmock("storefronts/features/currency/index.js");
-    vi.unmock("storefronts/features/cart/index.js");
-    vi.unmock("storefronts/features/checkout/init.js");
+    vi.unmock("../../features/auth/init.js");
+    vi.unmock("../../features/currency/index.js");
+    vi.unmock("../../features/cart/index.js");
+    vi.unmock("../../features/checkout/init.js");
     document.body.innerHTML = "";
     vi.restoreAllMocks();
   });
@@ -52,7 +45,8 @@ describe("checkout DOM trigger", () => {
 
       await import("../../smoothr-sdk.js");
       await window.Smoothr.ready;
-      expect(checkoutInitMock).toHaveBeenCalled();
+      await Promise.resolve();
+      expect(window.Smoothr.checkout).toBeDefined();
   });
 
     it("skips checkout when trigger absent", async () => {
@@ -67,6 +61,7 @@ describe("checkout DOM trigger", () => {
 
       await import("../../smoothr-sdk.js");
       await window.Smoothr.ready;
-      expect(checkoutInitMock).not.toHaveBeenCalled();
+      await Promise.resolve();
+      expect(window.Smoothr.checkout).toBeUndefined();
   });
 });
