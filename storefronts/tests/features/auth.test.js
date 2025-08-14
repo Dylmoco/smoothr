@@ -28,7 +28,7 @@ describe('auth feature init', () => {
         signOut: vi.fn()
       }
     };
-    globalThis.Ec = supabaseMock;
+    globalThis.Cc = supabaseMock;
     vi.doMock('../../../supabase/browserClient.js', () => ({
       supabase: supabaseMock,
       ensureSupabaseSessionAuth: vi.fn().mockResolvedValue()
@@ -40,11 +40,16 @@ describe('auth feature init', () => {
     }));
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
     global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
-    global.window = { location: { hash: '', search: '' } };
+    global.window = {
+      location: { hash: '', search: '' },
+      Smoothr: {},
+      smoothr: {}
+    };
     global.document = {
       readyState: 'complete',
       addEventListener: vi.fn(),
-      currentScript: { getAttribute: vi.fn(), dataset: {} }
+      currentScript: { getAttribute: vi.fn(), dataset: {} },
+      querySelectorAll: vi.fn(() => [])
     };
   });
 

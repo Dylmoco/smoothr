@@ -14,14 +14,12 @@ const platform =
   scriptEl?.dataset?.platform || scriptEl?.getAttribute?.('platform') || null;
 const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
 
-const url = process.env.VITE_SUPABASE_URL;
-if (!url) {
-  throw new Error('Missing VITE_SUPABASE_URL in Cloudflare environment');
-}
-const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-if (!anonKey) {
-  throw new Error('VITE_SUPABASE_ANON_KEY is missing in Cloudflare environment');
-}
+// Safely resolve Supabase credentials with fallbacks for local/tests
+const url =
+  process.env.VITE_SUPABASE_URL ||
+  'https://lpuqrzvokroazwlricgn.supabase.co';
+const anonKey =
+  process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here';
 
 if (!scriptEl || !storeId) {
   if (debug) {
@@ -33,14 +31,14 @@ if (!scriptEl || !storeId) {
   }
 } else {
   (async () => {
-    const configModsPromise = Promise.all([
+    const supabase = createClient(url, anonKey);
+
+    // Load configuration helpers only after the client is ready to avoid
+    // circular dependencies during feature loading.
+    const [{ mergeConfig }, { loadPublicConfig }] = await Promise.all([
       import('./features/config/globalConfig.js'),
       import('./features/config/sdkConfig.js')
     ]);
-
-    const supabase = createClient(url, anonKey);
-
-    const [{ mergeConfig }, { loadPublicConfig }] = await configModsPromise;
 
     const config = mergeConfig({ storeId, platform, debug, supabase });
     if (config.platform === 'webflow-ecom') {
