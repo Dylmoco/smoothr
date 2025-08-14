@@ -18,6 +18,8 @@ describe('loadPublicConfig', () => {
         throw new Error(`Unexpected table ${table}`);
       },
     };
+    process.env.VITE_SUPABASE_URL = 'https://example.supabase.co';
+    process.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
 
     vi.mock('../../shared/supabase/client.ts', () => ({
       createSupabaseClient: vi.fn(() => supabase),

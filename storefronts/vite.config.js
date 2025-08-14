@@ -13,9 +13,11 @@ export default defineConfig(({ mode }) => {
       include: ['@supabase/supabase-js']
     },
     define: {
-      // Map Cloudflare’s NEXT_PUBLIC_* secrets into process.env
-      'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
-      'process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      // Map Cloudflare’s VITE_* secrets into process.env
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
+        process.env.VITE_SUPABASE_ANON_KEY
+      ),
       __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__: JSON.stringify(
         env.NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL
       ),
@@ -28,6 +30,7 @@ export default defineConfig(({ mode }) => {
         'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates'
       )
     },
+    envPrefix: ['VITE_'],
     build: {
       target: 'esnext', // ✅ Enables top-level await
       rollupOptions: {
