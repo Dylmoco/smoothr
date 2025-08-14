@@ -15,6 +15,13 @@ globalThis.Rc = Rc;
 const Lc = globalThis.Lc || {};
 globalThis.Lc = Lc;
 
+// Some builds reference a minified helper `Ac`. Provide a safe fallback.
+try {
+  globalThis.Ac = globalThis.Ac || {};
+} catch {
+  // ignore global assignment errors
+}
+
 // Legacy helpers
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
