@@ -49,7 +49,8 @@ export async function init(config = {}) {
   if (initialized) return window.Smoothr?.checkout;
 
   try {
-    mergeConfig(config);
+    // Allow tests or embedders to provide a global `Wc` Supabase client
+    mergeConfig({ ...config, supabase: config.supabase || globalThis.Wc });
     await platformReady();
 
     const debug = getConfig().debug;

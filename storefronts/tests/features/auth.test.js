@@ -6,7 +6,6 @@ let supabaseMock;
 describe('auth feature init', () => {
   beforeEach(() => {
     vi.resetModules();
-    globalThis.vc = {};
     fromMock = vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
@@ -29,6 +28,7 @@ describe('auth feature init', () => {
         signOut: vi.fn()
       }
     };
+    globalThis.Ec = supabaseMock;
     vi.doMock('../../../supabase/browserClient.js', () => ({
       supabase: supabaseMock,
       ensureSupabaseSessionAuth: vi.fn().mockResolvedValue()

@@ -1,5 +1,5 @@
 import {
-  supabase as authClient,
+  supabase as importedSupabase,
   ensureSupabaseSessionAuth
 } from '../../../supabase/browserClient.js';
 import * as authExports from './index.js';
@@ -9,6 +9,10 @@ import { getConfig, mergeConfig } from '../config/globalConfig.js';
 // Legacy helpers
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
+
+// Some build environments reference a global `Ec` for the Supabase client.
+// Fall back to the imported client if the global is unavailable.
+const authClient = globalThis.Ec || importedSupabase;
 
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};

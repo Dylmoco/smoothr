@@ -6,13 +6,13 @@ let supabaseMock;
 describe('checkout feature init', () => {
   beforeEach(() => {
     vi.resetModules();
-    globalThis.Mc = {};
     supabaseMock = { from: vi.fn() };
+    globalThis.Wc = supabaseMock;
     loadPublicConfigMock = vi.fn().mockResolvedValue({});
     vi.doMock('../../features/config/sdkConfig.js', () => ({
       loadPublicConfig: loadPublicConfigMock
     }));
-    let cfg = { storeId: '1', supabase: supabaseMock, settings: {}, debug: false };
+    let cfg = { storeId: '1', supabase: undefined, settings: {}, debug: false };
     vi.doMock('../../features/config/globalConfig.js', () => ({
       getConfig: vi.fn(() => cfg),
       mergeConfig: vi.fn(obj => Object.assign(cfg, obj))
@@ -28,7 +28,7 @@ describe('checkout feature init', () => {
 
   it('fetches public config using supplied Supabase client', async () => {
     const { init } = await import('../../features/checkout/init.js');
-    await init({ storeId: '1', supabase: supabaseMock });
+    await init({ storeId: '1' });
     expect(loadPublicConfigMock).toHaveBeenCalledWith('1', supabaseMock);
   });
 });
