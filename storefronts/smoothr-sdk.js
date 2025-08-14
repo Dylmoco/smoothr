@@ -90,6 +90,10 @@ if (!scriptEl || !storeId) {
 
   Smoothr.ready = (async () => {
     const res = await fetchFirstOk(candidateUrls);
+    const chosenUrl = res?.url ? new URL(res.url) : null;
+    if (chosenUrl) {
+      console.info('[Smoothr SDK] Using config URL:', chosenUrl.toString());
+    }
     if (!res) return null;
     try {
       return await res.json();
