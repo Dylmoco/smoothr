@@ -1,4 +1,16 @@
 // vitest.setup.ts
+import { vi } from 'vitest';
+
+// Ensure minimal browser globals exist for tests
+if (typeof (globalThis as any).window === 'undefined') {
+  ;(globalThis as any).window = {};
+}
+if (typeof (globalThis as any).localStorage === 'undefined') {
+  ;(globalThis as any).localStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn()
+  } as any;
+}
 
 // ————————————————————————————————————————————————————————————————
 // JSDOM shims for things Vitest needs
