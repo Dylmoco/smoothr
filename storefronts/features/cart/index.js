@@ -13,16 +13,17 @@ const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ..
 // Define it safely here so imports never throw in environments without
 // localStorage (e.g. server-side rendering or tests).
 const cl =
-  typeof window !== 'undefined'
+  globalThis.cl ||
+  (typeof window !== 'undefined'
     ? window.localStorage
     : typeof globalThis !== 'undefined'
     ? globalThis.localStorage
-    : undefined;
+    : undefined);
 
 // Ensure the cart storage key exists so JSON.parse does not throw later.
 try {
   if (cl && cl.getItem(STORAGE_KEY) == null) {
-    cl.setItem(STORAGE_KEY, '{}');
+    cl.setItem(STORAGE_KEY, JSON.stringify({ items: [] }));
   }
 } catch {
   // ignore storage errors

@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
+if (typeof (globalThis as any).window === 'undefined') {
+  ;(globalThis as any).window = {};
+}
+
 const repoRoot = __dirname;
 
 export default defineConfig({

@@ -25,7 +25,9 @@ const getSessionMock = vi.fn().mockResolvedValue({
 vi.mock('../../../supabase/browserClient.js', () => ({
   supabase: {
     auth: { getSession: getSessionMock },
-    from: vi.fn(),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
+    })),
     supabaseUrl: process.env.SUPABASE_URL,
   },
   ensureSupabaseSessionAuth: vi.fn().mockResolvedValue(),
@@ -49,6 +51,12 @@ beforeEach(() => {
     dispatchEvent: vi.fn(),
     currentScript: { getAttribute: vi.fn(), dataset: { storeId: 's1' } },
   };
+  globalThis.Tc = {
+    auth: { getSession: getSessionMock, onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })) },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
+    })),
+  } as any;
 });
 
 describe('auth init session restoration', () => {

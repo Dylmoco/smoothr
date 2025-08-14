@@ -30,6 +30,7 @@ beforeEach(async () => {
       delete store[key];
     }),
   };
+  globalThis.cl = global.localStorage;
   global.window = {
     dispatchEvent: vi.fn((ev) => events.push(ev)),
     addEventListener: vi.fn(),
@@ -60,7 +61,7 @@ beforeEach(async () => {
       dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
     })),
   };
-  store["smoothr_cart"] = "{}";
+  store["smoothr_cart"] = JSON.stringify({ items: [] });
   await import("../../features/auth/init.js");
   await auth.init({
     storeId: "00000000-0000-0000-0000-000000000000",
@@ -77,6 +78,7 @@ describe("cart module", () => {
     cart.addItem({ product_id: "1", name: "Test", price: 100, quantity: 1 });
     const stored = JSON.parse(store["smoothr_cart"]);
     expect(stored.items[0].quantity).toBe(2);
+    expect(cart.getSubtotal()).toBe(200);
     expect(events.length).toBe(2);
   });
 

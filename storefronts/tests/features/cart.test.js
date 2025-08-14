@@ -5,7 +5,6 @@ let mergeConfigMock;
 describe('cart feature init', () => {
   beforeEach(() => {
     vi.resetModules();
-    globalThis.cl = {};
     mergeConfigMock = vi.fn();
     vi.doMock('../../features/cart/addToCart.js', () => ({ bindAddToCartButtons: vi.fn() }));
     vi.doMock('../../features/cart/renderCart.js', () => ({ renderCart: vi.fn(), bindRemoveFromCartButtons: vi.fn() }));
@@ -16,6 +15,7 @@ describe('cart feature init', () => {
     }));
     global.window = { Smoothr: {}, smoothr: {} };
     global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
+    globalThis.cl = global.localStorage;
   });
 
   it('initializes cart and merges config', async () => {

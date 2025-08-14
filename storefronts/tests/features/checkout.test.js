@@ -7,7 +7,7 @@ describe('checkout feature init', () => {
   beforeEach(() => {
     vi.resetModules();
     supabaseMock = { from: vi.fn() };
-    globalThis.Hc = supabaseMock;
+    globalThis.Kc = supabaseMock;
     loadPublicConfigMock = vi.fn().mockResolvedValue({});
     vi.doMock('../../features/config/sdkConfig.js', () => ({
       loadPublicConfig: loadPublicConfigMock
