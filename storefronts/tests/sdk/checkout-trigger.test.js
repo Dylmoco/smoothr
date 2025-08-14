@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 const checkoutInitMock = vi.fn();
-const globalKey = "__supabaseAuthClientsmoothr-browser-client";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -14,7 +13,9 @@ describe("checkout DOM trigger", () => {
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve({ data: {} }) })
     );
-    global.console = { log: vi.fn(), warn: vi.fn() };
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.doMock("../../features/auth/init.js", () => ({ default: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
     vi.doMock("../../features/cart/index.js", () => ({ __esModule: true }));
@@ -29,7 +30,6 @@ describe("checkout DOM trigger", () => {
     vi.doUnmock("../../features/currency/index.js");
     vi.doUnmock("../../features/cart/index.js");
     vi.doUnmock("../../features/checkout/init.js");
-    delete globalThis[globalKey];
     vi.restoreAllMocks();
   });
 
@@ -39,8 +39,8 @@ describe("checkout DOM trigger", () => {
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
     window.addEventListener = vi.fn();
     window.removeEventListener = vi.fn();
-    window.Smoothr = {};
-    window.smoothr = {};
+    window.Smoothr = { config: {} };
+    window.smoothr = window.Smoothr;
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
     vi.spyOn(document, 'querySelector').mockImplementation(sel => (sel === '[data-smoothr="pay"]' ? {} : null));
@@ -58,8 +58,8 @@ describe("checkout DOM trigger", () => {
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
     window.addEventListener = vi.fn();
     window.removeEventListener = vi.fn();
-    window.Smoothr = {};
-    window.smoothr = {};
+    window.Smoothr = { config: {} };
+    window.smoothr = window.Smoothr;
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
     vi.spyOn(document, 'querySelector').mockReturnValue(null);

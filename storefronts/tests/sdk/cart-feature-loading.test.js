@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 const cartInitMock = vi.fn();
-const globalKey = '__supabaseAuthClientsmoothr-browser-client';
 
 const flushPromises = () => new Promise(setImmediate);
 
@@ -25,7 +24,7 @@ describe("cart feature loading", () => {
     vi.doUnmock("../../features/auth/init.js");
     vi.doUnmock("../../features/currency/index.js");
     vi.doUnmock("../../features/cart/index.js");
-    delete globalThis[globalKey];
+    document.body.innerHTML = '';
     vi.restoreAllMocks();
   });
 
@@ -33,13 +32,14 @@ describe("cart feature loading", () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
-    window.addEventListener = vi.fn();
-    window.removeEventListener = vi.fn();
     window.Smoothr = {};
     window.smoothr = {};
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
-    vi.spyOn(document, 'querySelector').mockImplementation(sel => (sel === '[data-smoothr-total]' ? {} : null));
-    vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);
+    scriptEl.id = 'smoothr-sdk';
+    document.body.appendChild(scriptEl);
+    const totalEl = document.createElement('div');
+    totalEl.setAttribute('data-smoothr-total', '');
+    document.body.appendChild(totalEl);
 
     await import("../../smoothr-sdk.js");
     await flushPromises();
@@ -53,14 +53,12 @@ describe("cart feature loading", () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     Object.defineProperty(window, 'location', { value: { search: '?smoothr-debug=true' }, configurable: true });
-    window.addEventListener = vi.fn();
-    window.removeEventListener = vi.fn();
     window.Smoothr = {};
     window.smoothr = {};
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
-    vi.spyOn(document, 'querySelector').mockReturnValue(null);
-    vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);
+    scriptEl.id = 'smoothr-sdk';
+    document.body.appendChild(scriptEl);
 
     await import("../../smoothr-sdk.js");
     await flushPromises();

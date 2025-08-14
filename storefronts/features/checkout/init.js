@@ -25,6 +25,11 @@ globalThis.el = el;
 const rl = globalThis.rl || {};
 globalThis.rl = rl;
 
+// Ensure a minified global placeholder `Gc` exists for compatibility with
+// legacy bundles that reference it.
+const Gc = globalThis.Gc || {};
+globalThis.Gc = Gc;
+
 let initialized = false;
 
 function forEachPayButton(fn) {

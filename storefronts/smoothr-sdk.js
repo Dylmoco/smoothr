@@ -36,7 +36,6 @@ if (!scriptEl || !storeId) {
     }
     const Smoothr = (window.Smoothr = window.Smoothr || {});
     window.smoothr = window.smoothr || Smoothr;
-    Smoothr.config = config;
 
     const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
 

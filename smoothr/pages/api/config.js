@@ -23,6 +23,11 @@ export default async function handler(req, res) {
     });
   }
 
+  res.setHeader(
+    'Access-Control-Allow-Origin',
+    'https://smoothr-cms.webflow.io'
+  );
+
   res.status(200).json({
     data:
       response.data || { public_settings: {}, active_payment_gateway: null }
