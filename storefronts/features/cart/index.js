@@ -24,6 +24,10 @@ try {
   const ol = globalThis.ol || {};
   globalThis.ol = ol;
 
+  // Some builds reference a minified helper `Cc`. Provide a safe fallback.
+  const Cc = globalThis.Cc || {};
+  globalThis.Cc = Cc;
+
   if (typeof window !== 'undefined' && window.localStorage) {
     const initValue = JSON.stringify({
       items: [],

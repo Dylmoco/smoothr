@@ -2,26 +2,31 @@ import { describe, it, beforeEach, afterEach, vi, expect } from "vitest";
 
 describe("cart feature loading", () => {
   let cartInitMock;
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 
   beforeEach(() => {
     vi.resetModules();
+    window.Smoothr = { ready: Promise.resolve({}) };
     global.fetch = vi.fn(() =>
       Promise.resolve({ json: () => Promise.resolve({}) })
     );
     cartInitMock = vi.fn();
-    vi.mock("../../features/auth/init.js", () => ({ __esModule: true, default: vi.fn() }));
-    vi.mock("../../features/checkout/init.js", () => ({ __esModule: true, default: vi.fn() }));
-    vi.mock("../../features/cart/index.js", () => {
+    vi.mock('storefronts/features/auth/init.js', () => ({ __esModule: true, default: vi.fn() }));
+    vi.mock('storefronts/features/checkout/init.js', () => ({ __esModule: true, default: vi.fn() }));
+    vi.mock('storefronts/features/cart/index.js', () => {
       cartInitMock();
       return { __esModule: true };
     });
+    Object.defineProperty(document, 'currentScript', { value: null, configurable: true });
   });
 
   afterEach(() => {
-    vi.unmock("../../features/auth/init.js");
-    vi.unmock("../../features/checkout/init.js");
-    vi.unmock("../../features/cart/index.js");
+    vi.unmock('storefronts/features/auth/init.js');
+    vi.unmock('storefronts/features/checkout/init.js');
+    vi.unmock('storefronts/features/cart/index.js');
     document.body.innerHTML = '';
+    delete window.Smoothr;
+    Object.defineProperty(document, 'currentScript', { value: null, configurable: true });
     vi.restoreAllMocks();
   });
 
@@ -29,15 +34,16 @@ describe("cart feature loading", () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     scriptEl.id = 'smoothr-sdk';
+    scriptEl.src = 'https://example.com/smoothr-sdk.js';
     document.body.appendChild(scriptEl);
+    Object.defineProperty(document, 'currentScript', { value: scriptEl, configurable: true });
     const totalEl = document.createElement('div');
     totalEl.setAttribute('data-smoothr-total', '');
     document.body.appendChild(totalEl);
 
     await import("../../smoothr-sdk.js");
     await window.Smoothr.ready;
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(cartInitMock).toHaveBeenCalled();
   });
@@ -46,17 +52,18 @@ describe("cart feature loading", () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     scriptEl.id = 'smoothr-sdk';
+    scriptEl.src = 'https://example.com/smoothr-sdk.js';
     document.body.appendChild(scriptEl);
-    const warnSpy = vi.spyOn(console, "warn");
+    Object.defineProperty(document, 'currentScript', { value: scriptEl, configurable: true });
+    const logSpy = vi.spyOn(console, 'warn');
 
     await import("../../smoothr-sdk.js");
     await window.Smoothr.ready;
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(cartInitMock).not.toHaveBeenCalled();
-    expect(warnSpy.mock.calls).toContainEqual([
-      "[Smoothr SDK] No cart triggers found, skipping cart initialization",
+    expect(logSpy.mock.calls).toContainEqual([
+      '[Smoothr SDK] No cart triggers found, skipping cart initialization',
     ]);
   });
 });

@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
 
-vi.mock("../../features/auth/init.js", () => ({ default: vi.fn() }));
-vi.mock("../../features/currency/index.js", () => ({ init: vi.fn() }));
-vi.mock("../../features/cart/index.js", () => ({ __esModule: true }));
-vi.mock("../../features/checkout/init.js", () => ({ __esModule: true }));
+vi.mock('storefronts/features/auth/init.js', () => ({ default: vi.fn() }));
+vi.mock('storefronts/features/currency/index.js', () => ({ init: vi.fn() }));
+vi.mock('storefronts/features/cart/index.js', () => ({ __esModule: true }));
+vi.mock('storefronts/features/checkout/init.js', () => ({ __esModule: true }));
 
 describe("platform detection", () => {
   let scriptEl;
@@ -12,7 +12,7 @@ describe("platform detection", () => {
     vi.resetModules();
     scriptEl = null;
     global.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: {} }) })
+      Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
     );
     Object.defineProperty(window, "location", { value: { search: "" }, configurable: true });
     window.addEventListener = vi.fn();
@@ -21,39 +21,36 @@ describe("platform detection", () => {
     vi.spyOn(document, "querySelectorAll").mockReturnValue([]);
     vi.spyOn(document, "querySelector").mockReturnValue(null);
     vi.spyOn(document, "getElementById").mockImplementation(() => scriptEl);
+    Object.defineProperty(document, 'currentScript', { value: null, configurable: true });
   });
 
   afterEach(() => {
+    delete window.Smoothr;
     vi.restoreAllMocks();
+    Object.defineProperty(document, 'currentScript', { value: null, configurable: true });
   });
 
-  const flushPromises = () => new Promise(setImmediate);
-
   it("uses existing Smoothr.config.platform for webflow", async () => {
-    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn() };
+    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn(), src: 'https://example.com/smoothr-sdk.js' };
     global.document.getElementById.mockReturnValue(scriptEl);
+    Object.defineProperty(document, 'currentScript', { value: scriptEl, configurable: true });
     window.Smoothr = { config: { platform: "webflow" } };
     window.smoothr = {};
 
     await import("../../smoothr-sdk.js");
-    await flushPromises();
-    await flushPromises();
-    await flushPromises();
-    await flushPromises();
+    await window.Smoothr.ready;
     expect(window.Smoothr.config.platform).toBe("webflow");
   });
 
   it("uses existing Smoothr.config.platform for magento", async () => {
-    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn() };
+    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn(), src: 'https://example.com/smoothr-sdk.js' };
     global.document.getElementById.mockReturnValue(scriptEl);
+    Object.defineProperty(document, 'currentScript', { value: scriptEl, configurable: true });
     window.Smoothr = { config: { platform: "magento" } };
     window.smoothr = {};
 
     await import("../../smoothr-sdk.js");
-    await flushPromises();
-    await flushPromises();
-    await flushPromises();
-    await flushPromises();
+    await window.Smoothr.ready;
     expect(window.Smoothr.config.platform).toBe("magento");
   });
 });
