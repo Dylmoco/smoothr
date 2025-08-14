@@ -1,4 +1,3 @@
-// Core cart module for Smoothr SDK
 const STORAGE_KEY = 'smoothr_cart';
 
 const getDebug = () => window.Smoothr?.config?.debug;
@@ -6,69 +5,17 @@ const log = (...args) => getDebug() && console.log('[Smoothr Cart]', ...args);
 const warn = (...args) => getDebug() && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => getDebug() && console.error('[Smoothr Cart]', ...args);
 
-// Ensure legacy globals exist and cart storage is initialized.
-try {
-  const el =
-    globalThis.el ||
-    (sel => (typeof document !== 'undefined' ? document.querySelector(sel) : null));
-  globalThis.el = el;
-
-  const Zc = globalThis.Zc || {};
-  globalThis.Zc = Zc;
-
-  // Some builds reference a minified helper `Pc`. Populate it with the
-  // Smoothr config when available to maintain backward compatibility.
-  const Pc = globalThis.Pc || window.Smoothr?.config || {};
-  globalThis.Pc = Pc;
-
-  // Some builds reference a minified helper `tl`. Provide a safe fallback.
-  const tl = globalThis.tl || {};
-  globalThis.tl = tl;
-
-  // Some builds reference a minified helper `ol`. Provide a safe fallback.
-  const ol = globalThis.ol || {};
-  globalThis.ol = ol;
-
-  // Some builds reference a minified helper `Cc`. Provide a safe fallback.
-  const Cc = globalThis.Cc || {};
-  globalThis.Cc = Cc;
-
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const initValue = JSON.stringify({
-      items: [],
-      meta: { lastModified: Date.now() }
-    });
-    window.localStorage.setItem(STORAGE_KEY, initValue);
-    window.localStorage[STORAGE_KEY] = initValue;
-  }
-} catch {
-  // ignore DOM/storage errors
-}
-
-// Some builds reference a minified `al` variable for localStorage access.
-// Define it safely here so imports never throw in environments without
-// localStorage (e.g. server-side rendering or tests).
-let al =
-  globalThis.al ||
-  ((typeof window !== 'undefined' && window.localStorage)
-    ? window.localStorage
-    : typeof globalThis !== 'undefined'
-    ? globalThis.localStorage
-    : undefined);
-globalThis.al = al;
-globalThis.il = globalThis.il || al;
-
-// Ensure a minified global placeholder `Xc` exists for compatibility with
-// legacy bundles that reference it.
-const Xc = globalThis.Xc || {};
-globalThis.Xc = Xc;
-
-// Some builds expect a minified helper `ll`. Provide a safe fallback.
-const ll = globalThis.ll || {};
-globalThis.ll = ll;
-
 function getStorage() {
-  return al || null;
+  try {
+    return (
+      globalThis.al ||
+      (typeof window !== 'undefined' && window.localStorage) ||
+      globalThis.localStorage ||
+      null
+    );
+  } catch {
+    return null;
+  }
 }
 
 export function readCart() {
@@ -190,68 +137,3 @@ export function getTotal() {
   return subtotal < 0 ? 0 : subtotal;
 }
 
-export async function initCart() {
-  const debug =
-    typeof window !== 'undefined' &&
-    window.location?.search?.includes('smoothr-debug=true');
-  try {
-    if (typeof window === 'undefined') return;
-    const Smoothr = (window.Smoothr = window.Smoothr || {});
-    if (!Smoothr.config) {
-      if (debug) {
-        console.groupCollapsed('[Smoothr]');
-        console.error('Smoothr.config is required before initializing the cart');
-        console.groupEnd();
-      }
-      return;
-    }
-
-    try {
-      if (window.localStorage.getItem(STORAGE_KEY) == null) {
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ items: [], meta: { lastModified: Date.now() } })
-        );
-      }
-    } catch (e) {
-      if (debug) {
-        console.groupCollapsed('[Smoothr]');
-        console.error('Failed to access localStorage', e);
-        console.groupEnd();
-      }
-    }
-
-    al = window.localStorage || globalThis.localStorage;
-    globalThis.al = al;
-
-    Smoothr.cart = {
-      readCart,
-      getCart,
-      getMeta,
-      setMetaField,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
-      getSubtotal,
-      applyDiscount,
-      getDiscount,
-      getTotal,
-    };
-    return Smoothr.cart;
-  } catch (e) {
-    if (debug) {
-      console.groupCollapsed('[Smoothr]');
-      console.error('Cart initialization failed', e);
-      console.groupEnd();
-    }
-  }
-}
-
-export default (async () => {
-  try {
-    await initCart();
-  } catch (err) {
-    console.warn('[Smoothr SDK] Cart initialization failed', err);
-  }
-})();

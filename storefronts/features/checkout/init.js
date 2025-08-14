@@ -75,23 +75,6 @@ try {
   vc = {};
 }
 
-// Some builds reference a minified helper `Sc`. Use the Smoothr config so
-// legacy bundles can continue reading settings.
-let Sc;
-try {
-  Sc = globalThis.Sc || window.Smoothr?.config || {};
-  globalThis.Sc = Sc;
-} catch {
-  Sc = {};
-}
-
-let globalConfig;
-try {
-  globalConfig = window.Smoothr?.config || {};
-} catch {
-  globalConfig = {};
-}
-
 let initialized = false;
 
 function forEachPayButton(fn) {
@@ -121,15 +104,14 @@ const gatewayModules = {
   segpay: () => import('./gateways/segpay.js')
 };
 
-export async function init(config = {}) {
+async function init({ config, supabase, adapter } = {}) {
   if (initialized) return window.Smoothr?.checkout;
 
+  const Sc = (globalThis.Sc = config || {});
+  const globalConfig = config || {};
+
   try {
-    // Allow tests or embedders to provide a minified global Supabase client
-    mergeConfig({
-      ...config,
-      supabase: config.supabase || globalThis.Zc || globalThis.Kc || globalThis.Hc
-    });
+    mergeConfig({ ...config, supabase });
     await platformReady();
 
     const debug = getConfig().debug;
@@ -149,7 +131,7 @@ export async function init(config = {}) {
     log('SDK initialized');
     log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
 
-    if (!getConfig().supabase && !config.supabase) {
+    if (!getConfig().supabase && !supabase) {
       warn('Supabase client missing.');
     }
 
@@ -419,6 +401,9 @@ export async function init(config = {}) {
   }
 }
 
+export { init };
+export default init;
+
 // collects form data, supports billing same-as-shipping
 function collectFormData(fields, emailField) {
   const email = emailField?.value.trim() || '';
@@ -542,10 +527,3 @@ function handleCheckoutSuccess(resp) {
   window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: resp }));
 }
 
-export default (async () => {
-  try {
-    await init(window.Smoothr?.config || {});
-  } catch (err) {
-    console.warn('[Smoothr SDK] Checkout initialization failed', err);
-  }
-})();

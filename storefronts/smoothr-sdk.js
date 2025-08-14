@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
@@ -5,7 +7,11 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
 
 async function initFeatures() {
   const Smoothr = (window.Smoothr = window.Smoothr || {});
-  const config = Smoothr.config || {};
+  const ctx = {
+    config: Smoothr.config,
+    supabase: Smoothr.__supabase,
+    adapter: Smoothr?.adapter
+  };
 
   const hasAuthTrigger = document.querySelector(
     '[data-smoothr="login"], [data-smoothr="sign-out"], [data-smoothr="signup"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], form[data-smoothr="auth-form"]'
@@ -13,7 +19,7 @@ async function initFeatures() {
   if (hasAuthTrigger) {
     try {
       const m = await import('storefronts/features/auth/init.js');
-      (m.default || m.init)?.(config);
+      (m.default || m.init)?.(ctx);
     } catch (err) {
       console.warn('[Smoothr SDK] Auth init failed', err);
     }
@@ -23,7 +29,7 @@ async function initFeatures() {
   if (hasCheckoutTrigger) {
     try {
       const m = await import('storefronts/features/checkout/init.js');
-      (m.default || m.init)?.(config);
+      (m.default || m.init)?.(ctx);
     } catch (err) {
       console.warn('[Smoothr SDK] Checkout init failed', err);
     }
@@ -41,7 +47,7 @@ async function initFeatures() {
   if (hasCartTrigger) {
     try {
       const m = await import('storefronts/features/cart/init.js');
-      (m.default || m.init)?.(config);
+      (m.default || m.init)?.(ctx);
     } catch (err) {
       console.warn('[Smoothr SDK] Cart init failed', err);
     }
@@ -113,6 +119,19 @@ if (!scriptEl || !storeId) {
 
     const existing = Smoothr.config || {};
     Smoothr.config = { ...existing, ...fetched };
+
+    const cfg = window.Smoothr.config;
+    let supabase = null;
+    if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
+      supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          storageKey: `smoothr_${cfg.storeId}`
+        }
+      });
+    }
+    window.Smoothr.__supabase = supabase;
+
     await initFeatures();
   })();
 }
