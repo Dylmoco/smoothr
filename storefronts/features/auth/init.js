@@ -225,5 +225,7 @@ async function init({ config, supabase, adapter } = {}) {
     };
   }
 
+}
+
 export { init };
 export default init;
