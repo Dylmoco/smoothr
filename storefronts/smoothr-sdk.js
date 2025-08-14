@@ -22,12 +22,16 @@ if (!scriptEl || !storeId) {
     );
   }
 } else {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  const supabase =
-    supabaseUrl && supabaseAnonKey
-      ? createClient(supabaseUrl, supabaseAnonKey)
-      : null;
+  let supabase = null;
+  try {
+    const url = process.env.VITE_SUPABASE_URL;
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) throw new Error('Missing Supabase credentials');
+    supabase = createClient(url, anonKey);
+  } catch (err) {
+    debug && console.error &&
+      console.error('[Smoothr SDK] Supabase init failed', err);
+  }
 
   const config = mergeConfig({ storeId, platform, debug, supabase });
   if (config.platform === 'webflow-ecom') {

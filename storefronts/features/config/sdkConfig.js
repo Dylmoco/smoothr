@@ -8,7 +8,7 @@ export async function loadPublicConfig(storeId, client) {
   if (!storeId || !client) return null;
 
   try {
-    const { data, error } = await client
+    const response = await client
       .from('v_public_store')
       .select(
         'store_id,active_payment_gateway,publishable_key,base_currency,public_settings'
@@ -16,16 +16,17 @@ export async function loadPublicConfig(storeId, client) {
       .eq('store_id', storeId)
       .maybeSingle();
 
-    if (error || !data) {
+    if (response.error || !response.data) {
       warn('Store settings lookup failed:', {
-        status: error?.status,
-        code: error?.code,
-        message: error?.message,
-        data,
+        status: response.error?.status,
+        code: response.error?.code,
+        message: response.error?.message,
+        data: response.data,
       });
       return { public_settings: {}, active_payment_gateway: null };
     }
 
+    const data = response.data;
     const settings = {
       ...data,
       public_settings: data.public_settings || {},
