@@ -5,7 +5,25 @@ import { renderCart, bindRemoveFromCartButtons } from './renderCart.js';
 
 let initialized = false;
 
+export function __test_resetCart() {
+  try {
+    if (typeof window !== 'undefined') {
+      if (window.Smoothr) {
+        delete window.Smoothr.cart;
+      }
+      if (window.smoothr) {
+        delete window.smoothr.cart;
+      }
+      try { localStorage.removeItem('smoothr_cart'); } catch {}
+    }
+  } catch {}
+  initialized = false;
+}
+
 export async function init({ config, supabase, adapter } = {}) {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+    initialized = false;
+  }
   if (initialized) return typeof window !== 'undefined' ? window.Smoothr?.cart : undefined;
 
   if (typeof window !== 'undefined') {
