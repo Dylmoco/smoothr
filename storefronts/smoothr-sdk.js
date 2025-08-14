@@ -1,5 +1,6 @@
 import { mergeConfig } from './features/config/globalConfig.js';
 import { loadPublicConfig } from './features/config/sdkConfig.js';
+import { createClient } from '@supabase/supabase-js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
@@ -21,7 +22,14 @@ if (!scriptEl || !storeId) {
     );
   }
 } else {
-  const config = mergeConfig({ storeId, platform, debug });
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  const supabase =
+    supabaseUrl && supabaseAnonKey
+      ? createClient(supabaseUrl, supabaseAnonKey)
+      : null;
+
+  const config = mergeConfig({ storeId, platform, debug, supabase });
   if (config.platform === 'webflow-ecom') {
     console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
     config.platform = 'webflow';
@@ -37,7 +45,7 @@ if (!scriptEl || !storeId) {
     if (storeId) {
       try {
         log('Fetching store settings');
-        const data = await loadPublicConfig(storeId);
+        const data = await loadPublicConfig(storeId, supabase);
         if (!data && debug) {
           console.warn('[Smoothr SDK] Store settings request failed');
         }

@@ -276,22 +276,22 @@ export async function handleCheckout({ req, res }: { req: NextApiRequest; res: N
     }
   }
 
-  log('[STEP] Fetching store_settings...');
-  const { data: storeSettings, error: settingsError } = await supabase
-    .from('store_settings')
-    .select('settings')
+  log('[STEP] Fetching store config...');
+  const { data: storeConfig, error: configError } = await supabase
+    .from('v_public_store')
+    .select('active_payment_gateway')
     .eq('store_id', store_id)
     .maybeSingle();
 
-  if (settingsError) {
-    console.error('[Supabase ERROR] Store settings lookup failed:', settingsError.message);
+  if (configError) {
+    console.error('[Supabase ERROR] Store config lookup failed:', configError.message);
     res
       .status(500)
-      .json({ error: 'Failed to load store settings', detail: settingsError.message });
+      .json({ error: 'Failed to load store config', detail: configError.message });
     return;
   }
 
-  const provider = (storeSettings?.settings?.active_payment_gateway || '') as string;
+  const provider = (storeConfig?.active_payment_gateway || '') as string;
   log('Selected provider:', provider);
 
   // Fetch customer payment profile using the selected provider

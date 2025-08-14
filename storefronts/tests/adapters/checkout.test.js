@@ -23,6 +23,16 @@ vi.mock('../../../supabase/browserClient.js', () => {
     ensureSupabaseSessionAuth: vi.fn()
   };
 });
+vi.mock('../../../shared/supabase/client.ts', () => ({
+  supabase: { from: vi.fn() },
+  createSupabaseClient: () => ({ from: vi.fn() }),
+  testMarker: '✅ supabase client loaded'
+}));
+vi.mock('shared/supabase/client', () => ({
+  supabase: { from: vi.fn() },
+  createSupabaseClient: () => ({ from: vi.fn() }),
+  testMarker: '✅ supabase client loaded'
+}));
 
 let getCredMock;
 vi.mock('../../features/checkout/core/credentials.js', () => ({
