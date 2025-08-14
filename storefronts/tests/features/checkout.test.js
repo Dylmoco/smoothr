@@ -7,7 +7,7 @@ describe('checkout feature init', () => {
   beforeEach(() => {
     vi.resetModules();
     supabaseMock = { from: vi.fn() };
-    globalThis.Wc = supabaseMock;
+    globalThis.Hc = supabaseMock;
     loadPublicConfigMock = vi.fn().mockResolvedValue({});
     vi.doMock('../../features/config/sdkConfig.js', () => ({
       loadPublicConfig: loadPublicConfigMock
@@ -22,7 +22,7 @@ describe('checkout feature init', () => {
       default: () => ({ log: vi.fn(), warn: vi.fn(), err: vi.fn(), select: vi.fn().mockResolvedValue(), q: vi.fn() })
     }));
     vi.doMock('../../features/checkout/utils/resolveGateway.js', () => ({ default: vi.fn(() => null) }));
-    global.window = {};
+    global.window = { Smoothr: {}, smoothr: {} };
     global.document = {};
   });
 

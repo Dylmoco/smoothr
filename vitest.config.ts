@@ -5,6 +5,7 @@ const repoRoot = __dirname;
 
 export default defineConfig({
   test: {
+    // Use jsdom so that browser globals like `window` are available in tests
     environment: 'jsdom',
     setupFiles: './vitest.setup.ts',
     testTimeout: 10000,

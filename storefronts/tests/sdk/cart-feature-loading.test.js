@@ -46,6 +46,8 @@ describe("cart feature loading", () => {
       location: { search: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      Smoothr: {},
+      smoothr: {},
     };
     global.document = {
       readyState: "complete",
@@ -67,6 +69,8 @@ describe("cart feature loading", () => {
       location: { search: "?smoothr-debug=true" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      Smoothr: {},
+      smoothr: {},
     };
     const logSpy = console.log;
     global.document = {

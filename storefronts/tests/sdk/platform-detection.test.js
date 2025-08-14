@@ -20,6 +20,8 @@ describe("platform detection", () => {
       location: { search: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      Smoothr: {},
+      smoothr: {},
     };
     global.document = {
       readyState: "complete",

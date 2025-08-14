@@ -46,6 +46,8 @@ describe("checkout DOM trigger", () => {
       location: { search: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      Smoothr: {},
+      smoothr: {},
     };
     global.document = {
       readyState: "complete",
@@ -67,6 +69,8 @@ describe("checkout DOM trigger", () => {
       location: { search: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      Smoothr: {},
+      smoothr: {},
     };
     global.document = {
       readyState: "complete",

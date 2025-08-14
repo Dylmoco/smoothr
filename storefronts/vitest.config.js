@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '');
   return {
     test: {
-      environment: 'happy-dom',
+      environment: 'jsdom',
       setupFiles: './vitest.setup.js'
     },
     resolve: {

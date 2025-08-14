@@ -60,6 +60,7 @@ beforeEach(async () => {
       dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
     })),
   };
+  store["smoothr_cart"] = "{}";
   await import("../../features/auth/init.js");
   await auth.init({
     storeId: "00000000-0000-0000-0000-000000000000",
