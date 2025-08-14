@@ -39,6 +39,15 @@ try {
   Jc = {};
 }
 
+// Some environments expect a minified helper `Vc`. Provide a safe fallback.
+let Vc;
+try {
+  Vc = globalThis.Vc || {};
+  globalThis.Vc = Vc;
+} catch {
+  Vc = {};
+}
+
 let initialized = false;
 
 function forEachPayButton(fn) {
