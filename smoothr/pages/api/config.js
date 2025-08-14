@@ -4,9 +4,10 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://smoothr-cms.webflow.io',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type',
+      Vary: 'Origin'
     }
   });
 }
@@ -34,12 +35,36 @@ export default async function handler(req, res) {
     });
   }
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://smoothr-cms.webflow.io');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
+
+  const data = response.data || {};
+  const {
+    store_id: storeId = null,
+    active_payment_gateway: activePaymentGateway = null,
+    publishable_key: publishableKey = null,
+    base_currency: baseCurrency = null,
+    public_settings: publicSettings = {}
+  } = data;
+
+  const {
+    tokenizationKey = null,
+    acceptJsKey = null
+  } = publicSettings || {};
 
   res.status(200).json({
-    data: response.data || { public_settings: {}, active_payment_gateway: null }
+    storeId,
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    baseCurrency,
+    activePaymentGateway,
+    gateway: {
+      stripe: { publishableKey },
+      nmi: { tokenizationKey },
+      authorize: { acceptJsKey }
+    }
   });
 }
 

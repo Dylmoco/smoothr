@@ -66,6 +66,13 @@ try {
   Xc = {};
 }
 
+let globalConfig;
+try {
+  globalConfig = window.Smoothr?.config || {};
+} catch {
+  globalConfig = {};
+}
+
 let initialized = false;
 
 function forEachPayButton(fn) {

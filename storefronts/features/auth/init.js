@@ -24,6 +24,13 @@ try {
   Oc = {};
 }
 
+let globalConfig;
+try {
+  globalConfig = window.Smoothr?.config || {};
+} catch {
+  globalConfig = {};
+}
+
   // Some builds reference a minified helper `Ac`. Provide a safe fallback.
   let Ac;
   try {
