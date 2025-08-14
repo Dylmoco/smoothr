@@ -3,6 +3,55 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
 }
 
+async function initFeatures() {
+  const Smoothr = (window.Smoothr = window.Smoothr || {});
+  const config = Smoothr.config || {};
+
+  const hasAuthTrigger = document.querySelector(
+    '[data-smoothr="login"], [data-smoothr="sign-out"], [data-smoothr="signup"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], form[data-smoothr="auth-form"]'
+  );
+  if (hasAuthTrigger) {
+    try {
+      const m = await import('storefronts/features/auth/init.js');
+      (m.default || m.init)?.(config);
+    } catch (err) {
+      console.warn('[Smoothr SDK] Auth init failed', err);
+    }
+  }
+
+  const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
+  if (hasCheckoutTrigger) {
+    try {
+      const m = await import('storefronts/features/checkout/init.js');
+      (m.default || m.init)?.(config);
+    } catch (err) {
+      console.warn('[Smoothr SDK] Checkout init failed', err);
+    }
+  } else {
+    console.warn(
+      '[Smoothr SDK] No checkout triggers found, skipping checkout initialization'
+    );
+  }
+
+  const hasCartTrigger =
+    document.querySelector('[data-smoothr="add-to-cart"]') ||
+    document.querySelector('[data-smoothr-total]') ||
+    document.querySelector('[data-smoothr-cart]');
+
+  if (hasCartTrigger) {
+    try {
+      const m = await import('storefronts/features/cart/init.js');
+      (m.default || m.init)?.(config);
+    } catch (err) {
+      console.warn('[Smoothr SDK] Cart init failed', err);
+    }
+  } else {
+    console.log(
+      '[Smoothr SDK] No cart triggers found, skipping cart initialization'
+    );
+  }
+}
+
 const scriptEl = document.currentScript || document.getElementById('smoothr-sdk');
 const storeId =
   scriptEl?.dataset?.storeId || scriptEl?.getAttribute?.('data-store-id') || null;
@@ -60,44 +109,12 @@ if (!scriptEl || !storeId) {
 
     const existing = Smoothr.config || {};
     Smoothr.config = { ...existing, ...fetched };
-
-    try {
-      const m = await import('./features/auth/init.js');
-      (m.default || m.init)?.(Smoothr.config);
-    } catch (err) {
-      console.warn('[Smoothr SDK] Auth init failed', err);
-    }
-
-    const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
-    if (hasCheckoutTrigger) {
-      try {
-        const m = await import('./features/checkout/init.js');
-        (m.default || m.init)?.(Smoothr.config);
-      } catch (err) {
-        console.warn('[Smoothr SDK] Checkout init failed', err);
-      }
-    } else {
-      console.warn(
-        '[Smoothr SDK] No checkout triggers found, skipping checkout initialization'
-      );
-    }
-
-    const hasCartTrigger =
-      document.querySelector('[data-smoothr="add-to-cart"]') ||
-      document.querySelector('[data-smoothr-total]') ||
-      document.querySelector('[data-smoothr-cart]');
-
-    if (hasCartTrigger) {
-      try {
-        const m = await import('./features/cart/init.js');
-        (m.default || m.init)?.(Smoothr.config);
-      } catch (err) {
-        console.warn('[Smoothr SDK] Cart init failed', err);
-      }
-    } else {
-      console.log(
-        '[Smoothr SDK] No cart triggers found, skipping cart initialization'
-      );
-    }
+    await initFeatures();
   })();
+}
+
+export async function __test_bootstrap(fakeConfig = {}) {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.config = { ...(window.Smoothr.config || {}), ...fakeConfig };
+  return initFeatures();
 }
