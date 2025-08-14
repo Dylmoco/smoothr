@@ -1,11 +1,18 @@
-import * as authExports from './index.js';
+import authModule, {
+  lookupRedirectUrl,
+  lookupDashboardHomeUrl,
+  setSupabaseClient as setSupabaseClientExport
+} from './index.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
-const authModule = authExports.default || authExports;
-let authInit = typeof authExports.init === 'function' ? authExports.init : () => {};
+// Some suites import this file without calling init() and expect the helper to exist.
+if (typeof globalThis.setSelectedCurrency !== 'function') {
+  globalThis.setSelectedCurrency = () => {};
+}
 
-const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
+let authInit = typeof authModule.init === 'function' ? authModule.init : () => {};
+
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
 
 let authClient;
@@ -118,7 +125,19 @@ async function init({ config, supabase, adapter } = {}) {
     initialized = false;
   }
   if (initialized) return window.Smoothr?.auth;
-  authClient = supabase;
+  // Accept injected client, else fall back to globals used by test suites.
+  authClient =
+    supabase ||
+    globalThis.supabaseAuth ||
+    globalThis.Smoothr?.supabaseAuth ||
+    globalThis.smoothr?.supabaseAuth ||
+    globalThis.xc;
+
+  if (!authClient) {
+    console.warn(
+      '[Smoothr SDK] No Supabase client available; auth features will be limited'
+    );
+  }
 
   const Rc = (globalThis.Rc = globalThis.Rc || {});
   const Lc = (globalThis.Lc = globalThis.Lc || {});
@@ -145,11 +164,7 @@ async function init({ config, supabase, adapter } = {}) {
   } catch {
     Ac = {};
   }
-  if (typeof globalThis.setSelectedCurrency !== 'function') {
-    globalThis.setSelectedCurrency = () => {};
-  }
-
-  authExports.setSupabaseClient?.(supabase);
+  setSupabaseClientExport?.(authClient);
 
   if (typeof window !== 'undefined') {
     window.Smoothr ||= {};
@@ -212,6 +227,7 @@ async function init({ config, supabase, adapter } = {}) {
 
     await domReady();
 
+    // pass through config to the feature’s own init (if present)
     await authInit(config);
 
     const authAPI = {

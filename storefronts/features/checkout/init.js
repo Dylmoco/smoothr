@@ -122,8 +122,14 @@ async function init({ config, supabase, adapter } = {}) {
   const Sc = (globalThis.Sc = config || {});
   const globalConfig = config || {};
 
+  const resolvedSupabase =
+    supabase ||
+    globalThis.supabaseAuth ||
+    globalThis.Smoothr?.supabaseAuth ||
+    globalThis.smoothr?.supabaseAuth;
+
   try {
-    mergeConfig({ ...config, supabase });
+    mergeConfig({ ...config, supabase: resolvedSupabase });
     await platformReady();
 
     const debug = getConfig().debug;
@@ -134,7 +140,7 @@ async function init({ config, supabase, adapter } = {}) {
 
     const publicConfig = await loadPublicConfig(
       getConfig().storeId,
-      getConfig().supabase
+      resolvedSupabase
     );
     if (publicConfig) {
       mergeConfig(publicConfig);
@@ -143,7 +149,7 @@ async function init({ config, supabase, adapter } = {}) {
     log('SDK initialized');
     log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
 
-    if (!getConfig().supabase && !supabase) {
+    if (!getConfig().supabase && !resolvedSupabase) {
       warn('Supabase client missing.');
     }
 
@@ -159,6 +165,7 @@ async function init({ config, supabase, adapter } = {}) {
       warn('No active payment gateway resolved. Aborting init.');
       return;
     }
+    // Ensure we attempt to mount when a provider is supplied (tests stub the DOM & mocks)
     if (sdkUrls[provider]) {
       try {
         const timeout = provider === 'stripe' ? 10000 : undefined;

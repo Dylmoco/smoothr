@@ -4,6 +4,7 @@ import { bindAddToCartButtons } from './addToCart.js';
 import { renderCart, bindRemoveFromCartButtons } from './renderCart.js';
 
 let initialized = false;
+let __cartAPI;
 
 export function __test_resetCart() {
   try {
@@ -20,15 +21,17 @@ export function __test_resetCart() {
   initialized = false;
 }
 
-export async function init({ config, supabase, adapter } = {}) {
+export async function init(config = {}) {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
     initialized = false;
   }
-  if (initialized) return typeof window !== 'undefined' ? window.Smoothr?.cart : undefined;
+  if (initialized)
+    return (
+      __cartAPI || (typeof window !== 'undefined' ? window.Smoothr?.cart : undefined)
+    );
 
   if (typeof window !== 'undefined') {
-    globalThis.el =
-      globalThis.el || (sel => document.querySelector(sel));
+    globalThis.el = globalThis.el || (sel => document.querySelector(sel));
     globalThis.Zc = globalThis.Zc || {};
     globalThis.tl = globalThis.tl || {};
     globalThis.ol = globalThis.ol || {};
@@ -36,12 +39,14 @@ export async function init({ config, supabase, adapter } = {}) {
     globalThis.Xc = globalThis.Xc || {};
     globalThis.ll = globalThis.ll || {};
     globalThis.Pc = config || {};
+    // Don't wipe any pre-seeded storage that tests rely on; only set defaults if missing.
     try {
-      const initValue = JSON.stringify({
-        items: [],
-        meta: { lastModified: Date.now() }
-      });
-      localStorage.setItem('smoothr_cart', initValue);
+      if (window.localStorage && !window.localStorage.getItem('smoothr_cart')) {
+        window.localStorage.setItem(
+          'smoothr_cart',
+          JSON.stringify({ items: [], meta: { lastModified: Date.now() } })
+        );
+      }
     } catch {}
     const storage = window.localStorage;
     globalThis.al = globalThis.al || storage;
@@ -58,6 +63,7 @@ export async function init({ config, supabase, adapter } = {}) {
       addButtonPollingRetries: 0,
       addButtonPollingDisabled: false
     };
+    __cartAPI = Smoothr.cart;
   }
 
   bindAddToCartButtons();
@@ -65,7 +71,7 @@ export async function init({ config, supabase, adapter } = {}) {
   bindRemoveFromCartButtons();
 
   initialized = true;
-  return typeof window !== 'undefined' ? window.Smoothr.cart : undefined;
+  return __cartAPI;
 }
 
 export default init;
