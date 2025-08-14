@@ -4,7 +4,7 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': 'https://smoothr-cms.webflow.io',
+      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       Vary: 'Origin'
@@ -18,6 +18,33 @@ export default async function handler(req, res) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
 
+  // Determine allowed origins for this store
+  const domainsRes = await supabase
+    .from('stores')
+    .select('store_domain, live_domain')
+    .eq('id', req.query.store_id)
+    .maybeSingle();
+
+  let allowOrigin = '*';
+  const origin = req.headers.origin;
+  const storeDomain = domainsRes.data?.store_domain;
+  const liveDomain = domainsRes.data?.live_domain;
+  const wildcardDomains = ['webflow.io', 'framer.website', 'webstudio.is'];
+
+  if (origin) {
+    try {
+      const { hostname } = new URL(origin);
+      const allowList = [storeDomain, liveDomain].filter(Boolean);
+      const isAllowed =
+        allowList.includes(hostname) ||
+        wildcardDomains.some(domain => hostname.endsWith(`.${domain}`));
+      if (isAllowed) allowOrigin = origin;
+    } catch {
+      // ignore URL parsing errors
+    }
+  }
+
+  // Fetch public store config
   const response = await supabase
     .from('v_public_store')
     .select(
@@ -35,7 +62,7 @@ export default async function handler(req, res) {
     });
   }
 
-  res.setHeader('Access-Control-Allow-Origin', 'https://smoothr-cms.webflow.io');
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Vary', 'Origin');

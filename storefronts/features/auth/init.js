@@ -24,6 +24,15 @@ try {
   Oc = {};
 }
 
+// Some builds reference a minified helper `Qa`. Provide a safe fallback.
+let Qa;
+try {
+  Qa = globalThis.Qa || {};
+  globalThis.Qa = Qa;
+} catch {
+  Qa = {};
+}
+
 let globalConfig;
 try {
   globalConfig = window.Smoothr?.config || {};

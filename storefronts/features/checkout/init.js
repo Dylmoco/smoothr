@@ -66,6 +66,15 @@ try {
   Xc = {};
 }
 
+// Some builds reference a minified helper `vc`. Provide a safe fallback.
+let vc;
+try {
+  vc = globalThis.vc || {};
+  globalThis.vc = vc;
+} catch {
+  vc = {};
+}
+
 let globalConfig;
 try {
   globalConfig = window.Smoothr?.config || {};
