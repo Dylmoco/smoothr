@@ -1,8 +1,8 @@
 import authModule, {
   lookupRedirectUrl,
-  lookupDashboardHomeUrl,
-  setSupabaseClient as setSupabaseClientExport
+  lookupDashboardHomeUrl
 } from './index.js';
+import * as authExports from './index.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
@@ -164,7 +164,8 @@ async function init({ config, supabase, adapter } = {}) {
   } catch {
     Ac = {};
   }
-  setSupabaseClientExport?.(authClient);
+  // use the barrel object to avoid Vitest named-export errors
+  authExports.setSupabaseClient?.(authClient);
 
   if (typeof window !== 'undefined') {
     window.Smoothr ||= {};

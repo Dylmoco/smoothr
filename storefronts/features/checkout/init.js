@@ -123,10 +123,11 @@ async function init({ config, supabase, adapter } = {}) {
   const globalConfig = config || {};
 
   const resolvedSupabase =
-    supabase ||
-    globalThis.supabaseAuth ||
-    globalThis.Smoothr?.supabaseAuth ||
-    globalThis.smoothr?.supabaseAuth;
+    supabase ??
+    globalThis.supabaseAuth ??
+    globalThis.Smoothr?.supabaseAuth ??
+    globalThis.smoothr?.supabaseAuth ??
+    globalThis.Zc;
 
   try {
     mergeConfig({ ...config, supabase: resolvedSupabase });
