@@ -1,97 +1,16 @@
-import {
-  supabase as importedSupabase,
-  ensureSupabaseSessionAuth
-} from '../../../supabase/browserClient.js';
 import * as authExports from './index.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
-// Some builds expect a minified helper `Rc` to exist. Provide a no-op
-// implementation so imports referencing it won't throw.
-const Rc = globalThis.Rc || {};
-globalThis.Rc = Rc;
+const authModule = authExports.default || authExports;
+let authInit = typeof authExports.init === 'function' ? authExports.init : () => {};
 
-// Some environments expect a minified helper `Lc`. Provide a safe fallback.
-const Lc = globalThis.Lc || {};
-globalThis.Lc = Lc;
-
-// Some builds reference a minified helper `Oc`. Provide a safe fallback.
-let Oc;
-try {
-  Oc = globalThis.Oc || {};
-  globalThis.Oc = Oc;
-} catch {
-  Oc = {};
-}
-
-// Some builds reference a minified helper `Qa`. Provide a safe fallback.
-let Qa;
-try {
-  Qa = globalThis.Qa || {};
-  globalThis.Qa = Qa;
-} catch {
-  Qa = {};
-}
-
-// Some builds reference a minified helper `Za`. Use the existing
-// Smoothr config if available so bundled code can read from it.
-let Za;
-try {
-  Za = globalThis.Za || window.Smoothr?.config || {};
-  globalThis.Za = Za;
-} catch {
-  Za = {};
-}
-
-let globalConfig;
-try {
-  globalConfig = window.Smoothr?.config || {};
-} catch {
-  globalConfig = {};
-}
-
-  // Some builds reference a minified helper `Ac`. Provide a safe fallback.
-  let Ac;
-  try {
-    Ac = globalThis.Ac || {};
-    globalThis.Ac = Ac;
-  } catch {
-    Ac = {};
-  }
-
-// Legacy helpers
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
 
-// Some build environments reference a minified global `Tc` for the Supabase
-// client. Ensure this placeholder exists and fall back to the imported client
-// when unavailable.
 let authClient;
-try {
-  authClient = globalThis.Tc || importedSupabase;
-  globalThis.Tc = authClient;
-} catch {
-  authClient = null;
-}
-
-if (typeof globalThis.setSelectedCurrency !== 'function') {
-  globalThis.setSelectedCurrency = () => {};
-}
-
-if (typeof window !== 'undefined') {
-  window.Smoothr = window.Smoothr || {};
-  window.Smoothr.storeRedirects = storeRedirects;
-  window.smoothr = window.smoothr || window.Smoothr;
-  window.smoothr.storeRedirects = storeRedirects;
-}
-
-const authModule = authExports.default || authExports;
-let authInit = () => {};
-if (Object.prototype.hasOwnProperty.call(authExports, 'init')) {
-  authInit = authExports.init;
-}
-
 let initialized = false;
+let sessionReadyPromise;
 
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
@@ -137,11 +56,9 @@ async function domReady() {
   }
 }
 
-let sessionReadyPromise;
 export function waitForSessionReady() {
   if (sessionReadyPromise) return sessionReadyPromise;
   sessionReadyPromise = (async () => {
-    await ensureSupabaseSessionAuth();
     try {
       const {
         data: { session }
@@ -182,11 +99,46 @@ export function waitForSessionReady() {
   return sessionReadyPromise;
 }
 
-export async function init(config = {}) {
+async function init({ config, supabase, adapter } = {}) {
   if (initialized) return window.Smoothr?.auth;
-  if (!authClient) {
-    console.warn('[Smoothr SDK] Supabase client unavailable - skipping auth init');
-    return {};
+  authClient = supabase;
+
+  const Rc = (globalThis.Rc = globalThis.Rc || {});
+  const Lc = (globalThis.Lc = globalThis.Lc || {});
+  let Oc;
+  try {
+    Oc = globalThis.Oc || {};
+    globalThis.Oc = Oc;
+  } catch {
+    Oc = {};
+  }
+  let Qa;
+  try {
+    Qa = globalThis.Qa || {};
+    globalThis.Qa = Qa;
+  } catch {
+    Qa = {};
+  }
+  const Za = (globalThis.Za = config || {});
+  const globalConfig = config || {};
+  let Ac;
+  try {
+    Ac = globalThis.Ac || {};
+    globalThis.Ac = Ac;
+  } catch {
+    Ac = {};
+  }
+  if (typeof globalThis.setSelectedCurrency !== 'function') {
+    globalThis.setSelectedCurrency = () => {};
+  }
+
+  authExports.setSupabaseClient?.(supabase);
+
+  if (typeof window !== 'undefined') {
+    window.Smoothr ||= {};
+    window.Smoothr.storeRedirects = storeRedirects;
+    window.smoothr = window.smoothr || window.Smoothr;
+    window.smoothr.storeRedirects = storeRedirects;
   }
 
   try {
@@ -195,7 +147,9 @@ export async function init(config = {}) {
         ? document.currentScript || document.getElementById('smoothr-sdk')
         : null;
     const storeId =
-      config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
+      config.storeId ||
+      script?.getAttribute?.('data-store-id') ||
+      script?.dataset?.storeId;
 
     mergeConfig({ ...config, storeId });
 
@@ -270,15 +224,6 @@ export async function init(config = {}) {
       getSession: authModule.getSession || (() => authClient.auth.getSession())
     };
   }
-}
 
-export const SMOOTHR_CONFIG = getConfig();
-
-export default (async () => {
-  try {
-    await init(window.Smoothr?.config || {});
-  } catch (err) {
-    console.warn('[Smoothr SDK] Auth initialization failed', err);
-  }
-})();
-
+export { init };
+export default init;

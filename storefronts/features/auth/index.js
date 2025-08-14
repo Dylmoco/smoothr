@@ -1,4 +1,3 @@
-import { supabase, ensureSupabaseSessionAuth } from '../../../supabase/browserClient.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import {
   initAuth as initAuthHelper,
@@ -54,6 +53,14 @@ function showLoginPopup() {
       })
     );
   }
+}
+
+let supabase;
+let ensureSupabaseSessionAuth = async () => {};
+
+export function setSupabaseClient(client, ensureFn = async () => {}) {
+  supabase = client;
+  ensureSupabaseSessionAuth = ensureFn;
 }
 
 async function login(email, password) {
