@@ -1,5 +1,11 @@
 {
   "routes": [
-    { "src": "/api/config", "dest": "/pages/api/config.js" }
+    {
+      "src": "/api/config",
+      "dest": "/pages/api/config.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io"
+      }
+    }
   ]
 }

@@ -22,6 +22,11 @@ let al =
 globalThis.al = al;
 globalThis.il = globalThis.il || al;
 
+// Ensure a minified global placeholder `Xc` exists for compatibility with
+// legacy bundles that reference it.
+const Xc = globalThis.Xc || {};
+globalThis.Xc = Xc;
+
 // Some builds expect a minified helper `ll`. Provide a safe fallback.
 const ll = globalThis.ll || {};
 globalThis.ll = ll;
@@ -29,10 +34,10 @@ globalThis.ll = ll;
 // Ensure the cart storage key exists so JSON.parse does not throw later.
 try {
   if (al && al.getItem(STORAGE_KEY) == null) {
-    al.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ items: [], meta: { lastModified: Date.now() } })
-    );
+    al[STORAGE_KEY] = JSON.stringify({
+      items: [],
+      meta: { lastModified: Date.now() }
+    });
   }
 } catch {
   // ignore storage errors
