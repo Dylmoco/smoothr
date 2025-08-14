@@ -75,6 +75,16 @@ try {
   vc = {};
 }
 
+// Some builds reference a minified helper `Sc`. Use the Smoothr config so
+// legacy bundles can continue reading settings.
+let Sc;
+try {
+  Sc = globalThis.Sc || window.Smoothr?.config || {};
+  globalThis.Sc = Sc;
+} catch {
+  Sc = {};
+}
+
 let globalConfig;
 try {
   globalConfig = window.Smoothr?.config || {};

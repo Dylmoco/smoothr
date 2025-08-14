@@ -16,6 +16,11 @@ try {
   const Zc = globalThis.Zc || {};
   globalThis.Zc = Zc;
 
+  // Some builds reference a minified helper `Pc`. Populate it with the
+  // Smoothr config when available to maintain backward compatibility.
+  const Pc = globalThis.Pc || window.Smoothr?.config || {};
+  globalThis.Pc = Pc;
+
   // Some builds reference a minified helper `tl`. Provide a safe fallback.
   const tl = globalThis.tl || {};
   globalThis.tl = tl;
