@@ -13,15 +13,6 @@ describe("checkout DOM trigger", () => {
     checkoutInitMock.mockReset();
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
     global.console = { log: vi.fn(), warn: vi.fn() };
-    vi.doMock("../../supabase/browserClient.js", () => ({
-      supabase: {
-        from: vi.fn(() => ({
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) }))
-          }))
-        }))
-      }
-    }));
     vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
     vi.doMock("../../features/cart/init.js", () => ({ init: vi.fn() }));
@@ -29,7 +20,6 @@ describe("checkout DOM trigger", () => {
   });
 
   afterEach(() => {
-    vi.doUnmock("../../supabase/browserClient.js");
     vi.doUnmock("../../features/auth/init.js");
     vi.doUnmock("../../features/currency/index.js");
     vi.doUnmock("../../features/cart/init.js");

@@ -1,8 +1,3 @@
-// Only the Supabase client is imported up front to avoid circular
-// dependencies during feature loading. Configuration helpers and
-// feature modules are loaded dynamically after the client is created.
-import { createClient } from '@supabase/supabase-js';
-
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
@@ -14,13 +9,6 @@ const platform =
   scriptEl?.dataset?.platform || scriptEl?.getAttribute?.('platform') || null;
 const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
 
-// Safely resolve Supabase credentials with fallbacks for local/tests
-const url =
-  process.env.VITE_SUPABASE_URL ||
-  'https://lpuqrzvokroazwlricgn.supabase.co';
-const anonKey =
-  process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here';
-
 if (!scriptEl || !storeId) {
   if (debug) {
     console.warn(
@@ -31,16 +19,12 @@ if (!scriptEl || !storeId) {
   }
 } else {
   (async () => {
-    const supabase = createClient(url, anonKey);
-
-    // Load configuration helpers only after the client is ready to avoid
-    // circular dependencies during feature loading.
-    const [{ mergeConfig }, { loadPublicConfig }] = await Promise.all([
-      import('./features/config/globalConfig.js'),
-      import('./features/config/sdkConfig.js')
+    // Load configuration helpers first so global config can be merged
+    const [{ mergeConfig }] = await Promise.all([
+      import('./features/config/globalConfig.js')
     ]);
 
-    const config = mergeConfig({ storeId, platform, debug, supabase });
+    const config = mergeConfig({ storeId, platform, debug });
     if (config.platform === 'webflow-ecom') {
       console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
       config.platform = 'webflow';
@@ -50,21 +34,22 @@ if (!scriptEl || !storeId) {
     Smoothr.config = config;
 
     const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
-    log('Config initialized', config);
 
     if (storeId) {
       try {
-        log('Fetching store settings');
-        const data = await loadPublicConfig(storeId, supabase);
-        if (!data && debug) {
-          console.warn('[Smoothr SDK] Store settings request failed');
-        }
-        config.settings = { ...(config.settings || {}), ...(data || {}) };
-        log('Store settings loaded', config.settings);
+        const res = await fetch(`/api/config?store_id=${storeId}`);
+        const data = res.ok ? await res.json() : null;
+        config.settings = { ...(config.settings || {}), ...(data?.public_settings || {}) };
+        config.active_payment_gateway = data?.active_payment_gateway ?? null;
+        config.publishable_key = data?.publishable_key;
+        config.base_currency = data?.base_currency;
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Failed to fetch store settings', err);
       }
     }
+
+    Smoothr.config = config;
+    log('Config initialized', config);
 
     if (platform) {
       try {

@@ -15,6 +15,7 @@ describe("platform detection", () => {
     vi.resetModules();
     scriptEl = null;
 
+    global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
     global.location = { search: "" };
     global.window = {
       location: { search: "" },
@@ -32,6 +33,10 @@ describe("platform detection", () => {
     };
   });
 
+  function flushPromises() {
+    return new Promise(setImmediate);
+  }
+
   it("uses data-platform attribute", async () => {
     scriptEl = {
       dataset: { storeId: "1", platform: "webflow" },
@@ -40,6 +45,8 @@ describe("platform detection", () => {
     global.document.getElementById.mockReturnValue(scriptEl);
 
     await import("../../smoothr-sdk.js");
+    await flushPromises();
+    await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("webflow");
   });
 
@@ -51,6 +58,8 @@ describe("platform detection", () => {
     global.document.getElementById.mockReturnValue(scriptEl);
 
     await import("../../smoothr-sdk.js");
+    await flushPromises();
+    await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("magento");
   });
 
@@ -62,6 +71,8 @@ describe("platform detection", () => {
     global.document.getElementById.mockReturnValue(scriptEl);
 
     await import("../../smoothr-sdk.js");
+    await flushPromises();
+    await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("webflow");
   });
 });

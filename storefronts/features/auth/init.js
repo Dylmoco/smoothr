@@ -10,9 +10,10 @@ import { getConfig, mergeConfig } from '../config/globalConfig.js';
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
 
-// Some build environments reference a minified global `Cc` for the Supabase
-// client. Fall back to the imported client if the global is unavailable.
-const authClient = globalThis.Cc || importedSupabase;
+// Some build environments reference a minified global `Tc` or `Cc` for the
+// Supabase client. Fall back to the imported client if those globals are
+// unavailable.
+const authClient = globalThis.Tc || globalThis.Cc || importedSupabase;
 
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
