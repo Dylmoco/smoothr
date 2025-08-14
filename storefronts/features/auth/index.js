@@ -36,6 +36,12 @@ if (typeof window !== 'undefined' && !__supabaseClient) {
   supabase = __supabaseClient;
 }
 
+// Lightweight wrapper: always provide a callable named export for tests.
+export async function init(opts = {}) {
+  const { default: run } = await import('./init.js');
+  return run(opts);
+}
+
 const SMOOTHR_CONFIG = getConfig();
 
 let initialized = false;
@@ -402,47 +408,9 @@ const auth = {
   getSession: () => supabase.auth.getSession(),
   initAuth,
   user,
+  init,
   client: supabase
 };
-
-  async function init(config = {}) {
-  updateGlobalAuth();
-  if (initialized) {
-    log('Auth module already initialized');
-    return window.Smoothr?.auth;
-  }
-
-  const merged = mergeConfig(config);
-
-  const debugQuery =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).has('smoothr-debug');
-  debug =
-    typeof config.debug === 'boolean'
-      ? config.debug
-      : typeof merged.debug === 'boolean'
-        ? merged.debug
-        : debugQuery;
-
-  registerDOMBindings(bindAuthElements, bindSignOutButtons);
-
-  await initAuth();
-  await ensureSupabaseSessionAuth();
-
-  updateGlobalAuth();
-
-  supabase.auth.onAuthStateChange((_event, session) => {
-    user.value = session?.user || null;
-    updateGlobalAuth();
-  });
-
-  if (debug) {
-    console.log('[Smoothr] Auth module loaded');
-  }
-
-  initialized = true;
-  return window.Smoothr?.auth;
-}
 
 export {
   initPasswordResetConfirmation,
