@@ -16,6 +16,11 @@ import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
 
+// Some builds expect a minified global `el` helper for DOM queries. Provide a
+// simple wrapper so imports referencing it don't throw.
+const el = globalThis.el || (sel => document.querySelector(sel));
+globalThis.el = el;
+
 let initialized = false;
 
 function forEachPayButton(fn) {
@@ -115,10 +120,15 @@ export async function init(config = {}) {
   log(`Using gateway: ${provider}`);
 
   // mount fields common to all gateways
-  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
-  await select('[data-smoothr="pay"], [data-smoothr-pay]');
-  // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
-  let payButtons = document.querySelectorAll('[data-smoothr="pay"], [data-smoothr-pay]');
+  // wait for a checkout trigger; support legacy [data-smoothr-pay]
+  let payButtons = document.querySelectorAll('[data-smoothr="pay"]');
+  if (!payButtons.length) {
+    await select('[data-smoothr-pay]');
+    payButtons = document.querySelectorAll('[data-smoothr-pay]');
+  } else {
+    await select('[data-smoothr="pay"]');
+  }
+
   if (debug) console.log('[Smoothr] Found pay buttons:', payButtons.length);
   if (!payButtons.length) {
     const path = window.location?.pathname || '';

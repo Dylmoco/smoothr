@@ -6,6 +6,11 @@ import * as authExports from './index.js';
 import * as currency from '../currency/index.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 
+// Some builds expect a minified helper `Rc` to exist. Provide a no-op
+// implementation so imports referencing it won't throw.
+const Rc = globalThis.Rc || {};
+globalThis.Rc = Rc;
+
 // Legacy helpers
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };

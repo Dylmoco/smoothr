@@ -35,18 +35,26 @@ if (!scriptEl || !storeId) {
 
     const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
 
+    const fallback = { public_settings: {}, active_payment_gateway: null };
+    let data = fallback;
     if (storeId) {
       try {
         const res = await fetch(`/api/config?store_id=${storeId}`);
-        const data = res.ok ? await res.json() : null;
-        config.settings = { ...(config.settings || {}), ...(data?.public_settings || {}) };
-        config.active_payment_gateway = data?.active_payment_gateway ?? null;
-        config.publishable_key = data?.publishable_key;
-        config.base_currency = data?.base_currency;
+        if (res.ok) {
+          data = await res.json();
+        }
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Failed to fetch store settings', err);
       }
     }
+
+    config.settings = {
+      ...(config.settings || {}),
+      ...(data.public_settings || {})
+    };
+    config.active_payment_gateway = data.active_payment_gateway ?? null;
+    config.publishable_key = data.publishable_key;
+    config.base_currency = data.base_currency;
 
     Smoothr.config = config;
     log('Config initialized', config);

@@ -9,22 +9,23 @@ const log = (...args) => getConfig().debug && console.log('[Smoothr Cart]', ...a
 const warn = (...args) => getConfig().debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ...args);
 
-// Some builds reference a minified `il` variable for localStorage access.
+// Some builds reference a minified `al` variable for localStorage access.
 // Define it safely here so imports never throw in environments without
 // localStorage (e.g. server-side rendering or tests).
-let il =
-  globalThis.il ||
-  (typeof window !== 'undefined'
+let al =
+  globalThis.al ||
+  ((typeof window !== 'undefined' && window.localStorage)
     ? window.localStorage
     : typeof globalThis !== 'undefined'
     ? globalThis.localStorage
     : undefined);
-globalThis.il = il;
+globalThis.al = al;
+globalThis.il = globalThis.il || al;
 
 // Ensure the cart storage key exists so JSON.parse does not throw later.
 try {
-  if (il && il.getItem(STORAGE_KEY) == null) {
-    il.setItem(
+  if (al && al.getItem(STORAGE_KEY) == null) {
+    al.setItem(
       STORAGE_KEY,
       JSON.stringify({ items: [], meta: { lastModified: Date.now() } })
     );
@@ -34,7 +35,7 @@ try {
 }
 
 function getStorage() {
-  return il || null;
+  return al || null;
 }
 
 export function readCart() {
@@ -187,7 +188,8 @@ export async function initCart() {
       }
     }
 
-    il = window.localStorage;
+    al = window.localStorage || globalThis.localStorage;
+    globalThis.al = al;
 
     Smoothr.cart = {
       readCart,
