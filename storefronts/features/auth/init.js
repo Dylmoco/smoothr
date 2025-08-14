@@ -33,6 +33,16 @@ try {
   Qa = {};
 }
 
+// Some builds reference a minified helper `Za`. Use the existing
+// Smoothr config if available so bundled code can read from it.
+let Za;
+try {
+  Za = globalThis.Za || window.Smoothr?.config || {};
+  globalThis.Za = Za;
+} catch {
+  Za = {};
+}
+
 let globalConfig;
 try {
   globalConfig = window.Smoothr?.config || {};
