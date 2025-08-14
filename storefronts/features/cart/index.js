@@ -9,10 +9,18 @@ const log = (...args) => getConfig().debug && console.log('[Smoothr Cart]', ...a
 const warn = (...args) => getConfig().debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ...args);
 
+// Some builds reference a minified `il` variable for localStorage access.
+// Define it safely here so imports never throw in environments without
+// localStorage (e.g. server-side rendering or tests).
+const il =
+  typeof window !== 'undefined'
+    ? window.localStorage
+    : typeof globalThis !== 'undefined'
+    ? globalThis.localStorage
+    : undefined;
+
 function getStorage() {
-  if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
-  return null;
+  return il || null;
 }
 
 export function readCart() {

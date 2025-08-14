@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     base: 'https://sdk.smoothr.io/',
+    // Only expose env vars prefixed with VITE_
+    envPrefix: ['VITE_'],
     optimizeDeps: {
       include: ['@supabase/supabase-js']
     },
@@ -33,7 +35,6 @@ export default defineConfig(({ mode }) => {
         'https://lpuqrzvokroazwlricgn.functions.supabase.co/proxy-live-rates'
       )
     },
-    envPrefix: ['VITE_'],
     build: {
       target: 'esnext', // ✅ Enables top-level await
       rollupOptions: {

@@ -132,7 +132,7 @@ describe('smoothr-sdk Supabase initialization', () => {
     document.body.appendChild(el);
 
     await expect(import('../smoothr-sdk.js')).rejects.toThrow(
-      'VITE_SUPABASE_URL is missing in Cloudflare environment'
+      'Missing VITE_SUPABASE_URL in Cloudflare environment'
     );
   });
 });

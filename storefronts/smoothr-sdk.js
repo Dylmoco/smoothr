@@ -16,7 +16,7 @@ const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
 
 const url = process.env.VITE_SUPABASE_URL;
 if (!url) {
-  throw new Error('VITE_SUPABASE_URL is missing in Cloudflare environment');
+  throw new Error('Missing VITE_SUPABASE_URL in Cloudflare environment');
 }
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 if (!anonKey) {

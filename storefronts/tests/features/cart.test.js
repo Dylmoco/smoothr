@@ -5,7 +5,7 @@ let mergeConfigMock;
 describe('cart feature init', () => {
   beforeEach(() => {
     vi.resetModules();
-    globalThis.ol = {};
+    globalThis.il = {};
     mergeConfigMock = vi.fn();
     vi.doMock('../../features/cart/addToCart.js', () => ({ bindAddToCartButtons: vi.fn() }));
     vi.doMock('../../features/cart/renderCart.js', () => ({ renderCart: vi.fn(), bindRemoveFromCartButtons: vi.fn() }));
