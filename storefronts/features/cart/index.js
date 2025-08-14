@@ -19,11 +19,10 @@ try {
   const Zc = globalThis.Zc || {};
   globalThis.Zc = Zc;
 
-  if (
-    typeof window !== 'undefined' &&
-    window.localStorage &&
-    window.localStorage.getItem(STORAGE_KEY) == null
-  ) {
+  // Some builds reference a minified helper `tl`. Provide a safe fallback.
+  globalThis.tl = globalThis.tl || {};
+
+  if (typeof window !== 'undefined' && window.localStorage) {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ items: [], meta: { lastModified: Date.now() } })

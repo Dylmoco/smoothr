@@ -48,6 +48,13 @@ try {
   Vc = {};
 }
 
+// Some builds reference a minified helper `Yc`. Provide a safe fallback.
+try {
+  globalThis.Yc = globalThis.Yc || {};
+} catch {
+  // ignore global assignment errors
+}
+
 let initialized = false;
 
 function forEachPayButton(fn) {
