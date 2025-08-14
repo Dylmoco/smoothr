@@ -9,6 +9,25 @@ const log = (...args) => getConfig().debug && console.log('[Smoothr Cart]', ...a
 const warn = (...args) => getConfig().debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ...args);
 
+// Ensure a minified global placeholder `Zc` exists and initialize cart storage
+// if it hasn't been created yet.
+try {
+  const Zc = globalThis.Zc || {};
+  globalThis.Zc = Zc;
+  if (
+    typeof window !== 'undefined' &&
+    window.localStorage &&
+    window.localStorage.getItem(STORAGE_KEY) == null
+  ) {
+    window.localStorage[STORAGE_KEY] = JSON.stringify({
+      items: [],
+      meta: { lastModified: Date.now() }
+    });
+  }
+} catch {
+  // ignore storage errors
+}
+
 // Some builds reference a minified `al` variable for localStorage access.
 // Define it safely here so imports never throw in environments without
 // localStorage (e.g. server-side rendering or tests).
@@ -30,18 +49,6 @@ globalThis.Xc = Xc;
 // Some builds expect a minified helper `ll`. Provide a safe fallback.
 const ll = globalThis.ll || {};
 globalThis.ll = ll;
-
-// Ensure the cart storage key exists so JSON.parse does not throw later.
-try {
-  if (al && al.getItem(STORAGE_KEY) == null) {
-    al[STORAGE_KEY] = JSON.stringify({
-      items: [],
-      meta: { lastModified: Date.now() }
-    });
-  }
-} catch {
-  // ignore storage errors
-}
 
 function getStorage() {
   return al || null;

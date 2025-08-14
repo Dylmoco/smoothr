@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 export default async function handler(req, res) {
-  const supabase = createClient(url, anonKey);
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 
   const response = await supabase
     .from('v_public_store')
@@ -23,10 +23,7 @@ export default async function handler(req, res) {
     });
   }
 
-  res.setHeader(
-    'Access-Control-Allow-Origin',
-    'https://smoothr-cms.webflow.io'
-  );
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
   res.status(200).json({
     data:

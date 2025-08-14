@@ -30,6 +30,15 @@ globalThis.rl = rl;
 const Gc = globalThis.Gc || {};
 globalThis.Gc = Gc;
 
+// Some builds reference a minified helper `Jc`. Provide a safe fallback.
+let Jc;
+try {
+  Jc = globalThis.Jc || {};
+  globalThis.Jc = Jc;
+} catch {
+  Jc = {};
+}
+
 let initialized = false;
 
 function forEachPayButton(fn) {
