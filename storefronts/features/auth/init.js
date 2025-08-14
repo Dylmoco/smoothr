@@ -20,13 +20,15 @@ const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
 
 // Some build environments reference a minified global `xc`, `Tc` or `Cc` for the
-// Supabase client. Ensure `xc` exists and fall back to the imported client when
-// these globals are unavailable.
+// Supabase client. Ensure these placeholders exist and fall back to the imported
+// client when unavailable.
 let authClient;
 try {
   const xc = globalThis.xc || importedSupabase;
   globalThis.xc = xc;
-  authClient = globalThis.Tc || globalThis.Cc || xc;
+  const Cc = globalThis.Cc || xc;
+  globalThis.Cc = Cc;
+  authClient = globalThis.Tc || Cc;
   globalThis.Tc = authClient;
 } catch {
   authClient = null;

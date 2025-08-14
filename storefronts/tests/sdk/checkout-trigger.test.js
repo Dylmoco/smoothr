@@ -23,6 +23,8 @@ describe("checkout DOM trigger", () => {
       checkoutInitMock();
       return { __esModule: true };
     });
+    window.Smoothr = { config: {} };
+    window.smoothr = window.Smoothr;
   });
 
   afterEach(() => {
@@ -39,8 +41,6 @@ describe("checkout DOM trigger", () => {
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
     window.addEventListener = vi.fn();
     window.removeEventListener = vi.fn();
-    window.Smoothr = { config: {} };
-    window.smoothr = window.Smoothr;
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
     vi.spyOn(document, 'querySelector').mockImplementation(sel => (sel === '[data-smoothr="pay"]' ? {} : null));
@@ -58,8 +58,6 @@ describe("checkout DOM trigger", () => {
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
     window.addEventListener = vi.fn();
     window.removeEventListener = vi.fn();
-    window.Smoothr = { config: {} };
-    window.smoothr = window.Smoothr;
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
     vi.spyOn(document, 'querySelector').mockReturnValue(null);

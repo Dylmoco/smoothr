@@ -32,8 +32,8 @@ describe("cart feature loading", () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
-    window.Smoothr = {};
-    window.smoothr = {};
+    window.Smoothr = { config: {} };
+    window.smoothr = window.Smoothr;
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     scriptEl.id = 'smoothr-sdk';
     document.body.appendChild(scriptEl);
@@ -53,8 +53,8 @@ describe("cart feature loading", () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     Object.defineProperty(window, 'location', { value: { search: '?smoothr-debug=true' }, configurable: true });
-    window.Smoothr = {};
-    window.smoothr = {};
+    window.Smoothr = { config: {} };
+    window.smoothr = window.Smoothr;
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     scriptEl.id = 'smoothr-sdk';
