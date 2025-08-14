@@ -12,18 +12,18 @@ describe("cart feature loading", () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve({ data: {} }) })
     );
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.doMock("../../features/auth/init.js", () => ({ default: vi.fn() }));
-    vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
-    vi.doMock("../../features/cart/index.js", () => {
+    vi.mock("storefronts/features/auth/init.js", () => ({ default: vi.fn() }));
+    vi.mock("storefronts/features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
+    vi.mock("storefronts/features/cart/index.js", () => {
       cartInitMock();
       return { __esModule: true };
     });
   });
 
   afterEach(() => {
-    vi.doUnmock("../../features/auth/init.js");
-    vi.doUnmock("../../features/currency/index.js");
-    vi.doUnmock("../../features/cart/index.js");
+    vi.unmock("storefronts/features/auth/init.js");
+    vi.unmock("storefronts/features/currency/index.js");
+    vi.unmock("storefronts/features/cart/index.js");
     document.body.innerHTML = '';
     vi.restoreAllMocks();
   });

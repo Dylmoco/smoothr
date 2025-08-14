@@ -42,6 +42,11 @@ vi.mock('../../features/checkout/core/credentials.js', () => ({
 let createPaymentMethodMock;
 let submitCheckout;
 let originalFetch;
+let loadPublicConfigMock;
+
+vi.mock('storefronts/features/config/sdkConfig.js', () => ({
+  loadPublicConfig: (...args) => loadPublicConfigMock(...args)
+}));
 
 beforeEach(() => {
   vi.resetModules();
@@ -54,8 +59,12 @@ beforeEach(() => {
   loadScriptOnceMock.mockResolvedValue();
   supabaseMaybeSingle.mockReset();
   supabaseMaybeSingle.mockResolvedValue({
-    data: { publishable_key: 'pk_test' },
+    data: { publishable_key: 'pk_test', active_payment_gateway: 'stripe' },
     error: null
+  });
+  loadPublicConfigMock = vi.fn().mockResolvedValue({
+    active_payment_gateway: 'stripe',
+    public_settings: {}
   });
   getCredMock = vi.fn(async () => ({ publishable_key: 'pk_test' }));
 
@@ -174,24 +183,16 @@ beforeEach(() => {
       }
     };
     await createPaymentMethodMock({ billing_details });
-    if (provider === 'authorizeNet') {
-      await fetch(`/api/createOrder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}'
-      });
-      await fetch(`/api/checkout/authorizeNet`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}'
-      });
-    } else {
-      await fetch(`/api/checkout/${provider}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}'
-      });
-    }
+    await fetch(`/api/createOrder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    await fetch(`/api/checkout/${provider}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
   };
   global.window.SMOOTHR_CONFIG = {
     baseCurrency: 'GBP',
@@ -247,13 +248,21 @@ describe('checkout', () => {
 
     const provider = global.window.SMOOTHR_CONFIG.active_payment_gateway;
     expect(fetch).toHaveBeenCalledWith(
-      `/api/checkout/${provider}`,
+      `/api/createOrder`,
+      expect.any(Object)
+    );
+    expect(fetch).toHaveBeenLastCalledWith(
+      `/api/checkout/stripe`,
       expect.any(Object)
     );
   });
 
   it('posts cart for non-Stripe provider', async () => {
     global.window.SMOOTHR_CONFIG.active_payment_gateway = 'authorizeNet';
+    loadPublicConfigMock.mockResolvedValue({
+      active_payment_gateway: 'authorizeNet',
+      public_settings: {}
+    });
 
     const init = await loadCheckout();
     await init();

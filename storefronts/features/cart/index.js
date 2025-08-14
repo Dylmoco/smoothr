@@ -9,23 +9,28 @@ const log = (...args) => getConfig().debug && console.log('[Smoothr Cart]', ...a
 const warn = (...args) => getConfig().debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ...args);
 
-// Ensure a minified global placeholder `Zc` exists and initialize cart storage
-// if it hasn't been created yet.
+// Ensure legacy globals exist and cart storage is initialized.
 try {
+  const el =
+    globalThis.el ||
+    (sel => (typeof document !== 'undefined' ? document.querySelector(sel) : null));
+  globalThis.el = el;
+
   const Zc = globalThis.Zc || {};
   globalThis.Zc = Zc;
+
   if (
     typeof window !== 'undefined' &&
     window.localStorage &&
     window.localStorage.getItem(STORAGE_KEY) == null
   ) {
-    window.localStorage[STORAGE_KEY] = JSON.stringify({
-      items: [],
-      meta: { lastModified: Date.now() }
-    });
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ items: [], meta: { lastModified: Date.now() } })
+    );
   }
 } catch {
-  // ignore storage errors
+  // ignore DOM/storage errors
 }
 
 // Some builds reference a minified `al` variable for localStorage access.

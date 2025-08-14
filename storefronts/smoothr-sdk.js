@@ -81,7 +81,7 @@ if (!scriptEl || !storeId) {
 
     try {
       log('Initializing auth feature');
-      await import('./features/auth/init.js');
+      await import('storefronts/features/auth/init.js');
     } catch (err) {
       debug && console.warn('[Smoothr SDK] Auth init failed', err);
     }
@@ -102,7 +102,7 @@ if (!scriptEl || !storeId) {
     if (hasCheckoutTrigger) {
       try {
         log('Initializing checkout feature');
-        await import('./features/checkout/init.js');
+        await import('storefronts/features/checkout/init.js');
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Checkout init failed', err);
       }
@@ -113,7 +113,7 @@ if (!scriptEl || !storeId) {
     if (hasCartTrigger) {
       try {
         log('Initializing cart feature');
-        await import('./features/cart/index.js');
+        await import('storefronts/features/cart/index.js');
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Cart init failed', err);
       }
