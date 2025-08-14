@@ -14,9 +14,12 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       // Map Cloudflare’s VITE_* secrets into process.env
-      'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(
+        process.env.VITE_SUPABASE_URL ||
+          'https://lpuqrzvokroazwlricgn.supabase.co'
+      ),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
-        process.env.VITE_SUPABASE_ANON_KEY
+        process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here'
       ),
       __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__: JSON.stringify(
         env.NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL

@@ -3,6 +3,7 @@ import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 let supabase: any;
 let loadPublicConfig: any;
 let builder: any;
+let createClientMock: any;
 
 describe('loadPublicConfig', () => {
   beforeEach(async () => {
@@ -20,12 +21,6 @@ describe('loadPublicConfig', () => {
     };
     process.env.VITE_SUPABASE_URL = 'https://example.supabase.co';
     process.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
-
-    vi.mock('../../shared/supabase/client.ts', () => ({
-      createSupabaseClient: vi.fn(() => supabase),
-      supabase,
-      testMarker: '✅ supabase client loaded',
-    }));
 
     ({ loadPublicConfig } = await import('../features/config/sdkConfig.js'));
   });
@@ -82,6 +77,63 @@ describe('loadPublicConfig', () => {
     const config = await loadPublicConfig(storeId, supabase);
 
     expect(config).toEqual({ public_settings: {}, active_payment_gateway: null });
+  });
+});
+
+describe('smoothr-sdk Supabase initialization', () => {
+  let createClientMock: any;
+
+  beforeEach(() => {
+    vi.resetModules();
+    document.body.innerHTML = '';
+    createClientMock = vi.fn(() => ({}));
+    vi.doMock('../features/config/globalConfig.js', () => ({
+      mergeConfig: vi.fn((cfg) => cfg),
+    }));
+    vi.doMock('../features/config/sdkConfig.js', () => ({
+      loadPublicConfig: vi.fn(() => Promise.resolve({})),
+    }));
+    vi.doMock('../features/auth/init.js', () => ({ init: vi.fn() }));
+    vi.doMock('../features/currency/index.js', () => ({ init: vi.fn() }));
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: (...args) => createClientMock(...args),
+    }));
+  });
+
+  afterEach(() => {
+    vi.resetModules();
+    document.body.innerHTML = '';
+    delete process.env.VITE_SUPABASE_URL;
+    delete process.env.VITE_SUPABASE_ANON_KEY;
+  });
+
+  it('initializes client when environment variables are set', async () => {
+    process.env.VITE_SUPABASE_URL = 'https://example.supabase.co';
+    process.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    const el = document.createElement('script');
+    el.id = 'smoothr-sdk';
+    el.dataset.storeId = 'store';
+    document.body.appendChild(el);
+
+    await import('../smoothr-sdk.js');
+
+    expect(createClientMock).toHaveBeenCalledWith(
+      'https://example.supabase.co',
+      'anon-key'
+    );
+  });
+
+  it('throws when VITE_SUPABASE_URL is missing', async () => {
+    delete process.env.VITE_SUPABASE_URL;
+    process.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    const el = document.createElement('script');
+    el.id = 'smoothr-sdk';
+    el.dataset.storeId = 'store';
+    document.body.appendChild(el);
+
+    await expect(import('../smoothr-sdk.js')).rejects.toThrow(
+      'VITE_SUPABASE_URL is missing in Cloudflare environment'
+    );
   });
 });
 
