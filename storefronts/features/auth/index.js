@@ -17,6 +17,25 @@ import {
   findMessageContainer
 } from '../../../supabase/authHelpers.js';
 
+// --- Supabase client plumbing (back-compat + tests) ---
+let __supabaseClient;
+let supabase = /** @type any */ (__supabaseClient);
+let ensureSupabaseSessionAuth = async () => {};
+export function setSupabaseClient(client, ensureFn = async () => {}) {
+  __supabaseClient = client;
+  supabase = client;
+  ensureSupabaseSessionAuth = ensureFn;
+}
+// Attempt global discovery so tests that don't call setSupabaseClient() still work.
+if (typeof window !== 'undefined' && !__supabaseClient) {
+  __supabaseClient =
+    window?.smoothr?.supabaseAuth ||
+    window?.Smoothr?.supabaseAuth ||
+    globalThis.supabaseAuth ||
+    globalThis.xc;
+  supabase = __supabaseClient;
+}
+
 const SMOOTHR_CONFIG = getConfig();
 
 let initialized = false;
@@ -53,14 +72,6 @@ function showLoginPopup() {
       })
     );
   }
-}
-
-let supabase;
-let ensureSupabaseSessionAuth = async () => {};
-
-export function setSupabaseClient(client, ensureFn = async () => {}) {
-  supabase = client;
-  ensureSupabaseSessionAuth = ensureFn;
 }
 
 async function login(email, password) {
@@ -434,8 +445,6 @@ const auth = {
 }
 
 export {
-  init,
-  initAuth,
   initPasswordResetConfirmation,
   signInWithGoogle,
   signInWithApple,
