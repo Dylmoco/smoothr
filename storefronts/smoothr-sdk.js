@@ -24,7 +24,12 @@ if (!scriptEl || !storeId) {
       import('./features/config/globalConfig.js')
     ]);
 
-    const config = mergeConfig({ storeId, platform, debug });
+    const initialPlatform = window.Smoothr?.config?.platform;
+    const config = mergeConfig(
+      platform
+        ? { storeId, platform, debug }
+        : { storeId, platform: initialPlatform, debug }
+    );
     if (config.platform === 'webflow-ecom') {
       console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
       config.platform = 'webflow';
@@ -39,9 +44,12 @@ if (!scriptEl || !storeId) {
     let data = fallback;
     if (storeId) {
       try {
-        const res = await fetch(`/api/config?store_id=${storeId}`);
+        const res = await fetch(
+          `https://smoothr-admin.vercel.app/api/config?store_id=${storeId}`
+        );
         if (res.ok) {
-          data = await res.json();
+          const json = await res.json();
+          data = json.data || fallback;
         }
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Failed to fetch store settings', err);
@@ -74,8 +82,7 @@ if (!scriptEl || !storeId) {
 
     try {
       log('Initializing auth feature');
-      const auth = await import('./features/auth/init.js');
-      await auth.init(config);
+      await import('./features/auth/init.js');
     } catch (err) {
       debug && console.warn('[Smoothr SDK] Auth init failed', err);
     }
@@ -96,8 +103,7 @@ if (!scriptEl || !storeId) {
     if (hasCheckoutTrigger) {
       try {
         log('Initializing checkout feature');
-        const { init } = await import('./features/checkout/init.js');
-        await init(config);
+        await import('./features/checkout/init.js');
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Checkout init failed', err);
       }
@@ -108,8 +114,7 @@ if (!scriptEl || !storeId) {
     if (hasCartTrigger) {
       try {
         log('Initializing cart feature');
-        const cart = await import('./features/cart/init.js');
-        await cart.init(config);
+        await import('./features/cart/index.js');
       } catch (err) {
         debug && console.warn('[Smoothr SDK] Cart init failed', err);
       }

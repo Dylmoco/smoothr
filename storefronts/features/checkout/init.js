@@ -21,6 +21,10 @@ import loadScriptOnce from '../../utils/loadScriptOnce.js';
 const el = globalThis.el || (sel => document.querySelector(sel));
 globalThis.el = el;
 
+// Some builds reference a minified helper `rl`. Ensure it exists.
+const rl = globalThis.rl || {};
+globalThis.rl = rl;
+
 let initialized = false;
 
 function forEachPayButton(fn) {
@@ -470,3 +474,11 @@ function handleCheckoutSuccess(resp) {
   if (cfg.successUrl) window.location.href = cfg.successUrl;
   window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: resp }));
 }
+
+export default (async () => {
+  try {
+    await init(window.Smoothr?.config || {});
+  } catch (err) {
+    console.warn('[Smoothr SDK] Checkout initialization failed', err);
+  }
+})();
