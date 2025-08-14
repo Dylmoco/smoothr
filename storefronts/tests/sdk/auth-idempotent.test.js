@@ -68,8 +68,8 @@ beforeEach(() => {
 
 describe('auth init session restoration', () => {
   it('restores session only once', async () => {
-    const mod = await import('../../features/auth/init.js');
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const mod = await import('../../features/auth/init.js');
     await mod.init({ storeId: 's1' });
     await mod.init({ storeId: 's1' });
     expect(getSessionMock).toHaveBeenCalledTimes(1);

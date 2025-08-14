@@ -9,18 +9,22 @@ describe("cart feature loading", () => {
   beforeEach(() => {
     vi.resetModules();
     cartInitMock.mockReset();
-    global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    vi.spyOn(console, "log").mockImplementation(() => {});
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: {} }) })
+    );
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
+    vi.doMock("../../features/auth/init.js", () => ({ default: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
-    vi.doMock("../../features/cart/init.js", () => ({ init: cartInitMock }));
+    vi.doMock("../../features/cart/index.js", () => {
+      cartInitMock();
+      return { __esModule: true };
+    });
   });
 
   afterEach(() => {
     vi.doUnmock("../../features/auth/init.js");
     vi.doUnmock("../../features/currency/index.js");
-    vi.doUnmock("../../features/cart/init.js");
+    vi.doUnmock("../../features/cart/index.js");
     delete globalThis[globalKey];
     vi.restoreAllMocks();
   });
@@ -53,7 +57,7 @@ describe("cart feature loading", () => {
     window.removeEventListener = vi.fn();
     window.Smoothr = {};
     window.smoothr = {};
-    const logSpy = console.log;
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     vi.spyOn(document, 'querySelector').mockReturnValue(null);
     vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);

@@ -11,18 +11,23 @@ describe("checkout DOM trigger", () => {
   beforeEach(() => {
     vi.resetModules();
     checkoutInitMock.mockReset();
-    global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: {} }) })
+    );
     global.console = { log: vi.fn(), warn: vi.fn() };
-    vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
+    vi.doMock("../../features/auth/init.js", () => ({ default: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
-    vi.doMock("../../features/cart/init.js", () => ({ init: vi.fn() }));
-    vi.doMock("../../features/checkout/init.js", () => ({ init: checkoutInitMock }));
+    vi.doMock("../../features/cart/index.js", () => ({ __esModule: true }));
+    vi.doMock("../../features/checkout/init.js", () => {
+      checkoutInitMock();
+      return { __esModule: true };
+    });
   });
 
   afterEach(() => {
     vi.doUnmock("../../features/auth/init.js");
     vi.doUnmock("../../features/currency/index.js");
-    vi.doUnmock("../../features/cart/init.js");
+    vi.doUnmock("../../features/cart/index.js");
     vi.doUnmock("../../features/checkout/init.js");
     delete globalThis[globalKey];
     vi.restoreAllMocks();

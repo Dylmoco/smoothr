@@ -10,19 +10,22 @@ describe("cart DOM trigger", () => {
     vi.resetModules();
     cartInitMock.mockReset();
     global.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: {} }) })
     );
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
+    vi.doMock("../../features/auth/init.js", () => ({ default: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
-    vi.doMock("../../features/cart/init.js", () => ({ init: cartInitMock }));
+    vi.doMock("../../features/cart/index.js", () => {
+      cartInitMock();
+      return { __esModule: true };
+    });
   });
 
   afterEach(() => {
     vi.doUnmock("../../features/auth/init.js");
     vi.doUnmock("../../features/currency/index.js");
-    vi.doUnmock("../../features/cart/init.js");
+    vi.doUnmock("../../features/cart/index.js");
     delete globalThis[globalKey];
     vi.restoreAllMocks();
   });

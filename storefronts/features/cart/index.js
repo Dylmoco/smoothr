@@ -22,6 +22,10 @@ let al =
 globalThis.al = al;
 globalThis.il = globalThis.il || al;
 
+// Some builds expect a minified helper `ll`. Provide a safe fallback.
+const ll = globalThis.ll || {};
+globalThis.ll = ll;
+
 // Ensure the cart storage key exists so JSON.parse does not throw later.
 try {
   if (al && al.getItem(STORAGE_KEY) == null) {
@@ -214,3 +218,11 @@ export async function initCart() {
     }
   }
 }
+
+export default (async () => {
+  try {
+    await initCart();
+  } catch (err) {
+    console.warn('[Smoothr SDK] Cart initialization failed', err);
+  }
+})();

@@ -11,6 +11,10 @@ import { getConfig, mergeConfig } from '../config/globalConfig.js';
 const Rc = globalThis.Rc || {};
 globalThis.Rc = Rc;
 
+// Some environments expect a minified helper `Lc`. Provide a safe fallback.
+const Lc = globalThis.Lc || {};
+globalThis.Lc = Lc;
+
 // Legacy helpers
 const { lookupRedirectUrl, lookupDashboardHomeUrl } = authExports;
 export const storeRedirects = { lookupRedirectUrl, lookupDashboardHomeUrl };
@@ -221,4 +225,12 @@ export async function init(config = {}) {
 }
 
 export const SMOOTHR_CONFIG = getConfig();
+
+export default (async () => {
+  try {
+    await init(window.Smoothr?.config || {});
+  } catch (err) {
+    console.warn('[Smoothr SDK] Auth initialization failed', err);
+  }
+})();
 
