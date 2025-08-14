@@ -57,6 +57,15 @@ try {
     Yc = {};
   }
 
+// Some builds reference a minified helper `Xc`. Provide a safe fallback.
+let Xc;
+try {
+  Xc = globalThis.Xc || {};
+  globalThis.Xc = Xc;
+} catch {
+  Xc = {};
+}
+
 let initialized = false;
 
 function forEachPayButton(fn) {

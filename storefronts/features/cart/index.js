@@ -19,15 +19,21 @@ try {
   const Zc = globalThis.Zc || {};
   globalThis.Zc = Zc;
 
-    // Some builds reference a minified helper `tl`. Provide a safe fallback.
-    const tl = globalThis.tl || {};
-    globalThis.tl = tl;
+  // Some builds reference a minified helper `tl`. Provide a safe fallback.
+  const tl = globalThis.tl || {};
+  globalThis.tl = tl;
+
+  // Some builds reference a minified helper `ol`. Provide a safe fallback.
+  const ol = globalThis.ol || {};
+  globalThis.ol = ol;
 
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ items: [], meta: { lastModified: Date.now() } })
-    );
+    const initValue = JSON.stringify({
+      items: [],
+      meta: { lastModified: Date.now() }
+    });
+    window.localStorage.setItem(STORAGE_KEY, initValue);
+    window.localStorage[STORAGE_KEY] = initValue;
   }
 } catch {
   // ignore DOM/storage errors
