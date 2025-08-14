@@ -48,57 +48,62 @@ const gatewayModules = {
 export async function init(config = {}) {
   if (initialized) return window.Smoothr?.checkout;
 
-  mergeConfig(config);
-  await platformReady();
-
-  const debug = getConfig().debug;
-  if (debug) console.log('[Smoothr] init', config);
-
-  let isSubmitting = false;
-  const { log, warn, err, select, q } = checkoutLogger();
-
-  const publicConfig = await loadPublicConfig(
-    getConfig().storeId,
-    getConfig().supabase
-  );
-  if (publicConfig) {
-    mergeConfig(publicConfig);
-  }
-
-  log('SDK initialized');
-  log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
-
-  let provider;
   try {
-    const cfg = getConfig();
-    provider = resolveGateway(cfg, cfg.settings);
-  } catch (e) {
-    warn('Gateway resolution failed:', e?.message || e);
-    return;
-  }
-  if (!provider) {
-    warn('No active payment gateway resolved. Aborting init.');
-    return;
-  }
-  if (sdkUrls[provider]) {
+    mergeConfig(config);
+    await platformReady();
+
+    const debug = getConfig().debug;
+    if (debug) console.log('[Smoothr] init', config);
+
+    let isSubmitting = false;
+    const { log, warn, err, select, q } = checkoutLogger();
+
+    const publicConfig = await loadPublicConfig(
+      getConfig().storeId,
+      getConfig().supabase
+    );
+    if (publicConfig) {
+      mergeConfig(publicConfig);
+    }
+
+    log('SDK initialized');
+    log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));
+
+    if (!getConfig().supabase && !config.supabase) {
+      warn('Supabase client missing.');
+    }
+
+    let provider;
     try {
-      const timeout = provider === 'stripe' ? 10000 : undefined;
-      await loadScriptOnce(sdkUrls[provider], {
-        timeout,
-        globalVar: sdkGlobals[provider]
-      });
+      const cfg = getConfig();
+      provider = resolveGateway(cfg, cfg.settings);
     } catch (e) {
-      if (getConfig().debug) {
-        const msg =
-          provider === 'stripe'
-            ? '[Smoothr Checkout] Failed to load Stripe SDK'
-            : '[Smoothr Checkout] Failed to load gateway script';
-        console.error(msg, e);
-      }
-      warn('Failed to load gateway SDK:', e?.message || e);
+      warn('Gateway resolution failed:', e?.message || e);
       return;
     }
-  }
+    if (!provider) {
+      warn('No active payment gateway resolved. Aborting init.');
+      return;
+    }
+    if (sdkUrls[provider]) {
+      try {
+        const timeout = provider === 'stripe' ? 10000 : undefined;
+        await loadScriptOnce(sdkUrls[provider], {
+          timeout,
+          globalVar: sdkGlobals[provider]
+        });
+      } catch (e) {
+        if (getConfig().debug) {
+          const msg =
+            provider === 'stripe'
+              ? '[Smoothr Checkout] Failed to load Stripe SDK'
+              : '[Smoothr Checkout] Failed to load gateway script';
+          console.error(msg, e);
+        }
+        warn('Failed to load gateway SDK:', e?.message || e);
+        return;
+      }
+    }
 
   const loadGateway = gatewayModules[provider];
   if (!loadGateway) throw new Error(`Unknown payment gateway: ${provider}`);
@@ -322,6 +327,11 @@ export async function init(config = {}) {
     });
   });
   log('pay button handlers attached');
+  } catch (error) {
+    const debug = getConfig().debug;
+    if (debug) console.warn('[Smoothr Checkout] Initialization failed', error);
+    return {};
+  }
 }
 
 // collects form data, supports billing same-as-shipping

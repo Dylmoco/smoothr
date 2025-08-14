@@ -2,10 +2,12 @@
 import { getConfig } from '../config/globalConfig.js';
 const STORAGE_KEY = 'smoothr_cart';
 
-const { debug } = getConfig();
-const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
-const warn = (...args) => debug && console.warn('[Smoothr Cart]', ...args);
-const err = (...args) => debug && console.error('[Smoothr Cart]', ...args);
+// Resolve the debug flag lazily so that configuration can be loaded
+// before the cart module accesses it. This avoids ReferenceErrors when
+// the module is imported prior to configuration being merged.
+const log = (...args) => getConfig().debug && console.log('[Smoothr Cart]', ...args);
+const warn = (...args) => getConfig().debug && console.warn('[Smoothr Cart]', ...args);
+const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ...args);
 
 function getStorage() {
   if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
