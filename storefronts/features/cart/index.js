@@ -12,7 +12,7 @@ const err = (...args) => getConfig().debug && console.error('[Smoothr Cart]', ..
 // Some builds reference a minified `cl` variable for localStorage access.
 // Define it safely here so imports never throw in environments without
 // localStorage (e.g. server-side rendering or tests).
-const cl =
+let cl =
   globalThis.cl ||
   (typeof window !== 'undefined'
     ? window.localStorage
@@ -150,4 +150,58 @@ export function getTotal() {
     }
   }
   return subtotal < 0 ? 0 : subtotal;
+}
+
+export async function initCart() {
+  const debug =
+    typeof window !== 'undefined' &&
+    window.location?.search?.includes('smoothr-debug=true');
+  try {
+    if (typeof window === 'undefined') return;
+    const Smoothr = (window.Smoothr = window.Smoothr || {});
+    if (!Smoothr.config) {
+      if (debug) {
+        console.groupCollapsed('[Smoothr]');
+        console.error('Smoothr.config is required before initializing the cart');
+        console.groupEnd();
+      }
+      return;
+    }
+
+    try {
+      if (window.localStorage.getItem(STORAGE_KEY) == null) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: [] }));
+      }
+    } catch (e) {
+      if (debug) {
+        console.groupCollapsed('[Smoothr]');
+        console.error('Failed to access localStorage', e);
+        console.groupEnd();
+      }
+    }
+
+    cl = window.localStorage;
+
+    Smoothr.cart = {
+      readCart,
+      getCart,
+      getMeta,
+      setMetaField,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      getSubtotal,
+      applyDiscount,
+      getDiscount,
+      getTotal,
+    };
+    return Smoothr.cart;
+  } catch (e) {
+    if (debug) {
+      console.groupCollapsed('[Smoothr]');
+      console.error('Cart initialization failed', e);
+      console.groupEnd();
+    }
+  }
 }
