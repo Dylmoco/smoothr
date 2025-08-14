@@ -19,8 +19,9 @@ try {
   const Zc = globalThis.Zc || {};
   globalThis.Zc = Zc;
 
-  // Some builds reference a minified helper `tl`. Provide a safe fallback.
-  globalThis.tl = globalThis.tl || {};
+    // Some builds reference a minified helper `tl`. Provide a safe fallback.
+    const tl = globalThis.tl || {};
+    globalThis.tl = tl;
 
   if (typeof window !== 'undefined' && window.localStorage) {
     window.localStorage.setItem(

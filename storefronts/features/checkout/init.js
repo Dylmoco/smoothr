@@ -48,12 +48,14 @@ try {
   Vc = {};
 }
 
-// Some builds reference a minified helper `Yc`. Provide a safe fallback.
-try {
-  globalThis.Yc = globalThis.Yc || {};
-} catch {
-  // ignore global assignment errors
-}
+  // Some builds reference a minified helper `Yc`. Provide a safe fallback.
+  let Yc;
+  try {
+    Yc = globalThis.Yc || {};
+    globalThis.Yc = Yc;
+  } catch {
+    Yc = {};
+  }
 
 let initialized = false;
 
