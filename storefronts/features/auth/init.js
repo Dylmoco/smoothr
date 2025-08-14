@@ -12,6 +12,20 @@ let authClient;
 let initialized = false;
 let sessionReadyPromise;
 
+export function __test_resetAuth() {
+  initialized = false;
+  try {
+    if (typeof window !== 'undefined') {
+      if (window.Smoothr) delete window.Smoothr.auth;
+      if (window.smoothr) {
+        delete window.smoothr.auth;
+        delete window.smoothr.supabaseAuth;
+      }
+      delete window.supabaseAuth;
+    }
+  } catch {}
+}
+
 export async function loadConfig(storeId) {
   console.log('[Smoothr SDK] loadConfig called with storeId:', storeId);
   try {
@@ -100,6 +114,9 @@ export function waitForSessionReady() {
 }
 
 async function init({ config, supabase, adapter } = {}) {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+    initialized = false;
+  }
   if (initialized) return window.Smoothr?.auth;
   authClient = supabase;
 
@@ -227,5 +244,5 @@ async function init({ config, supabase, adapter } = {}) {
 
 }
 
-export { init };
 export default init;
+export { init };

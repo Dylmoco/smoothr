@@ -75,7 +75,16 @@ try {
   vc = {};
 }
 
-let initialized = false;
+let __checkoutInitialized = false;
+export function __test_resetCheckout() {
+  __checkoutInitialized = false;
+  try {
+    if (typeof window !== 'undefined') {
+      if (window.Smoothr) delete window.Smoothr.checkout;
+      if (window.smoothr) delete window.smoothr.checkout;
+    }
+  } catch {}
+}
 
 function forEachPayButton(fn) {
   // TODO: Remove legacy [data-smoothr-pay] support once all projects are migrated.
@@ -105,7 +114,10 @@ const gatewayModules = {
 };
 
 async function init({ config, supabase, adapter } = {}) {
-  if (initialized) return window.Smoothr?.checkout;
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+    __checkoutInitialized = false;
+  }
+  if (__checkoutInitialized) return window.Smoothr?.checkout;
 
   const Sc = (globalThis.Sc = config || {});
   const globalConfig = config || {};
@@ -218,7 +230,7 @@ async function init({ config, supabase, adapter } = {}) {
     ...gateway
   };
 
-  initialized = true;
+  __checkoutInitialized = true;
 
   const checkoutEl = payButtons[0];
   log('checkout trigger found', checkoutEl);
@@ -401,9 +413,6 @@ async function init({ config, supabase, adapter } = {}) {
   }
 }
 
-export { init };
-export default init;
-
 // collects form data, supports billing same-as-shipping
 function collectFormData(fields, emailField) {
   const email = emailField?.value.trim() || '';
@@ -526,4 +535,7 @@ function handleCheckoutSuccess(resp) {
   if (cfg.successUrl) window.location.href = cfg.successUrl;
   window.dispatchEvent(new CustomEvent('smoothr:checkout:success', { detail: resp }));
 }
+
+export default init;
+export { init };
 
