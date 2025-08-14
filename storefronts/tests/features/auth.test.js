@@ -26,10 +26,12 @@ describe('auth feature init', () => {
         getSession: vi.fn().mockResolvedValue({ data: { session: {} } }),
         getSessionFromUrl: vi.fn().mockResolvedValue({}),
         signOut: vi.fn(),
-        onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } }))
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } }
+        }))
       }
     };
-    globalThis.Tc = supabaseMock;
+    globalThis.xc = supabaseMock;
     vi.doMock('../../../supabase/browserClient.js', () => ({
       supabase: supabaseMock,
       ensureSupabaseSessionAuth: vi.fn().mockResolvedValue()

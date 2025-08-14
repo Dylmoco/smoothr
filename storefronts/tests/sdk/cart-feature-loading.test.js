@@ -23,6 +23,7 @@ describe("cart feature loading", () => {
     vi.doUnmock("../../features/currency/index.js");
     vi.doUnmock("../../features/cart/init.js");
     delete globalThis[globalKey];
+    vi.restoreAllMocks();
   });
 
   it.each([
@@ -30,49 +31,41 @@ describe("cart feature loading", () => {
     '[data-smoothr-total]',
     '[data-smoothr-cart]'
   ])("initializes cart when trigger %s exists", async selector => {
-    const scriptEl = { dataset: { storeId: "1" } };
-    global.location = { search: "" };
-    global.window = {
-      location: { search: "" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      Smoothr: {},
-      smoothr: {},
-    };
-    global.document = {
-      readyState: "complete",
-      addEventListener: vi.fn(),
-      querySelectorAll: vi.fn(() => []),
-      querySelector: vi.fn(sel => (sel === selector ? {} : null)),
-      getElementById: vi.fn(() => scriptEl),
-    };
+    const scriptEl = document.createElement('script');
+    scriptEl.dataset.storeId = '1';
+    Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
+    window.addEventListener = vi.fn();
+    window.removeEventListener = vi.fn();
+    window.Smoothr = {};
+    window.smoothr = {};
+    Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
+    vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
+    vi.spyOn(document, 'querySelector').mockImplementation(sel => (sel === selector ? {} : null));
+    vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);
 
     await import("../../smoothr-sdk.js");
+    await flushPromises();
     await flushPromises();
     await flushPromises();
     expect(cartInitMock).toHaveBeenCalled();
   });
 
   it("logs when cart triggers are absent", async () => {
-    const scriptEl = { dataset: { storeId: "1" } };
-    global.location = { search: "?smoothr-debug=true" };
-    global.window = {
-      location: { search: "?smoothr-debug=true" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      Smoothr: {},
-      smoothr: {},
-    };
+    const scriptEl = document.createElement('script');
+    scriptEl.dataset.storeId = '1';
+    Object.defineProperty(window, 'location', { value: { search: '?smoothr-debug=true' }, configurable: true });
+    window.addEventListener = vi.fn();
+    window.removeEventListener = vi.fn();
+    window.Smoothr = {};
+    window.smoothr = {};
     const logSpy = console.log;
-    global.document = {
-      readyState: "complete",
-      addEventListener: vi.fn(),
-      querySelectorAll: vi.fn(() => []),
-      querySelector: vi.fn(() => null),
-      getElementById: vi.fn(() => scriptEl),
-    };
+    Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
+    vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
+    vi.spyOn(document, 'querySelector').mockReturnValue(null);
+    vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);
 
     await import("../../smoothr-sdk.js");
+    await flushPromises();
     await flushPromises();
     await flushPromises();
     expect(cartInitMock).not.toHaveBeenCalled();

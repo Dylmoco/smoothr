@@ -1,5 +1,5 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 vi.mock("../../features/auth/init.js", () => ({
   init: vi.fn(),
@@ -16,21 +16,19 @@ describe("platform detection", () => {
     scriptEl = null;
 
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    global.location = { search: "" };
-    global.window = {
-      location: { search: "" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      Smoothr: {},
-      smoothr: {},
-    };
-    global.document = {
-      readyState: "complete",
-      addEventListener: vi.fn(),
-      querySelectorAll: vi.fn(() => []),
-      querySelector: vi.fn(() => null),
-      getElementById: vi.fn(() => scriptEl),
-    };
+    Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
+    window.addEventListener = vi.fn();
+    window.removeEventListener = vi.fn();
+    window.Smoothr = { config: {} };
+    window.smoothr = {};
+    Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
+    vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
+    vi.spyOn(document, 'querySelector').mockReturnValue(null);
+    vi.spyOn(document, 'getElementById').mockImplementation(() => scriptEl);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   function flushPromises() {
@@ -47,6 +45,7 @@ describe("platform detection", () => {
     await import("../../smoothr-sdk.js");
     await flushPromises();
     await flushPromises();
+    await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("webflow");
   });
 
@@ -60,6 +59,7 @@ describe("platform detection", () => {
     await import("../../smoothr-sdk.js");
     await flushPromises();
     await flushPromises();
+    await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("magento");
   });
 
@@ -71,6 +71,7 @@ describe("platform detection", () => {
     global.document.getElementById.mockReturnValue(scriptEl);
 
     await import("../../smoothr-sdk.js");
+    await flushPromises();
     await flushPromises();
     await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("webflow");

@@ -52,7 +52,7 @@ export async function init(config = {}) {
     // Allow tests or embedders to provide a minified global Supabase client
     mergeConfig({
       ...config,
-      supabase: config.supabase || globalThis.Kc || globalThis.Hc
+      supabase: config.supabase || globalThis.Zc || globalThis.Kc || globalThis.Hc
     });
     await platformReady();
 

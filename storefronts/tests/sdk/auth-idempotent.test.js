@@ -51,12 +51,19 @@ beforeEach(() => {
     dispatchEvent: vi.fn(),
     currentScript: { getAttribute: vi.fn(), dataset: { storeId: 's1' } },
   };
-  globalThis.Tc = {
-    auth: { getSession: getSessionMock, onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })) },
+  globalThis.xc = {
+    auth: {
+      getSession: getSessionMock,
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } }
+      }))
+    },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
-    })),
-  } as any;
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) }))
+      }))
+    }))
+  };
 });
 
 describe('auth init session restoration', () => {

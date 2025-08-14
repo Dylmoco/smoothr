@@ -22,15 +22,15 @@ beforeEach(async () => {
     Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
   );
   global.localStorage = {
-    getItem: vi.fn((key) => store[key] ?? null),
+    getItem: vi.fn(key => store[key] ?? null),
     setItem: vi.fn((key, val) => {
       store[key] = val;
     }),
-    removeItem: vi.fn((key) => {
+    removeItem: vi.fn(key => {
       delete store[key];
-    }),
+    })
   };
-  globalThis.cl = global.localStorage;
+  globalThis.il = global.localStorage;
   global.window = {
     dispatchEvent: vi.fn((ev) => events.push(ev)),
     addEventListener: vi.fn(),
@@ -61,7 +61,7 @@ beforeEach(async () => {
       dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
     })),
   };
-  store["smoothr_cart"] = JSON.stringify({ items: [] });
+  store["smoothr_cart"] = JSON.stringify({ items: [], meta: { lastModified: Date.now() } });
   await import("../../features/auth/init.js");
   await auth.init({
     storeId: "00000000-0000-0000-0000-000000000000",
@@ -79,6 +79,7 @@ describe("cart module", () => {
     const stored = JSON.parse(store["smoothr_cart"]);
     expect(stored.items[0].quantity).toBe(2);
     expect(cart.getSubtotal()).toBe(200);
+    expect(stored.meta).toHaveProperty("lastModified");
     expect(events.length).toBe(2);
   });
 
@@ -104,5 +105,7 @@ describe("cart module", () => {
     cart.addItem({ product_id: "1", name: "A", price: 100, quantity: 1 });
     cart.clearCart();
     expect(cart.getCart().items.length).toBe(0);
+    const stored = JSON.parse(store["smoothr_cart"]);
+    expect(stored).toEqual({ items: [], meta: { lastModified: expect.any(Number) } });
   });
 });
