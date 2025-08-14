@@ -1,3 +1,8 @@
+// Forward the cart initializer for callers that import the barrel
+export { init } from './init.js';
+export { init as default } from './init.js';
+export { init as initCart } from './init.js';
+
 const STORAGE_KEY = 'smoothr_cart';
 
 const getDebug = () => window.Smoothr?.config?.debug;

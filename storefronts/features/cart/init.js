@@ -50,3 +50,5 @@ export async function init({ config, supabase, adapter } = {}) {
   return typeof window !== 'undefined' ? window.Smoothr.cart : undefined;
 }
 
+export default init;
+export { init };
