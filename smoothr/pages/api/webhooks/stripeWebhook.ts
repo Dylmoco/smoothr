@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
-import { supabase } from 'shared/supabase/client';
+import { createSupabaseClient } from 'shared/supabase/client';
+
+process.env.SUPABASE_URL ||= process.env.NEXT_PUBLIC_SUPABASE_URL;
+process.env.SUPABASE_ANON_KEY ||= process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createSupabaseClient();
 
 export const config = {
   api: {

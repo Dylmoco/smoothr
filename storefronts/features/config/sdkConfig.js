@@ -1,15 +1,14 @@
-import { supabase } from '../../../shared/supabase/client.ts';
 import { getConfig } from './globalConfig.js';
 
 const debug = typeof window !== 'undefined' && getConfig().debug;
 const log = (...args) => debug && console.log('[Smoothr Config]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Config]', ...args);
 
-export async function loadPublicConfig(storeId) {
-  if (!storeId) return null;
+export async function loadPublicConfig(storeId, client) {
+  if (!storeId || !client) return null;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('v_public_store')
       .select(
         'store_id,active_payment_gateway,publishable_key,base_currency,public_settings'

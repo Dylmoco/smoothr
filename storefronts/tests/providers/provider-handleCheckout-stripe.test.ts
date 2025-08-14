@@ -28,7 +28,7 @@ vi.mock('../../../shared/checkout/utils/dedupeOrders.ts', () => ({
   dedupeOrders: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock('../../../shared/supabase/client', () => {
+function supabaseMockFactory() {
   const chain = (result: any = { data: null, error: null }) => {
     const obj: any = { ...result };
     obj.eq = vi.fn(() => obj);
@@ -46,6 +46,18 @@ vi.mock('../../../shared/supabase/client', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({ data: [{ id: 'store-1' }], error: null })),
+          })),
+        };
+      }
+      if (table === 'v_public_store') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(async () => ({
+                data: { active_payment_gateway: 'stripe' },
+                error: null,
+              })),
+            })),
           })),
         };
       }
@@ -121,7 +133,10 @@ vi.mock('../../../shared/supabase/client', () => {
     },
   };
   return { supabase: client, createSupabaseClient: () => client, testMarker: '✅ supabase client loaded' };
-});
+}
+
+vi.mock('../../../shared/supabase/client', supabaseMockFactory);
+vi.mock('shared/supabase/client', supabaseMockFactory);
 
 let mockEvent: any;
 vi.mock('stripe', () => {

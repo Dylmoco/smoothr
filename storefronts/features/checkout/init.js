@@ -57,7 +57,10 @@ export async function init(config = {}) {
   let isSubmitting = false;
   const { log, warn, err, select, q } = checkoutLogger();
 
-  const publicConfig = await loadPublicConfig(getConfig().storeId);
+  const publicConfig = await loadPublicConfig(
+    getConfig().storeId,
+    getConfig().supabase
+  );
   if (publicConfig) {
     mergeConfig(publicConfig);
   }

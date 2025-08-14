@@ -2,13 +2,7 @@ import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 
 let supabase: any;
 let loadPublicConfig: any;
-let createClientMock: any;
 let builder: any;
-
-async function loadModules() {
-  supabase = (await import('../../shared/supabase/client.ts')).supabase;
-  ({ loadPublicConfig } = await import('../features/config/sdkConfig.js'));
-}
 
 describe('loadPublicConfig', () => {
   beforeEach(async () => {
@@ -18,15 +12,20 @@ describe('loadPublicConfig', () => {
       maybeSingle: vi.fn(),
     };
 
-    createClientMock = vi.fn(() => ({
+    supabase = {
       from: (table: string) => {
         if (table === 'v_public_store') return builder;
         throw new Error(`Unexpected table ${table}`);
       },
+    };
+
+    vi.mock('../../shared/supabase/client.ts', () => ({
+      createSupabaseClient: vi.fn(() => supabase),
+      supabase,
+      testMarker: '✅ supabase client loaded',
     }));
 
-    vi.mock('@supabase/supabase-js', () => ({ createClient: createClientMock }));
-    await loadModules();
+    ({ loadPublicConfig } = await import('../features/config/sdkConfig.js'));
   });
 
   afterEach(() => {
@@ -45,7 +44,7 @@ describe('loadPublicConfig', () => {
     };
     builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
-    const config = await loadPublicConfig(storeId);
+    const config = await loadPublicConfig(storeId, supabase);
 
     expect(config).toEqual(row);
     expect(builder.select).toHaveBeenCalledWith(
@@ -65,7 +64,7 @@ describe('loadPublicConfig', () => {
     };
     builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
-    const config = await loadPublicConfig(storeId);
+    const config = await loadPublicConfig(storeId, supabase);
 
     expect(config.active_payment_gateway).toBeNull();
     expect(config.public_settings).toEqual({});
@@ -78,7 +77,7 @@ describe('loadPublicConfig', () => {
       error: { status: 500, code: 'PGRST500', message: 'failed' },
     });
 
-    const config = await loadPublicConfig(storeId);
+    const config = await loadPublicConfig(storeId, supabase);
 
     expect(config).toEqual({ public_settings: {}, active_payment_gateway: null });
   });

@@ -17,8 +17,11 @@ vi.mock('../../features/auth/index.js', () => {
 });
 
 let from;
-vi.mock('../../../supabase/browserClient.js', () => {
-  const ensureSupabaseSessionAuth = vi.fn().mockResolvedValue();
+let supabase;
+
+beforeEach(() => {
+  vi.resetModules();
+
   const maybeSingle = vi.fn(async () => ({
     data: { api_base: 'https://example.com' },
     error: null,
@@ -26,12 +29,7 @@ vi.mock('../../../supabase/browserClient.js', () => {
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   from = vi.fn(() => ({ select }));
-  const client = { from };
-  return { supabase: client, default: client, ensureSupabaseSessionAuth };
-});
-
-beforeEach(() => {
-  vi.resetModules();
+  supabase = { from };
 
   global.window = {
     SMOOTHR_CONFIG: { storeId: '00000000-0000-0000-0000-000000000000' },
@@ -87,7 +85,8 @@ describe('loadConfig api_base mapping', () => {
       '../../features/config/globalConfig.js'
     );
     const data = await loadPublicConfig(
-      '00000000-0000-0000-0000-000000000000'
+      '00000000-0000-0000-0000-000000000000',
+      supabase
     );
     const updates = {};
     for (const [key, value] of Object.entries(data || {})) {
