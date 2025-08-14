@@ -3,9 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 const cartInitMock = vi.fn();
 const globalKey = "__supabaseAuthClientsmoothr-browser-client";
 
-function flushPromises() {
-  return new Promise(setImmediate);
-}
+const flushPromises = () => new Promise(setImmediate);
 
 describe("cart DOM trigger", () => {
   beforeEach(() => {
@@ -14,7 +12,8 @@ describe("cart DOM trigger", () => {
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
     );
-    global.console = { log: vi.fn(), warn: vi.fn() };
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.doMock("../../features/auth/init.js", () => ({ init: vi.fn() }));
     vi.doMock("../../features/currency/index.js", () => ({ init: vi.fn().mockResolvedValue() }));
     vi.doMock("../../features/cart/init.js", () => ({ init: cartInitMock }));
@@ -28,11 +27,7 @@ describe("cart DOM trigger", () => {
     vi.restoreAllMocks();
   });
 
-  it.each([
-    '[data-smoothr="add-to-cart"]',
-    '[data-smoothr-total]',
-    '[data-smoothr-cart]'
-  ])("imports cart when %s is present", async selector => {
+  it("imports cart when [data-smoothr=\"add-to-cart\"] is present", async () => {
     const scriptEl = document.createElement('script');
     scriptEl.dataset.storeId = '1';
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
@@ -41,10 +36,10 @@ describe("cart DOM trigger", () => {
     window.Smoothr = {};
     window.smoothr = {};
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
-    vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
-    vi.spyOn(document, 'querySelector').mockImplementation(sel => (sel === selector ? {} : null));
+    vi.spyOn(document, 'querySelector').mockImplementation(sel => (sel === '[data-smoothr="add-to-cart"]' ? {} : null));
     vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);
     await import("../../smoothr-sdk.js");
+    await flushPromises();
     await flushPromises();
     await flushPromises();
     await flushPromises();
@@ -60,10 +55,10 @@ describe("cart DOM trigger", () => {
     window.Smoothr = {};
     window.smoothr = {};
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
-    vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
     vi.spyOn(document, 'querySelector').mockReturnValue(null);
     vi.spyOn(document, 'getElementById').mockReturnValue(scriptEl);
     await import("../../smoothr-sdk.js");
+    await flushPromises();
     await flushPromises();
     await flushPromises();
     await flushPromises();

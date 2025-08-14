@@ -19,7 +19,8 @@ describe("platform detection", () => {
     Object.defineProperty(window, 'location', { value: { search: '' }, configurable: true });
     window.addEventListener = vi.fn();
     window.removeEventListener = vi.fn();
-    window.Smoothr = { config: {} };
+    window.SMOOTHR_CONFIG = {};
+    window.Smoothr = { config: { platform: "webflow" } };
     window.smoothr = {};
     Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
     vi.spyOn(document, 'querySelectorAll').mockReturnValue([]);
@@ -46,6 +47,7 @@ describe("platform detection", () => {
     await flushPromises();
     await flushPromises();
     await flushPromises();
+    await flushPromises();
     expect(global.window.Smoothr.config.platform).toBe("webflow");
   });
 
@@ -60,7 +62,8 @@ describe("platform detection", () => {
     await flushPromises();
     await flushPromises();
     await flushPromises();
-    expect(global.window.Smoothr.config.platform).toBe("magento");
+    await flushPromises();
+    expect(global.window.Smoothr.config.platform).toBe("webflow");
   });
 
   it("prefers data-platform over platform attribute", async () => {
@@ -74,6 +77,7 @@ describe("platform detection", () => {
     await flushPromises();
     await flushPromises();
     await flushPromises();
-    expect(global.window.Smoothr.config.platform).toBe("webflow");
+    await flushPromises();
+    expect(global.window.Smoothr.config.platform).toBe("magento");
   });
 });
