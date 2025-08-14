@@ -1,5 +1,6 @@
-import { mergeConfig } from './features/config/globalConfig.js';
-import { loadPublicConfig } from './features/config/sdkConfig.js';
+// Only the Supabase client is imported up front to avoid circular
+// dependencies during feature loading. Configuration helpers and
+// feature modules are loaded dynamically after the client is created.
 import { createClient } from '@supabase/supabase-js';
 
 // Ensure legacy global currency helper exists
@@ -13,6 +14,15 @@ const platform =
   scriptEl?.dataset?.platform || scriptEl?.getAttribute?.('platform') || null;
 const debug = new URLSearchParams(window.location.search).has('smoothr-debug');
 
+const url = process.env.VITE_SUPABASE_URL;
+if (!url) {
+  throw new Error('VITE_SUPABASE_URL is missing in Cloudflare environment');
+}
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+if (!anonKey) {
+  throw new Error('VITE_SUPABASE_ANON_KEY is missing in Cloudflare environment');
+}
+
 if (!scriptEl || !storeId) {
   if (debug) {
     console.warn(
@@ -22,30 +32,28 @@ if (!scriptEl || !storeId) {
     );
   }
 } else {
-  const url = process.env.VITE_SUPABASE_URL;
-  if (!url) {
-    throw new Error('VITE_SUPABASE_URL is missing in Cloudflare environment');
-  }
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  if (!anonKey) {
-    throw new Error('VITE_SUPABASE_ANON_KEY is missing in Cloudflare environment');
-  }
-
-  const supabase = createClient(url, anonKey);
-
-  const config = mergeConfig({ storeId, platform, debug, supabase });
-  if (config.platform === 'webflow-ecom') {
-    console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
-    config.platform = 'webflow';
-  }
-  const Smoothr = (window.Smoothr = window.Smoothr || {});
-  window.smoothr = window.smoothr || Smoothr;
-  Smoothr.config = config;
-
-  const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
-  log('Config initialized', config);
-
   (async () => {
+    const configModsPromise = Promise.all([
+      import('./features/config/globalConfig.js'),
+      import('./features/config/sdkConfig.js')
+    ]);
+
+    const supabase = createClient(url, anonKey);
+
+    const [{ mergeConfig }, { loadPublicConfig }] = await configModsPromise;
+
+    const config = mergeConfig({ storeId, platform, debug, supabase });
+    if (config.platform === 'webflow-ecom') {
+      console.warn('[Smoothr] Invalid platform "webflow-ecom" — defaulting to "webflow"');
+      config.platform = 'webflow';
+    }
+    const Smoothr = (window.Smoothr = window.Smoothr || {});
+    window.smoothr = window.smoothr || Smoothr;
+    Smoothr.config = config;
+
+    const log = (...args) => debug && console.log('[Smoothr SDK]', ...args);
+    log('Config initialized', config);
+
     if (storeId) {
       try {
         log('Fetching store settings');

@@ -120,78 +120,92 @@ export function waitForSessionReady() {
 
 export async function init(config = {}) {
   if (initialized) return window.Smoothr?.auth;
-
-  const script =
-    typeof document !== 'undefined'
-      ? document.currentScript || document.getElementById('smoothr-sdk')
-      : null;
-  const storeId =
-    config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
-
-  mergeConfig({ ...config, storeId });
-
-  if (!storeId) {
-    console.warn(
-      '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
-    );
+  if (!authClient) {
+    console.warn('[Smoothr SDK] Supabase client unavailable - skipping auth init');
+    return {};
   }
-
-  if (
-    typeof window !== 'undefined' &&
-    window.location?.hash?.includes('access_token')
-  ) {
-    const { error } = await authClient.auth.getSessionFromUrl({
-      storeSession: true
-    });
-    if (error) {
-      console.warn('[Smoothr SDK] Error parsing session from URL:', error);
-    }
-  }
-
-  await waitForSessionReady();
 
   try {
-    await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');
-  } catch (err) {
-    if (
-      typeof process !== 'undefined' &&
-      process.env.NODE_ENV === 'test'
-    ) {
-      console.log('[Smoothr SDK] Test environment: Ignoring error:', err.message);
-    } else {
+    const script =
+      typeof document !== 'undefined'
+        ? document.currentScript || document.getElementById('smoothr-sdk')
+        : null;
+    const storeId =
+      config.storeId || script?.getAttribute?.('data-store-id') || script?.dataset?.storeId;
+
+    mergeConfig({ ...config, storeId });
+
+    if (!storeId) {
       console.warn(
-        '[Smoothr SDK] Failed to load config:',
-        err?.message || err
+        '[Smoothr SDK] No storeId found — auth metadata will be incomplete'
       );
     }
+
+    if (
+      typeof window !== 'undefined' &&
+      window.location?.hash?.includes('access_token')
+    ) {
+      const { error } = await authClient.auth.getSessionFromUrl({
+        storeSession: true
+      });
+      if (error) {
+        console.warn('[Smoothr SDK] Error parsing session from URL:', error);
+      }
+    }
+
+    await waitForSessionReady();
+
+    try {
+      await loadConfig(storeId || '00000000-0000-0000-0000-000000000000');
+    } catch (err) {
+      if (
+        typeof process !== 'undefined' &&
+        process.env.NODE_ENV === 'test'
+      ) {
+        console.log('[Smoothr SDK] Test environment: Ignoring error:', err.message);
+      } else {
+        console.warn(
+          '[Smoothr SDK] Failed to load config:',
+          err?.message || err
+        );
+      }
+    }
+
+    const cfg = getConfig();
+    if (cfg.baseCurrency) currency.setBaseCurrency(cfg.baseCurrency);
+    if (cfg.rates) currency.updateRates(cfg.rates);
+
+    await domReady();
+
+    await authInit(config);
+
+    const authAPI = {
+      login: authModule.login,
+      signup: authModule.signup,
+      logout: authModule.logout || authModule.signOut,
+      getSession: authModule.getSession || (() => authClient.auth.getSession())
+    };
+
+    if (typeof window !== 'undefined') {
+      window.Smoothr = window.Smoothr || {};
+      window.Smoothr.auth = authAPI;
+      window.smoothr = window.smoothr || window.Smoothr;
+      window.smoothr.auth = authAPI;
+      window.smoothr.supabaseAuth = authClient;
+      window.supabaseAuth = authClient;
+    }
+
+    initialized = true;
+    return authAPI;
+  } catch (error) {
+    console.warn('[Smoothr SDK] Auth initialization failed', error);
+    return {
+      login: authModule.login,
+      signup: authModule.signup,
+      logout: authModule.logout || authModule.signOut,
+      getSession: authModule.getSession || (() => authClient.auth.getSession())
+    };
   }
-
-  const cfg = getConfig();
-  if (cfg.baseCurrency) currency.setBaseCurrency(cfg.baseCurrency);
-  if (cfg.rates) currency.updateRates(cfg.rates);
-
-  await domReady();
-
-  await authInit(config);
-
-  const authAPI = {
-    login: authModule.login,
-    signup: authModule.signup,
-    logout: authModule.logout || authModule.signOut,
-    getSession: authModule.getSession || (() => authClient.auth.getSession())
-  };
-
-  if (typeof window !== 'undefined') {
-    window.Smoothr = window.Smoothr || {};
-    window.Smoothr.auth = authAPI;
-    window.smoothr = window.smoothr || window.Smoothr;
-    window.smoothr.auth = authAPI;
-    window.smoothr.supabaseAuth = authClient;
-    window.supabaseAuth = authClient;
-  }
-
-  initialized = true;
-  return authAPI;
 }
 
 export const SMOOTHR_CONFIG = getConfig();
