@@ -22,6 +22,8 @@ const getSessionMock = vi.fn().mockResolvedValue({
   data: { session: {} },
 });
 
+let client;
+
 vi.mock('../../../supabase/browserClient.js', () => ({
   supabase: {
     auth: { getSession: getSessionMock },
@@ -65,6 +67,7 @@ beforeEach(async () => {
     }))
   };
   const mod = await import('../../features/auth/init.js');
+  client = await mod.__test_tryImportClient();
   mod.__test_resetAuth();
 });
 
@@ -72,8 +75,8 @@ describe('auth init session restoration', () => {
   it('restores session only once', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const mod = await import('../../features/auth/init.js');
-    await mod.init({ storeId: 's1' });
-    await mod.init({ storeId: 's1' });
+    await mod.init({ storeId: 's1', supabase: client });
+    await mod.init({ storeId: 's1', supabase: client });
     expect(getSessionMock).toHaveBeenCalledTimes(1);
     expect(logSpy.mock.calls.filter((c) => c[0] === '[Smoothr] Auth restored').length).toBe(1);
   });
