@@ -85,6 +85,7 @@ describe("signup flow", () => {
       location: { href: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      SMOOTHR_CONFIG: { storeId: config.storeId },
     };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
@@ -104,7 +105,7 @@ describe("signup flow", () => {
 
   it("signs up and redirects on success", async () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    await auth.init(config);
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
@@ -112,14 +113,14 @@ describe("signup flow", () => {
     expect(signUpMock).toHaveBeenCalledWith({
       email: "test@example.com",
       password: "Password1",
-      options: { data: { store_id: globalThis.SMOOTHR_CONFIG.storeId } },
+      options: { data: { store_id: config.storeId } },
     });
     expect(global.document.dispatchEvent).toHaveBeenCalled();
   });
 
   it("does nothing on signup failure", async () => {
     signUpMock.mockResolvedValue({ data: null, error: new Error("bad") });
-    await auth.init(config);
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
@@ -130,7 +131,7 @@ describe("signup flow", () => {
 
   it("validates email and password", async () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    await auth.init(config);
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     emailValue = "bademail";
@@ -152,7 +153,7 @@ describe("signup flow", () => {
   it("sets window.Smoothr.auth.user on success", async () => {
     const user = { id: "1" };
     signUpMock.mockResolvedValue({ data: { user }, error: null });
-    await auth.init(config);
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
