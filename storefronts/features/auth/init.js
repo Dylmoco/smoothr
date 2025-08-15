@@ -11,6 +11,8 @@ export let clickHandler = () => {};
 export let googleClickHandler = () => {};
 export let appleClickHandler = () => {};
 export let passwordResetClickHandler = () => {};
+export let signOutHandler = () => {};
+export let docClickHandler = () => {};
 
 // ---- Supabase client plumbings ----
 let _injectedClient = null;
@@ -77,6 +79,8 @@ export async function init(options = {}) {
     googleClickHandler = () => {};
     appleClickHandler = () => {};
     passwordResetClickHandler = () => {};
+    signOutHandler = () => {};
+    docClickHandler = () => {};
     mutationCallback = () => {};
     onAuthStateChangeHandler = () => {};
 
@@ -173,6 +177,24 @@ export async function init(options = {}) {
       try { await c.auth.resetPasswordForEmail?.(email); } catch {}
     };
 
+    signOutHandler = async (e) => {
+      try { e?.preventDefault?.(); } catch {}
+      const c = resolveSupabase();
+      try { await c?.auth?.signOut?.(); } catch {}
+      try { onAuthStateChangeHandler('SIGNED_OUT'); } catch {}
+    };
+
+    docClickHandler = (e) => {
+      try { e?.preventDefault?.(); } catch {}
+      const el = e?.target?.closest?.('[data-smoothr="account-access"],[data-smoothr-account-access]');
+      if (!el) return;
+      const ev = typeof w.CustomEvent === 'function'
+        ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } })
+        : { type: 'smoothr:open-auth', detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } };
+      w.dispatchEvent?.(ev);
+    };
+    w.document?.addEventListener?.('click', docClickHandler);
+
     // Bind listeners if the test attaches elements to the DOM then calls mutationCallback
     const _bound = new WeakSet();
     const bindAuthListeners = () => {
@@ -191,6 +213,7 @@ export async function init(options = {}) {
       attach('[data-smoothr-google],[data-smoothr="google"]', googleClickHandler, 'click');
       attach('[data-smoothr-apple],[data-smoothr="apple"]', appleClickHandler, 'click');
       attach('[data-smoothr-password-reset],[data-smoothr="password-reset"]', passwordResetClickHandler, 'click');
+      attach('[data-smoothr-sign-out],[data-smoothr="sign-out"]', signOutHandler, 'click');
       attach('[data-smoothr-account-access],[data-smoothr="account-access"]', clickHandler, 'click');
     };
     mutationCallback = () => { try { bindAuthListeners(); } catch {} };

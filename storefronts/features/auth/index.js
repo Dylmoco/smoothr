@@ -11,7 +11,8 @@ export {
   clickHandler,
   googleClickHandler,
   appleClickHandler,
-  passwordResetClickHandler,
-  mutationCallback,
+  signOutHandler,
+  docClickHandler,
   onAuthStateChangeHandler,
+  mutationCallback,
 } from './init.js';
