@@ -1,29 +1,23 @@
 // Stable barrel for the auth feature — no DOM work at import time.
-// Exposes a default callable init, a named init, a Supabase injector/resolver,
-// and test-visible hook functions that start as no-ops.
+// Simply re-export everything from init.js and provide a callable default.
 
-let _injectedClient = null;
+export {
+  default as init,
+  initPasswordResetConfirmation,
+  setSupabaseClient,
+  resolveSupabase,
+  onAuthStateChangeHandler,
+  mutationCallback,
+  clickHandler,
+  googleClickHandler,
+  appleClickHandler,
+  passwordResetClickHandler,
+  normalizeDomain,
+  lookupRedirectUrl,
+  lookupDashboardHomeUrl,
+} from './init.js';
 
-// Test-visible hooks (replaced by init at runtime)
-export let onAuthStateChangeHandler = () => {};
-export let mutationCallback = () => {};
-export let clickHandler = () => {};
-export let googleClickHandler = () => {};
-export let appleClickHandler = () => {};
-export let passwordResetClickHandler = () => {};
-
-// Resolve a Supabase client from common places (Vitest-friendly)
-export const resolveSupabase = () =>
-  (globalThis?.window?.Smoothr?.auth?.client) ??
-  _injectedClient ??
-  globalThis?.supabase ??
-  null;
-
-// Allow init() to inject a client (mocks can assert this was called)
-export const setSupabaseClient = (c) => { _injectedClient = c; };
-
-// Re-export real initializer and also provide a callable default.
-export { default as init, initPasswordResetConfirmation } from './init.js';
+// Barrel default is a callable init
 import init from './init.js';
 const callable = (opts) => init(opts);
 export default callable;
