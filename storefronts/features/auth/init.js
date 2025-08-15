@@ -140,73 +140,136 @@ export async function init(options = {}) {
 
     try { client?.auth?.onAuthStateChange?.(onAuthStateChangeHandler); } catch {}
 
+    const emailRE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const strong = p => /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8;
+
     clickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      const u = w.Smoothr?.auth?.user?.value;
-      if (u) {
-        const to = await lookupDashboardHomeUrl();
-        if (to && w.location) w.location.href = to;
-      } else {
-        // Open auth modal
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:open-auth')
-          : { type: 'smoothr:open-auth' };
-        w.document?.dispatchEvent?.(ev);
+      const el = e?.target?.closest?.('[data-smoothr]');
+      const action = el?.getAttribute?.('data-smoothr');
+      const form = el?.closest?.('form[data-smoothr="auth-form"]');
+      const c = resolveSupabase();
+      if (!action || !c?.auth) return;
+      if (action === 'login') {
+        const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
+        const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
+        if (!emailRE.test(email)) return;
+        const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
+        if (error || !data?.user) return;
+        w.Smoothr.auth.user.value = data.user;
+        await c.auth.getSession?.();
+        w.document?.dispatchEvent?.(new w.CustomEvent('smoothr:login'));
+        return;
+      }
+      if (action === 'signup') {
+        const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
+        const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
+        const confirm = form?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
+        if (!emailRE.test(email) || !strong(pwd) || pwd !== confirm) return;
+        const { data, error } = await c.auth.signUp({
+          email,
+          password: pwd,
+          options: { data: { store_id: w.SMOOTHR_CONFIG?.storeId } },
+        });
+        if (error || !data?.user) return;
+        w.Smoothr.auth.user.value = data.user;
+        await c.auth.getSession?.();
+        w.document?.dispatchEvent?.(new w.CustomEvent('smoothr:login'));
+        return;
+      }
+      if (action === 'password-reset') {
+        const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
+        const successEl = form?.querySelector('[data-smoothr-success]');
+        const errorEl = form?.querySelector('[data-smoothr-error]');
+        try {
+          const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: w.location?.origin || '' });
+          if (error) throw error;
+          if (successEl) {
+            successEl.textContent = 'Check your email for a reset link.';
+            successEl.removeAttribute?.('hidden');
+            successEl.style && (successEl.style.display = '');
+          }
+          if (errorEl) errorEl.textContent = '';
+          w.alert?.('Check your email for a reset link.');
+        } catch (err) {
+          if (errorEl) {
+            errorEl.textContent = err?.message || String(err);
+            errorEl.removeAttribute?.('hidden');
+            errorEl.style && (errorEl.style.display = '');
+          }
+          w.alert?.(err?.message || String(err));
+        }
+        return;
+      }
+      if (action === 'password-reset-confirm') {
+        const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
+        const confirm = form?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
+        if (!strong(pwd) || pwd !== confirm) return;
+        try {
+          if (_prSession) await c.auth.setSession(_prSession);
+          const { data, error } = await c.auth.updateUser({ password: pwd });
+          if (error) throw error;
+          w.Smoothr.auth.user.value = data?.user ?? null;
+          w.alert?.('Password updated');
+          if (_prRedirect && w.location) w.location.href = _prRedirect;
+        } catch (err) {
+          w.alert?.(err?.message || String(err));
+        }
+        return;
       }
     };
 
     googleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      const c = resolveSupabase();
-      try {
-        if (c?.auth?.signInWithOAuth) {
-          await c.auth.signInWithOAuth({ provider: 'google' });
-        } else {
-          await c?.auth?.signIn?.({ provider: 'google' });
-        }
-      } catch {}
+      globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
+      await resolveSupabase()?.auth?.signInWithOAuth?.({
+        provider: 'google',
+        options: { redirectTo: w.location?.origin || '' },
+      });
     };
 
     appleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      const c = resolveSupabase();
-      try {
-        if (c?.auth?.signInWithOAuth) {
-          await c.auth.signInWithOAuth({ provider: 'apple' });
-        } else {
-          await c?.auth?.signIn?.({ provider: 'apple' });
-        }
-      } catch {}
+      globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
+      await resolveSupabase()?.auth?.signInWithOAuth?.({
+        provider: 'apple',
+        options: { redirectTo: w.location?.origin || '' },
+      });
     };
 
     signOutHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      const c = resolveSupabase();
-      try { await c?.auth?.signOut?.(); } catch {}
-      try { onAuthStateChangeHandler('SIGNED_OUT'); } catch {}
+      await resolveSupabase()?.auth?.signOut?.();
+      const authState = w.Smoothr?.auth;
+      if (authState) authState.user.value = null;
     };
 
-    docClickHandler = (e) => {
-      try { e?.preventDefault?.(); } catch {}
-      const el = e?.target?.closest?.('[data-smoothr="account-access"],[data-smoothr-account-access]');
-      if (!el) return;
-      const ev = typeof w.CustomEvent === 'function'
-        ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } })
-        : { type: 'smoothr:open-auth', detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } };
-      w.dispatchEvent?.(ev);
+    docClickHandler = async (e) => {
+      const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
+      if (!trigger) return;
+      try { e.preventDefault(); } catch {}
+      const user = w.Smoothr?.auth?.user?.value;
+      if (user) {
+        const to = await lookupDashboardHomeUrl();
+        if (to && w.location) w.location.href = to;
+      } else {
+        const ev = new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } });
+        w.dispatchEvent?.(ev);
+      }
     };
 
-    mutationCallback = () => { try { bindAuthElements(w.document); } catch {} };
+    mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
 
     // Observe DOM for dynamically added auth elements and allow manual binding
     try {
       const Observer = w.MutationObserver || globalThis.MutationObserver;
+      const doc = w.document || globalThis.document;
       if (typeof Observer === 'function') {
         const mo = new Observer(mutationCallback);
-        mo.observe(w.document || w, { childList: true, subtree: true });
+        mo.observe(doc || w, { childList: true, subtree: true });
       }
-      w.document?.addEventListener?.('DOMContentLoaded', mutationCallback);
-      w.document?.addEventListener?.('click', docClickHandler);
+      doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
+      doc?.addEventListener?.('click', docClickHandler);
     } catch {}
     try { mutationCallback(); } catch {}
 
