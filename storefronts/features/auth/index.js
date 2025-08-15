@@ -21,4 +21,3 @@ export {
   // optional flow
   initPasswordResetConfirmation,
 } from './init.js';
-
