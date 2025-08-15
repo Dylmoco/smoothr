@@ -16,21 +16,25 @@ export let docClickHandler = () => {};
 const _bound = new WeakSet();
 function bindAuthElements(root = globalThis.document) {
   if (!root?.querySelectorAll) return;
-  const attach = (sel, handler) => {
-    root.querySelectorAll(sel).forEach(el => {
-      if (!_bound.has(el) && typeof el.addEventListener === 'function') {
-        el.addEventListener('click', handler);
-        _bound.add(el);
-      }
-    });
+  const attach = (el, handler) => {
+    if (!_bound.has(el) && typeof el.addEventListener === 'function') {
+      el.addEventListener('click', handler);
+      _bound.add(el);
+    }
   };
-  attach('[data-smoothr="login"]', clickHandler);
-  attach('[data-smoothr="signup"]', clickHandler);
-  attach('[data-smoothr="password-reset"]', clickHandler);
-  attach('[data-smoothr="password-reset-confirm"]', clickHandler);
-  attach('[data-smoothr="login-google"]', googleClickHandler);
-  attach('[data-smoothr="login-apple"]', appleClickHandler);
-  attach('[data-smoothr="sign-out"]', signOutHandler);
+  root.querySelectorAll('[data-smoothr="login"]').forEach(el => attach(el, clickHandler));
+  root.querySelectorAll('[data-smoothr="password-reset-confirm"]').forEach(el => attach(el, clickHandler));
+  root
+    .querySelectorAll('[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]')
+    .forEach(el => {
+      const action = el.getAttribute('data-smoothr');
+      const handler =
+        action === 'login-google' ? googleClickHandler :
+        action === 'login-apple' ? appleClickHandler :
+        clickHandler;
+      attach(el, handler);
+    });
+  root.querySelectorAll('[data-smoothr="sign-out"]').forEach(el => attach(el, signOutHandler));
 }
 
 // ---- Supabase client plumbings ----
