@@ -2,78 +2,10 @@
 
 import bindCardInputs from './utils/inputFormatters.js';
 import checkoutLogger from './utils/checkoutLogger.js';
-import resolveGateway from './utils/resolveGateway.js';
-import collectFormFields from './utils/collectFormFields.js';
-import constructPayload from './utils/constructPayload.js';
-import gatewayDispatcher from './utils/gatewayDispatcher.js';
-import {
-  computeCartHash,
-  disableButton,
-  enableButton
-} from './utils/cartHash.js';
 import { loadPublicConfig } from '../config/sdkConfig.js';
 import { getConfig, mergeConfig } from '../config/globalConfig.js';
 import { platformReady } from '../../utils/platformReady.js';
 import loadScriptOnce from '../../utils/loadScriptOnce.js';
-
-// Some builds expect a minified global `el` helper for DOM queries. Provide a
-// simple wrapper so imports referencing it don't throw.
-const el = globalThis.el || (sel => document.querySelector(sel));
-globalThis.el = el;
-
-// Some builds reference a minified helper `rl`. Ensure it exists.
-const rl = globalThis.rl || {};
-globalThis.rl = rl;
-
-// Ensure a minified global placeholder `Gc` exists for compatibility with
-// legacy bundles that reference it.
-const Gc = globalThis.Gc || {};
-globalThis.Gc = Gc;
-
-// Some builds reference a minified helper `Jc`. Provide a safe fallback.
-let Jc;
-try {
-  Jc = globalThis.Jc || {};
-  globalThis.Jc = Jc;
-} catch {
-  Jc = {};
-}
-
-// Some environments expect a minified helper `Vc`. Provide a safe fallback.
-let Vc;
-try {
-  Vc = globalThis.Vc || {};
-  globalThis.Vc = Vc;
-} catch {
-  Vc = {};
-}
-
-  // Some builds reference a minified helper `Yc`. Provide a safe fallback.
-  let Yc;
-  try {
-    Yc = globalThis.Yc || {};
-    globalThis.Yc = Yc;
-  } catch {
-    Yc = {};
-  }
-
-// Some builds reference a minified helper `Xc`. Provide a safe fallback.
-let Xc;
-try {
-  Xc = globalThis.Xc || {};
-  globalThis.Xc = Xc;
-} catch {
-  Xc = {};
-}
-
-// Some builds reference a minified helper `vc`. Provide a safe fallback.
-let vc;
-try {
-  vc = globalThis.vc || {};
-  globalThis.vc = vc;
-} catch {
-  vc = {};
-}
 
 let __checkoutInitialized = false;
 export function __test_resetCheckout() {
@@ -117,6 +49,56 @@ async function init(opts = {}) {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
     __checkoutInitialized = false;
   }
+  // Global placeholder assignments for legacy bundles
+  const el = globalThis.el || (sel => document.querySelector(sel));
+  globalThis.el = el;
+
+  const rl = globalThis.rl || {};
+  globalThis.rl = rl;
+
+  const Gc = globalThis.Gc || {};
+  globalThis.Gc = Gc;
+
+  let Jc;
+  try {
+    Jc = globalThis.Jc || {};
+    globalThis.Jc = Jc;
+  } catch {
+    Jc = {};
+  }
+
+  let Vc;
+  try {
+    Vc = globalThis.Vc || {};
+    globalThis.Vc = Vc;
+  } catch {
+    Vc = {};
+  }
+
+  let Yc;
+  try {
+    Yc = globalThis.Yc || {};
+    globalThis.Yc = Yc;
+  } catch {
+    Yc = {};
+  }
+
+  let Xc;
+  try {
+    Xc = globalThis.Xc || {};
+    globalThis.Xc = Xc;
+  } catch {
+    Xc = {};
+  }
+
+  let vc;
+  try {
+    vc = globalThis.vc || {};
+    globalThis.vc = vc;
+  } catch {
+    vc = {};
+  }
+
   if (__checkoutInitialized) return window.Smoothr?.checkout;
 
   if (typeof opts !== 'object' || Array.isArray(opts)) opts = {};
@@ -136,6 +118,19 @@ async function init(opts = {}) {
   try {
     mergeConfig({ ...config, supabase: resolvedSupabase });
     await platformReady();
+    const [
+      { default: resolveGateway },
+      { default: collectFormFields },
+      { default: constructPayload },
+      { default: gatewayDispatcher },
+      { computeCartHash, disableButton, enableButton }
+    ] = await Promise.all([
+      import('./utils/resolveGateway.js'),
+      import('./utils/collectFormFields.js'),
+      import('./utils/constructPayload.js'),
+      import('./utils/gatewayDispatcher.js'),
+      import('./utils/cartHash.js')
+    ]);
 
     const debug = getConfig().debug;
     if (debug) console.log('[Smoothr] init', config);
