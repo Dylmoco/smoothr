@@ -4,6 +4,39 @@
 import { supabase as sharedSupabase } from '../../../supabase/browserClient.js';
 import { lookupRedirectUrl, lookupDashboardHomeUrl } from '../../../supabase/authHelpers.js';
 
+// Minimal CustomEvent polyfill for environments lacking it.
+if (typeof globalThis.CustomEvent !== 'function') {
+  const CustomEventPoly = function CustomEvent(type, params = {}) {
+    const evt = globalThis.document?.createEvent?.('CustomEvent');
+    if (evt && evt.initCustomEvent) {
+      evt.initCustomEvent(
+        type,
+        params.bubbles ?? false,
+        params.cancelable ?? false,
+        params.detail,
+      );
+      Object.setPrototypeOf(evt, globalThis.CustomEvent.prototype);
+      return evt;
+    }
+    const e = {
+      type,
+      detail: params.detail,
+      bubbles: params.bubbles ?? false,
+      cancelable: params.cancelable ?? false,
+    };
+    return Object.setPrototypeOf(e, globalThis.CustomEvent.prototype);
+  };
+  CustomEventPoly.prototype = globalThis.Event?.prototype ?? {};
+  globalThis.CustomEvent = CustomEventPoly;
+  try {
+    if (globalThis.window && !globalThis.window.CustomEvent) {
+      globalThis.window.CustomEvent = CustomEventPoly;
+    }
+  } catch {}
+} else if (globalThis.window && !globalThis.window.CustomEvent) {
+  try { globalThis.window.CustomEvent = globalThis.CustomEvent; } catch {}
+}
+
 // ---- Public, test-visible hooks (live bindings) ----
 // Define as no-ops *at module load* so tests always import functions.
 export let onAuthStateChangeHandler = () => {};
@@ -121,6 +154,12 @@ export async function init(options = {}) {
         const res = await client?.auth?.getUser?.();
         const initialUser = res?.data?.user ?? null;
         api.user.value = initialUser;
+        if (initialUser) {
+          const ev = typeof w.CustomEvent === 'function'
+            ? new w.CustomEvent('smoothr:login')
+            : { type: 'smoothr:login' };
+          (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        }
       } catch {}
       _seededUserOnce = true;
     }
@@ -276,7 +315,7 @@ export async function init(options = {}) {
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } })
           : { type: 'smoothr:open-auth', detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } };
-        w.dispatchEvent?.(ev);
+        (w.document || globalThis.document)?.dispatchEvent?.(ev);
       }
     };
 
