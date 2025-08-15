@@ -278,19 +278,37 @@ export async function init(options = {}) {
     googleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-      await resolveSupabase()?.auth?.signInWithOAuth?.({
+      const c = resolveSupabase();
+      await c?.auth?.signInWithOAuth?.({
         provider: 'google',
         options: { redirectTo: w.location?.origin || '' },
       });
+      try {
+        const res = await c?.auth?.getUser?.();
+        w.Smoothr.auth.user.value = res?.data?.user ?? null;
+      } catch {}
+      const ev = typeof w.CustomEvent === 'function'
+        ? new w.CustomEvent('smoothr:login')
+        : { type: 'smoothr:login' };
+      (w.document || globalThis.document)?.dispatchEvent?.(ev);
     };
 
     appleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-      await resolveSupabase()?.auth?.signInWithOAuth?.({
+      const c = resolveSupabase();
+      await c?.auth?.signInWithOAuth?.({
         provider: 'apple',
         options: { redirectTo: w.location?.origin || '' },
       });
+      try {
+        const res = await c?.auth?.getUser?.();
+        w.Smoothr.auth.user.value = res?.data?.user ?? null;
+      } catch {}
+      const ev = typeof w.CustomEvent === 'function'
+        ? new w.CustomEvent('smoothr:login')
+        : { type: 'smoothr:login' };
+      (w.document || globalThis.document)?.dispatchEvent?.(ev);
     };
 
     signOutHandler = async (e) => {
