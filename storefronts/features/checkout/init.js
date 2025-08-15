@@ -113,14 +113,18 @@ const gatewayModules = {
   segpay: () => import('./gateways/segpay.js')
 };
 
-async function init({ config, supabase, adapter } = {}) {
+async function init(opts = {}) {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
     __checkoutInitialized = false;
   }
   if (__checkoutInitialized) return window.Smoothr?.checkout;
 
-  const Sc = (globalThis.Sc = config || {});
-  const globalConfig = config || {};
+  if (typeof opts !== 'object' || Array.isArray(opts)) opts = {};
+  const { config: nested = {}, supabase, adapter, ...topLevel } = opts;
+  const config = { ...nested, ...topLevel };
+
+  const Sc = (globalThis.Sc = config);
+  const globalConfig = config;
 
   const resolvedSupabase =
     supabase ??
