@@ -22,12 +22,14 @@ export const resolveSupabase = () =>
 export async function lookupRedirectUrl() { return '/'; }
 export async function lookupDashboardHomeUrl() { return '/'; }
 // Several tests spy on this name; keep it here.
-export function normalizeDomain(d) {
+export function normalizeDomain(input) {
   try {
-    if (!d) return '';
-    const url = new URL(d.startsWith('http') ? d : `https://${d}`);
-    return url.hostname;
-  } catch { return ''; }
+    if (!input) return '';
+    const url = new URL(input.startsWith('http') ? input : `https://${input}`);
+    return url.hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return '';
+  }
 }
 
 // Some tests expect this to exist on import (no DOM work).
@@ -45,9 +47,9 @@ export async function init(options = {}) {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
-    const passedClient = options.supabase ?? null;
-    // Prefer the test’s global mock if present
-    const client = passedClient ?? globalThis.supabase ?? resolveSupabase();
+    const passed = options.supabase ?? null;
+    // Prefer global mock (vitest), then injected, then passed
+    const client = globalThis.supabase ?? _injectedClient ?? passed ?? null;
 
     // Let tests observe the client injection (barrel re-exports this).
     try { setSupabaseClient(client); } catch {}
