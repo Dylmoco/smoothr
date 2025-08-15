@@ -78,6 +78,17 @@ export const resolveSupabase = async () => {
   const w = g.window || g;
   if (_injectedClient) return _injectedClient;
   if (w?.Smoothr?.__supabase) return w.Smoothr.__supabase;
+  const maybeReady = w?.Smoothr?.supabaseReady;
+  if (maybeReady) {
+    try {
+      const client = await maybeReady;
+      if (client) {
+        w.Smoothr = w.Smoothr || {};
+        w.Smoothr.__supabase = client;
+        return client;
+      }
+    } catch {}
+  }
   const existing = w?.Smoothr?.auth?.client || w?.supabase;
   if (existing) {
     w.Smoothr = w.Smoothr || {};

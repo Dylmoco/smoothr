@@ -107,6 +107,29 @@ if (!scriptEl || !storeId) {
     }
   })();
 
+  let _supabasePromise;
+  Object.defineProperty(Smoothr, 'supabaseReady', {
+    get() {
+      if (!_supabasePromise) {
+        _supabasePromise = (async () => {
+          const cfg = await Smoothr.ready;
+          if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return null;
+          if (window.Smoothr.__supabase) return window.Smoothr.__supabase;
+          const { createClient } = await import('@supabase/supabase-js');
+          const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+            auth: {
+              persistSession: true,
+              storageKey: `smoothr_${cfg.storeId}`
+            }
+          });
+          window.Smoothr.__supabase = client;
+          return client;
+        })();
+      }
+      return _supabasePromise;
+    }
+  });
+
   (async () => {
     const fetched = await Smoothr.ready;
     if (!fetched) {
@@ -118,19 +141,6 @@ if (!scriptEl || !storeId) {
 
     const existing = Smoothr.config || {};
     Smoothr.config = { ...existing, ...fetched };
-
-    const cfg = window.Smoothr.config;
-    let supabase = null;
-    if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
-      const { createClient } = await import('@supabase/supabase-js');
-      supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-        auth: {
-          persistSession: true,
-          storageKey: `smoothr_${cfg.storeId}`
-        }
-      });
-    }
-    window.Smoothr.__supabase = supabase;
 
     await initFeatures();
   })();
