@@ -50,6 +50,7 @@ async function init(opts = {}) {
 
     const resolvedSupabase =
       supabase ??
+      (await globalThis.Smoothr?.supabaseReady) ??
       globalThis.supabaseAuth ??
       globalThis.Smoothr?.supabaseAuth ??
       globalThis.smoothr?.supabaseAuth ??

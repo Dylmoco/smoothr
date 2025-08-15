@@ -52,6 +52,14 @@ process.env.VITE_SUPABASE_ANON_KEY            ??= process.env.NEXT_PUBLIC_SUPABA
   // you can add platform, currency, etc. here if needed
 };
 
+// provide default Smoothr config for tests
+(globalThis as any).window.Smoothr = (globalThis as any).window.Smoothr || {};
+(globalThis as any).window.Smoothr.config = {
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+};
+(globalThis as any).Smoothr = (globalThis as any).window.Smoothr;
+
 // inject the <script data-store-id> before any SDK import
 const s = document.createElement('script');
 s.setAttribute('data-store-id', (globalThis as any).SMOOTHR_CONFIG.storeId);

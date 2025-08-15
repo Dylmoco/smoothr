@@ -114,6 +114,10 @@ if (!scriptEl || !storeId) {
         _supabasePromise = (async () => {
           const cfg = await Smoothr.ready;
           if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return null;
+          window.SMOOTHR_CONFIG = {
+            ...(window.SMOOTHR_CONFIG || {}),
+            storeId: cfg.storeId
+          };
           if (window.Smoothr.__supabase) return window.Smoothr.__supabase;
           const { createClient } = await import('@supabase/supabase-js');
           const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
