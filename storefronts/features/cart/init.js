@@ -46,8 +46,7 @@ export async function init() {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
-    w.Smoothr = w.Smoothr || {};
-    if (w.Smoothr.cart) return w.Smoothr.cart;
+    if (w.Smoothr?.cart) return w.Smoothr.cart;
 
     loadFromStorage();
     const api = {
@@ -57,12 +56,16 @@ export async function init() {
       clear: () => { _state.items.length = 0; },
     };
 
-    w.Smoothr.cart = api;
     try {
       await bindCartButtons();
       const { bindAddToCartButtons } = await import('./addToCart.js');
+      w.Smoothr = w.Smoothr || {};
+      w.Smoothr.cart = api;
       bindAddToCartButtons();
-    } catch {}
+    } catch {
+      w.Smoothr = w.Smoothr || {};
+      w.Smoothr.cart = api;
+    }
     return api;
   })();
   return _initPromise;
