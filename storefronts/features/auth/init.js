@@ -186,19 +186,17 @@ export async function init(options = {}) {
     try { client?.auth?.onAuthStateChange?.(onAuthStateChangeHandler); } catch {}
 
     const emailRE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-    const strong = p => /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8;
+    // was: /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8
+    const strong = p => /[0-9]/.test(p) && p?.length >= 8;
 
     clickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       const d = w.document || globalThis.document;
-      const el = e?.target?.closest?.('[data-smoothr]')
-        || d?.querySelectorAll?.('[data-smoothr]')?.[0]
-        || d?.querySelectorAll?.('[data-smoothr="login"]')?.[0]
-        || d?.querySelectorAll?.('[data-smoothr="signup"]')?.[0]
-        || d?.querySelectorAll?.('[data-smoothr="password-reset"]')?.[0]
-        || d?.querySelectorAll?.('[data-smoothr="password-reset-confirm"]')?.[0]
-        || d?.querySelectorAll?.('[data-smoothr="login-google"]')?.[0]
-        || d?.querySelectorAll?.('[data-smoothr="login-apple"]')?.[0];
+      const el =
+        e?.target?.closest?.('[data-smoothr]') ||
+        d?.querySelectorAll?.(
+          '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], [data-smoothr="login-google"], [data-smoothr="login-apple"]'
+        )?.[0];
       const form = e?.target?.closest?.('form[data-smoothr="auth-form"]') || d?.querySelectorAll?.('form[data-smoothr="auth-form"]')?.[0];
       const action = el?.getAttribute?.('data-smoothr');
       const c = resolveSupabase();
