@@ -76,41 +76,45 @@ export const setSupabaseClient = (c) => { _injectedClient = c || null; };
 export const resolveSupabase = async () => {
   const g = globalThis;
   const w = g.window || g;
+  const s = w.Smoothr || g.Smoothr || {};
+  w.Smoothr = g.Smoothr = s;
   if (_injectedClient) return _injectedClient;
-  if (w?.Smoothr?.__supabase) return w.Smoothr.__supabase;
-  const maybeReady = w?.Smoothr?.supabaseReady;
+  if (s?.__supabase) return s.__supabase;
+  const maybeReady = s?.supabaseReady;
   if (maybeReady) {
     try {
       const client = await maybeReady;
       if (client) {
-        w.Smoothr = w.Smoothr || {};
-        w.Smoothr.__supabase = client;
+        s.__supabase = client;
         return client;
       }
     } catch {}
   }
-  const existing = w?.Smoothr?.auth?.client || w?.supabase;
+  const existing = s?.auth?.client || w?.supabase || g.supabase;
   if (existing) {
-    w.Smoothr = w.Smoothr || {};
-    w.Smoothr.__supabase = existing;
+    s.__supabase = existing;
     return existing;
   }
   try {
-    const { supabaseUrl, supabaseAnonKey } = w?.Smoothr?.config || {};
+    const { supabaseUrl, supabaseAnonKey } = s?.config || {};
     if (!supabaseUrl || !supabaseAnonKey) {
-      try {
-        const mod = await import('../../../supabase/browserClient.js');
-        return mod.supabase ?? mod.default ?? null;
-      } catch {
-        return null;
+      const ready = s?.supabaseReady;
+      if (ready) {
+        try {
+          const client = await ready;
+          if (client) {
+            s.__supabase = client;
+            return client;
+          }
+        } catch {}
       }
+      return null;
     }
     const mod = await import('@supabase/supabase-js');
     const create = mod.createClient || mod.default?.createClient;
     if (!create) return null;
     const client = create(supabaseUrl, supabaseAnonKey);
-    w.Smoothr = w.Smoothr || {};
-    w.Smoothr.__supabase = client;
+    s.__supabase = client;
     return client;
   } catch {
     return null;
