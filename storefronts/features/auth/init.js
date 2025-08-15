@@ -1,6 +1,8 @@
 // Auth init owns the test hooks and helpers (barrel re-exports these).
 // Keep everything side-effect light but export callable hooks immediately.
 
+import { supabase as sharedSupabase } from '../../../supabase/browserClient.js';
+
 // ---- Public, test-visible hooks (live bindings) ----
 // Define as no-ops *at module load* so tests always import functions.
 export let onAuthStateChangeHandler = () => {};
@@ -17,6 +19,7 @@ export const resolveSupabase = () =>
   (globalThis?.window?.Smoothr?.auth?.client) ??
   _injectedClient ??
   globalThis?.supabase ??
+  sharedSupabase ??
   null;
 
 export async function lookupRedirectUrl() { return '/'; }
@@ -47,19 +50,14 @@ export async function init(options = {}) {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
-    const passed = options.supabase ?? null;
-    // Prefer global mock (vitest), then injected, then passed
-    const client = globalThis.supabase ?? _injectedClient ?? passed ?? null;
+    const client = options.supabase ?? resolveSupabase();
 
     // Let tests observe the client injection (barrel re-exports this).
     try { setSupabaseClient(client); } catch {}
 
     // Hit whichever object the test is spying on. Don't await a query chain here;
     // the tests only assert the 'from' call with table name.
-    try {
-      if (globalThis.supabase?.from) globalThis.supabase.from('v_public_store');
-      else if (client?.from) client.from('v_public_store');
-    } catch {}
+    try { client?.from?.('v_public_store'); } catch {}
 
     // Idempotent global
     w.Smoothr = w.Smoothr || {};
@@ -84,7 +82,7 @@ export async function init(options = {}) {
 
     // Restore session exactly once per boot (tests spy on getSession).
     if (!_restoredOnce) {
-      try { await (globalThis.supabase?.auth?.getSession?.() ?? client?.auth?.getSession?.()); } catch {}
+      try { await client?.auth?.getSession?.(); } catch {}
       _restoredOnce = true;
       try { console?.log?.('[Smoothr] Auth restored'); } catch {}
     }
@@ -92,7 +90,7 @@ export async function init(options = {}) {
     // Seed initial user exactly once (some specs expect getUser to be called)
     if (!_seededUserOnce) {
       try {
-        const res = await (globalThis.supabase?.auth?.getUser?.() ?? client?.auth?.getUser?.());
+        const res = await client?.auth?.getUser?.();
         const initialUser = res?.data?.user ?? null;
         api.user.value = initialUser;
       } catch {}
@@ -101,13 +99,24 @@ export async function init(options = {}) {
 
     // Live handlers used by specs (no DOM required)
     onAuthStateChangeHandler = (event, payload = {}) => {
-      if (!w.Smoothr?.auth) return;
+      const authState = w.Smoothr?.auth;
+      if (!authState || !authState.user) return;
       if (event === 'SIGNED_OUT') {
-        w.Smoothr.auth.user.value = null;
+        authState.user.value = null;
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:sign-out')
+          : { type: 'smoothr:sign-out' };
+        w.document?.dispatchEvent?.(ev);
       } else {
-        w.Smoothr.auth.user.value = payload.user ?? null;
+        authState.user.value = payload.user ?? null;
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:login')
+          : { type: 'smoothr:login' };
+        w.document?.dispatchEvent?.(ev);
       }
     };
+
+    try { client?.auth?.onAuthStateChange?.(onAuthStateChangeHandler); } catch {}
 
     clickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
@@ -185,6 +194,17 @@ export async function init(options = {}) {
       attach('[data-smoothr-account-access],[data-smoothr="account-access"]', clickHandler, 'click');
     };
     mutationCallback = () => { try { bindAuthListeners(); } catch {} };
+
+    // Observe DOM for dynamically added auth elements and allow manual binding
+    try {
+      const Observer = w.MutationObserver || globalThis.MutationObserver;
+      if (typeof Observer === 'function') {
+        const mo = new Observer(mutationCallback);
+        mo.observe(w.document || w, { childList: true, subtree: true });
+      }
+      w.document?.addEventListener?.('DOMContentLoaded', mutationCallback);
+    } catch {}
+    try { mutationCallback(); } catch {}
 
     return api;
   })();
