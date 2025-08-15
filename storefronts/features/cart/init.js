@@ -1,5 +1,5 @@
 let _initPromise;
-export default async function init() {
+export async function init() {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
@@ -35,4 +35,5 @@ export default async function init() {
   })();
   return _initPromise;
 }
+export default init;
 
