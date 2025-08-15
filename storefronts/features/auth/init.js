@@ -2,6 +2,7 @@
 // Keep everything side-effect light but export callable hooks immediately.
 
 import { lookupRedirectUrl, lookupDashboardHomeUrl } from '../../../supabase/authHelpers.js';
+import { getConfig } from '../config/globalConfig.js';
 
 // Minimal CustomEvent polyfill for environments lacking it.
 if (typeof globalThis.CustomEvent !== 'function') {
@@ -273,7 +274,7 @@ export async function init(options = {}) {
         const { data, error } = await c.auth.signUp({
           email,
           password: pwd,
-          options: { data: { store_id: w.SMOOTHR_CONFIG?.storeId ?? globalThis.SMOOTHR_CONFIG?.storeId } },
+          options: { data: { store_id: getConfig().storeId } },
         });
         w.Smoothr.auth.user.value = data?.user ?? null;
         if (error || !data?.user) return;
@@ -335,7 +336,10 @@ export async function init(options = {}) {
       const c = await resolveSupabase();
       await c?.auth?.signInWithOAuth?.({
         provider: 'google',
-        options: { redirectTo: w.location?.origin || '' },
+        options: {
+          redirectTo: w.location?.origin || '',
+          data: { store_id: getConfig().storeId }
+        }
       });
       try {
         const res = await c?.auth?.getUser?.();
@@ -353,7 +357,10 @@ export async function init(options = {}) {
       const c = await resolveSupabase();
       await c?.auth?.signInWithOAuth?.({
         provider: 'apple',
-        options: { redirectTo: w.location?.origin || '' },
+        options: {
+          redirectTo: w.location?.origin || '',
+          data: { store_id: getConfig().storeId }
+        }
       });
       try {
         const res = await c?.auth?.getUser?.();

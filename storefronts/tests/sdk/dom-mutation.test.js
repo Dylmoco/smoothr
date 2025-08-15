@@ -9,6 +9,8 @@ var resetPasswordMock;
 var getUserMock;
 var createClientMock;
 
+const STORE_ID = "test-store";
+
 vi.mock("@supabase/supabase-js", () => {
   signInMock = vi.fn();
   signUpMock = vi.fn();
@@ -54,13 +56,18 @@ describe("dynamic DOM bindings", () => {
   let win;
   let docClickHandler;
 
-  beforeEach(async () => {
-    vi.resetModules();
-    document?.dispatchEvent?.mockClear?.();
-    elements = [];
-    forms = [];
-    mutationCallback = undefined;
-    docClickHandler = undefined;
+    beforeEach(async () => {
+      signInMock?.mockClear?.();
+      signUpMock?.mockClear?.();
+      signInWithOAuthMock?.mockClear?.();
+      resetPasswordMock?.mockClear?.();
+      getUserMock?.mockClear?.();
+      vi.resetModules();
+      document?.dispatchEvent?.mockClear?.();
+      elements = [];
+      forms = [];
+      mutationCallback = undefined;
+      docClickHandler = undefined;
     global.MutationObserver = class {
       constructor(cb) {
         mutationCallback = cb;
@@ -103,13 +110,14 @@ describe("dynamic DOM bindings", () => {
         return true;
       },
     };
-    win = {
-      location: { href: "", origin: "" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    };
-    global.document = doc;
+      win = {
+        location: { href: "", origin: "" },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+        SMOOTHR_CONFIG: { storeId: STORE_ID },
+      };
+      global.document = doc;
     vi.spyOn(document, "dispatchEvent").mockImplementation(() => true);
     document.dispatchEvent.mockClear();
     global.window = win;
@@ -145,7 +153,7 @@ describe("dynamic DOM bindings", () => {
       return null;
     });
 
-    await auth.init();
+      await auth.init({ supabase: createClientMock() });
     await flushPromises();
     expect(btn.addEventListener).not.toHaveBeenCalled();
 
@@ -197,7 +205,7 @@ describe("dynamic DOM bindings", () => {
       return null;
     });
 
-    await auth.init();
+      await auth.init({ supabase: createClientMock() });
     await flushPromises();
     forms.push(form);
     elements.push(btn);
@@ -238,7 +246,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    await auth.init();
+      await auth.init({ supabase: createClientMock() });
     await flushPromises();
     elements.push(btn);
     mutationCallback();
@@ -248,10 +256,13 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
-    expect(signInWithOAuthMock).toHaveBeenCalledWith({
-      provider: "google",
-      options: { redirectTo: expect.any(String) },
-    });
+      expect(signInWithOAuthMock).toHaveBeenCalledWith({
+        provider: "google",
+        options: {
+          redirectTo: expect.any(String),
+          data: { store_id: STORE_ID },
+        },
+      });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
     const user = { id: "3", email: "google@example.com" };
@@ -261,7 +272,7 @@ describe("dynamic DOM bindings", () => {
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
     getUserMock.mockResolvedValue({ data: { user } });
-    await auth.init();
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
@@ -292,7 +303,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
-    await auth.init();
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     elements.push(btn);
     mutationCallback();
@@ -302,10 +313,13 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
-    expect(signInWithOAuthMock).toHaveBeenCalledWith({
-      provider: "apple",
-      options: { redirectTo: expect.any(String) },
-    });
+      expect(signInWithOAuthMock).toHaveBeenCalledWith({
+        provider: "apple",
+        options: {
+          redirectTo: expect.any(String),
+          data: { store_id: STORE_ID },
+        },
+      });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
     const user = { id: "4", email: "apple@example.com" };
@@ -315,7 +329,7 @@ describe("dynamic DOM bindings", () => {
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
     getUserMock.mockResolvedValue({ data: { user } });
-    await auth.init();
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
@@ -371,7 +385,7 @@ describe("dynamic DOM bindings", () => {
       return null;
     });
 
-    await auth.init();
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     forms.push(form);
     elements.push(btn);
@@ -412,7 +426,7 @@ describe("dynamic DOM bindings", () => {
       closest: vi.fn(() => btn),
     };
 
-    await auth.init();
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     elements.push(btn);
     mutationCallback();

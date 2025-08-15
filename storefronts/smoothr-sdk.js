@@ -144,7 +144,14 @@ if (!scriptEl || !storeId) {
     }
 
     const existing = Smoothr.config || {};
-    Smoothr.config = { ...existing, ...fetched };
+    const mergedConfig = { ...existing, ...fetched };
+    Smoothr.config = mergedConfig;
+    const resolvedStoreId = fetched?.storeId ?? storeId;
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      ...mergedConfig,
+      storeId: resolvedStoreId
+    };
 
     await initFeatures();
   })();

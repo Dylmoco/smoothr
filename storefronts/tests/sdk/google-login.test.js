@@ -1,9 +1,9 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-var getUserMock;
-var signInWithOAuthMock;
-var createClientMock;
+  var getUserMock;
+  var signInWithOAuthMock;
+  var createClientMock;
 
 vi.mock("@supabase/supabase-js", () => {
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
@@ -46,6 +46,7 @@ describe("OAuth login buttons", () => {
       location: { origin: "", href: "", hostname: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      SMOOTHR_CONFIG: { storeId: "test-store" }
     };
     global.localStorage = {
       getItem: vi.fn(() => store),
@@ -89,7 +90,7 @@ describe("OAuth login buttons", () => {
   });
 
   it("triggers Supabase OAuth sign-in for Google", async () => {
-    await init();
+      await init({ supabase: createClientMock() });
     await flushPromises();
 
     await googleClickHandler({ preventDefault: () => {} });
@@ -97,13 +98,16 @@ describe("OAuth login buttons", () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: "google",
-      options: { redirectTo: expect.any(String) },
+      options: {
+        redirectTo: expect.any(String),
+        data: { store_id: "test-store" },
+      },
     });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
   });
 
   it("triggers Supabase OAuth sign-in for Apple", async () => {
-    await init();
+      await init({ supabase: createClientMock() });
     await flushPromises();
 
     await appleClickHandler({ preventDefault: () => {} });
@@ -111,7 +115,10 @@ describe("OAuth login buttons", () => {
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
       provider: "apple",
-      options: { redirectTo: expect.any(String) },
+      options: {
+        redirectTo: expect.any(String),
+        data: { store_id: "test-store" },
+      },
     });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
   });
