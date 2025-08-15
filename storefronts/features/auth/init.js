@@ -367,3 +367,20 @@ export async function initPasswordResetConfirmation(opts = {}) {
   try { mutationCallback(); } catch {}
 }
 
+// Exported test helper to reset private module state between specs.
+export function __test_resetAuth() {
+  _initPromise = undefined;
+  _restoredOnce = false;
+  _seededUserOnce = false;
+  _prSession = null;
+  _prRedirect = '';
+  _injectedClient = null;
+  onAuthStateChangeHandler = () => {};
+  mutationCallback = () => {};
+  clickHandler = () => {};
+  googleClickHandler = () => {};
+  appleClickHandler = () => {};
+  signOutHandler = () => {};
+  docClickHandler = () => {};
+}
+

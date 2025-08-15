@@ -4,7 +4,7 @@ let fromMock;
 let supabaseMock;
 
 describe('auth feature init', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
     fromMock = vi.fn(() => ({
       select: vi.fn(() => ({
@@ -54,6 +54,8 @@ describe('auth feature init', () => {
       currentScript: { getAttribute: vi.fn(), dataset: {} },
       querySelectorAll: vi.fn(() => [])
     };
+    const mod = await import('../../features/auth/init.js');
+    mod.__test_resetAuth();
   });
 
   it('loads v_public_store during init', async () => {

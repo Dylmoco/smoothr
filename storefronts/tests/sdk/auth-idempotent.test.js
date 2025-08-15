@@ -33,7 +33,7 @@ vi.mock('../../../supabase/browserClient.js', () => ({
   ensureSupabaseSessionAuth: vi.fn().mockResolvedValue(),
 }));
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules();
   process.env.NODE_ENV = 'production';
   global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
@@ -64,6 +64,8 @@ beforeEach(() => {
       }))
     }))
   };
+  const mod = await import('../../features/auth/init.js');
+  mod.__test_resetAuth();
 });
 
 describe('auth init session restoration', () => {

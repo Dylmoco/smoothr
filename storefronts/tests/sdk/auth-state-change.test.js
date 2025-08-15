@@ -32,6 +32,7 @@ vi.mock("@supabase/supabase-js", () => {
 });
 
 import * as auth from "../../features/auth/index.js";
+import { __test_resetAuth } from "../../features/auth/init.js";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -39,6 +40,7 @@ function flushPromises() {
 
 describe("auth state change", () => {
   beforeEach(() => {
+    __test_resetAuth();
     global.window = {
       location: { origin: "", href: "", hostname: "" },
       addEventListener: vi.fn(),
