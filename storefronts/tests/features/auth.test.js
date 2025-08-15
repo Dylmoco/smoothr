@@ -2,6 +2,7 @@ import { describe, it, beforeEach, expect, vi } from 'vitest';
 
 let fromMock;
 let supabaseMock;
+let client;
 
 describe('auth feature init', () => {
   beforeEach(async () => {
@@ -55,12 +56,13 @@ describe('auth feature init', () => {
       querySelectorAll: vi.fn(() => [])
     };
     const mod = await import('../../features/auth/init.js');
+    client = await mod.__test_tryImportClient();
     mod.__test_resetAuth();
   });
 
   it('loads v_public_store during init', async () => {
     const { init } = await import('../../features/auth/init.js');
-    const api = await init({ storeId: '1' });
+    const api = await init({ storeId: '1', supabase: client });
     expect(api).toHaveProperty('login');
     expect(fromMock).toHaveBeenCalledWith('v_public_store');
   });

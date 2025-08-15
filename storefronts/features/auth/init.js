@@ -81,6 +81,17 @@ export const resolveSupabase = () =>
   sharedSupabase ??
   null;
 
+/** @internal test-only helper to avoid bundling legacy deps */
+async function tryImportClient() {
+  try {
+    const mod = await import('../../../supabase/browserClient.js');
+    return mod.supabase ?? mod.default ?? null;
+  } catch {
+    return null;
+  }
+}
+export { tryImportClient as __test_tryImportClient };
+
 export { lookupRedirectUrl, lookupDashboardHomeUrl };
 // Several tests spy on this name; keep it here.
 export function normalizeDomain(input) {
