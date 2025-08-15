@@ -86,6 +86,18 @@ async function init(opts = {}) {
 
       mergeConfig({ ...config, supabase: resolvedSupabase });
       await platformReady();
+
+    let isSubmitting = false;
+    const { log, warn, err, select, q } = checkoutLogger();
+
+    const publicConfig = await loadPublicConfig(
+      getConfig().storeId,
+      resolvedSupabase
+    );
+    if (publicConfig) {
+      mergeConfig(publicConfig);
+    }
+
     const [
       { default: resolveGateway },
       { default: collectFormFields },
@@ -102,17 +114,6 @@ async function init(opts = {}) {
 
     const debug = getConfig().debug;
     if (debug) console.log('[Smoothr] init', config);
-
-    let isSubmitting = false;
-    const { log, warn, err, select, q } = checkoutLogger();
-
-    const publicConfig = await loadPublicConfig(
-      getConfig().storeId,
-      resolvedSupabase
-    );
-    if (publicConfig) {
-      mergeConfig(publicConfig);
-    }
 
     log('SDK initialized');
     log('SMOOTHR_CONFIG', JSON.stringify(getConfig()));

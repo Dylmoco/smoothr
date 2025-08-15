@@ -58,9 +58,9 @@ export async function init() {
 
     try {
       await bindCartButtons();
-      const { bindAddToCartButtons } = await import('./addToCart.js');
       w.Smoothr = w.Smoothr || {};
       w.Smoothr.cart = api;
+      const { bindAddToCartButtons } = await import('./addToCart.js');
       bindAddToCartButtons();
     } catch {
       w.Smoothr = w.Smoothr || {};
