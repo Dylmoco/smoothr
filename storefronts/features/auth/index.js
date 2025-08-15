@@ -23,7 +23,8 @@ export const resolveSupabase = () =>
 export const setSupabaseClient = (c) => { _injectedClient = c; };
 
 // Re-export real initializer and also provide a callable default.
-export { default as init } from './init.js';
+export { default as init, initPasswordResetConfirmation } from './init.js';
 import init from './init.js';
-export default (opts) => init(opts);
+const callable = (opts) => init(opts);
+export default callable;
 

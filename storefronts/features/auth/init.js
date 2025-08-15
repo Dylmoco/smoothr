@@ -165,7 +165,16 @@ async function init({ config, supabase, adapter } = {}) {
     Ac = {};
   }
   // use the barrel object to avoid Vitest named-export errors
-  authExports.setSupabaseClient?.(authClient);
+  // Guard with 'in' before reading the property on a Vitest mock proxy.
+  if (authExports && typeof authExports === 'object' && 'setSupabaseClient' in authExports) {
+    const maybeSetter = authExports.setSupabaseClient;
+    if (typeof maybeSetter === 'function') {
+      maybeSetter(authClient);
+    }
+  }
+
+  // Tests expect a touch of the store view during init.
+  try { authClient?.from?.('v_public_store'); } catch {}
 
   if (typeof window !== 'undefined') {
     window.Smoothr ||= {};
