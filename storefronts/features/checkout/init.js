@@ -39,76 +39,23 @@ const sdkGlobals = {
 };
 
 async function init(opts = {}) {
-  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
-    __checkoutInitialized = false;
-  }
-  // Global placeholder assignments for legacy bundles
-  const el = globalThis.el || (sel => document.querySelector(sel));
-  globalThis.el = el;
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+      __checkoutInitialized = false;
+    }
+    if (__checkoutInitialized) return window.Smoothr?.checkout;
 
-  const rl = globalThis.rl || {};
-  globalThis.rl = rl;
+    if (typeof opts !== 'object' || Array.isArray(opts)) opts = {};
+    const { config: nested = {}, supabase, adapter, ...topLevel } = opts;
+    const config = { ...nested, ...topLevel };
 
-  const Gc = globalThis.Gc || {};
-  globalThis.Gc = Gc;
+    const resolvedSupabase =
+      supabase ??
+      globalThis.supabaseAuth ??
+      globalThis.Smoothr?.supabaseAuth ??
+      globalThis.smoothr?.supabaseAuth ??
+      globalThis.Zc;
 
-  let Jc;
-  try {
-    Jc = globalThis.Jc || {};
-    globalThis.Jc = Jc;
-  } catch {
-    Jc = {};
-  }
-
-  let Vc;
-  try {
-    Vc = globalThis.Vc || {};
-    globalThis.Vc = Vc;
-  } catch {
-    Vc = {};
-  }
-
-  let Yc;
-  try {
-    Yc = globalThis.Yc || {};
-    globalThis.Yc = Yc;
-  } catch {
-    Yc = {};
-  }
-
-  let Xc;
-  try {
-    Xc = globalThis.Xc || {};
-    globalThis.Xc = Xc;
-  } catch {
-    Xc = {};
-  }
-
-  let vc;
-  try {
-    vc = globalThis.vc || {};
-    globalThis.vc = vc;
-  } catch {
-    vc = {};
-  }
-
-  if (__checkoutInitialized) return window.Smoothr?.checkout;
-
-  if (typeof opts !== 'object' || Array.isArray(opts)) opts = {};
-  const { config: nested = {}, supabase, adapter, ...topLevel } = opts;
-  const config = { ...nested, ...topLevel };
-
-  const Sc = (globalThis.Sc = config);
-  const globalConfig = config;
-
-  const resolvedSupabase =
-    supabase ??
-    globalThis.supabaseAuth ??
-    globalThis.Smoothr?.supabaseAuth ??
-    globalThis.smoothr?.supabaseAuth ??
-    globalThis.Zc;
-
-  try {
+    try {
     [
       { default: bindCardInputs },
       { default: checkoutLogger },
@@ -116,17 +63,28 @@ async function init(opts = {}) {
       { getConfig, mergeConfig },
       { platformReady },
       { default: loadScriptOnce }
-    ] = await Promise.all([
-      import('./utils/inputFormatters.js'),
-      import('./utils/checkoutLogger.js'),
-      import('../config/sdkConfig.js'),
-      import('../config/globalConfig.js'),
-      import('../../utils/platformReady.js'),
-      import('../../utils/loadScriptOnce.js'),
-    ]);
+      ] = await Promise.all([
+        import('./utils/inputFormatters.js'),
+        import('./utils/checkoutLogger.js'),
+        import('../config/sdkConfig.js'),
+        import('../config/globalConfig.js'),
+        import('../../utils/platformReady.js'),
+        import('../../utils/loadScriptOnce.js'),
+      ]);
 
-    mergeConfig({ ...config, supabase: resolvedSupabase });
-    await platformReady();
+      // Legacy globals are assigned only after dependencies load
+      globalThis.el = globalThis.el || (sel => document.querySelector(sel));
+      globalThis.rl = globalThis.rl || {};
+      globalThis.Gc = globalThis.Gc || {};
+      try { globalThis.Jc = globalThis.Jc || {}; } catch {}
+      try { globalThis.Vc = globalThis.Vc || {}; } catch {}
+      try { globalThis.Yc = globalThis.Yc || {}; } catch {}
+      try { globalThis.Xc = globalThis.Xc || {}; } catch {}
+      try { globalThis.vc = globalThis.vc || {}; } catch {}
+      globalThis.Sc = config;
+
+      mergeConfig({ ...config, supabase: resolvedSupabase });
+      await platformReady();
     const [
       { default: resolveGateway },
       { default: collectFormFields },
