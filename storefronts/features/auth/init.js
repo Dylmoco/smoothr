@@ -164,7 +164,10 @@ export async function init(options = {}) {
         if (error || !data?.user) return;
         w.Smoothr.auth.user.value = data.user;
         await c.auth.getSession?.();
-        w.document?.dispatchEvent?.(new w.CustomEvent('smoothr:login'));
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:login')
+          : { type: 'smoothr:login' };
+        w.document?.dispatchEvent?.(ev);
         return;
       }
       if (action === 'signup') {
@@ -180,7 +183,10 @@ export async function init(options = {}) {
         if (error || !data?.user) return;
         w.Smoothr.auth.user.value = data.user;
         await c.auth.getSession?.();
-        w.document?.dispatchEvent?.(new w.CustomEvent('smoothr:login'));
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:login')
+          : { type: 'smoothr:login' };
+        w.document?.dispatchEvent?.(ev);
         return;
       }
       if (action === 'password-reset') {
@@ -259,7 +265,9 @@ export async function init(options = {}) {
         const to = await lookupDashboardHomeUrl();
         if (to && w.location) w.location.href = to;
       } else {
-        const ev = new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } });
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } })
+          : { type: 'smoothr:open-auth', detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } };
         w.dispatchEvent?.(ev);
       }
     };
