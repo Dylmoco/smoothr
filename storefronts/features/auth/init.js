@@ -405,7 +405,8 @@ export default init;
 
 // Optional export used by some tests
 export async function initPasswordResetConfirmation(opts = {}) {
-  await init();
+  const p = init();
+  await p;
   const w = globalThis.window || globalThis;
   _prRedirect = opts.redirectTo || '';
   const params = new URLSearchParams((w.location?.hash || '').replace(/^#/, ''));
@@ -413,6 +414,7 @@ export async function initPasswordResetConfirmation(opts = {}) {
   const refresh = params.get('refresh_token');
   _prSession = access && refresh ? { access_token: access, refresh_token: refresh } : null;
   try { mutationCallback(); } catch {}
+  return p;
 }
 
 // Exported test helper to reset private module state between specs.

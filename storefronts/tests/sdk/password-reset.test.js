@@ -176,7 +176,7 @@ describe("password reset confirmation", () => {
   it("updates password and redirects", async () => {
     updateUserMock.mockResolvedValue({ data: {}, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
-    auth.initPasswordResetConfirmation({ redirectTo: "/login" });
+    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
@@ -191,17 +191,22 @@ describe("password reset confirmation", () => {
   it("handles update failure", async () => {
     updateUserMock.mockResolvedValue({ data: null, error: new Error("fail") });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
-    auth.initPasswordResetConfirmation({ redirectTo: "/login" });
+    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
+    expect(setSessionMock).toHaveBeenCalledWith({
+      access_token: "a",
+      refresh_token: "b",
+    });
+    expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
     expect(global.window.alert).toHaveBeenCalled();
   });
 
   it("validates strength and match", async () => {
     updateUserMock.mockResolvedValue({ data: {}, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
-    auth.initPasswordResetConfirmation({ redirectTo: "/login" });
+    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
     passwordValue = "short";
     confirmValue = "short";
@@ -224,7 +229,7 @@ describe("password reset confirmation", () => {
     const user = { id: "1", email: "test@example.com" };
     updateUserMock.mockResolvedValue({ data: { user }, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
-    auth.initPasswordResetConfirmation({ redirectTo: "/login" });
+    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
