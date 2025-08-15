@@ -1,7 +1,6 @@
 // Auth init owns the test hooks and helpers (barrel re-exports these).
 // Keep everything side-effect light but export callable hooks immediately.
 
-import { supabase as sharedSupabase } from '../../../supabase/browserClient.js';
 import { lookupRedirectUrl, lookupDashboardHomeUrl } from '../../../supabase/authHelpers.js';
 
 // Minimal CustomEvent polyfill for environments lacking it.
@@ -74,12 +73,29 @@ function bindAuthElements(root = globalThis.document) {
 // ---- Supabase client plumbings ----
 let _injectedClient = null;
 export const setSupabaseClient = (c) => { _injectedClient = c || null; };
-export const resolveSupabase = () =>
-  (globalThis?.window?.Smoothr?.auth?.client) ??
-  _injectedClient ??
-  globalThis?.supabase ??
-  sharedSupabase ??
-  null;
+export const resolveSupabase = async () => {
+  const g = globalThis;
+  const w = g.window || g;
+  const existing =
+    w?.Smoothr?.auth?.client ||
+    _injectedClient ||
+    w?.supabase ||
+    w?.Smoothr?.__supabase;
+  if (existing) return existing;
+  try {
+    const { supabaseUrl, supabaseAnonKey } = w?.Smoothr?.config || {};
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+    const mod = await import('@supabase/supabase-js');
+    const create = mod.createClient || mod.default?.createClient;
+    if (!create) return null;
+    const client = create(supabaseUrl, supabaseAnonKey);
+    w.Smoothr = w.Smoothr || {};
+    w.Smoothr.__supabase = client;
+    return client;
+  } catch {
+    return null;
+  }
+};
 
 /** @internal test-only helper to avoid bundling legacy deps */
 async function tryImportClient() {
@@ -121,7 +137,7 @@ export async function init(options = {}) {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
-    const client = options.supabase ?? resolveSupabase();
+    const client = options.supabase ?? await resolveSupabase();
 
     // Let tests observe the client injection (barrel re-exports this).
     try { setSupabaseClient(client); } catch {}
@@ -209,7 +225,7 @@ export async function init(options = {}) {
         )?.[0];
       const form = e?.target?.closest?.('form[data-smoothr="auth-form"]') || d?.querySelectorAll?.('form[data-smoothr="auth-form"]')?.[0];
       const action = el?.getAttribute?.('data-smoothr');
-      const c = resolveSupabase();
+      const c = await resolveSupabase();
       if (!action || !c?.auth) return;
       if (action === 'login') {
         const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
@@ -289,7 +305,7 @@ export async function init(options = {}) {
     googleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-      const c = resolveSupabase();
+      const c = await resolveSupabase();
       await c?.auth?.signInWithOAuth?.({
         provider: 'google',
         options: { redirectTo: w.location?.origin || '' },
@@ -307,7 +323,7 @@ export async function init(options = {}) {
     appleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-      const c = resolveSupabase();
+      const c = await resolveSupabase();
       await c?.auth?.signInWithOAuth?.({
         provider: 'apple',
         options: { redirectTo: w.location?.origin || '' },
@@ -324,7 +340,8 @@ export async function init(options = {}) {
 
     signOutHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      await resolveSupabase()?.auth?.signOut?.();
+      const c = await resolveSupabase();
+      await c?.auth?.signOut?.();
       const authState = w.Smoothr?.auth;
       if (authState) authState.user.value = null;
     };
@@ -386,6 +403,8 @@ export function __test_resetAuth() {
   _prSession = null;
   _prRedirect = '';
   _injectedClient = null;
+  const w = globalThis.window || globalThis;
+  if (w.Smoothr) delete w.Smoothr.__supabase;
   onAuthStateChangeHandler = () => {};
   mutationCallback = () => {};
   clickHandler = () => {};
