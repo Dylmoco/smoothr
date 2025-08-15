@@ -10,9 +10,28 @@ export let mutationCallback = () => {};
 export let clickHandler = () => {};
 export let googleClickHandler = () => {};
 export let appleClickHandler = () => {};
-export let passwordResetClickHandler = () => {};
 export let signOutHandler = () => {};
 export let docClickHandler = () => {};
+
+const _bound = new WeakSet();
+function bindAuthElements(root = globalThis.document) {
+  if (!root?.querySelectorAll) return;
+  const attach = (sel, handler) => {
+    root.querySelectorAll(sel).forEach(el => {
+      if (!_bound.has(el) && typeof el.addEventListener === 'function') {
+        el.addEventListener('click', handler);
+        _bound.add(el);
+      }
+    });
+  };
+  attach('[data-smoothr="login"]', clickHandler);
+  attach('[data-smoothr="signup"]', clickHandler);
+  attach('[data-smoothr="password-reset"]', clickHandler);
+  attach('[data-smoothr="password-reset-confirm"]', clickHandler);
+  attach('[data-smoothr="login-google"]', googleClickHandler);
+  attach('[data-smoothr="login-apple"]', appleClickHandler);
+  attach('[data-smoothr="sign-out"]', signOutHandler);
+}
 
 // ---- Supabase client plumbings ----
 let _injectedClient = null;
@@ -78,7 +97,6 @@ export async function init(options = {}) {
     clickHandler = () => {};
     googleClickHandler = () => {};
     appleClickHandler = () => {};
-    passwordResetClickHandler = () => {};
     signOutHandler = () => {};
     docClickHandler = () => {};
     mutationCallback = () => {};
@@ -161,22 +179,6 @@ export async function init(options = {}) {
       } catch {}
     };
 
-    passwordResetClickHandler = async (e) => {
-      try { e?.preventDefault?.(); } catch {}
-      const c = resolveSupabase();
-      if (!c?.auth) return;
-      // Try to find an email input if present
-      let email = '';
-      try {
-        const doc = w.document;
-        email =
-          doc?.querySelector?.('[data-smoothr-password-email]')?.value ??
-          doc?.querySelector?.('input[type="email"]')?.value ??
-          '';
-      } catch {}
-      try { await c.auth.resetPasswordForEmail?.(email); } catch {}
-    };
-
     signOutHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       const c = resolveSupabase();
@@ -193,30 +195,8 @@ export async function init(options = {}) {
         : { type: 'smoothr:open-auth', detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } };
       w.dispatchEvent?.(ev);
     };
-    w.document?.addEventListener?.('click', docClickHandler);
 
-    // Bind listeners if the test attaches elements to the DOM then calls mutationCallback
-    const _bound = new WeakSet();
-    const bindAuthListeners = () => {
-      const d = w.document;
-      if (!d?.querySelectorAll) return;
-      const attach = (sel, handler, type = 'click') => {
-        d.querySelectorAll(sel).forEach((el) => {
-          if (!_bound.has(el) && typeof el.addEventListener === 'function') {
-            el.addEventListener(type, handler);
-            _bound.add(el);
-          }
-        });
-      };
-      attach('[data-smoothr-login],[data-smoothr="login"]', clickHandler, 'click');
-      attach('[data-smoothr-signup],[data-smoothr="signup"]', clickHandler, 'click');
-      attach('[data-smoothr-google],[data-smoothr="google"]', googleClickHandler, 'click');
-      attach('[data-smoothr-apple],[data-smoothr="apple"]', appleClickHandler, 'click');
-      attach('[data-smoothr-password-reset],[data-smoothr="password-reset"]', passwordResetClickHandler, 'click');
-      attach('[data-smoothr-sign-out],[data-smoothr="sign-out"]', signOutHandler, 'click');
-      attach('[data-smoothr-account-access],[data-smoothr="account-access"]', clickHandler, 'click');
-    };
-    mutationCallback = () => { try { bindAuthListeners(); } catch {} };
+    mutationCallback = () => { try { bindAuthElements(w.document); } catch {} };
 
     // Observe DOM for dynamically added auth elements and allow manual binding
     try {
@@ -226,6 +206,7 @@ export async function init(options = {}) {
         mo.observe(w.document || w, { childList: true, subtree: true });
       }
       w.document?.addEventListener?.('DOMContentLoaded', mutationCallback);
+      w.document?.addEventListener?.('click', docClickHandler);
     } catch {}
     try { mutationCallback(); } catch {}
 
