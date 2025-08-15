@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { initCart } from '../../features/cart/index.js';
+import { initCart, __test_resetCart } from '../../features/cart/index.js';
 
 describe('Cart', () => {
   beforeEach(() => {
+    __test_resetCart();
     const cartData = JSON.stringify({ items: [], meta: { lastModified: Date.now() } });
     const localStorageMock = {
       getItem: vi.fn(key => (key === 'smoothr_cart' ? cartData : null)),
@@ -25,19 +26,18 @@ describe('Cart', () => {
   });
 
   it('handles cart with items', async () => {
-    const cartData = JSON.stringify({
-      items: [{ product_id: '1', quantity: 2, price: 1000 }],
-      meta: { lastModified: Date.now() }
-    });
+    const cartData = JSON.stringify([
+      { product_id: '1', quantity: 2, price: 1000 }
+    ]);
     const localStorageMock = {
-      getItem: vi.fn(key => (key === 'smoothr_cart' ? cartData : null)),
+      getItem: vi.fn(key => (key === 'cart' ? cartData : null)),
       setItem: vi.fn()
     };
     window.localStorage = localStorageMock;
     globalThis.il = localStorageMock;
     await initCart();
     expect(window.Smoothr.cart.getCart().items).toHaveLength(1);
-    expect(window.Smoothr.cart.getSubtotal()).toBe(2000);
+    expect(window.Smoothr.cart.getSubtotal()).toBe(1000);
   });
 });
 

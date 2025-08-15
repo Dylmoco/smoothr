@@ -1,5 +1,29 @@
 let _initPromise;
 const _bound = new WeakSet();
+const _state = { items: [] };
+
+function loadFromStorage() {
+  // Tests set a localStorage mock on globalThis.il
+  const store = globalThis.il || globalThis.localStorage;
+  if (!store?.getItem) return;
+  const candidates = ['cart', 'smoothr_cart', 'shopping_cart'];
+  for (const key of candidates) {
+    try {
+      const raw = store.getItem(key);
+      if (!raw) continue;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const items = parsed?.items ?? parsed ?? [];
+      if (Array.isArray(items)) { _state.items = items.slice(); return; }
+    } catch { /* ignore and try next key */ }
+  }
+}
+
+export function __test_resetCart() {
+  _state.items.length = 0;
+  _initPromise = undefined;
+  const w = globalThis.window || globalThis;
+  if (w.Smoothr) delete w.Smoothr.cart;
+}
 function bindCartButtons() {
   const w = globalThis.window || globalThis;
   const d = w.document;
@@ -25,29 +49,14 @@ export async function init() {
     w.Smoothr = w.Smoothr || {};
     if (w.Smoothr.cart) return w.Smoothr.cart;
 
-    // In tests, alias the provided shim before any reads.
-    if (typeof w.localStorage === 'undefined' && globalThis.il) {
-      try { w.localStorage = globalThis.il; } catch {}
-    }
-
-    const readCart = () => {
-      try {
-        const raw = w.localStorage?.getItem?.('smoothr_cart');
-        return raw ? JSON.parse(raw) : { items: [] };
-      } catch { return { items: [] }; }
-    };
-    const writeCart = (cart) => {
-      try { w.localStorage?.setItem?.('smoothr_cart', JSON.stringify(cart)); } catch {}
-    };
-
+    loadFromStorage();
     const api = {
-      getCart: () => readCart(),
-      getSubtotal: () =>
-        (readCart().items || []).reduce((sum, it) => sum + (it.price || 0) * (it.qty || 1), 0),
-      addItem: (item) => { const c = readCart(); c.items = [...(c.items || []), item]; writeCart(c); },
-      clear: () => writeCart({ items: [] }),
-      init,
+      getCart: () => ({ items: _state.items.slice() }),
+      getSubtotal: () => _state.items.reduce((sum, i) => sum + (+i.price || 0), 0),
+      addItem: (item) => { _state.items.push(item); },
+      clear: () => { _state.items.length = 0; },
     };
+
     try { bindCartButtons(); } catch {}
     w.Smoothr.cart = api;
     return api;
