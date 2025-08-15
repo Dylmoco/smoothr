@@ -2,6 +2,7 @@
 // Keep everything side-effect light but export callable hooks immediately.
 
 import { supabase as sharedSupabase } from '../../../supabase/browserClient.js';
+import { lookupRedirectUrl, lookupDashboardHomeUrl } from '../../../supabase/authHelpers.js';
 
 // ---- Public, test-visible hooks (live bindings) ----
 // Define as no-ops *at module load* so tests always import functions.
@@ -47,8 +48,7 @@ export const resolveSupabase = () =>
   sharedSupabase ??
   null;
 
-export async function lookupRedirectUrl() { return '/'; }
-export async function lookupDashboardHomeUrl() { return '/'; }
+export { lookupRedirectUrl, lookupDashboardHomeUrl };
 // Several tests spy on this name; keep it here.
 export function normalizeDomain(input) {
   try {
