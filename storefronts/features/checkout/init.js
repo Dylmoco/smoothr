@@ -1,11 +1,12 @@
 // checkout.js
 
-import bindCardInputs from './utils/inputFormatters.js';
-import checkoutLogger from './utils/checkoutLogger.js';
-import { loadPublicConfig } from '../config/sdkConfig.js';
-import { getConfig, mergeConfig } from '../config/globalConfig.js';
-import { platformReady } from '../../utils/platformReady.js';
-import loadScriptOnce from '../../utils/loadScriptOnce.js';
+let bindCardInputs,
+  checkoutLogger,
+  loadPublicConfig,
+  getConfig,
+  mergeConfig,
+  platformReady,
+  loadScriptOnce;
 
 let __checkoutInitialized = false;
 export function __test_resetCheckout() {
@@ -35,14 +36,6 @@ const sdkGlobals = {
   stripe: 'Stripe',
   authorizeNet: 'Accept',
   nmi: 'CollectJS'
-};
-
-const gatewayModules = {
-  stripe: () => import('./gateways/stripeGateway.js'),
-  authorizeNet: () => import('./gateways/authorizeNet.js'),
-  paypal: () => import('./gateways/paypal.js'),
-  nmi: () => import('./gateways/nmiGateway.js'),
-  segpay: () => import('./gateways/segpay.js')
 };
 
 async function init(opts = {}) {
@@ -116,6 +109,22 @@ async function init(opts = {}) {
     globalThis.Zc;
 
   try {
+    [
+      { default: bindCardInputs },
+      { default: checkoutLogger },
+      { loadPublicConfig },
+      { getConfig, mergeConfig },
+      { platformReady },
+      { default: loadScriptOnce }
+    ] = await Promise.all([
+      import('./utils/inputFormatters.js'),
+      import('./utils/checkoutLogger.js'),
+      import('../config/sdkConfig.js'),
+      import('../config/globalConfig.js'),
+      import('../../utils/platformReady.js'),
+      import('../../utils/loadScriptOnce.js'),
+    ]);
+
     mergeConfig({ ...config, supabase: resolvedSupabase });
     await platformReady();
     const [
@@ -165,6 +174,13 @@ async function init(opts = {}) {
       warn('No active payment gateway resolved. Aborting init.');
       return;
     }
+    const gatewayModules = {
+      stripe: () => import('./gateways/stripeGateway.js'),
+      authorizeNet: () => import('./gateways/authorizeNet.js'),
+      paypal: () => import('./gateways/paypal.js'),
+      nmi: () => import('./gateways/nmiGateway.js'),
+      segpay: () => import('./gateways/segpay.js')
+    };
     // Ensure we attempt to mount when a provider is supplied (tests stub the DOM & mocks)
     if (sdkUrls[provider]) {
       try {
@@ -186,10 +202,10 @@ async function init(opts = {}) {
       }
     }
 
-  const loadGateway = gatewayModules[provider];
-  if (!loadGateway) throw new Error(`Unknown payment gateway: ${provider}`);
-  const gateway = (await loadGateway()).default;
-  log(`Using gateway: ${provider}`);
+    const loadGateway = gatewayModules[provider];
+    if (!loadGateway) throw new Error(`Unknown payment gateway: ${provider}`);
+    const gateway = (await loadGateway()).default;
+    log(`Using gateway: ${provider}`);
 
   // mount fields common to all gateways
   // wait for a checkout trigger; support legacy [data-smoothr-pay]
