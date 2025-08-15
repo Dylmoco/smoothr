@@ -74,23 +74,28 @@ describe("dynamic DOM bindings", () => {
         if (evt === "click") docClickHandler = cb;
       }),
       querySelectorAll: vi.fn((selector) => {
-        if (selector === LOGIN_SELECTOR) {
+        if (selector.includes(LOGIN_SELECTOR)) {
           return elements.filter((el) => el.dataset?.smoothr === "login");
         }
-        if (selector === OTHER_SELECTOR) {
+        if (
+          selector.includes('[data-smoothr="signup"]') ||
+          selector.includes('[data-smoothr="login-google"]') ||
+          selector.includes('[data-smoothr="login-apple"]') ||
+          selector.includes('[data-smoothr="password-reset"]')
+        ) {
           return elements.filter((el) =>
             ["signup", "login-google", "login-apple", "password-reset"].includes(
               el.dataset?.smoothr
             )
           );
         }
-        if (selector === ACCOUNT_ACCESS_SELECTOR) {
+        if (selector.includes(ACCOUNT_ACCESS_SELECTOR)) {
           return elements.filter((el) => el.dataset?.smoothr === "account-access");
         }
-        if (selector === 'form[data-smoothr="auth-form"]') {
+        if (selector.includes('form[data-smoothr="auth-form"]')) {
           return forms;
         }
-        if (selector === '[data-smoothr="sign-out"]') return [];
+        if (selector.includes('[data-smoothr="sign-out"]')) return [];
         return [];
       }),
       querySelector: vi.fn(() => null),
@@ -130,11 +135,15 @@ describe("dynamic DOM bindings", () => {
       tagName: "DIV",
       dataset: { smoothr: "login" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
-      closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),
     };
+    btn.closest = vi.fn((sel) => {
+      if (sel === '[data-smoothr]') return btn;
+      if (sel === 'form[data-smoothr="auth-form"]') return form;
+      return null;
+    });
 
     await auth.init();
     await flushPromises();
@@ -147,7 +156,7 @@ describe("dynamic DOM bindings", () => {
 
     const user = { id: "1", email: "user@example.com" };
     signInMock.mockResolvedValue({ data: { user }, error: null });
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
@@ -178,11 +187,15 @@ describe("dynamic DOM bindings", () => {
       tagName: "DIV",
       dataset: { smoothr: "signup" },
       getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
-      closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),
     };
+    btn.closest = vi.fn((sel) => {
+      if (sel === '[data-smoothr]') return btn;
+      if (sel === 'form[data-smoothr="auth-form"]') return form;
+      return null;
+    });
 
     await auth.init();
     await flushPromises();
@@ -193,7 +206,7 @@ describe("dynamic DOM bindings", () => {
 
     const user = { id: "2", email: "new@example.com" };
     signUpMock.mockResolvedValue({ data: { user }, error: null });
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
@@ -232,7 +245,7 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     signInWithOAuthMock.mockResolvedValue({});
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
@@ -243,6 +256,7 @@ describe("dynamic DOM bindings", () => {
 
     const user = { id: "3", email: "google@example.com" };
     document.dispatchEvent.mockClear();
+    global.window.Smoothr = {};
     vi.resetModules();
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
@@ -285,7 +299,7 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     signInWithOAuthMock.mockResolvedValue({});
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
     expect(signInWithOAuthMock).toHaveBeenCalledWith({
@@ -296,6 +310,7 @@ describe("dynamic DOM bindings", () => {
 
     const user = { id: "4", email: "apple@example.com" };
     document.dispatchEvent.mockClear();
+    global.window.Smoothr = {};
     vi.resetModules();
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
@@ -346,11 +361,15 @@ describe("dynamic DOM bindings", () => {
       dataset: { smoothr: "password-reset" },
       getAttribute: (attr) =>
         attr === "data-smoothr" ? "password-reset" : null,
-      closest: vi.fn(() => form),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),
     };
+    btn.closest = vi.fn((sel) => {
+      if (sel === '[data-smoothr]') return btn;
+      if (sel === 'form[data-smoothr="auth-form"]') return form;
+      return null;
+    });
 
     await auth.init();
     await flushPromises();
@@ -360,7 +379,7 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     resetPasswordMock.mockResolvedValue({ data: {}, error: null });
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
     expect(resetPasswordMock).toHaveBeenCalledWith("user@example.com", {
@@ -376,7 +395,7 @@ describe("dynamic DOM bindings", () => {
       data: null,
       error: new Error("oops"),
     });
-    await clickHandler({ preventDefault: () => {} });
+    await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
     expect(errorEl.textContent).toBe("oops");

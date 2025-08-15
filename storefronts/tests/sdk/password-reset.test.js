@@ -146,6 +146,8 @@ describe("password reset confirmation", () => {
     btn = {
       tagName: "DIV",
       dataset: { smoothr: "password-reset-confirm" },
+      getAttribute: (attr) =>
+        attr === "data-smoothr" ? "password-reset-confirm" : null,
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),
@@ -226,6 +228,8 @@ describe("password reset confirmation", () => {
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
+    expect(setSessionMock).toHaveBeenCalled();
+    expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
   });
 });
