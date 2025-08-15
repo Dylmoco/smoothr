@@ -294,7 +294,8 @@ export async function init(options = {}) {
 export default init;
 
 // Optional export used by some tests
-export function initPasswordResetConfirmation(opts = {}) {
+export async function initPasswordResetConfirmation(opts = {}) {
+  await init();
   const w = globalThis.window || globalThis;
   _prRedirect = opts.redirectTo || '';
   const params = new URLSearchParams((w.location?.hash || '').replace(/^#/, ''));
