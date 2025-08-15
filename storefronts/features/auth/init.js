@@ -67,6 +67,8 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
 let _initPromise;
 let _restoredOnce = false;
 let _seededUserOnce = false;
+let _prSession = null;
+let _prRedirect = '';
 export async function init(options = {}) {
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
@@ -280,14 +282,13 @@ export async function init(options = {}) {
 export default init;
 
 // Optional export used by some tests
-export async function initPasswordResetConfirmation(opts = {}) {
-  const supabase = opts.supabase ?? resolveSupabase();
-  if (!supabase) return;
-  try {
-    await supabase.auth?.setSession?.(opts.session ?? {});
-    if (opts.password) {
-      await supabase.auth?.updateUser?.({ password: opts.password });
-    }
-  } catch {}
+export function initPasswordResetConfirmation(opts = {}) {
+  const w = globalThis.window || globalThis;
+  _prRedirect = opts.redirectTo || '';
+  const params = new URLSearchParams((w.location?.hash || '').replace(/^#/, ''));
+  const access = params.get('access_token');
+  const refresh = params.get('refresh_token');
+  _prSession = access && refresh ? { access_token: access, refresh_token: refresh } : null;
+  try { mutationCallback(); } catch {}
 }
 
