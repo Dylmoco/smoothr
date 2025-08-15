@@ -1,3 +1,5 @@
+import { bindAddToCartButtons } from './addToCart.js';
+
 let _initPromise;
 const _bound = new WeakSet();
 const _state = { items: [] };
@@ -26,7 +28,7 @@ export function __test_resetCart() {
 }
 function bindCartButtons() {
   const w = globalThis.window || globalThis;
-  const d = w.document;
+  const d = w.document || globalThis.document;
   if (!d?.querySelectorAll) return;
   const sel = [
     '#smoothr-cart-toggle',
@@ -40,6 +42,8 @@ function bindCartButtons() {
       _bound.add(el);
     }
   });
+
+  try { bindAddToCartButtons(); } catch {}
 }
 
 export async function init() {
@@ -57,8 +61,8 @@ export async function init() {
       clear: () => { _state.items.length = 0; },
     };
 
-    try { bindCartButtons(); } catch {}
     w.Smoothr.cart = api;
+    try { bindCartButtons(); } catch {}
     return api;
   })();
   return _initPromise;

@@ -5,6 +5,7 @@ let noButtonsWarned = false;
 let foundLogShown = false;
 const MAX_POLL_ATTEMPTS = 10;
 let pollAttempts = 0;
+const _bound = new WeakSet();
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
@@ -23,7 +24,23 @@ export function bindAddToCartButtons() {
     return;
   }
 
-  const buttons = document.querySelectorAll('[data-smoothr="add-to-cart"]');
+  const selectors = [
+    '[data-smoothr="add-to-cart"]',
+    '#smoothr-add-to-cart',
+    '.smoothr-add-to-cart',
+    '[data-smoothr-add-to-cart]',
+    '[data-smoothr-add]'
+  ];
+  const seen = new Set();
+  const buttons = [];
+  selectors.forEach((sel) => {
+    document.querySelectorAll(sel).forEach((btn) => {
+      if (!seen.has(btn)) {
+        seen.add(btn);
+        buttons.push(btn);
+      }
+    });
+  });
   if (debug && !foundLogShown)
     log(`found ${buttons.length} [data-smoothr="add-to-cart"] elements`);
   foundLogShown = true;
@@ -53,8 +70,8 @@ export function bindAddToCartButtons() {
 
     buttons.forEach(btn => {
       if (debug) log('🔗 binding [data-smoothr="add-to-cart"] button', btn);
-      if (btn.__smoothrBound) return;
-      btn.__smoothrBound = true;
+      if (_bound.has(btn)) return;
+      _bound.add(btn);
 
     btn.addEventListener('click', e => {
       e?.preventDefault?.();
