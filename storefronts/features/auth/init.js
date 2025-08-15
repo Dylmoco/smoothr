@@ -121,10 +121,9 @@ export async function init(options = {}) {
 
     // Idempotent global
     w.Smoothr = w.Smoothr || {};
-    if (w.Smoothr.auth) return w.Smoothr.auth;
 
     // Minimal API shape some tests reach for
-    const api = {
+    const api = w.Smoothr.auth || {
       client: client || null,
       user: { value: null },
       init,
