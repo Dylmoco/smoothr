@@ -40,11 +40,6 @@ async function bindCartButtons() {
       _bound.add(el);
     }
   });
-
-  try {
-    const { bindAddToCartButtons } = await import('./addToCart.js');
-    bindAddToCartButtons();
-  } catch {}
 }
 
 export async function init() {
@@ -63,7 +58,11 @@ export async function init() {
     };
 
     w.Smoothr.cart = api;
-    try { await bindCartButtons(); } catch {}
+    try {
+      await bindCartButtons();
+      const { bindAddToCartButtons } = await import('./addToCart.js');
+      bindAddToCartButtons();
+    } catch {}
     return api;
   })();
   return _initPromise;
