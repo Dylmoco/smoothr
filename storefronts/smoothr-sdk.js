@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
@@ -123,6 +122,7 @@ if (!scriptEl || !storeId) {
     const cfg = window.Smoothr.config;
     let supabase = null;
     if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
+      const { createClient } = await import('@supabase/supabase-js');
       supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
         auth: {
           persistSession: true,
