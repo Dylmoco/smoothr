@@ -134,13 +134,13 @@ export async function init(options = {}) {
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:sign-out')
           : { type: 'smoothr:sign-out' };
-        w.document?.dispatchEvent?.(ev);
+          (w.document || globalThis.document)?.dispatchEvent?.(ev);
       } else {
         authState.user.value = payload.user ?? null;
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:login')
           : { type: 'smoothr:login' };
-        w.document?.dispatchEvent?.(ev);
+          (w.document || globalThis.document)?.dispatchEvent?.(ev);
       }
     };
 
@@ -151,9 +151,17 @@ export async function init(options = {}) {
 
     clickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      const el = e?.target?.closest?.('[data-smoothr]');
+      const d = w.document || globalThis.document;
+      const el = e?.target?.closest?.('[data-smoothr]')
+        || d?.querySelectorAll?.('[data-smoothr]')?.[0]
+        || d?.querySelectorAll?.('[data-smoothr="login"]')?.[0]
+        || d?.querySelectorAll?.('[data-smoothr="signup"]')?.[0]
+        || d?.querySelectorAll?.('[data-smoothr="password-reset"]')?.[0]
+        || d?.querySelectorAll?.('[data-smoothr="password-reset-confirm"]')?.[0]
+        || d?.querySelectorAll?.('[data-smoothr="login-google"]')?.[0]
+        || d?.querySelectorAll?.('[data-smoothr="login-apple"]')?.[0];
+      const form = e?.target?.closest?.('form[data-smoothr="auth-form"]') || d?.querySelectorAll?.('form[data-smoothr="auth-form"]')?.[0];
       const action = el?.getAttribute?.('data-smoothr');
-      const form = el?.closest?.('form[data-smoothr="auth-form"]');
       const c = resolveSupabase();
       if (!action || !c?.auth) return;
       if (action === 'login') {
@@ -167,7 +175,7 @@ export async function init(options = {}) {
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:login')
           : { type: 'smoothr:login' };
-        w.document?.dispatchEvent?.(ev);
+          (w.document || globalThis.document)?.dispatchEvent?.(ev);
         return;
       }
       if (action === 'signup') {
@@ -178,7 +186,7 @@ export async function init(options = {}) {
         const { data, error } = await c.auth.signUp({
           email,
           password: pwd,
-          options: { data: { store_id: w.SMOOTHR_CONFIG?.storeId } },
+          options: { data: { store_id: w.SMOOTHR_CONFIG?.storeId ?? globalThis.SMOOTHR_CONFIG?.storeId } },
         });
         if (error || !data?.user) return;
         w.Smoothr.auth.user.value = data.user;
@@ -186,7 +194,7 @@ export async function init(options = {}) {
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:login')
           : { type: 'smoothr:login' };
-        w.document?.dispatchEvent?.(ev);
+          (w.document || globalThis.document)?.dispatchEvent?.(ev);
         return;
       }
       if (action === 'password-reset') {
@@ -194,7 +202,7 @@ export async function init(options = {}) {
         const successEl = form?.querySelector('[data-smoothr-success]');
         const errorEl = form?.querySelector('[data-smoothr-error]');
         try {
-          const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: w.location?.origin || '' });
+          const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: '' });
           if (error) throw error;
           if (successEl) {
             successEl.textContent = 'Check your email for a reset link.';
