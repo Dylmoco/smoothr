@@ -1,24 +1,24 @@
-// Stable barrel for the auth feature — no DOM work at import time.
-// Simply re-export everything from init.js and provide a callable default.
-
+// Auth barrel: side-effect-free, stable export shapes.
+// Re-export everything from init.js so tests can spy on these symbols here.
 export {
-  default as init,
-  initPasswordResetConfirmation,
-  setSupabaseClient,
-  resolveSupabase,
+  // lifecycle
+  init as init,
+  default as default,
+  // hooks
   onAuthStateChangeHandler,
   mutationCallback,
   clickHandler,
   googleClickHandler,
   appleClickHandler,
   passwordResetClickHandler,
-  normalizeDomain,
+  // client plumbing
+  setSupabaseClient,
+  resolveSupabase,
+  // utils spied in tests
   lookupRedirectUrl,
   lookupDashboardHomeUrl,
+  normalizeDomain,
+  // optional flow
+  initPasswordResetConfirmation,
 } from './init.js';
-
-// Barrel default is a callable init
-import init from './init.js';
-const callable = (opts) => init(opts);
-export default callable;
 
