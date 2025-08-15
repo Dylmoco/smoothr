@@ -1,5 +1,3 @@
-import { bindAddToCartButtons } from './addToCart.js';
-
 let _initPromise;
 const _bound = new WeakSet();
 const _state = { items: [] };
@@ -26,7 +24,7 @@ export function __test_resetCart() {
   const w = globalThis.window || globalThis;
   if (w.Smoothr) delete w.Smoothr.cart;
 }
-function bindCartButtons() {
+async function bindCartButtons() {
   const w = globalThis.window || globalThis;
   const d = w.document || globalThis.document;
   if (!d?.querySelectorAll) return;
@@ -43,7 +41,10 @@ function bindCartButtons() {
     }
   });
 
-  try { bindAddToCartButtons(); } catch {}
+  try {
+    const { bindAddToCartButtons } = await import('./addToCart.js');
+    bindAddToCartButtons();
+  } catch {}
 }
 
 export async function init() {
@@ -62,7 +63,7 @@ export async function init() {
     };
 
     w.Smoothr.cart = api;
-    try { bindCartButtons(); } catch {}
+    try { await bindCartButtons(); } catch {}
     return api;
   })();
   return _initPromise;
