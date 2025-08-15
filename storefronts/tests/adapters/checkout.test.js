@@ -213,8 +213,12 @@ afterEach(() => {
 });
 
 async function loadCheckout() {
+  const cfg = global.window.SMOOTHR_CONFIG || {};
+  const originalGateway = cfg.active_payment_gateway;
+  cfg.active_payment_gateway = undefined;
   const mod = await import('../../adapters/webflow/initCheckoutWebflow.js');
   window.Smoothr.checkout.submit = submitCheckout;
+  cfg.active_payment_gateway = originalGateway;
   return mod.init;
 }
 
@@ -294,7 +298,7 @@ describe('checkout', () => {
   it('logs warning when gateway script fails to load', async () => {
     loadScriptOnceMock.mockRejectedValueOnce(new Error('load failed'));
     const init = await loadCheckout();
-    await init();
+    await expect(init()).rejects.toThrow('load failed');
     expect(console.error).toHaveBeenCalledWith(
       '[Smoothr Checkout] Failed to load Stripe SDK',
       expect.any(Error)

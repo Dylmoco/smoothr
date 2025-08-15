@@ -190,15 +190,13 @@ async function init(opts = {}) {
           globalVar: sdkGlobals[provider]
         });
       } catch (e) {
-        if (getConfig().debug) {
-          const msg =
-            provider === 'stripe'
-              ? '[Smoothr Checkout] Failed to load Stripe SDK'
-              : '[Smoothr Checkout] Failed to load gateway script';
-          console.error(msg, e);
-        }
+        const msg =
+          provider === 'stripe'
+            ? '[Smoothr Checkout] Failed to load Stripe SDK'
+            : '[Smoothr Checkout] Failed to load gateway script';
+        console.error(msg, e);
         warn('Failed to load gateway SDK:', e?.message || e);
-        return;
+        throw e;
       }
     }
 
@@ -430,9 +428,10 @@ async function init(opts = {}) {
   });
   log('pay button handlers attached');
   } catch (error) {
-    const debug = getConfig().debug;
-    if (debug) console.warn('[Smoothr Checkout] Initialization failed', error);
-    return {};
+    if (typeof getConfig === 'function' && getConfig().debug) {
+      console.warn('[Smoothr Checkout] Initialization failed', error);
+    }
+    throw error;
   }
 }
 
