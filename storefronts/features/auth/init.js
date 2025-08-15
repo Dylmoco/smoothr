@@ -76,15 +76,24 @@ export const setSupabaseClient = (c) => { _injectedClient = c || null; };
 export const resolveSupabase = async () => {
   const g = globalThis;
   const w = g.window || g;
-  const existing =
-    w?.Smoothr?.auth?.client ||
-    _injectedClient ||
-    w?.supabase ||
-    w?.Smoothr?.__supabase;
-  if (existing) return existing;
+  if (_injectedClient) return _injectedClient;
+  if (w?.Smoothr?.__supabase) return w.Smoothr.__supabase;
+  const existing = w?.Smoothr?.auth?.client || w?.supabase;
+  if (existing) {
+    w.Smoothr = w.Smoothr || {};
+    w.Smoothr.__supabase = existing;
+    return existing;
+  }
   try {
     const { supabaseUrl, supabaseAnonKey } = w?.Smoothr?.config || {};
-    if (!supabaseUrl || !supabaseAnonKey) return null;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      try {
+        const mod = await import('../../../supabase/browserClient.js');
+        return mod.supabase ?? mod.default ?? null;
+      } catch {
+        return null;
+      }
+    }
     const mod = await import('@supabase/supabase-js');
     const create = mod.createClient || mod.default?.createClient;
     if (!create) return null;
@@ -232,8 +241,8 @@ export async function init(options = {}) {
         const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
         if (!emailRE.test(email)) return;
         const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
+        w.Smoothr.auth.user.value = data?.user ?? null;
         if (error || !data?.user) return;
-        w.Smoothr.auth.user.value = data.user;
         await c.auth.getSession?.();
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:login')
@@ -251,8 +260,8 @@ export async function init(options = {}) {
           password: pwd,
           options: { data: { store_id: w.SMOOTHR_CONFIG?.storeId ?? globalThis.SMOOTHR_CONFIG?.storeId } },
         });
+        w.Smoothr.auth.user.value = data?.user ?? null;
         if (error || !data?.user) return;
-        w.Smoothr.auth.user.value = data.user;
         await c.auth.getSession?.();
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:login')
@@ -267,6 +276,7 @@ export async function init(options = {}) {
         try {
           const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: '' });
           if (error) throw error;
+          w.Smoothr.auth.user.value = null;
           if (successEl) {
             successEl.textContent = 'Check your email for a reset link.';
             successEl.removeAttribute?.('hidden');
@@ -275,6 +285,7 @@ export async function init(options = {}) {
           if (errorEl) errorEl.textContent = '';
           w.alert?.('Check your email for a reset link.');
         } catch (err) {
+          w.Smoothr.auth.user.value = null;
           if (errorEl) {
             errorEl.textContent = err?.message || String(err);
             errorEl.removeAttribute?.('hidden');
@@ -291,11 +302,12 @@ export async function init(options = {}) {
         try {
           if (_prSession) await c.auth.setSession(_prSession);
           const { data, error } = await c.auth.updateUser({ password: pwd });
-          if (error) throw error;
           w.Smoothr.auth.user.value = data?.user ?? null;
+          if (error) throw error;
           w.alert?.('Password updated');
           if (_prRedirect && w.location) w.location.href = _prRedirect;
         } catch (err) {
+          w.Smoothr.auth.user.value = null;
           w.alert?.(err?.message || String(err));
         }
         return;
@@ -363,6 +375,14 @@ export async function init(options = {}) {
     };
 
     mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
+
+    api.clickHandler = clickHandler;
+    api.googleClickHandler = googleClickHandler;
+    api.appleClickHandler = appleClickHandler;
+    api.signOutHandler = signOutHandler;
+    api.docClickHandler = docClickHandler;
+    api.onAuthStateChangeHandler = onAuthStateChangeHandler;
+    api.mutationCallback = mutationCallback;
 
     // Observe DOM for dynamically added auth elements and allow manual binding
     try {
