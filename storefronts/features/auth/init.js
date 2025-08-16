@@ -237,7 +237,28 @@ export async function init(options = {}) {
       }
     };
 
-    try { client?.auth?.onAuthStateChange?.(onAuthStateChangeHandler); } catch {}
+    // Adapter: normalize Supabase callback (event, session|null|weird) -> (event, { user })
+    const _safeAuthCallback = (event, sessOrData) => {
+      try {
+        let session = null;
+        // support (event, session) and (event, { session })
+        if (sessOrData && typeof sessOrData === 'object') {
+          if ('user' in sessOrData || 'access_token' in sessOrData) {
+            session = sessOrData;
+          } else if ('session' in sessOrData) {
+            session = sessOrData.session;
+          } else if ('data' in sessOrData && sessOrData.data && 'session' in sessOrData.data) {
+            session = sessOrData.data.session;
+          }
+        }
+        const user = session?.user ?? null;
+        onAuthStateChangeHandler(event, { user });
+      } catch (err) {
+        try { console.warn('[Smoothr SDK] auth state callback error:', err); } catch {}
+      }
+    };
+
+    try { client?.auth?.onAuthStateChange?.(_safeAuthCallback); } catch {}
 
     const emailRE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     // was: /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8
