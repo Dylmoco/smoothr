@@ -25,13 +25,14 @@ const getSessionMock = vi.fn().mockResolvedValue({
 let client;
 
 vi.mock('../../../supabase/browserClient.js', () => ({
-  supabase: {
-    auth: { getSession: getSessionMock },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
-    })),
-    supabaseUrl: process.env.SUPABASE_URL,
-  },
+  getSupabaseClient: () =>
+    Promise.resolve({
+      auth: { getSession: getSessionMock },
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
+      })),
+      supabaseUrl: process.env.SUPABASE_URL,
+    }),
   ensureSupabaseSessionAuth: vi.fn().mockResolvedValue(),
 }));
 

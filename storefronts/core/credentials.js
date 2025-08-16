@@ -1,4 +1,4 @@
-import supabase, { ensureSupabaseSessionAuth } from '../../supabase/browserClient.js';
+import { getSupabaseClient, ensureSupabaseSessionAuth } from '../../supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 
 export async function getGatewayCredential(gateway) {
@@ -6,6 +6,10 @@ export async function getGatewayCredential(gateway) {
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).has('smoothr-debug');
   try {
+    const supabase = await getSupabaseClient();
+    if (!supabase) {
+      return { publishable_key: null, tokenization_key: null, api_login_id: null };
+    }
     await ensureSupabaseSessionAuth();
     const { storeId: store_id } = getConfig();
 

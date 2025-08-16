@@ -4,7 +4,7 @@ const invokeMock = vi.fn();
 const ensureMock = vi.fn();
 
 vi.mock('../../../supabase/browserClient.js', () => ({
-  default: { functions: { invoke: invokeMock } },
+  getSupabaseClient: () => Promise.resolve({ functions: { invoke: invokeMock } }),
   ensureSupabaseSessionAuth: ensureMock
 }));
 
