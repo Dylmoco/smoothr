@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 let auth;
 
 var signInMock;
@@ -7,7 +8,7 @@ var signUpMock;
 var signInWithOAuthMock;
 var resetPasswordMock;
 var getUserMock;
-var createClientMock;
+var legacyCreateClientMock;
 
 const STORE_ID = "test-store";
 
@@ -17,7 +18,7 @@ vi.mock("@supabase/supabase-js", () => {
   signInWithOAuthMock = vi.fn();
   resetPasswordMock = vi.fn();
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  createClientMock = vi.fn(() => ({
+  legacyCreateClientMock = vi.fn(() => ({
     auth: {
       getUser: getUserMock,
       signOut: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock("@supabase/supabase-js", () => {
       })),
     })),
   }));
-  return { createClient: createClientMock };
+  return { createClient: legacyCreateClientMock };
 });
 
 
@@ -57,13 +58,17 @@ describe("dynamic DOM bindings", () => {
   let docClickHandler;
 
     beforeEach(async () => {
-      signInMock?.mockClear?.();
-      signUpMock?.mockClear?.();
-      signInWithOAuthMock?.mockClear?.();
-      resetPasswordMock?.mockClear?.();
-      getUserMock?.mockClear?.();
       vi.resetModules();
       document?.dispatchEvent?.mockClear?.();
+      createClientMock();
+      ({
+        signInMock,
+        signUpMock,
+        signInWithOAuthMock,
+        resetPasswordMock,
+        getUserMock,
+      } = currentSupabaseMocks());
+      getUserMock.mockResolvedValue({ data: { user: null } });
       elements = [];
       forms = [];
       mutationCallback = undefined;

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   return {
     test: {
       environment: 'jsdom',
-      setupFiles: './vitest.setup.js'
+      setupFiles: ['./vitest.setup.js', './tests/setup.ts']
     },
     resolve: {
       alias: {
