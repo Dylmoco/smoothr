@@ -16,7 +16,14 @@ function expectCors(res: Response, origin = "https://smoothr-cms.webflow.io") {
 beforeEach(() => {
   handler = undefined as any;
   (globalThis as any).Deno = {
-    env: { get: () => "" },
+    env: {
+      get: (key: string) =>
+        key === "SUPABASE_URL"
+          ? process.env.SUPABASE_URL
+          : key === "SUPABASE_ANON_KEY"
+            ? process.env.SUPABASE_ANON_KEY
+            : "",
+    },
     serve: (fn: any) => {
       handler = fn;
     },
