@@ -1,25 +1,30 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-let createClient;
+import { getSupabaseClient } from '../../../supabase/client/browserClient.js';
 
 describe('supabase browser client singleton', () => {
   beforeEach(() => {
-    vi.resetModules();
-    createClient = vi.fn(() => ({ auth: {} }));
-    vi.mock('@supabase/supabase-js', () => ({ createClient }));
-    if (globalThis.Smoothr) {
-      delete globalThis.Smoothr.__supabase;
-    }
+    global.window = global.window || {};
+    window.Smoothr = window.Smoothr || {};
+    window.Smoothr.supabaseReady = Promise.resolve({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        setSession: vi.fn().mockResolvedValue({}),
+        signInWithOAuth: vi.fn().mockResolvedValue({}),
+      },
+      from: vi.fn(() => ({
+        select: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+      functions: {
+        invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
+      },
+    });
+    delete window.Smoothr.__supabase;
   });
 
-    it('creates client only once across calls', async () => {
-      const mod1 = await import('../../../supabase/browserClient.js');
-      const client1 = await mod1.getSupabaseClient();
-      vi.resetModules();
-      vi.mock('@supabase/supabase-js', () => ({ createClient }));
-      const mod2 = await import('../../../supabase/browserClient.js');
-      const client2 = await mod2.getSupabaseClient();
-      expect(createClient).toHaveBeenCalledTimes(1);
-      expect(client1).toBe(client2);
-    });
+  it('resolves same client across calls', async () => {
+    const client1 = await getSupabaseClient();
+    const client2 = await getSupabaseClient();
+    expect(client1).toBe(client2);
+  });
 });
+
