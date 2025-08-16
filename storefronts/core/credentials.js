@@ -1,36 +1,35 @@
-import { getSupabaseClient, ensureSupabaseSessionAuth } from '../../supabase/browserClient.js';
 import { getConfig } from '../features/config/globalConfig.js';
 
 export async function getGatewayCredential(gateway) {
-  const debug =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).has('smoothr-debug');
+  const w = typeof window !== 'undefined' ? window : globalThis;
+  const debug = new URLSearchParams(w.location?.search || '').has('smoothr-debug');
+
   try {
-    const supabase = await getSupabaseClient();
+    const supabase =
+      (await (w.Smoothr?.supabaseReady || Promise.resolve(null))) || null;
+
     if (!supabase) {
+      debug && console.warn('[Smoothr] Supabase not ready in getGatewayCredential');
       return { publishable_key: null, tokenization_key: null, api_login_id: null };
     }
-    await ensureSupabaseSessionAuth();
-    const { storeId: store_id } = getConfig();
 
-    const { data: creds, error } = await supabase.functions.invoke(
-      'get_gateway_credentials',
-      {
-        body: { store_id, gateway }
-      }
-    );
+    // Best-effort: hydrate session if present.
+    try {
+      const mod = await import('../../supabase/client/browserClient.js');
+      await mod.ensureSupabaseSessionAuth?.();
+    } catch {}
 
-    if (error) {
-      debug &&
-        console.warn('[Smoothr] Credential fetch failed:', error.message);
-      return { publishable_key: null, tokenization_key: null, api_login_id: null };
-    }
+    const { storeId } = getConfig();
+    const { data, error } = await supabase.functions.invoke('get_gateway_credentials', {
+      body: { store_id: storeId, gateway },
+    });
+    if (error) throw error;
 
     const {
       publishable_key = null,
       tokenization_key = null,
-      api_login_id = null
-    } = creds || {};
+      api_login_id = null,
+    } = data || {};
     return { publishable_key, tokenization_key, api_login_id };
   } catch (e) {
     debug && console.warn('[Smoothr] Credential fetch error:', e?.message || e);

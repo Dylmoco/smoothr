@@ -1,11 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const invokeMock = vi.fn();
 const ensureMock = vi.fn();
 
-vi.mock('../../../supabase/browserClient.js', () => ({
-  getSupabaseClient: () => Promise.resolve({ functions: { invoke: invokeMock } }),
-  ensureSupabaseSessionAuth: ensureMock
+vi.mock('../../../supabase/client/browserClient.js', () => ({
+  ensureSupabaseSessionAuth: ensureMock,
 }));
 
 vi.mock('../../features/config/globalConfig.js', () => ({
@@ -16,6 +15,13 @@ describe('credential helper', () => {
   beforeEach(() => {
     invokeMock.mockReset();
     ensureMock.mockReset();
+    globalThis.Smoothr = {
+      supabaseReady: Promise.resolve({ functions: { invoke: invokeMock } }),
+    };
+  });
+
+  afterEach(() => {
+    delete globalThis.Smoothr;
   });
 
   it('invokes edge function with store id and gateway', async () => {
