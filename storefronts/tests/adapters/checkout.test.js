@@ -18,8 +18,7 @@ vi.mock('../../../supabase/browserClient.js', () => {
   const from = vi.fn(() => ({ select }));
   const client = { from };
   return {
-    supabase: client,
-    default: client,
+    getSupabaseClient: () => Promise.resolve(client),
     ensureSupabaseSessionAuth: vi.fn()
   };
 });

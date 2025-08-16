@@ -33,10 +33,10 @@ describe('auth feature init', () => {
       }
     };
     globalThis.xc = supabaseMock;
-    vi.doMock('../../../supabase/browserClient.js', () => ({
-      supabase: supabaseMock,
-      ensureSupabaseSessionAuth: vi.fn().mockResolvedValue()
-    }));
+      vi.doMock('../../../supabase/browserClient.js', () => ({
+        getSupabaseClient: () => Promise.resolve(supabaseMock),
+        ensureSupabaseSessionAuth: vi.fn().mockResolvedValue()
+      }));
     vi.doMock('../../features/currency/index.js', () => ({
       setBaseCurrency: vi.fn(),
       updateRates: vi.fn(),

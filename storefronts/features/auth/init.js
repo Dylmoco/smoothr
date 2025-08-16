@@ -123,14 +123,17 @@ export const resolveSupabase = async () => {
 };
 
 /** @internal test-only helper to avoid bundling legacy deps */
-async function tryImportClient() {
-  try {
-    const mod = await import('../../../supabase/browserClient.js');
-    return mod.supabase ?? mod.default ?? null;
-  } catch {
-    return null;
+  async function tryImportClient() {
+    try {
+      const mod = await import('../../../supabase/browserClient.js');
+      if (mod.getSupabaseClient) {
+        return await mod.getSupabaseClient();
+      }
+      return mod.default ?? null;
+    } catch {
+      return null;
+    }
   }
-}
 export { tryImportClient as __test_tryImportClient };
 
 export { lookupRedirectUrl, lookupDashboardHomeUrl };

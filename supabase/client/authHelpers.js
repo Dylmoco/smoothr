@@ -1,4 +1,4 @@
-import { supabase } from './browserClient.js';
+import { getSupabaseClient } from './browserClient.js';
 import { loadPublicConfig } from '../../storefronts/features/config/sdkConfig.js';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
@@ -164,33 +164,42 @@ export async function lookupDashboardHomeUrl() {
   }
 }
 
-export function initAuth() {
-  const p = supabase.auth.getUser().then(async ({ data: { user } }) => {
-    if (typeof window !== 'undefined') {
-      window.smoothr = window.smoothr || {};
-      window.smoothr.auth = { user: user || null };
+export async function initAuth() {
+  const supabase = await getSupabaseClient();
+  if (!supabase) return null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (typeof window !== 'undefined') {
+    window.smoothr = window.smoothr || {};
+    window.smoothr.auth = { user: user || null };
 
-      if (user) {
-        log(`%c✅ Smoothr Auth: Logged in as ${user.email}`, 'color: #22c55e; font-weight: bold;');
-      } else {
-        log('%c🔒 Smoothr Auth: Not logged in', 'color: #f87171; font-weight: bold;');
-      }
-
-      const storage =
-        typeof localStorage !== 'undefined'
-          ? localStorage
-          : typeof globalThis !== 'undefined'
-            ? globalThis.localStorage
-            : undefined;
-      const oauthFlag = storage?.getItem?.('smoothr_oauth');
-      if (oauthFlag && user) {
-        document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
-        storage?.removeItem?.('smoothr_oauth');
-        const url = await lookupRedirectUrl('login');
-        window.location.href = url;
-      }
+    if (user) {
+      log(
+        `%c✅ Smoothr Auth: Logged in as ${user.email}`,
+        'color: #22c55e; font-weight: bold;'
+      );
+    } else {
+      log(
+        '%c🔒 Smoothr Auth: Not logged in',
+        'color: #f87171; font-weight: bold;'
+      );
     }
-  });
+
+    const storage =
+      typeof localStorage !== 'undefined'
+        ? localStorage
+        : typeof globalThis !== 'undefined'
+        ? globalThis.localStorage
+        : undefined;
+    const oauthFlag = storage?.getItem?.('smoothr_oauth');
+    if (oauthFlag && user) {
+      document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
+      storage?.removeItem?.('smoothr_oauth');
+      const url = await lookupRedirectUrl('login');
+      window.location.href = url;
+    }
+  }
   const setupBindings = () => {
     bindAuthElements();
     bindSignOutButtons();
@@ -207,7 +216,7 @@ export function initAuth() {
   } else {
     document.addEventListener('DOMContentLoaded', setupBindings);
   }
-  return p;
+  return user || null;
 }
 
 export async function signInWithGoogle() {
@@ -215,6 +224,8 @@ export async function signInWithGoogle() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
+  const supabase = await getSupabaseClient();
+  if (!supabase) return;
   await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: getOAuthRedirectUrl() }
@@ -226,6 +237,8 @@ export async function signInWithApple() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
+  const supabase = await getSupabaseClient();
+  if (!supabase) return;
   await supabase.auth.signInWithOAuth({
     provider: 'apple',
     options: { redirectTo: getOAuthRedirectUrl() }
@@ -233,6 +246,8 @@ export async function signInWithApple() {
 }
 
 export async function signUp(email, password) {
+  const supabase = await getSupabaseClient();
+  if (!supabase) return { data: null, error: new Error('Supabase unavailable') };
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -246,6 +261,9 @@ export async function signUp(email, password) {
 }
 
 export async function requestPasswordReset(email) {
+  const supabase = await getSupabaseClient();
+  if (!supabase)
+    return { data: null, error: new Error('Supabase unavailable') };
   return await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: getPasswordResetRedirectUrl()
   });
@@ -257,7 +275,9 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
     if (access_token && refresh_token) {
-      supabase.auth.setSession({ access_token, refresh_token });
+      getSupabaseClient().then(supabase => {
+        supabase?.auth.setSession({ access_token, refresh_token });
+      });
     }
     document
       .querySelectorAll('[data-smoothr="password-reset-confirm"]')
@@ -288,9 +308,17 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
             }
             setLoading(trigger, true);
             try {
-              const { data, error } = await supabase.auth.updateUser({ password });
+              const supabase = await getSupabaseClient();
+              const { data, error } = supabase
+                ? await supabase.auth.updateUser({ password })
+                : { data: null, error: { message: 'Supabase unavailable' } };
               if (error) {
-                showError(form, error.message || 'Password update failed', trigger, trigger);
+                showError(
+                  form,
+                  error.message || 'Password update failed',
+                  trigger,
+                  trigger
+                );
               } else {
                 if (typeof window !== 'undefined') {
                   window.smoothr = window.smoothr || {};
