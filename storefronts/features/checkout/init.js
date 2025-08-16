@@ -1,12 +1,6 @@
 // checkout.js
 
-let bindCardInputs,
-  checkoutLogger,
-  loadPublicConfig,
-  getConfig,
-  mergeConfig,
-  platformReady,
-  loadScriptOnce;
+let getConfig;
 
 let __checkoutInitialized = false;
 export function __test_resetCheckout() {
@@ -57,21 +51,13 @@ async function init(opts = {}) {
       globalThis.Zc;
 
     try {
-    [
-      { default: bindCardInputs },
-      { default: checkoutLogger },
-      { loadPublicConfig },
-      { getConfig, mergeConfig },
-      { platformReady },
-      { default: loadScriptOnce }
-      ] = await Promise.all([
-        import('./utils/inputFormatters.js'),
-        import('./utils/checkoutLogger.js'),
-        import('../config/sdkConfig.js'),
-        import('../config/globalConfig.js'),
-        import('../../utils/platformReady.js'),
-        import('../../utils/loadScriptOnce.js'),
-      ]);
+    const { default: bindCardInputs } = await import('./utils/inputFormatters.js');
+    const { default: checkoutLogger } = await import('./utils/checkoutLogger.js');
+    const { loadPublicConfig } = await import('../config/sdkConfig.js');
+    const { getConfig: importedGetConfig, mergeConfig } = await import('../config/globalConfig.js');
+    getConfig = importedGetConfig;
+    const { platformReady } = await import('../../utils/platformReady.js');
+    const { default: loadScriptOnce } = await import('../../utils/loadScriptOnce.js');
 
       // Legacy globals are assigned only after dependencies load
       globalThis.el = globalThis.el || (sel => document.querySelector(sel));
@@ -98,19 +84,11 @@ async function init(opts = {}) {
       mergeConfig(publicConfig);
     }
 
-    const [
-      { default: resolveGateway },
-      { default: collectFormFields },
-      { default: constructPayload },
-      { default: gatewayDispatcher },
-      { computeCartHash, disableButton, enableButton }
-    ] = await Promise.all([
-      import('./utils/resolveGateway.js'),
-      import('./utils/collectFormFields.js'),
-      import('./utils/constructPayload.js'),
-      import('./utils/gatewayDispatcher.js'),
-      import('./utils/cartHash.js')
-    ]);
+    const { default: resolveGateway } = await import('./utils/resolveGateway.js');
+    const { default: collectFormFields } = await import('./utils/collectFormFields.js');
+    const { default: constructPayload } = await import('./utils/constructPayload.js');
+    const { default: gatewayDispatcher } = await import('./utils/gatewayDispatcher.js');
+    const { computeCartHash, disableButton, enableButton } = await import('./utils/cartHash.js');
 
     const debug = getConfig().debug;
     if (debug) console.log('[Smoothr] init', config);
