@@ -1,4 +1,4 @@
-import { createSupabaseClient } from "../../../shared/supabase/client.ts";
+import { createSupabaseClient } from "../_shared/supabase-client.ts";
 
 // Helper function to extract host from origin
 function hostFromOrigin(origin: string | null): string | null {
