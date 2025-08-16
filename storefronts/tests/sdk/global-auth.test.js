@@ -1,24 +1,5 @@
-// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
-var getUserMock = vi.fn();
-var signOutMock = vi.fn(() => Promise.resolve({ error: null }));
-var createClientMock;
-
-vi.mock("@supabase/supabase-js", () => {
-  createClientMock = vi.fn(() => ({
-    auth: { getUser: getUserMock, signOut: signOutMock, onAuthStateChange: vi.fn() },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  }));
-  return { createClient: createClientMock };
-});
-
+import { currentSupabaseMocks } from "../utils/supabase-mock";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -29,8 +10,10 @@ describe("global auth", () => {
 
   beforeEach(() => {
     signOutHandler = undefined;
+    const { getUserMock, signOutMock } = currentSupabaseMocks();
     getUserMock.mockClear();
     signOutMock.mockClear();
+    getUserMock.mockResolvedValue({ data: { user: null } });
     global.window = {
       location: { origin: "", href: "", hostname: "" },
       addEventListener: vi.fn(),
@@ -58,6 +41,7 @@ describe("global auth", () => {
   });
 
   it("sets and clears window.Smoothr.auth.user", async () => {
+    const { getUserMock } = currentSupabaseMocks();
     const user = { id: "1", email: "test@example.com" };
     getUserMock.mockResolvedValueOnce({ data: { user } });
     const auth = await import("../../features/auth/index.js");

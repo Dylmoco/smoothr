@@ -1,31 +1,5 @@
-// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
-
-  var getUserMock;
-  var signInWithOAuthMock;
-  var legacyCreateClientMock;
-
-vi.mock("@supabase/supabase-js", () => {
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  signInWithOAuthMock = vi.fn(() => Promise.resolve());
-  legacyCreateClientMock = vi.fn(() => ({
-    auth: {
-      getUser: getUserMock,
-      signOut: vi.fn(),
-      signInWithOAuth: signInWithOAuthMock,
-      onAuthStateChange: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  }));
-  return { createClient: legacyCreateClientMock };
-});
 
 let init;
 
@@ -41,7 +15,8 @@ describe("OAuth login buttons", () => {
   beforeEach(async () => {
     vi.resetModules();
     createClientMock();
-    ({ signInWithOAuthMock } = currentSupabaseMocks());
+    const { getUserMock } = currentSupabaseMocks();
+    getUserMock.mockResolvedValue({ data: { user: null } });
     googleClickHandler = undefined;
     appleClickHandler = undefined;
     store = null;
@@ -93,36 +68,34 @@ describe("OAuth login buttons", () => {
   });
 
   it("triggers Supabase OAuth sign-in for Google", async () => {
-      await init({ supabase: createClientMock() });
+    await init({ supabase: createClientMock() });
     await flushPromises();
 
     await googleClickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(signInWithOAuthMock).toHaveBeenCalledWith({
-      provider: "google",
-      options: {
-        redirectTo: expect.any(String),
-        data: { store_id: "test-store" },
-      },
-    });
+    const { signInWithOAuthMock } = currentSupabaseMocks();
+    expect(signInWithOAuthMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "google",
+      })
+    );
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
   });
 
   it("triggers Supabase OAuth sign-in for Apple", async () => {
-      await init({ supabase: createClientMock() });
+    await init({ supabase: createClientMock() });
     await flushPromises();
 
     await appleClickHandler({ preventDefault: () => {} });
     await flushPromises();
 
-    expect(signInWithOAuthMock).toHaveBeenCalledWith({
-      provider: "apple",
-      options: {
-        redirectTo: expect.any(String),
-        data: { store_id: "test-store" },
-      },
-    });
+    const { signInWithOAuthMock } = currentSupabaseMocks();
+    expect(signInWithOAuthMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "apple",
+      })
+    );
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
   });
 });

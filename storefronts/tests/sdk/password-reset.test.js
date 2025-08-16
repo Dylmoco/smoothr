@@ -1,39 +1,5 @@
-// [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
-
-var resetPasswordMock;
-var updateUserMock;
-var setSessionMock;
-var getUserMock;
-var createClientMock;
-
-vi.mock("@supabase/supabase-js", () => {
-  resetPasswordMock = vi.fn();
-  updateUserMock = vi.fn();
-  setSessionMock = vi.fn();
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  createClientMock = vi.fn(() => ({
-    auth: {
-      getUser: getUserMock,
-      signOut: vi.fn(),
-      signInWithOAuth: vi.fn(),
-      signUp: vi.fn(),
-      resetPasswordForEmail: resetPasswordMock,
-      updateUser: updateUserMock,
-      setSession: setSessionMock,
-      onAuthStateChange: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  }));
-  return { createClient: createClientMock };
-});
 
 let auth;
 
@@ -48,7 +14,7 @@ describe("password reset request", () => {
   beforeEach(async () => {
     vi.resetModules();
     createClientMock();
-    ({ resetPasswordMock, getUserMock } = currentSupabaseMocks());
+    const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValue({ data: { user: null } });
     emailValue = "user@example.com";
     clickHandler = undefined;
@@ -93,18 +59,21 @@ describe("password reset request", () => {
   });
 
   it("sends reset email", async () => {
+    const { resetPasswordMock } = currentSupabaseMocks();
     resetPasswordMock.mockResolvedValue({ data: {}, error: null });
     await auth.init();
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(resetPasswordMock).toHaveBeenCalledWith("user@example.com", {
-      redirectTo: "",
-    });
+    expect(resetPasswordMock).toHaveBeenCalledWith(
+      "user@example.com",
+      expect.objectContaining({ redirectTo: "" })
+    );
     expect(global.window.alert).toHaveBeenCalled();
   });
 
   it("handles failure", async () => {
+    const { resetPasswordMock } = currentSupabaseMocks();
     resetPasswordMock.mockResolvedValue({
       data: null,
       error: new Error("bad"),
@@ -127,9 +96,7 @@ describe("password reset confirmation", () => {
   beforeEach(async () => {
     vi.resetModules();
     createClientMock();
-    const { updateUserMock: uMock, setSessionMock: sMock } = currentSupabaseMocks();
-    updateUserMock = uMock;
-    setSessionMock = sMock;
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
     updateUserMock.mockClear();
     setSessionMock.mockClear();
     passwordValue = "newpass123";
@@ -182,6 +149,7 @@ describe("password reset confirmation", () => {
   });
 
   it("updates password and redirects", async () => {
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
     updateUserMock.mockResolvedValue({ data: {}, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
     await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
@@ -197,6 +165,7 @@ describe("password reset confirmation", () => {
   });
 
   it("handles update failure", async () => {
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
     updateUserMock.mockResolvedValue({ data: null, error: new Error("fail") });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
     await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
@@ -212,6 +181,7 @@ describe("password reset confirmation", () => {
   });
 
   it("validates strength and match", async () => {
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
     updateUserMock.mockResolvedValue({ data: {}, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });
     await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
@@ -234,6 +204,7 @@ describe("password reset confirmation", () => {
   });
 
   it("sets window.Smoothr.auth.user after update", async () => {
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
     const user = { id: "1", email: "test@example.com" };
     updateUserMock.mockResolvedValue({ data: { user }, error: null });
     setSessionMock.mockResolvedValue({ data: {}, error: null });

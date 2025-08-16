@@ -29,7 +29,11 @@ describe('checkout feature init', () => {
   it('fetches public config using supplied Supabase client', async () => {
     const { init } = await import('../../features/checkout/init.js');
     await init({ storeId: '1' });
-    expect(loadPublicConfigMock).toHaveBeenCalledWith('1', supabaseMock);
+    // The SDK now passes a full client; we only care that it supplies `.from`.
+    expect(loadPublicConfigMock).toHaveBeenCalledWith(
+      '1',
+      expect.objectContaining({ from: expect.any(Function) })
+    );
   });
 });
 

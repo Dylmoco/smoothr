@@ -3,41 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 let auth;
 
-var signInMock;
-var signUpMock;
-var signInWithOAuthMock;
-var resetPasswordMock;
-var getUserMock;
-var legacyCreateClientMock;
-
 const STORE_ID = "test-store";
-
-vi.mock("@supabase/supabase-js", () => {
-  signInMock = vi.fn();
-  signUpMock = vi.fn();
-  signInWithOAuthMock = vi.fn();
-  resetPasswordMock = vi.fn();
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  legacyCreateClientMock = vi.fn(() => ({
-    auth: {
-      getUser: getUserMock,
-      signOut: vi.fn(),
-      signInWithPassword: signInMock,
-      signInWithOAuth: signInWithOAuthMock,
-      signUp: signUpMock,
-      resetPasswordForEmail: resetPasswordMock,
-      onAuthStateChange: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  }));
-  return { createClient: legacyCreateClientMock };
-});
 
 
 function flushPromises() {
@@ -61,13 +27,7 @@ describe("dynamic DOM bindings", () => {
       vi.resetModules();
       document?.dispatchEvent?.mockClear?.();
       createClientMock();
-      ({
-        signInMock,
-        signUpMock,
-        signInWithOAuthMock,
-        resetPasswordMock,
-        getUserMock,
-      } = currentSupabaseMocks());
+      const { getUserMock } = currentSupabaseMocks();
       getUserMock.mockResolvedValue({ data: { user: null } });
       elements = [];
       forms = [];
@@ -168,6 +128,7 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     const user = { id: "1", email: "user@example.com" };
+    const { signInMock } = currentSupabaseMocks();
     signInMock.mockResolvedValue({ data: { user }, error: null });
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
@@ -218,6 +179,7 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     const user = { id: "2", email: "new@example.com" };
+    const { signUpMock } = currentSupabaseMocks();
     signUpMock.mockResolvedValue({ data: { user }, error: null });
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
@@ -257,6 +219,7 @@ describe("dynamic DOM bindings", () => {
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
+    const { signInWithOAuthMock } = currentSupabaseMocks();
     signInWithOAuthMock.mockResolvedValue({});
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
@@ -276,8 +239,10 @@ describe("dynamic DOM bindings", () => {
     vi.resetModules();
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+    const client = createClientMock();
+    const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValue({ data: { user } });
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
@@ -314,6 +279,7 @@ describe("dynamic DOM bindings", () => {
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
+    const { signInWithOAuthMock } = currentSupabaseMocks();
     signInWithOAuthMock.mockResolvedValue({});
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
@@ -333,8 +299,10 @@ describe("dynamic DOM bindings", () => {
     vi.resetModules();
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+    const client = createClientMock();
+    const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValue({ data: { user } });
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
     await flushPromises();
 
     expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
@@ -397,13 +365,17 @@ describe("dynamic DOM bindings", () => {
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
+    const { resetPasswordMock } = currentSupabaseMocks();
     resetPasswordMock.mockResolvedValue({ data: {}, error: null });
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
-    expect(resetPasswordMock).toHaveBeenCalledWith("user@example.com", {
-      redirectTo: expect.any(String),
-    });
+    expect(resetPasswordMock).toHaveBeenCalledWith(
+      "user@example.com",
+      expect.objectContaining({
+        redirectTo: expect.any(String),
+      })
+    );
     expect(successEl.textContent).toBe("Check your email for a reset link.");
     expect(errorEl.textContent).toBe("");
     expect(successEl.removeAttribute).toHaveBeenCalledWith("hidden");
@@ -424,6 +396,7 @@ describe("dynamic DOM bindings", () => {
   });
 
   it("binds newly added account-access elements and dispatches open-auth", async () => {
+    const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValue({ data: { user: null } });
     const btn = {
       tagName: "DIV",
