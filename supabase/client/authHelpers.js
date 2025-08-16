@@ -1,5 +1,9 @@
-import { getSupabaseClient } from './browserClient.js';
 import { loadPublicConfig } from '../../storefronts/features/config/sdkConfig.js';
+
+async function getSupabase() {
+  const w = typeof window !== 'undefined' ? window : globalThis;
+  return (await (w.Smoothr?.supabaseReady || Promise.resolve(null))) || null;
+}
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const SMOOTHR_CONFIG = globalScope.SMOOTHR_CONFIG || {};
@@ -165,7 +169,11 @@ export async function lookupDashboardHomeUrl() {
 }
 
 export async function initAuth() {
-  const supabase = await getSupabaseClient();
+  try {
+    const mod = await import('./browserClient.js');
+    await mod.ensureSupabaseSessionAuth?.();
+  } catch {}
+  const supabase = await getSupabase();
   if (!supabase) return null;
   const {
     data: { user },
@@ -224,7 +232,11 @@ export async function signInWithGoogle() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
-  const supabase = await getSupabaseClient();
+  try {
+    const mod = await import('./browserClient.js');
+    await mod.ensureSupabaseSessionAuth?.();
+  } catch {}
+  const supabase = await getSupabase();
   if (!supabase) return;
   await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -237,7 +249,11 @@ export async function signInWithApple() {
   if (typeof window !== 'undefined') {
     localStorage.setItem('smoothr_oauth', '1');
   }
-  const supabase = await getSupabaseClient();
+  try {
+    const mod = await import('./browserClient.js');
+    await mod.ensureSupabaseSessionAuth?.();
+  } catch {}
+  const supabase = await getSupabase();
   if (!supabase) return;
   await supabase.auth.signInWithOAuth({
     provider: 'apple',
@@ -246,7 +262,11 @@ export async function signInWithApple() {
 }
 
 export async function signUp(email, password) {
-  const supabase = await getSupabaseClient();
+  try {
+    const mod = await import('./browserClient.js');
+    await mod.ensureSupabaseSessionAuth?.();
+  } catch {}
+  const supabase = await getSupabase();
   if (!supabase) return { data: null, error: new Error('Supabase unavailable') };
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -261,7 +281,11 @@ export async function signUp(email, password) {
 }
 
 export async function requestPasswordReset(email) {
-  const supabase = await getSupabaseClient();
+  try {
+    const mod = await import('./browserClient.js');
+    await mod.ensureSupabaseSessionAuth?.();
+  } catch {}
+  const supabase = await getSupabase();
   if (!supabase)
     return { data: null, error: new Error('Supabase unavailable') };
   return await supabase.auth.resetPasswordForEmail(email, {
@@ -275,8 +299,13 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
     if (access_token && refresh_token) {
-      getSupabaseClient().then(supabase => {
-        supabase?.auth.setSession({ access_token, refresh_token });
+      getSupabase().then(async supabase => {
+        if (!supabase) return;
+        try {
+          const mod = await import('./browserClient.js');
+          await mod.ensureSupabaseSessionAuth?.();
+        } catch {}
+        await supabase.auth.setSession({ access_token, refresh_token });
       });
     }
     document
@@ -308,10 +337,11 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
             }
             setLoading(trigger, true);
             try {
-              const supabase = await getSupabaseClient();
-              const { data, error } = supabase
-                ? await supabase.auth.updateUser({ password })
-                : { data: null, error: { message: 'Supabase unavailable' } };
+              const mod = await import('./browserClient.js');
+              await mod.ensureSupabaseSessionAuth?.();
+              const supabase = await getSupabase();
+              if (!supabase) throw new Error('Supabase unavailable');
+              const { data, error } = await supabase.auth.updateUser({ password });
               if (error) {
                 showError(
                   form,
