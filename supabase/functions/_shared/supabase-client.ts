@@ -1,19 +1,13 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.38.4";
 
-function getEnv(name: string): string | undefined {
-  // Prefer Deno env in Edge runtime; fall back to Node env for Vitest.
-  // IMPORTANT: let errors from Deno.env.get bubble so tests can assert 500.
-  const denoEnvGet = (globalThis as any)?.Deno?.env?.get;
-  if (typeof denoEnvGet === 'function') {
-    return denoEnvGet(name) ?? undefined;
-  }
-  if (typeof process !== 'undefined' && process?.env) return process.env[name];
-  return undefined;
-}
+const readEnv = (k: string): string | undefined =>
+  (typeof Deno !== "undefined" && Deno.env?.get?.(k)) ||
+  (typeof globalThis !== "undefined" && (globalThis as any).process?.env?.[k]) ||
+  undefined;
 
 export function createSupabaseClient(): SupabaseClient {
-  const supabaseUrl = getEnv('SUPABASE_URL');
-  const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
+  const supabaseUrl = readEnv("SUPABASE_URL");
+  const supabaseAnonKey = readEnv("SUPABASE_ANON_KEY");
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Missing Supabase credentials: SUPABASE_URL and SUPABASE_ANON_KEY must be set');
@@ -29,4 +23,12 @@ export function createSupabaseClient(): SupabaseClient {
     },
   });
 }
+
+export const supabase: SupabaseClient = (() => {
+  try {
+    return createSupabaseClient();
+  } catch {
+    return undefined as unknown as SupabaseClient;
+  }
+})();
 

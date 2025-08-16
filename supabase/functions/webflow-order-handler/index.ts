@@ -1,4 +1,4 @@
-import { createSupabaseClient } from "../../shared/supabase/client.ts";
+import { createSupabaseClient } from "../_shared/supabase-client.ts";
 import { findOrCreateCustomer } from "../_shared/findOrCreateCustomer.ts";
 
 const debug = Deno.env.get("SMOOTHR_DEBUG") === "true";

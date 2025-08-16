@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.38.4";
 
 export async function findOrCreateCustomer(
   supabase: SupabaseClient,

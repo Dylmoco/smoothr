@@ -1,4 +1,5 @@
 import { createSupabaseClient } from "../_shared/supabase-client.ts";
+import { withCors, preflight } from "../_shared/cors.ts";
 
 // Helper function to extract host from origin
 function hostFromOrigin(origin: string | null): string | null {
@@ -9,25 +10,6 @@ function hostFromOrigin(origin: string | null): string | null {
     const raw = origin.replace(/^https?:\/\//i, "").toLowerCase();
     return raw.split("/")[0] || null;
   }
-}
-
-// Add CORS headers to response
-function withCors(res: Response, origin: string = "*"): Response {
-  const headers = new Headers(res.headers);
-  headers.set("Access-Control-Allow-Origin", origin);
-  headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  headers.set(
-    "Access-Control-Allow-Headers",
-    "authorization, x-client-info, apikey, content-type, x-store-id, user-agent"
-  );
-  headers.set("Access-Control-Allow-Credentials", "true");
-  headers.set("Access-Control-Max-Age", "86400"); // Cache preflight for 24 hours
-  return new Response(res.body, { status: res.status, headers });
-}
-
-// Create preflight response
-function preflight(origin: string = "*"): Response {
-  return withCors(new Response(null, { status: 204 }), origin);
 }
 
 // Debug helper function
