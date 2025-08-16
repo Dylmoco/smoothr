@@ -1,36 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
-var getUserMock;
-var createClientMock;
-var getSessionMock;
-
-vi.mock("@supabase/supabase-js", () => {
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: {} }, error: null }));
-  createClientMock = vi.fn(() => ({
-    auth: {
-      getUser: getUserMock,
-      signOut: vi.fn(),
-      onAuthStateChange: vi.fn(),
-      getSession: getSessionMock
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null })
-        }))
-      }))
-    }))
-  }));
-  return { createClient: createClientMock };
-});
-
+import { currentSupabaseMocks } from "../utils/supabase-mock";
 import * as auth from "../../features/auth/index.js";
 import * as currency from "../../features/currency/index.js";
 
 describe("module init idempotency", () => {
   beforeEach(() => {
     vi.resetModules();
+    const { getUserMock } = currentSupabaseMocks();
+    getUserMock.mockResolvedValue({ data: { user: null } });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
     );
@@ -54,6 +31,7 @@ describe("module init idempotency", () => {
     const first = window.Smoothr.auth;
     await auth.init();
     expect(window.Smoothr.auth).toBe(first);
+    const { getUserMock } = currentSupabaseMocks();
     expect(getUserMock).toHaveBeenCalledTimes(1);
   });
 
