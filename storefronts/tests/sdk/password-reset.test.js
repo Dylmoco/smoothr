@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var resetPasswordMock;
 var updateUserMock;
@@ -46,6 +47,9 @@ describe("password reset request", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    createClientMock();
+    ({ resetPasswordMock, getUserMock } = currentSupabaseMocks());
+    getUserMock.mockResolvedValue({ data: { user: null } });
     emailValue = "user@example.com";
     clickHandler = undefined;
     let btn;
@@ -122,6 +126,10 @@ describe("password reset confirmation", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    createClientMock();
+    const { updateUserMock: uMock, setSessionMock: sMock } = currentSupabaseMocks();
+    updateUserMock = uMock;
+    setSessionMock = sMock;
     updateUserMock.mockClear();
     setSessionMock.mockClear();
     passwordValue = "newpass123";

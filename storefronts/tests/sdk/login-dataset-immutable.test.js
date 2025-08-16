@@ -1,5 +1,6 @@
 // [Codex Fix] New test for immutable dataset
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var signInMock;
 var getUserMock;
@@ -40,6 +41,9 @@ describe("login with immutable dataset", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    createClientMock();
+    ({ signInMock, getUserMock } = currentSupabaseMocks());
+    getUserMock.mockResolvedValue({ data: { user: null } });
     clickHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";

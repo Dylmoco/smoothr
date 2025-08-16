@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var signInMock;
 var getUserMock;
@@ -42,6 +43,9 @@ describe("login form", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    createClientMock();
+    ({ signInMock, getUserMock, getSessionMock } = currentSupabaseMocks());
+    getUserMock.mockResolvedValue({ data: { user: null } });
     clickHandler = undefined;
     emailValue = "user@example.com";
     passwordValue = "Password1";

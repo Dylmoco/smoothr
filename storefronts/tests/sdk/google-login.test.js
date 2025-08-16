@@ -1,14 +1,15 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
   var getUserMock;
   var signInWithOAuthMock;
-  var createClientMock;
+  var legacyCreateClientMock;
 
 vi.mock("@supabase/supabase-js", () => {
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   signInWithOAuthMock = vi.fn(() => Promise.resolve());
-  createClientMock = vi.fn(() => ({
+  legacyCreateClientMock = vi.fn(() => ({
     auth: {
       getUser: getUserMock,
       signOut: vi.fn(),
@@ -23,7 +24,7 @@ vi.mock("@supabase/supabase-js", () => {
       })),
     })),
   }));
-  return { createClient: createClientMock };
+  return { createClient: legacyCreateClientMock };
 });
 
 let init;
@@ -39,6 +40,8 @@ describe("OAuth login buttons", () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    createClientMock();
+    ({ signInWithOAuthMock } = currentSupabaseMocks());
     googleClickHandler = undefined;
     appleClickHandler = undefined;
     store = null;

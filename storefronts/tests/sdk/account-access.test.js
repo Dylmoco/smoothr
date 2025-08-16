@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var getUserMock;
 var createClientMock;
@@ -77,6 +78,8 @@ describe("account access trigger", () => {
 
     beforeEach(async () => {
       vi.resetModules();
+      createClientMock();
+      const { getUserMock } = currentSupabaseMocks();
       authHelpers = await import("../../../supabase/authHelpers.js");
       vi
         .spyOn(authHelpers, "lookupDashboardHomeUrl")
@@ -101,6 +104,8 @@ describe("account access trigger", () => {
   describe("dispatches open-auth event for anonymous users", () => {
     beforeEach(async () => {
       vi.resetModules();
+      createClientMock();
+      const { getUserMock } = currentSupabaseMocks();
       getUserMock.mockResolvedValueOnce({ data: { user: null } });
       authHelpers = await import("../../../supabase/authHelpers.js");
       const { init } = await import("../../features/auth/index.js");

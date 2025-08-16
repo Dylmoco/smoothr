@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     // Use jsdom so that browser globals like `window` are available in tests
     environment: 'jsdom',
-    setupFiles: './vitest.setup.ts',
+    setupFiles: ['./vitest.setup.ts', './storefronts/tests/setup.ts'],
     testTimeout: 10000,
     deps: {
       inline: ['@supabase/supabase-js'], // Enable npm imports
