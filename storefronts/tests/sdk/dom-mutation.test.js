@@ -415,6 +415,6 @@ describe("dynamic DOM bindings", () => {
     expect(global.document.dispatchEvent).toHaveBeenCalled();
     const evt = global.document.dispatchEvent.mock.calls[0][0];
     expect(evt.type).toBe("smoothr:open-auth");
-    expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-wrapper"]');
+    expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-panel"]');
   });
 });
