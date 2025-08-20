@@ -10,7 +10,10 @@ const legacyMap = {
   'data-smoothr-currency': 'currency',
   'data-smoothr-signup': 'signup',
   'data-smoothr-password-reset': 'password-reset',
-  'data-smoothr-password-reset-confirm': 'password-reset-confirm'
+  'data-smoothr-password-reset-confirm': 'password-reset-confirm',
+  // Extra legacy conveniences for auth entry points:
+  'data-smoothr-account': 'account-access',
+  'data-smoothr-auth': 'auth-panel'
 };
 
 function normalizeLegacyAttributes(root = document) {

@@ -89,13 +89,21 @@ function bindAuthElements(root = globalThis.document) {
   const doc = root?.ownerDocument || globalThis.document;
   if (doc && !_bound.has(doc)) {
     doc.addEventListener('smoothr:open-auth', (e = {}) => {
-      const selector = e?.detail?.targetSelector || '[data-smoothr="auth-panel"]';
-      const panel = doc.querySelector(selector);
+      // Robust panel resolution: prefer panel, then wrapper, then panel inside wrapper
+      const requested = e?.detail?.targetSelector;
+      let panel = null;
+      if (requested) panel = doc.querySelector(requested);
+      if (!panel) panel = doc.querySelector('[data-smoothr="auth-panel"]');
+      if (!panel) {
+        const wrapper = doc.querySelector('[data-smoothr="auth-wrapper"]');
+        if (wrapper) panel = wrapper.querySelector('[data-smoothr="auth-panel"]') || wrapper;
+      }
+      const shouldOpen = e?.detail?.open !== false;
       if (panel) {
-        const shouldOpen = e?.detail?.open !== false;
         panel.classList.toggle('is-active', shouldOpen);
-        if (shouldOpen) log('auth panel opened');
-        else log('auth panel closed');
+        log(`auth panel ${shouldOpen ? 'opened' : 'closed'}`, panel);
+      } else {
+        log('auth panel not found for smoothr:open-auth', requested || '(default)');
       }
     });
     _bound.add(doc);
@@ -444,10 +452,13 @@ export async function init(options = {}) {
         const to = await lookupDashboardHomeUrl();
         if (to && w.location) w.location.href = to;
       } else {
+        // Dispatch to canonical auth-panel; listener has wrapper fallback if needed
+        const detail = { targetSelector: '[data-smoothr="auth-panel"]', open: true };
         const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } })
-          : { type: 'smoothr:open-auth', detail: { targetSelector: '[data-smoothr="auth-wrapper"]' } };
+          ? new w.CustomEvent('smoothr:open-auth', { detail })
+          : { type: 'smoothr:open-auth', detail };
         (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        log('dispatched smoothr:open-auth', detail);
       }
     };
 
