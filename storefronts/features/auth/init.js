@@ -89,7 +89,7 @@ function bindAuthElements(root = globalThis.document) {
   const doc = root?.ownerDocument || globalThis.document;
   if (doc && !_bound.has(doc)) {
     doc.addEventListener('smoothr:open-auth', (e = {}) => {
-      // Robust panel resolution: prefer panel, then wrapper, then panel inside wrapper
+      // Robust panel resolution: prefer requested selector, then [auth-panel], then panel inside [auth-wrapper], finally wrapper
       const requested = e?.detail?.targetSelector;
       let panel = null;
       if (requested) panel = doc.querySelector(requested);
@@ -102,6 +102,13 @@ function bindAuthElements(root = globalThis.document) {
       if (panel) {
         panel.classList.toggle('is-active', shouldOpen);
         log(`auth panel ${shouldOpen ? 'opened' : 'closed'}`, panel);
+        // lifecycle events for animations/integrations
+        const evType = shouldOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
+        const payload = { selector: requested || '[data-smoothr="auth-panel"]' };
+        const ev = typeof globalThis.CustomEvent === 'function'
+          ? new CustomEvent(evType, { detail: payload })
+          : { type: evType, detail: payload };
+        doc.dispatchEvent(ev);
       } else {
         log('auth panel not found for smoothr:open-auth', requested || '(default)');
       }
@@ -444,7 +451,8 @@ export async function init(options = {}) {
     };
 
     docClickHandler = async (e) => {
-      const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
+      // Unified trigger: data-smoothr="auth" (adapter maps account-access → auth)
+      const trigger = e?.target?.closest?.('[data-smoothr="auth"],[data-smoothr="account-access"]');
       if (!trigger) return;
       try { e.preventDefault(); } catch {}
       const user = w.Smoothr?.auth?.user?.value;
@@ -452,7 +460,33 @@ export async function init(options = {}) {
         const to = await lookupDashboardHomeUrl();
         if (to && w.location) w.location.href = to;
       } else {
-        // Dispatch to canonical auth-panel; listener has wrapper fallback if needed
+        // Mode-aware behavior
+        const mode = (trigger.getAttribute?.('data-smoothr-mode') || trigger.dataset?.smoothrMode || 'popup').toLowerCase();
+        log('auth trigger', { mode });
+        if (mode === 'page') {
+          // redirect to login / magic link page
+          const to = await lookupRedirectUrl();
+          if (to && w.location) w.location.href = to;
+          return;
+        }
+        if (mode === 'dropdown') {
+          const doc = w.document || globalThis.document;
+          let dropdown = doc.querySelector('[data-smoothr="auth-dropdown"]');
+          if (!dropdown) dropdown = doc.querySelector('[data-smoothr="auth-panel"]'); // graceful fallback
+          if (dropdown) {
+            const nowOpen = !dropdown.classList.contains('is-active');
+            dropdown.classList.toggle('is-active', nowOpen);
+            const evType = nowOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
+            const ev = typeof w.CustomEvent === 'function'
+              ? new w.CustomEvent(evType, { detail: { selector: '[data-smoothr="auth-dropdown"]' } })
+              : { type: evType, detail: { selector: '[data-smoothr="auth-dropdown"]' } };
+            doc.dispatchEvent(ev);
+          } else {
+            log('auth dropdown not found');
+          }
+          return;
+        }
+        // default: popup
         const detail = { targetSelector: '[data-smoothr="auth-panel"]', open: true };
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:open-auth', { detail })

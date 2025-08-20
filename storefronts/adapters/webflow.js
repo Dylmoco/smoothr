@@ -16,6 +16,18 @@ const legacyMap = {
   'data-smoothr-auth': 'auth-panel'
 };
 
+// Normalize unified auth trigger aliases:
+// - prefer data-smoothr="auth" with optional data-smoothr-mode
+// - keep account-access as alias for "auth" trigger
+function normalizeUnifiedAuth(root = document) {
+  // account-access → auth (trigger), preserve any mode attribute
+  root.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
+    if (el.getAttribute('data-smoothr') !== 'auth') {
+      el.setAttribute('data-smoothr', 'auth');
+    }
+  });
+}
+
 function normalizeLegacyAttributes(root = document) {
   const debug = getConfig().debug;
   Object.entries(legacyMap).forEach(([legacyAttr, canonical]) => {
@@ -30,6 +42,8 @@ function normalizeLegacyAttributes(root = document) {
       }
     });
   });
+  // then normalize unified auth trigger aliases
+  normalizeUnifiedAuth(root);
 }
 
 function observeDOMChanges() {
