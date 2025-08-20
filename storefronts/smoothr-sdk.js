@@ -15,18 +15,12 @@ async function initFeatures() {
   };
 
   const promises = [];
-  const hasAuthTrigger = document.querySelector(
-    '[data-smoothr="login"], [data-smoothr="sign-out"], [data-smoothr="signup"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], form[data-smoothr="auth-form"]'
+  // Auth is a core module: always initialize (still lazy-loaded)
+  promises.push(
+    import('storefronts/features/auth/init.js')
+      .then(m => (m.default || m.init)?.(ctx))
+      .catch(err => console.warn('[Smoothr SDK] Auth init failed', err))
   );
-  if (hasAuthTrigger) {
-    promises.push(
-      import('storefronts/features/auth/init.js').then(m =>
-        (m.default || m.init)?.(ctx)
-      ).catch(err =>
-        console.warn('[Smoothr SDK] Auth init failed', err)
-      )
-    );
-  }
   const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
   if (hasCheckoutTrigger) {
     promises.push(

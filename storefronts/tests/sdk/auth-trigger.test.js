@@ -33,7 +33,7 @@ test('loads auth feature when auth trigger is present', async () => {
   expect(authInitMock).toHaveBeenCalled();
 });
 
-test('does not load auth feature when trigger is absent', async () => {
+test('still loads auth feature when trigger is absent', async () => {
   vi.spyOn(document, 'querySelector').mockReturnValue(null);
 
   await __test_bootstrap({
@@ -43,5 +43,5 @@ test('does not load auth feature when trigger is absent', async () => {
     activePaymentGateway: 'stripe',
   });
 
-  expect(authInitMock).not.toHaveBeenCalled();
+  expect(authInitMock).toHaveBeenCalled();
 });

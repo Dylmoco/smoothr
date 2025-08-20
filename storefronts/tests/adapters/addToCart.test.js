@@ -61,7 +61,7 @@ describe("webflow add-to-cart binding", () => {
       querySelectorAll: vi.fn(() => [btn]),
     };
     global.window = {
-      Smoothr: { cart: { addItem: addItemMock, getCart: vi.fn(() => ({})) } },
+      Smoothr: { cart: { addItem: addItemMock, getCart: vi.fn(() => ({ items: [] })) } },
       dispatchEvent: vi.fn((ev) => {
         events[ev.type]?.(ev);
       }),
@@ -74,17 +74,17 @@ describe("webflow add-to-cart binding", () => {
     ({ bindAddToCartButtons } = await import("../../features/cart/addToCart.js"));
     // Override cart methods after module initializes
     global.window.Smoothr.cart.addItem = addItemMock;
-    global.window.Smoothr.cart.getCart = vi.fn(() => ({}));
+    global.window.Smoothr.cart.getCart = vi.fn(() => ({ items: [] }));
   });
 
-  it("binds click handler once", () => {
-    bindAddToCartButtons();
-    bindAddToCartButtons();
+  it("binds click handler once", async () => {
+    await bindAddToCartButtons();
+    await bindAddToCartButtons();
     expect(btn.addEventListener).toHaveBeenCalledTimes(1);
   });
 
-  it("adds item and dispatches update", () => {
-    bindAddToCartButtons();
+  it("adds item and dispatches update", async () => {
+    await bindAddToCartButtons();
     events.click();
     expect(addItemMock).toHaveBeenCalledWith({
       product_id: "1",
@@ -98,7 +98,7 @@ describe("webflow add-to-cart binding", () => {
     expect(global.window.dispatchEvent).toHaveBeenCalled();
   });
 
-  it("finds image on ancestor when wrapper lacks one", () => {
+  it("finds image on ancestor when wrapper lacks one", async () => {
     // wrapper lacks image; ancestor contains it
     wrapper.querySelector.mockImplementation(() => null);
     const ancestor = {
@@ -107,7 +107,7 @@ describe("webflow add-to-cart binding", () => {
     };
     wrapper.parentElement = ancestor;
 
-    bindAddToCartButtons();
+    await bindAddToCartButtons();
     events.click();
 
     expect(addItemMock).toHaveBeenCalledWith({
@@ -121,12 +121,12 @@ describe("webflow add-to-cart binding", () => {
     });
   });
 
-  it("warns when no image is found", () => {
+  it("warns when no image is found", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     wrapper.querySelector.mockImplementation(() => null);
     wrapper.parentElement = null;
 
-    bindAddToCartButtons();
+    await bindAddToCartButtons();
     events.click();
 
     expect(addItemMock).toHaveBeenCalledWith({
@@ -142,10 +142,10 @@ describe("webflow add-to-cart binding", () => {
     warnSpy.mockRestore();
   });
 
-  it("detects wrapper when button is nested deeply", () => {
+  it("detects wrapper when button is nested deeply", async () => {
     // simulate button nested inside two levels of divs within wrapper
     btn.parentElement = { matches: vi.fn(() => false), parentElement: wrapper };
-    bindAddToCartButtons();
+    await bindAddToCartButtons();
     events.click();
 
     expect(btn.closest).toHaveBeenCalledWith("[data-smoothr-product]");
@@ -160,23 +160,12 @@ describe("webflow add-to-cart binding", () => {
     });
   });
 
-  it("stops polling after limit and exposes failure state", () => {
-    vi.useFakeTimers();
+  it("observes DOM when no buttons found", async () => {
     document.querySelectorAll.mockReturnValue([]);
-    const warnSpy = vi
-      .spyOn(console, "warn")
-      .mockImplementation(() => {});
-    bindAddToCartButtons();
-    for (let i = 0; i < 10; i++) {
-      vi.runOnlyPendingTimers();
-    }
-    expect(window.Smoothr.cart.addButtonPollingDisabled).toBe(true);
-    expect(window.Smoothr.cart.addButtonPollingRetries).toBe(10);
-    expect(warnSpy).toHaveBeenLastCalledWith(
-      "[Smoothr Cart]",
-      "No [data-smoothr=\"add-to-cart\"] elements after 10 attempts—feature disabled"
-    );
-    warnSpy.mockRestore();
-    vi.useRealTimers();
+    const observe = vi.fn();
+    global.MutationObserver = vi.fn(() => ({ observe, disconnect: vi.fn() }));
+    await bindAddToCartButtons();
+    expect(global.MutationObserver).toHaveBeenCalled();
+    expect(observe).toHaveBeenCalled();
   });
 });

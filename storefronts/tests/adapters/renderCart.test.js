@@ -84,7 +84,7 @@ beforeEach(async () => {
         }
       ]
     }),
-    getTotal: () => 250,
+    getSubtotal: () => 250,
     removeItem: removeItemMock
   };
 });

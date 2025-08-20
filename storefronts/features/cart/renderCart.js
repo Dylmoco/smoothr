@@ -51,7 +51,7 @@ export function renderCart() {
   if (!Smoothr?.cart) return;
 
   const cart = Smoothr.cart.getCart();
-  const total = Smoothr.cart.getTotal();
+  const total = Smoothr.cart.getSubtotal?.() || 0;
   const currency =
     Smoothr?.currency?.getCurrency?.() ||
     Smoothr?.currency?.baseCurrency ||
