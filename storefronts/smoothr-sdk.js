@@ -6,55 +6,72 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
 
 async function initFeatures() {
   const Smoothr = (window.Smoothr = window.Smoothr || {});
+  // ensure lower-case alias exists everywhere (idempotent)
+  if (!window.smoothr) window.smoothr = Smoothr;
   const ctx = {
     config: Smoothr.config,
     supabase: Smoothr.__supabase,
     adapter: Smoothr?.adapter
   };
 
+  const promises = [];
   const hasAuthTrigger = document.querySelector(
     '[data-smoothr="login"], [data-smoothr="sign-out"], [data-smoothr="signup"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], form[data-smoothr="auth-form"]'
   );
   if (hasAuthTrigger) {
-    try {
-      const m = await import('storefronts/features/auth/init.js');
-      (m.default || m.init)?.(ctx);
-    } catch (err) {
-      console.warn('[Smoothr SDK] Auth init failed', err);
-    }
+    promises.push(
+      import('storefronts/features/auth/init.js').then(m =>
+        (m.default || m.init)?.(ctx)
+      ).catch(err =>
+        console.warn('[Smoothr SDK] Auth init failed', err)
+      )
+    );
   }
-
   const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
   if (hasCheckoutTrigger) {
-    try {
-      const m = await import('storefronts/features/checkout/init.js');
-      (m.default || m.init)?.(ctx);
-    } catch (err) {
-      console.warn('[Smoothr SDK] Checkout init failed', err);
-    }
+    promises.push(
+      import('storefronts/features/checkout/init.js').then(m =>
+        (m.default || m.init)?.(ctx)
+      ).catch(err =>
+        console.warn('[Smoothr SDK] Checkout init failed', err)
+      )
+    );
   } else {
     console.warn(
       '[Smoothr SDK] No checkout triggers found, skipping checkout initialization'
     );
   }
-
   const hasCartTrigger =
     document.querySelector('[data-smoothr="add-to-cart"]') ||
     document.querySelector('[data-smoothr-total]') ||
     document.querySelector('[data-smoothr-cart]');
-
   if (hasCartTrigger) {
-    try {
-      const m = await import('storefronts/features/cart/init.js');
-      (m.default || m.init)?.(ctx);
-    } catch (err) {
-      console.warn('[Smoothr SDK] Cart init failed', err);
-    }
+    promises.push(
+      import('storefronts/features/cart/init.js').then(m =>
+        (m.default || m.init)?.(ctx)
+      ).catch(err =>
+        console.warn('[Smoothr SDK] Cart init failed', err)
+      )
+    );
   } else {
     console.log(
       '[Smoothr SDK] No cart triggers found, skipping cart initialization'
     );
   }
+  const hasCurrencyTrigger =
+    document.querySelector('[data-smoothr-price]') ||
+    document.querySelector('[data-smoothr-total]') ||
+    document.querySelector('[data-smoothr-currency]');
+  if (hasCurrencyTrigger) {
+    promises.push(
+      import('storefronts/features/currency/init.js').then(m =>
+        (m.default || m.init)?.(ctx)
+      ).catch(err =>
+        console.warn('[Smoothr SDK] Currency init failed', err)
+      )
+    );
+  }
+  await Promise.allSettled(promises);
 }
 
 const scriptEl = document.currentScript || document.getElementById('smoothr-sdk');

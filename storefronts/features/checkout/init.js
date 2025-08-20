@@ -294,7 +294,8 @@ async function init(opts = {}) {
       );
       const cfg = getConfig();
       const currency = cfg.baseCurrency;
-      const customer_id = window.smoothr.auth.user?.value?.id || null;
+      const smoothr = window.Smoothr || window.smoothr || {};
+      const customer_id = smoothr.auth?.user?.value?.id || null;
       const store_id = cfg.storeId;
       const platform = cfg.platform;
 
