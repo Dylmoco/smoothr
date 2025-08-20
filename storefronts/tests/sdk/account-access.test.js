@@ -65,7 +65,7 @@ describe("account access trigger", () => {
         )
           return [];
         if (selector === 'form[data-smoothr="auth-form"]') return [];
-        if (selector === '[data-smoothr="sign-out"]') return [];
+        if (selector.includes('[data-smoothr="sign-out"]')) return [];
         return [];
       }),
       querySelector: vi.fn(() => null),

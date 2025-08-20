@@ -71,7 +71,12 @@ function bindAuthElements(root = globalThis.document) {
         clickHandler;
       attach(el, handler);
     });
-  root.querySelectorAll('[data-smoothr="sign-out"]').forEach(el => attach(el, signOutHandler));
+  root
+    .querySelectorAll('[data-smoothr="sign-out"], [data-smoothr="logout"]')
+    .forEach(el => {
+      attach(el, signOutHandler);
+      log('logout handler bound to', `[data-smoothr="${el.getAttribute('data-smoothr')}"]`);
+    });
   root.querySelectorAll('[data-smoothr="auth-panel"]').forEach(el => {
     attach(el, () => {
       const active = el.classList.toggle('is-active');

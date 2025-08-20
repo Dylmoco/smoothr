@@ -25,7 +25,7 @@ describe("global auth", () => {
       }),
       dispatchEvent: vi.fn(),
       querySelectorAll: vi.fn((selector) => {
-        if (selector === '[data-smoothr="sign-out"]') {
+        if (selector.includes('[data-smoothr="sign-out"]')) {
           const btn = {
             tagName: "DIV",
             dataset: { smoothr: "sign-out" },
