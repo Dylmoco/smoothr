@@ -99,9 +99,22 @@ export function renderCart() {
         }
       });
 
-      clone.querySelectorAll('[data-smoothr-quantity]').forEach(el => {
-        el.textContent = String(item.quantity);
-      });
+      clone
+        .querySelectorAll('[data-smoothr-qty], [data-smoothr-quantity]')
+        .forEach(el => {
+          el.textContent = String(Math.max(1, +item.quantity || 1));
+        });
+
+      clone
+        .querySelectorAll('[data-smoothr="qty-plus"],[data-smoothr="qty-minus"]')
+        .forEach(btn => {
+          btn.setAttribute('data-product-id', item.product_id);
+        });
+      clone
+        .querySelectorAll('[data-smoothr-qty="+"],[data-smoothr-qty="-"]')
+        .forEach(btn => {
+          btn.setAttribute('data-product-id', item.product_id);
+        });
 
       clone.querySelectorAll('[data-smoothr-price]').forEach(el => {
         const basePrice = item.price / 100;
