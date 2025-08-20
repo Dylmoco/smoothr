@@ -72,6 +72,24 @@ function bindAuthElements(root = globalThis.document) {
       attach(el, handler);
     });
   root.querySelectorAll('[data-smoothr="sign-out"]').forEach(el => attach(el, signOutHandler));
+  root.querySelectorAll('[data-smoothr="auth-panel"]').forEach(el => {
+    attach(el, () => {
+      const active = el.classList.toggle('is-active');
+      log(`auth panel ${active ? 'opened' : 'closed'}`);
+    });
+  });
+  const doc = root?.ownerDocument || globalThis.document;
+  if (doc && !_bound.has(doc)) {
+    doc.addEventListener('smoothr:open-auth', (e = {}) => {
+      const selector = e?.detail?.targetSelector || '[data-smoothr="auth-panel"]';
+      const panel = doc.querySelector(selector);
+      if (panel) {
+        panel.classList.add('is-active');
+        log('auth panel opened', selector);
+      }
+    });
+    _bound.add(doc);
+  }
 }
 
 // ---- Supabase client plumbings ----
