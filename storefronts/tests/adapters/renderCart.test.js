@@ -25,7 +25,13 @@ beforeEach(async () => {
   optionsEl.setAttribute('data-smoothr-options', '');
 
   const qtyEl = document.createElement('span');
-  qtyEl.setAttribute('data-smoothr-quantity', '');
+  qtyEl.setAttribute('data-smoothr-qty', '');
+
+  const minusBtn = document.createElement('button');
+  minusBtn.setAttribute('data-smoothr', 'qty-minus');
+
+  const plusBtn = document.createElement('button');
+  plusBtn.setAttribute('data-smoothr', 'qty-plus');
 
   const priceEl = document.createElement('span');
   priceEl.setAttribute('data-smoothr-price', '');
@@ -43,7 +49,9 @@ beforeEach(async () => {
     imageEl,
     nameEl,
     optionsEl,
+    minusBtn,
     qtyEl,
+    plusBtn,
     priceEl,
     subtotalEl,
     removeBtn
@@ -116,7 +124,7 @@ describe('renderCart', () => {
     renderCart();
     const clone = container.querySelector('.cart-rendered');
     expect(clone.querySelector('[data-smoothr-name]').textContent).toBe('Item Two');
-    expect(clone.querySelector('[data-smoothr-quantity]').textContent).toBe('1');
+    expect(clone.querySelector('[data-smoothr-qty]').textContent).toBe('1');
     expect(clone.querySelector('[data-smoothr-price]').textContent).toBe('$0.50');
     expect(clone.querySelector('[data-smoothr-subtotal]').textContent).toBe('$0.50');
     expect(totalEl.textContent).toBe('$2.50');
@@ -148,5 +156,21 @@ describe('renderCart', () => {
     const img = first.querySelector('[data-smoothr-image]');
     expect(img.getAttribute('src')).toBeNull();
     expect(img.alt).toBe('Item Two');
+  });
+
+  it('tags qty controls with product id', async () => {
+    const renderCart = await loadRenderCart();
+    renderCart();
+    const clone = container.querySelector('.cart-rendered');
+    expect(
+      clone
+        .querySelector('[data-smoothr="qty-plus"]')
+        .getAttribute('data-product-id')
+    ).toBe('p2');
+    expect(
+      clone
+        .querySelector('[data-smoothr="qty-minus"]')
+        .getAttribute('data-product-id')
+    ).toBe('p2');
   });
 });

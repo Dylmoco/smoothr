@@ -8,6 +8,42 @@ let _initPromise;
 const _bound = new WeakSet();
 const _state = { items: [] };
 
+function bindQtyControls() {
+  const w = globalThis.window || globalThis;
+  const d = w.document || globalThis.document;
+  if (!d?.addEventListener) return;
+  if (d.__smoothrQtyBound__) return;
+  d.__smoothrQtyBound__ = true;
+  d.addEventListener('click', e => {
+    const t = e.target?.closest?.(
+      '[data-smoothr="qty-plus"],[data-smoothr="qty-minus"],[data-smoothr-qty]'
+    );
+    if (!t) return;
+    const attr = t.getAttribute('data-smoothr');
+    const legacy = t.getAttribute('data-smoothr-qty');
+    const delta =
+      attr === 'qty-plus' || legacy === '+' ? 1 :
+      attr === 'qty-minus' || legacy === '-' ? -1 : 0;
+    if (!delta) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const pid =
+      t.getAttribute('data-product-id') ||
+      t.closest('.smoothr-cart-rendered')
+        ?.querySelector('[data-product-id]')
+        ?.getAttribute('data-product-id');
+    if (!pid) return;
+    const line = t.closest('.smoothr-cart-rendered');
+    let current = parseInt(
+      line?.querySelector('[data-smoothr-qty]')?.textContent || '1',
+      10
+    );
+    if (isNaN(current) || current < 1) current = 1;
+    const next = Math.max(1, current + delta);
+    try { w.Smoothr?.cart?.updateQuantity?.(pid, next); } catch {}
+  });
+}
+
 function loadFromStorage() {
   // Tests set a localStorage mock on globalThis.il
   const store = globalThis.il || globalThis.localStorage;
@@ -70,9 +106,29 @@ export async function init() {
     await domReady();
     const api = {
       getCart: () => ({ items: _state.items.slice() }),
-      getSubtotal: () => _state.items.reduce((sum, i) => sum + (+i.price || 0), 0),
-      addItem: (item) => {
-        _state.items.push(item);
+      getSubtotal: () =>
+        _state.items.reduce(
+          (sum, i) => sum + ((+i.price || 0) * (+i.quantity || 1)),
+          0
+        ),
+      addItem: item => {
+        const existing = _state.items.find(
+          i => i?.product_id === item?.product_id
+        );
+        if (existing) {
+          existing.quantity =
+            (existing.quantity || 1) + (+item.quantity || 1);
+        } else {
+          _state.items.push({ ...item, quantity: +item.quantity || 1 });
+        }
+      },
+      updateQuantity: (product_id, qty) => {
+        const item = _state.items.find(i => i?.product_id === product_id);
+        if (!item) return false;
+        const n = Math.max(1, parseInt(qty, 10) || 1);
+        item.quantity = n;
+        try { w.Smoothr?.cart?.renderCart?.(); } catch {}
+        return true;
       },
       clear: () => {
         _state.items.length = 0;
@@ -98,6 +154,7 @@ export async function init() {
       if (!w.Smoothr.cart.renderCart) {
         w.Smoothr.cart.renderCart = renderCart;
       }
+      bindQtyControls();
       const { bindAddToCartButtons } = await import('./addToCart.js');
       await bindAddToCartButtons();
       // Initial render so templates hide and totals format on first load
@@ -120,6 +177,7 @@ export async function init() {
       if (!w.Smoothr.cart.renderCart) {
         w.Smoothr.cart.renderCart = renderCart;
       }
+      bindQtyControls();
       // Ensure initial empty render even on fallback path
       try { w.Smoothr.cart.renderCart?.(); } catch {}
       log('cart init complete (fallback)', _state.items.length, 'items');

@@ -37,7 +37,7 @@ describe('Cart', () => {
     globalThis.il = localStorageMock;
     await initCart();
     expect(window.Smoothr.cart.getCart().items).toHaveLength(1);
-    expect(window.Smoothr.cart.getSubtotal()).toBe(1000);
+    expect(window.Smoothr.cart.getSubtotal()).toBe(2000);
   });
 });
 
