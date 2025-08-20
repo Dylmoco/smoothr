@@ -287,15 +287,18 @@ async function init(opts = {}) {
         }
       }
 
-      const cart = window.Smoothr.cart.getCart() || { items: [] };
-      const items = Array.isArray(cart.items) ? cart.items : [];
-      const total = Math.round(
-        (window.Smoothr.cart.getTotal?.() || parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0) * 100
-      );
-      const cfg = getConfig();
-      const currency = cfg.baseCurrency;
-      const smoothr = window.Smoothr || window.smoothr || {};
-      const customer_id = smoothr.auth?.user?.value?.id || null;
+        const smoothr = window.Smoothr || window.smoothr || {};
+        log('cart present', !!smoothr.cart, 'currency present', !!smoothr.currency);
+        const cartApi = smoothr.cart || {};
+        const cart = cartApi.getCart?.() || { items: [] };
+        const items = Array.isArray(cart.items) ? cart.items : [];
+        const subtotal = cartApi.getSubtotal?.();
+        const parsedFallback = parseFloat(totalEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+        const total = typeof subtotal === 'number' ? Math.round(subtotal * 100) : Math.round(parsedFallback * 100);
+        log(`total source=${typeof subtotal === 'number' ? 'cart.getSubtotal' : 'text'} cents=${total}`);
+        const cfg = getConfig();
+        const currency = cfg.baseCurrency;
+        const customer_id = smoothr.auth?.user?.value?.id || null;
       const store_id = cfg.storeId;
       const platform = cfg.platform;
 
@@ -366,6 +369,7 @@ async function init(opts = {}) {
     });
   });
   log('pay button handlers attached');
+  log('checkout init complete');
   } catch (error) {
     if (typeof getConfig === 'function' && getConfig().debug) {
       console.warn('[Smoothr Checkout] Initialization failed', error);

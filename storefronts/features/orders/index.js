@@ -55,7 +55,8 @@ export async function renderOrders(container) {
     if (el !== template) el.remove();
   });
 
-  const user = window.smoothr?.auth?.user?.value;
+  const smoothr = window.Smoothr || window.smoothr || {};
+  const user = smoothr.auth?.user?.value;
   const orders = await fetchOrderHistory(user?.id);
 
   if (!orders.length) {

@@ -24,8 +24,9 @@ export async function applyDiscount(code: string): Promise<DiscountRecord | null
     const config = getConfig();
     const store_id = config.storeId;
     const apiBase = config.apiBase || '';
-    const customer_id = window.smoothr?.auth?.user?.value?.id || null;
-    const total = window.Smoothr?.cart?.getSubtotal?.() || 0;
+    const smoothr = window.Smoothr || window.smoothr || {};
+    const customer_id = smoothr.auth?.user?.value?.id || null;
+    const total = smoothr.cart?.getSubtotal?.() || 0;
 
     const data = await apiFetch(`${apiBase}/api/checkout`, {
       method: 'POST',

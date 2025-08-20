@@ -19,7 +19,7 @@ describe("cart totals use currency formatter", () => {
       Smoothr: {
         cart: {
           getCart: vi.fn(() => ({ items: [] })),
-          getTotal: vi.fn(() => 500),
+          getSubtotal: vi.fn(() => 500),
         },
         currency: {
           getCurrency: vi.fn(() => "USD"),

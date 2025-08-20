@@ -1,3 +1,8 @@
+import { getConfig } from '../config/globalConfig.js';
+
+const { debug } = getConfig();
+const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
+
 let _initPromise;
 const _bound = new WeakSet();
 const _state = { items: [] };
@@ -14,7 +19,18 @@ function loadFromStorage() {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
       const items = parsed?.items ?? parsed ?? [];
       if (Array.isArray(items)) { _state.items = items.slice(); return; }
-    } catch { /* ignore and try next key */ }
+    } catch {
+      /* ignore and try next key */
+    }
+  }
+}
+
+async function domReady() {
+  if (typeof document === 'undefined') return;
+  if (document.readyState === 'loading') {
+    await new Promise(resolve =>
+      document.addEventListener('DOMContentLoaded', resolve, { once: true })
+    );
   }
 }
 
@@ -48,12 +64,18 @@ export async function init() {
     const w = globalThis.window || globalThis;
     if (w.Smoothr?.cart) return w.Smoothr.cart;
 
+    log('cart init start');
     loadFromStorage();
+    await domReady();
     const api = {
       getCart: () => ({ items: _state.items.slice() }),
       getSubtotal: () => _state.items.reduce((sum, i) => sum + (+i.price || 0), 0),
-      addItem: (item) => { _state.items.push(item); },
-      clear: () => { _state.items.length = 0; },
+      addItem: (item) => {
+        _state.items.push(item);
+      },
+      clear: () => {
+        _state.items.length = 0;
+      },
     };
 
     try {
@@ -61,10 +83,23 @@ export async function init() {
       w.Smoothr = w.Smoothr || {};
       w.Smoothr.cart = api;
       const { bindAddToCartButtons } = await import('./addToCart.js');
-      bindAddToCartButtons();
+      await bindAddToCartButtons();
+      // Single-shot late-node fallback for add-to-cart buttons
+      if (w.document && !w.document.querySelector('[data-smoothr="add-to-cart"]')) {
+        const mo = new MutationObserver((_, obs) => {
+          if (w.document.querySelector('[data-smoothr="add-to-cart"]')) {
+            obs.disconnect();
+            bindAddToCartButtons();
+            if (debug) log('🔁 late add-to-cart button detected, rebinding');
+          }
+        });
+        mo.observe(w.document.body, { childList: true, subtree: true });
+      }
+      log('cart init complete', _state.items.length, 'items');
     } catch {
       w.Smoothr = w.Smoothr || {};
       w.Smoothr.cart = api;
+      log('cart init complete (fallback)', _state.items.length, 'items');
     }
     return api;
   })();

@@ -42,7 +42,7 @@ export async function mountCardFields() {
         const q = s => document.querySelector(s);
       const totalEl = q('[data-smoothr-total]');
       const total =
-        window.Smoothr?.cart?.getTotal?.() ||
+        window.Smoothr?.cart?.getSubtotal?.() ||
         parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
         0;
       const currency = getConfig().baseCurrency || 'USD';
@@ -87,11 +87,12 @@ export async function mountCardFields() {
       const cart = window.Smoothr?.cart?.getCart()?.items || [];
       const totalEl = q('[data-smoothr-total]');
       const total =
-        window.Smoothr?.cart?.getTotal?.() ||
+        window.Smoothr?.cart?.getSubtotal?.() ||
         parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
         0;
       const currency = getConfig().baseCurrency || 'USD';
 
+      const smoothr = window.Smoothr || window.smoothr || {};
       const payload = {
         orderID: data.orderID,
         store_id: storeId,
@@ -103,7 +104,7 @@ export async function mountCardFields() {
         cart,
         total,
         currency,
-        customer_id: window.smoothr?.auth?.user?.value?.id || null,
+        customer_id: smoothr.auth?.user?.value?.id || null,
         platform: getConfig().platform
       };
 
@@ -135,7 +136,7 @@ export async function mountCardFields() {
           const q = s => document.querySelector(s);
           const totalEl = q('[data-smoothr-total]');
           const total =
-            window.Smoothr?.cart?.getTotal?.() ||
+            window.Smoothr?.cart?.getSubtotal?.() ||
             parseInt(totalEl?.textContent?.replace(/[^0-9]/g, '') || '0', 10) ||
             0;
           const currency = getConfig().baseCurrency || 'USD';

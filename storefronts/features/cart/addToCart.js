@@ -1,18 +1,25 @@
 import { getConfig } from '../config/globalConfig.js';
 
 let initLogShown = false;
-let noButtonsWarned = false;
 let foundLogShown = false;
-const MAX_POLL_ATTEMPTS = 10;
-let pollAttempts = 0;
 const _bound = new WeakSet();
+let observer;
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Cart]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Cart]', ...args);
 
-export function bindAddToCartButtons() {
+async function domReady() {
+  if (typeof document === 'undefined') return;
+  if (document.readyState === 'loading') {
+    await new Promise(resolve =>
+      document.addEventListener('DOMContentLoaded', resolve, { once: true })
+    );
+  }
+}
+
+export async function bindAddToCartButtons() {
   if (debug && !initLogShown) {
     log('🧩 bindAddToCartButtons loaded and executing');
     initLogShown = true;
@@ -23,6 +30,8 @@ export function bindAddToCartButtons() {
     warn('cart module not found');
     return;
   }
+
+  await domReady();
 
   const selectors = [
     '[data-smoothr="add-to-cart"]',
@@ -46,37 +55,30 @@ export function bindAddToCartButtons() {
   foundLogShown = true;
 
   if (buttons.length === 0) {
-    const path = window.location?.pathname || '';
-    if (path.includes('/checkout')) {
-      if (debug) log('🧩 addToCart polling disabled on checkout page');
-      return;
+    if (!observer && typeof MutationObserver === 'function') {
+      observer = new MutationObserver((_, obs) => {
+        if (document.querySelector('[data-smoothr="add-to-cart"]')) {
+          obs.disconnect();
+          observer = null;
+          if (debug) log('🔁 late add-to-cart button detected, rebinding');
+          bindAddToCartButtons();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      if (debug) log('👀 observing DOM for late add-to-cart buttons');
     }
-    pollAttempts++;
-    Smoothr.cart.addButtonPollingRetries = pollAttempts;
-    if (pollAttempts >= MAX_POLL_ATTEMPTS) {
-      warn(
-        `No [data-smoothr="add-to-cart"] elements after ${MAX_POLL_ATTEMPTS} attempts—feature disabled`
-      );
-      Smoothr.cart.addButtonPollingDisabled = true;
-      return;
-    }
-    if (!noButtonsWarned) {
-      warn('no buttons found; retrying...');
-      noButtonsWarned = true;
-    }
-    setTimeout(bindAddToCartButtons, 500);
     return;
   }
 
-    buttons.forEach(btn => {
-      if (debug) log('🔗 binding [data-smoothr="add-to-cart"] button', btn);
-      if (_bound.has(btn)) return;
-      _bound.add(btn);
+  buttons.forEach(btn => {
+    if (_bound.has(btn)) return;
+    _bound.add(btn);
+    if (debug) log('🔗 binding [data-smoothr="add-to-cart"] button', { ...btn.dataset });
 
     btn.addEventListener('click', e => {
       e?.preventDefault?.();
       e?.stopPropagation?.();
-      if (debug) log('🛒 Add to cart clicked:', btn);
+      if (debug) log('🛒 Add to cart clicked:', { ...btn.dataset });
       try {
         const rawPrice = btn.getAttribute('data-product-price') || '0';
         const price = Math.round(parseFloat(rawPrice) * 100);
@@ -86,10 +88,10 @@ export function bindAddToCartButtons() {
         const isSubscription =
           btn.getAttribute('data-product-subscription') === 'true';
 
-          if (!product_id || !name || isNaN(price)) {
-            warn('Missing required cart attributes on:', btn);
-            return;
-          }
+        if (!product_id || !name || isNaN(price)) {
+          warn('Missing required cart attributes on:', btn);
+          return;
+        }
 
         const wrapper = btn.closest('[data-smoothr-product]');
         let image = '';
@@ -106,7 +108,6 @@ export function bindAddToCartButtons() {
           warn(`No [data-smoothr-image] found for product "${product_id}"`);
         }
 
-
         const item = {
           product_id,
           name,
@@ -117,6 +118,7 @@ export function bindAddToCartButtons() {
           image
         };
         Smoothr.cart.addItem(item);
+        if (debug) log('🧮 cart item count', Smoothr.cart.getCart().items.length);
         if (typeof Smoothr.cart?.renderCart === 'function') {
           if (debug) log('🧼 Calling renderCart() to update UI');
           try {
@@ -133,3 +135,4 @@ export function bindAddToCartButtons() {
     });
   });
 }
+

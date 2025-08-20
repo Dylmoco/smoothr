@@ -4,6 +4,9 @@
 import { lookupRedirectUrl, lookupDashboardHomeUrl } from '../../../supabase/authHelpers.js';
 import { getConfig } from '../config/globalConfig.js';
 
+const { debug } = getConfig();
+const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
+
 // Minimal CustomEvent polyfill for environments lacking it.
 if (typeof globalThis.CustomEvent !== 'function') {
   const CustomEventPoly = function CustomEvent(type, params = {}) {
@@ -442,6 +445,7 @@ export async function init(options = {}) {
       doc?.addEventListener?.('click', docClickHandler);
     } catch {}
     try { mutationCallback(); } catch {}
+    log('auth init complete');
 
     return api;
   })();
