@@ -7,18 +7,23 @@ const legacyMap = {
   'data-smoothr-remove': 'remove-from-cart',
   'data-smoothr-login': 'login',
   'data-smoothr-logout': 'logout',
-  'data-smoothr-currency': 'currency'
+  'data-smoothr-currency': 'currency',
+  'data-smoothr-signup': 'signup',
+  'data-smoothr-password-reset': 'password-reset',
+  'data-smoothr-password-reset-confirm': 'password-reset-confirm'
 };
 
 function normalizeLegacyAttributes(root = document) {
+  const debug = getConfig().debug;
   Object.entries(legacyMap).forEach(([legacyAttr, canonical]) => {
     root.querySelectorAll(`[${legacyAttr}]`).forEach((el) => {
       if (!el.hasAttribute('data-smoothr')) {
         el.setAttribute('data-smoothr', canonical);
-        if (getConfig().debug)
+        if (debug) {
           console.log(
             `[Smoothr Webflow] normalized ${legacyAttr} -> data-smoothr="${canonical}"`
           );
+        }
       }
     });
   });
