@@ -10,4 +10,4 @@
 
 1. The storefront loads public configuration from `v_public_store` using the store ID.
 2. Server helpers check `store_settings` to determine the active gateway and fetch credentials with `getActiveGatewayCreds.ts`.
-3. Integrations are defined in the `integrations` table with associated secrets stored in the vault..
+3. Integrations are defined in the `integrations` table with associated secrets stored in the vault...
