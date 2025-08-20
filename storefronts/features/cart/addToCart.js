@@ -88,8 +88,12 @@ export async function bindAddToCartButtons() {
         const isSubscription =
           btn.getAttribute('data-product-subscription') === 'true';
 
-        if (!product_id || !name || isNaN(price)) {
-          warn('Missing required cart attributes on:', btn);
+        const missing = [];
+        if (!product_id) missing.push('data-product-id');
+        if (!name) missing.push('data-product-name');
+        if (isNaN(price)) missing.push('data-product-price');
+        if (missing.length) {
+          warn(`Missing ${missing.join(', ')} on:`, btn);
           return;
         }
 
@@ -119,15 +123,10 @@ export async function bindAddToCartButtons() {
         };
         Smoothr.cart.addItem(item);
         if (debug) log('🧮 cart item count', Smoothr.cart.getCart().items.length);
-        if (typeof Smoothr.cart?.renderCart === 'function') {
-          if (debug) log('🧼 Calling renderCart() to update UI');
-          try {
-            Smoothr.cart.renderCart();
-          } catch (error) {
-            warn('renderCart failed', error);
-          }
-        } else {
-          warn('renderCart not found');
+        try {
+          Smoothr.cart.renderCart?.();
+        } catch (error) {
+          warn('renderCart failed', error);
         }
       } catch (error) {
         err('addToCart failed', error);

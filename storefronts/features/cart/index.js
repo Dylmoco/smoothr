@@ -3,6 +3,7 @@ export { init } from './init.js';
 export { init as default } from './init.js';
 export { init as initCart } from './init.js';
 export { __test_resetCart } from './init.js';
+export { renderCart } from './renderCart.js';
 
 const STORAGE_KEY = 'smoothr_cart';
 

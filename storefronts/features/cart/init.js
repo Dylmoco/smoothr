@@ -1,4 +1,5 @@
 import { getConfig } from '../config/globalConfig.js';
+import { renderCart } from './renderCart.js';
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Cart]', ...args);
@@ -82,6 +83,9 @@ export async function init() {
       await bindCartButtons();
       w.Smoothr = w.Smoothr || {};
       w.Smoothr.cart = api;
+      if (!w.Smoothr.cart.renderCart) {
+        w.Smoothr.cart.renderCart = renderCart;
+      }
       const { bindAddToCartButtons } = await import('./addToCart.js');
       await bindAddToCartButtons();
       // Single-shot late-node fallback for add-to-cart buttons
@@ -99,6 +103,9 @@ export async function init() {
     } catch {
       w.Smoothr = w.Smoothr || {};
       w.Smoothr.cart = api;
+      if (!w.Smoothr.cart.renderCart) {
+        w.Smoothr.cart.renderCart = renderCart;
+      }
       log('cart init complete (fallback)', _state.items.length, 'items');
     }
     return api;
