@@ -74,13 +74,16 @@ function bindAuthElements(root = globalThis.document) {
   root
     .querySelectorAll('[data-smoothr="sign-out"], [data-smoothr="logout"]')
     .forEach(el => {
+      const value = el.getAttribute?.('data-smoothr') ?? el.dataset?.smoothr ?? '';
+      const selector = `[data-smoothr="${value}"]`;
       attach(el, signOutHandler);
-      log('logout handler bound to', `[data-smoothr="${el.getAttribute('data-smoothr')}"]`);
+      log('bound sign-out handler to', selector);
     });
   root.querySelectorAll('[data-smoothr="auth-panel"]').forEach(el => {
     attach(el, () => {
       const active = el.classList.toggle('is-active');
-      log(`auth panel ${active ? 'opened' : 'closed'}`);
+      if (active) log('auth panel opened');
+      else log('auth panel closed');
     });
   });
   const doc = root?.ownerDocument || globalThis.document;
@@ -89,8 +92,10 @@ function bindAuthElements(root = globalThis.document) {
       const selector = e?.detail?.targetSelector || '[data-smoothr="auth-panel"]';
       const panel = doc.querySelector(selector);
       if (panel) {
-        panel.classList.add('is-active');
-        log('auth panel opened', selector);
+        const shouldOpen = e?.detail?.open !== false;
+        panel.classList.toggle('is-active', shouldOpen);
+        if (shouldOpen) log('auth panel opened');
+        else log('auth panel closed');
       }
     });
     _bound.add(doc);
