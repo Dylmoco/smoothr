@@ -1,6 +1,6 @@
 # Smoothr Master Outline
 
-## Data Sources
+## Data Sourcess
 
 - **Client-side configuration** uses the `v_public_store` view to expose public store metadata needed by the storefront SDK.
 - **Server-side configuration** is stored in the `integrations` and `store_settings` tables and accessed with `shared/supabase/client.ts`.
