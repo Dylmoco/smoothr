@@ -76,6 +76,18 @@ export async function init() {
       },
       clear: () => {
         _state.items.length = 0;
+        try { w.Smoothr?.cart?.renderCart?.(); } catch {}
+      },
+      /**
+       * Remove by product_id (matches renderCart/remove button wiring).
+       */
+      removeItem: (product_id) => {
+        if (!product_id) return false;
+        const idx = _state.items.findIndex(i => i?.product_id === product_id);
+        if (idx < 0) return false;
+        _state.items.splice(idx, 1);
+        try { w.Smoothr?.cart?.renderCart?.(); } catch {}
+        return true;
       },
     };
 
@@ -88,6 +100,8 @@ export async function init() {
       }
       const { bindAddToCartButtons } = await import('./addToCart.js');
       await bindAddToCartButtons();
+      // Initial render so templates hide and totals format on first load
+      try { w.Smoothr.cart.renderCart?.(); } catch {}
       // Single-shot late-node fallback for add-to-cart buttons
       if (w.document && !w.document.querySelector('[data-smoothr="add-to-cart"]')) {
         const mo = new MutationObserver((_, obs) => {
@@ -106,6 +120,8 @@ export async function init() {
       if (!w.Smoothr.cart.renderCart) {
         w.Smoothr.cart.renderCart = renderCart;
       }
+      // Ensure initial empty render even on fallback path
+      try { w.Smoothr.cart.renderCart?.(); } catch {}
       log('cart init complete (fallback)', _state.items.length, 'items');
     }
     return api;
