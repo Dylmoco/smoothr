@@ -35,6 +35,11 @@ describe('webflow adapter legacy attribute normalization', () => {
     elements.login = createEl('data-smoothr-login');
     elements.logout = createEl('data-smoothr-logout');
     elements.currency = createEl('data-smoothr-currency');
+    elements.signup = createEl('data-smoothr-signup');
+    elements.passwordReset = createEl('data-smoothr-password-reset');
+    elements.passwordResetConfirm = createEl(
+      'data-smoothr-password-reset-confirm'
+    );
 
     const selectorMap = {
       '[data-smoothr-pay]': [elements.pay],
@@ -43,6 +48,11 @@ describe('webflow adapter legacy attribute normalization', () => {
       '[data-smoothr-login]': [elements.login],
       '[data-smoothr-logout]': [elements.logout],
       '[data-smoothr-currency]': [elements.currency],
+      '[data-smoothr-signup]': [elements.signup],
+      '[data-smoothr-password-reset]': [elements.passwordReset],
+      '[data-smoothr-password-reset-confirm]': [
+        elements.passwordResetConfirm,
+      ],
     };
 
     global.document = {
@@ -66,6 +76,13 @@ describe('webflow adapter legacy attribute normalization', () => {
     expect(elements.login.attributes['data-smoothr']).toBe('login');
     expect(elements.logout.attributes['data-smoothr']).toBe('logout');
     expect(elements.currency.attributes['data-smoothr']).toBe('currency');
+    expect(elements.signup.attributes['data-smoothr']).toBe('signup');
+    expect(elements.passwordReset.attributes['data-smoothr']).toBe(
+      'password-reset'
+    );
+    expect(
+      elements.passwordResetConfirm.attributes['data-smoothr']
+    ).toBe('password-reset-confirm');
     expect(elements.addExisting.attributes['data-smoothr']).toBe('existing');
   });
 });
