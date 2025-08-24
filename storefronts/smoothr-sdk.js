@@ -8,6 +8,13 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
 const Smoothr = (window.Smoothr = window.Smoothr || {});
 if (!window.smoothr) window.smoothr = Smoothr;
 
+if (window.SMOOTHR_DEBUG) {
+  console.info('[Smoothr] build', {
+    sdkTag: 'auth-trigger-no-fallback',
+    builtAt: '__BUILD_TIME__',
+  });
+}
+
 try {
   const adapter = initWebflowAdapter(Smoothr.config || {});
   Smoothr.adapter = adapter;

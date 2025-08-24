@@ -36,7 +36,7 @@ describe('lookupRedirectUrl login', () => {
     expect(url).toBe('/from-settings');
   });
 
-  it('falls back to window.location.origin', async () => {
+  it('returns null when config missing', async () => {
     vi.doMock('../../features/config/sdkConfig.js', () => ({
       loadPublicConfig: vi.fn().mockResolvedValue({
         sign_in_redirect_url: null,
@@ -45,6 +45,6 @@ describe('lookupRedirectUrl login', () => {
     }));
     const { lookupRedirectUrl } = await import('../../../supabase/authHelpers.js');
     const url = await lookupRedirectUrl('login');
-    expect(url).toBe('https://example.com');
+    expect(url).toBeNull();
   });
 });

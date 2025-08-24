@@ -64,7 +64,7 @@ describe('account-access trigger', () => {
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
   });
 
-  it('no UI redirects to login URL', async () => {
+  it('no UI with redirect mode navigates to login URL', async () => {
     vi.resetModules();
     const { win, doc } = setup();
     const lookupRedirectUrl = vi.fn().mockResolvedValue('/login-url');
@@ -75,7 +75,11 @@ describe('account-access trigger', () => {
     const mod = await import('../../features/auth/init.js');
     await mod.init();
     const evt = {
-      target: { closest: () => ({}) },
+      target: {
+        closest: () => ({
+          getAttribute: (name) => name === 'data-smoothr-auth-mode' ? 'redirect' : null
+        })
+      },
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
       stopImmediatePropagation: vi.fn()
