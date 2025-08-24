@@ -13,20 +13,12 @@ const legacyMap = {
   'data-smoothr-password-reset-confirm': 'password-reset-confirm',
   // Extra legacy conveniences for auth entry points:
   'data-smoothr-account': 'account-access',
-  'data-smoothr-auth': 'auth-panel'
+  'data-smoothr-auth': 'auth-pop-up',
+  'data-smoothr-auth-panel': 'auth-pop-up',
+  'data-smoothr-auth-popup': 'auth-pop-up',
+  'data-smoothr-auth-dropdown': 'auth-drop-down',
+  'data-smoothr-auth-drop-down': 'auth-drop-down'
 };
-
-// Normalize unified auth trigger aliases:
-// - prefer data-smoothr="auth" with optional data-smoothr-mode
-// - keep account-access as alias for "auth" trigger
-function normalizeUnifiedAuth(root = document) {
-  // account-access → auth (trigger), preserve any mode attribute
-  root.querySelectorAll('[data-smoothr="account-access"]').forEach(el => {
-    if (el.getAttribute('data-smoothr') !== 'auth') {
-      el.setAttribute('data-smoothr', 'auth');
-    }
-  });
-}
 
 function normalizeLegacyAttributes(root = document) {
   const debug = getConfig().debug;
@@ -42,8 +34,6 @@ function normalizeLegacyAttributes(root = document) {
       }
     });
   });
-  // then normalize unified auth trigger aliases
-  normalizeUnifiedAuth(root);
 }
 
 function observeDOMChanges() {

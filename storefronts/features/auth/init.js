@@ -49,6 +49,7 @@ export let googleClickHandler = () => {};
 export let appleClickHandler = () => {};
 export let signOutHandler = () => {};
 export let docClickHandler = () => {};
+export let docSubmitHandler = () => {};
 
 const _bound = new WeakSet();
 function bindAuthElements(root = globalThis.document) {
@@ -79,7 +80,7 @@ function bindAuthElements(root = globalThis.document) {
       attach(el, signOutHandler);
       log('bound sign-out handler to', selector);
     });
-  root.querySelectorAll('[data-smoothr="auth-panel"]').forEach(el => {
+  root.querySelectorAll('[data-smoothr="auth-pop-up"]').forEach(el => {
     attach(el, () => {
       const active = el.getAttribute?.('data-smoothr-active') === '1';
       const nowOpen = !active;
@@ -93,19 +94,19 @@ function bindAuthElements(root = globalThis.document) {
   const doc = root?.ownerDocument || globalThis.document;
   if (doc && !_bound.has(doc)) {
     doc.addEventListener('smoothr:open-auth', (e = {}) => {
-      // Robust panel resolution: prefer requested selector, then [auth-panel], then panel inside [auth-wrapper], finally wrapper
+      // Robust panel resolution: prefer requested selector, then [auth-pop-up], then panel inside [auth-wrapper], finally wrapper
       const requested = e?.detail?.targetSelector;
       let panel = null;
       if (requested) panel = doc.querySelector(requested);
-      if (!panel) panel = doc.querySelector('[data-smoothr="auth-panel"]');
+      if (!panel) panel = doc.querySelector('[data-smoothr="auth-pop-up"]');
       if (!panel) {
         const wrapper = doc.querySelector('[data-smoothr="auth-wrapper"]');
-        if (wrapper) panel = wrapper.querySelector('[data-smoothr="auth-panel"]') || wrapper;
+        if (wrapper) panel = wrapper.querySelector('[data-smoothr="auth-pop-up"]') || wrapper;
       }
       const shouldOpen = e?.detail?.open !== false;
       if (panel) {
         const evType = shouldOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
-        const payload = { selector: requested || '[data-smoothr="auth-panel"]' };
+        const payload = { selector: requested || '[data-smoothr="auth-pop-up"]' };
         const ev = typeof globalThis.CustomEvent === 'function'
           ? new CustomEvent(evType, { detail: payload })
           : { type: evType, detail: payload };
@@ -116,7 +117,7 @@ function bindAuthElements(root = globalThis.document) {
         }
         log(`auth panel ${shouldOpen ? 'opened' : 'closed'}`, panel);
       } else {
-        log('auth panel not found for smoothr:open-auth', requested || '(default)');
+        log('auth pop-up not found for smoothr:open-auth', requested || '(default)');
       }
     });
     _bound.add(doc);
@@ -457,65 +458,51 @@ export async function init(options = {}) {
     };
 
     docClickHandler = async (e) => {
-      // Unified trigger: data-smoothr="auth" (adapter maps account-access → auth)
-      const trigger = e?.target?.closest?.('[data-smoothr="auth"],[data-smoothr="account-access"]');
+      const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
       if (!trigger) return;
-      try { e.preventDefault(); } catch {}
+      try {
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        e.stopImmediatePropagation?.();
+      } catch {}
       const user = w.Smoothr?.auth?.user?.value;
       if (user) {
         const to = await lookupDashboardHomeUrl();
-        if (to && w.location) w.location.href = to;
-      } else {
-        // Mode-aware behavior
-        const doc = w.document || globalThis.document;
-        let mode = (trigger.getAttribute?.('data-smoothr-mode') || trigger.dataset?.smoothrMode || '').toLowerCase();
-        if (!mode) {
-          if (doc.querySelector('[data-smoothr="auth-panel"]')) mode = 'popup';
-          else if (doc.querySelector('[data-smoothr="auth-dropdown"]')) mode = 'dropdown';
-          else mode = 'page';
-        }
-        let selector = mode === 'dropdown' ? '[data-smoothr="auth-dropdown"]' : '[data-smoothr="auth-panel"]';
-        log('auth trigger', { mode, selector });
-        if (mode === 'page') {
-          // redirect to login / magic link page
-          const to = await lookupRedirectUrl();
-          if (to && w.location) w.location.href = to;
-          return;
-        }
-        if (mode === 'dropdown') {
-          let dropdown = doc.querySelector(selector);
-          if (!dropdown) {
-            dropdown = doc.querySelector('[data-smoothr="auth-panel"]');
-            selector = '[data-smoothr="auth-panel"]';
-          }
-          if (dropdown) {
-            const isOpen = dropdown.getAttribute?.('data-smoothr-active') === '1';
-            const nowOpen = !isOpen;
-            try { dropdown.setAttribute?.('data-smoothr-active', nowOpen ? '1' : '0'); } catch {}
-            const evType = nowOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
-            const ev = typeof w.CustomEvent === 'function'
-              ? new w.CustomEvent(evType, { detail: { selector } })
-              : { type: evType, detail: { selector } };
-            doc.dispatchEvent(ev);
-            const legacy = typeof w.CustomEvent === 'function'
-              ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector, open: nowOpen } })
-              : { type: 'smoothr:open-auth', detail: { targetSelector: selector, open: nowOpen } };
-            doc.dispatchEvent(legacy);
-          } else {
-            log('auth dropdown not found');
-          }
-          return;
-        }
-        // popup
+        if (w.location) w.location.href = to || '/';
+        return;
+      }
+      const doc = w.document || globalThis.document;
+      let mode = 'page';
+      if (doc.querySelector('[data-smoothr="auth-pop-up"]')) mode = 'popup';
+      else if (doc.querySelector('[data-smoothr="auth-drop-down"]')) mode = 'dropdown';
+      if (mode === 'popup') {
+        const selector = '[data-smoothr="auth-pop-up"]';
         const openEv = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:auth:open', { detail: { selector } })
           : { type: 'smoothr:auth:open', detail: { selector } };
         doc.dispatchEvent(openEv);
         const legacy = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector, open: true } })
-          : { type: 'smoothr:open-auth', detail: { targetSelector: selector, open: true } };
+          ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector } })
+          : { type: 'smoothr:open-auth', detail: { targetSelector: selector } };
         doc.dispatchEvent(legacy);
+        return;
       }
+      if (mode === 'dropdown') {
+        log('dropdown present—external animation handles UI');
+        return;
+      }
+      const to = await lookupRedirectUrl();
+      if (w.location) w.location.href = to || '/login';
+    };
+
+    docSubmitHandler = (e) => {
+      const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
+      if (!trigger) return;
+      try {
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        e.stopImmediatePropagation?.();
+      } catch {}
     };
 
     mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
@@ -525,6 +512,7 @@ export async function init(options = {}) {
     api.appleClickHandler = appleClickHandler;
     api.signOutHandler = signOutHandler;
     api.docClickHandler = docClickHandler;
+    api.docSubmitHandler = docSubmitHandler;
     api.onAuthStateChangeHandler = onAuthStateChangeHandler;
     api.mutationCallback = mutationCallback;
 
@@ -537,7 +525,8 @@ export async function init(options = {}) {
         mo.observe(doc || w, { childList: true, subtree: true });
       }
       doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
-      doc?.addEventListener?.('click', docClickHandler);
+      doc?.addEventListener?.('click', docClickHandler, true);
+      doc?.addEventListener?.('submit', docSubmitHandler, true);
     } catch {}
     try { mutationCallback(); } catch {}
     log('auth init complete');
