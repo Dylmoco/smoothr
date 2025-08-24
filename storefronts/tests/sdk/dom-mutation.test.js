@@ -70,7 +70,10 @@ describe("dynamic DOM bindings", () => {
         if (selector.includes('[data-smoothr="sign-out"]')) return [];
         return [];
       }),
-      querySelector: vi.fn(() => null),
+      querySelector: vi.fn((sel) => {
+        if (sel === '[data-smoothr="auth-panel"]') return {};
+        return null;
+      }),
       dispatchEvent() {
         return true;
       },
@@ -412,9 +415,11 @@ describe("dynamic DOM bindings", () => {
 
     await docClickHandler({ target: btn, preventDefault: () => {} });
     await flushPromises();
-    expect(global.document.dispatchEvent).toHaveBeenCalled();
-    const evt = global.document.dispatchEvent.mock.calls[0][0];
-    expect(evt.type).toBe("smoothr:open-auth");
-    expect(evt.detail.targetSelector).toBe('[data-smoothr="auth-panel"]');
+    expect(global.document.dispatchEvent).toHaveBeenCalledTimes(2);
+    const first = global.document.dispatchEvent.mock.calls[0][0];
+    const second = global.document.dispatchEvent.mock.calls[1][0];
+    expect(first.type).toBe("smoothr:auth:open");
+    expect(second.type).toBe("smoothr:open-auth");
+    expect(second.detail.targetSelector).toBe('[data-smoothr="auth-panel"]');
   });
 });

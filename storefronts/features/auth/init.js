@@ -81,9 +81,13 @@ function bindAuthElements(root = globalThis.document) {
     });
   root.querySelectorAll('[data-smoothr="auth-panel"]').forEach(el => {
     attach(el, () => {
-      const active = el.classList.toggle('is-active');
-      if (active) log('auth panel opened');
-      else log('auth panel closed');
+      const active = el.getAttribute?.('data-smoothr-active') === '1';
+      const nowOpen = !active;
+      try { el.setAttribute?.('data-smoothr-active', nowOpen ? '1' : '0'); } catch {}
+      if (el.getAttribute?.('data-smoothr-autoclass') === '1') {
+        try { el.classList.toggle('is-active', nowOpen); } catch {}
+      }
+      log(`auth panel ${nowOpen ? 'opened' : 'closed'}`);
     });
   });
   const doc = root?.ownerDocument || globalThis.document;
@@ -100,15 +104,17 @@ function bindAuthElements(root = globalThis.document) {
       }
       const shouldOpen = e?.detail?.open !== false;
       if (panel) {
-        panel.classList.toggle('is-active', shouldOpen);
-        log(`auth panel ${shouldOpen ? 'opened' : 'closed'}`, panel);
-        // lifecycle events for animations/integrations
         const evType = shouldOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
         const payload = { selector: requested || '[data-smoothr="auth-panel"]' };
         const ev = typeof globalThis.CustomEvent === 'function'
           ? new CustomEvent(evType, { detail: payload })
           : { type: evType, detail: payload };
         doc.dispatchEvent(ev);
+        try { panel.setAttribute?.('data-smoothr-active', shouldOpen ? '1' : '0'); } catch {}
+        if (panel.getAttribute?.('data-smoothr-autoclass') === '1') {
+          try { panel.classList.toggle('is-active', shouldOpen); } catch {}
+        }
+        log(`auth panel ${shouldOpen ? 'opened' : 'closed'}`, panel);
       } else {
         log('auth panel not found for smoothr:open-auth', requested || '(default)');
       }
@@ -461,8 +467,15 @@ export async function init(options = {}) {
         if (to && w.location) w.location.href = to;
       } else {
         // Mode-aware behavior
-        const mode = (trigger.getAttribute?.('data-smoothr-mode') || trigger.dataset?.smoothrMode || 'popup').toLowerCase();
-        log('auth trigger', { mode });
+        const doc = w.document || globalThis.document;
+        let mode = (trigger.getAttribute?.('data-smoothr-mode') || trigger.dataset?.smoothrMode || '').toLowerCase();
+        if (!mode) {
+          if (doc.querySelector('[data-smoothr="auth-panel"]')) mode = 'popup';
+          else if (doc.querySelector('[data-smoothr="auth-dropdown"]')) mode = 'dropdown';
+          else mode = 'page';
+        }
+        let selector = mode === 'dropdown' ? '[data-smoothr="auth-dropdown"]' : '[data-smoothr="auth-panel"]';
+        log('auth trigger', { mode, selector });
         if (mode === 'page') {
           // redirect to login / magic link page
           const to = await lookupRedirectUrl();
@@ -470,29 +483,38 @@ export async function init(options = {}) {
           return;
         }
         if (mode === 'dropdown') {
-          const doc = w.document || globalThis.document;
-          let dropdown = doc.querySelector('[data-smoothr="auth-dropdown"]');
-          if (!dropdown) dropdown = doc.querySelector('[data-smoothr="auth-panel"]'); // graceful fallback
+          let dropdown = doc.querySelector(selector);
+          if (!dropdown) {
+            dropdown = doc.querySelector('[data-smoothr="auth-panel"]');
+            selector = '[data-smoothr="auth-panel"]';
+          }
           if (dropdown) {
-            const nowOpen = !dropdown.classList.contains('is-active');
-            dropdown.classList.toggle('is-active', nowOpen);
+            const isOpen = dropdown.getAttribute?.('data-smoothr-active') === '1';
+            const nowOpen = !isOpen;
+            try { dropdown.setAttribute?.('data-smoothr-active', nowOpen ? '1' : '0'); } catch {}
             const evType = nowOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
             const ev = typeof w.CustomEvent === 'function'
-              ? new w.CustomEvent(evType, { detail: { selector: '[data-smoothr="auth-dropdown"]' } })
-              : { type: evType, detail: { selector: '[data-smoothr="auth-dropdown"]' } };
+              ? new w.CustomEvent(evType, { detail: { selector } })
+              : { type: evType, detail: { selector } };
             doc.dispatchEvent(ev);
+            const legacy = typeof w.CustomEvent === 'function'
+              ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector, open: nowOpen } })
+              : { type: 'smoothr:open-auth', detail: { targetSelector: selector, open: nowOpen } };
+            doc.dispatchEvent(legacy);
           } else {
             log('auth dropdown not found');
           }
           return;
         }
-        // default: popup
-        const detail = { targetSelector: '[data-smoothr="auth-panel"]', open: true };
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:open-auth', { detail })
-          : { type: 'smoothr:open-auth', detail };
-        (w.document || globalThis.document)?.dispatchEvent?.(ev);
-        log('dispatched smoothr:open-auth', detail);
+        // popup
+        const openEv = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:auth:open', { detail: { selector } })
+          : { type: 'smoothr:auth:open', detail: { selector } };
+        doc.dispatchEvent(openEv);
+        const legacy = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector, open: true } })
+          : { type: 'smoothr:open-auth', detail: { targetSelector: selector, open: true } };
+        doc.dispatchEvent(legacy);
       }
     };
 
