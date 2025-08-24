@@ -40,6 +40,10 @@ jobs:
         working-directory: storefronts
         run: npm run build
 
+      - name: Verify build output
+        working-directory: storefronts
+        run: test -f dist/smoothr-sdk.js
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
