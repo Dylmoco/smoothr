@@ -68,5 +68,13 @@ describe('auth feature init', () => {
     expect(api).toHaveProperty('login');
     expect(fromMock).toHaveBeenCalledWith('v_public_store');
   });
+
+  it('binds document click handler in capture only', async () => {
+    const { init } = await import('../../features/auth/init.js');
+    await init({ storeId: '1', supabase: client });
+    const clickCalls = document.addEventListener.mock.calls.filter(c => c[0] === 'click');
+    expect(clickCalls.length).toBe(1);
+    expect(clickCalls[0][2]).toBe(true);
+  });
 });
 

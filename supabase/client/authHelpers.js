@@ -13,6 +13,11 @@ const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 const warn = (...args) => debug && console.warn('[Smoothr Auth]', ...args);
 const err = (...args) => debug && console.error('[Smoothr Auth]', ...args);
 
+const __debug = typeof window !== 'undefined' && !!window.SMOOTHR_DEBUG;
+function isGoodUrl(u) {
+  return !!u && typeof u === 'string' && (/^https?:\/\//.test(u) || u.startsWith('/'));
+}
+
 export function getOAuthRedirectUrl() {
   return (
     (typeof __NEXT_PUBLIC_SUPABASE_OAUTH_REDIRECT_URL__ !== 'undefined' &&
@@ -235,7 +240,11 @@ export async function initAuth() {
       document.dispatchEvent(new CustomEvent('smoothr:login', { detail: { user } }));
       storage?.removeItem?.('smoothr_oauth');
       const url = await lookupRedirectUrl('login');
-      window.location.href = url;
+      if (isGoodUrl(url)) {
+        window.location.href = url;
+      } else if (__debug) {
+        console.warn('[Smoothr][auth] skipped invalid OAuth redirect', { url });
+      }
     }
   }
   const setupBindings = () => {
@@ -386,7 +395,11 @@ export function initPasswordResetConfirmation({ redirectTo = '/' } = {}) {
                 }
                 showSuccess(form, 'Password updated', trigger);
                 setTimeout(() => {
-                  window.location.href = redirectTo;
+                  if (isGoodUrl(redirectTo)) {
+                    window.location.href = redirectTo;
+                  } else if (__debug) {
+                    console.warn('[Smoothr][auth] skipped invalid password-reset redirect', { redirectTo });
+                  }
                 }, 1000);
               }
             } catch (err) {
