@@ -23,7 +23,7 @@ describe('Smoothr SDK script element validation', () => {
     await import('../../smoothr-sdk.js');
 
     expect(warnSpy).toHaveBeenCalled();
-    expect(global.window.Smoothr).toBeUndefined();
+    expect(global.window.Smoothr?.ready).toBeUndefined();
   });
 
   it('warns and aborts when data-store-id is missing', async () => {
@@ -33,6 +33,6 @@ describe('Smoothr SDK script element validation', () => {
     await import('../../smoothr-sdk.js');
 
     expect(warnSpy).toHaveBeenCalled();
-    expect(global.window.Smoothr).toBeUndefined();
+    expect(global.window.Smoothr?.ready).toBeUndefined();
   });
 });

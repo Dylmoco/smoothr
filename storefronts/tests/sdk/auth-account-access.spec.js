@@ -35,6 +35,7 @@ describe('account-access trigger', () => {
     };
     await mod.docClickHandler(evt);
     expect(evt.preventDefault).toHaveBeenCalled();
+    expect(evt.stopImmediatePropagation).toHaveBeenCalled();
     expect(win.location.href).toBe('/start');
     expect(doc.dispatchEvent).toHaveBeenCalledTimes(2);
     const first = doc.dispatchEvent.mock.calls[0][0];
@@ -58,6 +59,7 @@ describe('account-access trigger', () => {
     };
     await mod.docClickHandler(evt);
     expect(evt.preventDefault).toHaveBeenCalled();
+    expect(evt.stopImmediatePropagation).toHaveBeenCalled();
     expect(win.location.href).toBe('/start');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
   });
@@ -79,7 +81,7 @@ describe('account-access trigger', () => {
       stopImmediatePropagation: vi.fn()
     };
     await mod.docClickHandler(evt);
-    expect(lookupRedirectUrl).toHaveBeenCalled();
+    expect(lookupRedirectUrl).toHaveBeenCalledWith('login');
     expect(win.location.href).toBe('/login-url');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
   });
@@ -105,5 +107,23 @@ describe('account-access trigger', () => {
     expect(lookupDashboardHomeUrl).toHaveBeenCalled();
     expect(win.location.href).toBe('/dashboard');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
+  });
+
+  it('registers capture-phase listener for account-access triggers', async () => {
+    vi.resetModules();
+    const { doc } = setup();
+    const mod = await import('../../features/auth/init.js');
+    await mod.init();
+    const clickCalls = doc.addEventListener.mock.calls.filter(c => c[0] === 'click');
+    expect(clickCalls.some(c => c[2] === true)).toBe(true);
+    const evt = {
+      target: { closest: () => ({}) },
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      stopImmediatePropagation: vi.fn()
+    };
+    await mod.docClickHandler(evt);
+    expect(evt.preventDefault).toHaveBeenCalled();
+    expect(evt.stopImmediatePropagation).toHaveBeenCalled();
   });
 });

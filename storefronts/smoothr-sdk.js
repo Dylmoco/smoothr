@@ -1,13 +1,23 @@
+import { initAdapter as initWebflowAdapter } from 'storefronts/adapters/webflow.js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
 }
 
+const Smoothr = (window.Smoothr = window.Smoothr || {});
+if (!window.smoothr) window.smoothr = Smoothr;
+
+try {
+  const adapter = initWebflowAdapter(Smoothr.config || {});
+  Smoothr.adapter = adapter;
+  adapter?.domReady?.().catch(() => {});
+  adapter?.observeDOMChanges?.();
+} catch (e) {
+  console.warn('[Smoothr SDK] adapter init failed', e);
+}
+
 async function initFeatures() {
-  const Smoothr = (window.Smoothr = window.Smoothr || {});
-  // ensure lower-case alias exists everywhere (idempotent)
-  if (!window.smoothr) window.smoothr = Smoothr;
   const ctx = {
     config: Smoothr.config,
     supabase: Smoothr.__supabase,
@@ -100,9 +110,6 @@ if (!scriptEl || !storeId) {
     }
     return null;
   }
-
-  const Smoothr = (window.Smoothr = window.Smoothr || {});
-  window.smoothr = window.smoothr || Smoothr;
 
   Smoothr.ready = (async () => {
     const res = await fetchFirstOk(candidateUrls);

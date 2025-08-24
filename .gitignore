@@ -20,6 +20,7 @@ out/
 
 # Storefronts dist: ignore everything except the webflow adapter
 /storefronts/dist/*
+!/storefronts/dist/smoothr-sdk.js
 !/storefronts/dist/platforms/
 !/storefronts/dist/platforms/webflow/
 !/storefronts/dist/platforms/webflow/checkout.js
