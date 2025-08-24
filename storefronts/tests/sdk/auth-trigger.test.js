@@ -24,7 +24,11 @@ describe('auth triggers', () => {
   it('popup mode dispatches smoothr:open-auth and fires lifecycle events', async () => {
     const btn = { getAttribute: (k) => (k === 'data-smoothr-mode' ? 'popup' : null) };
     const evt = { target: { closest: () => btn }, preventDefault: vi.fn() };
-    const panel = { classList: { toggle: vi.fn(), contains: vi.fn(() => false) } };
+    const panel = {
+      classList: { toggle: vi.fn(), contains: vi.fn(() => false) },
+      getAttribute: (k) => (k === 'data-smoothr-autoclass' ? '1' : null),
+      setAttribute: vi.fn(),
+    };
     doc.querySelector = vi.fn(sel => (sel.includes('auth-panel') ? panel : null));
     await mod.docClickHandler(evt);
     const listener = doc.addEventListener.mock.calls.find(c => c[0] === 'smoothr:open-auth')[1];
@@ -42,10 +46,16 @@ describe('auth triggers', () => {
 
   it('dropdown mode toggles auth-dropdown and fires lifecycle', async () => {
     const btn = { getAttribute: (k) => (k === 'data-smoothr-mode' ? 'dropdown' : null) };
-    const dropdown = { classList: { contains: vi.fn(() => false), toggle: vi.fn() } };
+    const dropdown = {
+      classList: { contains: vi.fn(() => false), toggle: vi.fn() },
+      getAttribute: (k) => (k === 'data-smoothr-autoclass' ? '1' : k === 'data-smoothr-active' ? '0' : null),
+      setAttribute: vi.fn(),
+    };
     doc.querySelector = vi.fn(sel => (sel.includes('auth-dropdown') ? dropdown : null));
     const evt = { target: { closest: () => btn }, preventDefault: vi.fn() };
     await mod.docClickHandler(evt);
+    const listener = doc.addEventListener.mock.calls.find(c => c[0] === 'smoothr:open-auth')[1];
+    listener({ detail: { targetSelector: '[data-smoothr="auth-dropdown"]', open: true } });
     expect(dropdown.classList.toggle).toHaveBeenCalledWith('is-active', true);
   });
 });
