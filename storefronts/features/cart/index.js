@@ -131,16 +131,3 @@ export function getDiscount() {
   return readCart().discount || null;
 }
 
-export function getTotal() {
-  const cart = readCart();
-  let subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  if (cart.discount) {
-    if (cart.discount.type === 'percent') {
-      subtotal -= Math.round(subtotal * (cart.discount.amount / 100));
-    } else {
-      subtotal -= cart.discount.amount;
-    }
-  }
-  return subtotal < 0 ? 0 : subtotal;
-}
-

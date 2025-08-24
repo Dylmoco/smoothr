@@ -7,8 +7,8 @@ export function __test_resetCheckout() {
   __checkoutInitialized = false;
   try {
     if (typeof window !== 'undefined') {
-      if (window.Smoothr) delete window.Smoothr.checkout;
-      if (window.smoothr) delete window.smoothr.checkout;
+      const s = window.Smoothr || window.smoothr;
+      if (s?.checkout) delete s.checkout;
     }
   } catch {}
 }

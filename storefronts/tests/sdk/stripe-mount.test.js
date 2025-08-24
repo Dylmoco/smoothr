@@ -65,7 +65,13 @@ beforeEach(() => {
       storeId: 'store-1',
       active_payment_gateway: 'stripe'
     },
-    Smoothr: { cart: { getCart: () => ({ items: [] }), getTotal: () => 0 } }
+    Smoothr: {
+      cart: {
+        getCart: () => ({ items: [] }),
+        getSubtotal: () => 0,
+        getDiscount: () => null
+      }
+    }
   };
 });
 

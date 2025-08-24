@@ -134,7 +134,8 @@ beforeEach(() => {
     Smoothr: {
       cart: {
         getCart: vi.fn(() => ({ items: [{ id: 1 }] })),
-        getTotal: vi.fn(() => 5000)
+        getSubtotal: vi.fn(() => 50),
+        getDiscount: vi.fn(() => null)
       }
     }
   };

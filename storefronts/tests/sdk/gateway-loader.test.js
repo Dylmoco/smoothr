@@ -65,7 +65,13 @@ function setupEnv(provider, modulePath) {
   };
   global.window = {
     location: { pathname: "", search: "" },
-    Smoothr: { cart: { getCart: () => ({ items: [] }), getTotal: () => 0 } },
+    Smoothr: {
+      cart: {
+        getCart: () => ({ items: [] }),
+        getSubtotal: () => 0,
+        getDiscount: () => null
+      }
+    },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn()
   };

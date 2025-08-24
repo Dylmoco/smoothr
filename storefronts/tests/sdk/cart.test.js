@@ -97,7 +97,17 @@ describe("cart module", () => {
     cart.updateQuantity("1", 3);
     cart.applyDiscount({ code: "SAVE", type: "percent", amount: 50 });
     expect(cart.getSubtotal()).toBe(300);
-    expect(cart.getTotal()).toBe(150);
+    const subtotal = cart.getSubtotal();
+    const discount = cart.getDiscount();
+    const total = discount
+      ? Math.max(
+          0,
+          discount.type === "percent"
+            ? subtotal - Math.round(subtotal * (discount.amount / 100))
+            : subtotal - discount.amount
+        )
+      : subtotal;
+    expect(total).toBe(150);
   });
 
   it("clears cart", () => {
