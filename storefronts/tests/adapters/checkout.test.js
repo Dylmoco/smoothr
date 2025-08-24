@@ -149,7 +149,8 @@ beforeEach(() => {
   const Smoothr = {
     cart: {
       getCart: () => cart,
-      getTotal: () => 100
+      getSubtotal: () => 100,
+      getDiscount: () => null
     },
     currency: { convertPrice: amt => amt },
     auth: { user: { id: 'cus_1' } },
