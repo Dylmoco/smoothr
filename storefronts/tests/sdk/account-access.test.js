@@ -69,7 +69,7 @@ describe("account access trigger", () => {
         return [];
       }),
       querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr="auth-panel"]') return {};
+        if (sel === '[data-smoothr="auth-pop-up"]') return {};
         return null;
       }),
       dispatchEvent: vi.fn(),
@@ -125,7 +125,7 @@ describe("account access trigger", () => {
       const second = global.document.dispatchEvent.mock.calls[1][0];
       expect(first.type).toBe("smoothr:auth:open");
       expect(second.type).toBe("smoothr:open-auth");
-      expect(second.detail.targetSelector).toBe('[data-smoothr="auth-panel"]');
+      expect(second.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     });
   });
 });
