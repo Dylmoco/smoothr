@@ -460,14 +460,13 @@ export async function init(options = {}) {
     docClickHandler = async (e) => {
       const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
       if (!trigger) return;
-      try {
-        e.preventDefault?.();
-        e.stopPropagation?.();
-        e.stopImmediatePropagation?.();
-      } catch {}
+      try { e.preventDefault?.(); } catch {}
+      try { e.stopPropagation?.(); } catch {}
+      try { e.stopImmediatePropagation?.(); } catch {}
       const user = w.Smoothr?.auth?.user?.value;
       if (user) {
         const to = await lookupDashboardHomeUrl();
+        log('auth trigger: page → redirecting to', to);
         if (w.location) w.location.href = to || '/';
         return;
       }
@@ -477,6 +476,7 @@ export async function init(options = {}) {
       else if (doc.querySelector('[data-smoothr="auth-drop-down"]')) mode = 'dropdown';
       if (mode === 'popup') {
         const selector = '[data-smoothr="auth-pop-up"]';
+        log('auth trigger: popup → dispatch smoothr:auth:open for', selector);
         const openEv = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:auth:open', { detail: { selector } })
           : { type: 'smoothr:auth:open', detail: { selector } };
@@ -491,7 +491,8 @@ export async function init(options = {}) {
         log('dropdown present—external animation handles UI');
         return;
       }
-      const to = await lookupRedirectUrl();
+      const to = await lookupRedirectUrl('login');
+      log('auth trigger: page → redirecting to', to);
       if (w.location) w.location.href = to || '/login';
     };
 
@@ -525,6 +526,7 @@ export async function init(options = {}) {
         mo.observe(doc || w, { childList: true, subtree: true });
       }
       doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
+      doc?.addEventListener?.('click', docClickHandler);
       doc?.addEventListener?.('click', docClickHandler, true);
       doc?.addEventListener?.('submit', docSubmitHandler, true);
     } catch {}

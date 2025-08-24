@@ -132,10 +132,21 @@ let cachedDashboardHomeUrl;
 export async function lookupRedirectUrl(type = 'login') {
   if (cachedRedirectUrls[type]) return cachedRedirectUrls[type];
 
-  const column = `${type}_redirect_url`;
   try {
     const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
-    const url = config?.[column] || window.location.origin;
+    let url;
+    if (type === 'login') {
+      url =
+        config?.sign_in_redirect_url ??
+        config?.public_settings?.sign_in_redirect_url ??
+        window.location.origin;
+    } else {
+      const key = `${type}_redirect_url`;
+      url =
+        config?.[key] ??
+        config?.public_settings?.[key] ??
+        window.location.origin;
+    }
     cachedRedirectUrls[type] = url;
     return url;
   } catch (error) {
@@ -151,20 +162,17 @@ export async function lookupDashboardHomeUrl() {
 
   try {
     const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
-    const url = config?.dashboard_home_url;
-    if (!url) {
-      console.warn(
-        '[Smoothr Auth] Dashboard home URL missing. Falling back to /account'
-      );
-      cachedDashboardHomeUrl = '/account';
-    } else {
-      cachedDashboardHomeUrl = url;
-    }
-    return cachedDashboardHomeUrl;
+    const url =
+      config?.dashboard_home_url ??
+      config?.public_settings?.dashboard_home_url ??
+      window.location.origin;
+    cachedDashboardHomeUrl = url;
+    return url;
   } catch (error) {
     console.warn('[Smoothr Auth] Dashboard home lookup failed:', error);
-    cachedDashboardHomeUrl = '/account';
-    return cachedDashboardHomeUrl;
+    const fallback = window.location.origin;
+    cachedDashboardHomeUrl = fallback;
+    return fallback;
   }
 }
 

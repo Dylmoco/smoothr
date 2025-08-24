@@ -38,6 +38,8 @@ describe('loadPublicConfig', () => {
       publishable_key: 'pk_live_123',
       base_currency: 'GBP',
       public_settings: {},
+      sign_in_redirect_url: '/sign-in',
+      dashboard_home_url: '/dashboard'
     };
     builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
@@ -45,7 +47,7 @@ describe('loadPublicConfig', () => {
 
     expect(config).toEqual(row);
     expect(builder.select).toHaveBeenCalledWith(
-      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings'
+      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,dashboard_home_url'
     );
     expect(builder.eq).toHaveBeenCalledWith('store_id', storeId);
     expect(builder.maybeSingle).toHaveBeenCalledTimes(1);
@@ -65,6 +67,8 @@ describe('loadPublicConfig', () => {
 
     expect(config.active_payment_gateway).toBeNull();
     expect(config.public_settings).toEqual({});
+    expect(config.sign_in_redirect_url).toBeNull();
+    expect(config.dashboard_home_url).toBeNull();
   });
 
   it('returns fallback settings on query error', async () => {
@@ -76,7 +80,12 @@ describe('loadPublicConfig', () => {
 
     const config = await loadPublicConfig(storeId, supabase);
 
-    expect(config).toEqual({ public_settings: {}, active_payment_gateway: null });
+    expect(config).toEqual({
+      public_settings: {},
+      active_payment_gateway: null,
+      sign_in_redirect_url: null,
+      dashboard_home_url: null
+    });
   });
 });
 

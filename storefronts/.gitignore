@@ -1,6 +1,7 @@
 # ─── storefronts/.gitignore ────────────────────────────────────
 node_modules/
 .vite/
-dist/
+dist/*
+!dist/smoothr-sdk.js
 !dist/gateways/nmi.js
 !dist/platforms/webflow/checkout.js
