@@ -5,15 +5,17 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
 }
 
+export const SDK_TAG = 'auth-popup-locked-v1';
+if (typeof window !== 'undefined') {
+  window.Smoothr = window.Smoothr || {};
+  window.Smoothr.meta = Object.assign({}, window.Smoothr.meta, { sdkTag: SDK_TAG });
+  if (window.SMOOTHR_DEBUG) {
+    console.info('[Smoothr] build', { sdkTag: SDK_TAG, builtAt: '__BUILD_TIME__' });
+  }
+}
+
 const Smoothr = (window.Smoothr = window.Smoothr || {});
 if (!window.smoothr) window.smoothr = Smoothr;
-
-if (window.SMOOTHR_DEBUG) {
-  console.info('[Smoothr] build', {
-    sdkTag: 'auth-trigger-no-fallback',
-    builtAt: '__BUILD_TIME__',
-  });
-}
 
 try {
   const adapter = initWebflowAdapter(Smoothr.config || {});

@@ -481,19 +481,26 @@ export async function init(options = {}) {
       if (authState) authState.user.value = null;
     };
 
-    docClickHandler = async (e) => {
-      const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
-      if (!trigger) return;
-      try { e.preventDefault?.(); } catch {}
-      try { e.stopPropagation?.(); } catch {}
-      try { e.stopImmediatePropagation?.(); } catch {}
-      const w = globalThis.window || globalThis;
-      const doc = w.document || globalThis.document;
-      let selector = null;
-      let popupExists = false;
-      let deferredCheck = false;
-      let mode = 'none';
-      let redirectTo = null;
+      docClickHandler = async (e) => {
+        const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
+        if (!trigger) return;
+        try { e.preventDefault?.(); } catch {}
+        try { e.stopPropagation?.(); } catch {}
+        try { e.stopImmediatePropagation?.(); } catch {}
+        const w = globalThis.window || globalThis;
+        const doc = w.document || globalThis.document;
+        const hasDropdown = !!doc?.querySelector?.('[data-smoothr="auth-drop-down"]');
+        if (hasDropdown) {
+          if (w.SMOOTHR_DEBUG) {
+            console.info('[Smoothr][auth] dropdown present → SDK noop (user animation handles it)');
+          }
+          return;
+        }
+        let selector = null;
+        let popupExists = false;
+        let deferredCheck = false;
+        let mode = 'none';
+        let redirectTo = null;
       const user = w.Smoothr?.auth?.user?.value;
       if (user) {
         mode = 'dashboard';
@@ -566,8 +573,10 @@ export async function init(options = {}) {
         mo.observe(doc || w, { childList: true, subtree: true });
       }
       doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
-      doc?.addEventListener?.('click', docClickHandler);
       doc?.addEventListener?.('click', docClickHandler, true);
+      if (w.SMOOTHR_DEBUG) {
+        console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
+      }
       doc?.addEventListener?.('submit', docSubmitHandler, true);
     } catch {}
     try { mutationCallback(); } catch {}
