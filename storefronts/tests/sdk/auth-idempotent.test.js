@@ -45,6 +45,7 @@ beforeEach(async () => {
     location: { origin: '', href: '', hostname: '' },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
+    SMOOTHR_DEBUG: true,
   };
   global.document = {
     addEventListener: vi.fn((evt, cb) => {
@@ -68,8 +69,9 @@ beforeEach(async () => {
     }))
   };
   const mod = await import('../../features/auth/init.js');
-  client = await mod.__test_tryImportClient();
-  mod.__test_resetAuth();
+  const test = global.window.Smoothr.config.__test;
+  client = await test.tryImportClient();
+  test.resetAuth();
 });
 
 describe('auth init session restoration', () => {

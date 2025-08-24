@@ -47,7 +47,8 @@ describe('auth feature init', () => {
     global.window = {
       location: { hash: '', search: '' },
       Smoothr: {},
-      smoothr: {}
+      smoothr: {},
+      SMOOTHR_DEBUG: true
     };
     global.document = {
       readyState: 'complete',
@@ -56,8 +57,9 @@ describe('auth feature init', () => {
       querySelectorAll: vi.fn(() => [])
     };
     const mod = await import('../../features/auth/init.js');
-    client = await mod.__test_tryImportClient();
-    mod.__test_resetAuth();
+    const test = global.window.Smoothr.config.__test;
+    client = await test.tryImportClient();
+    test.resetAuth();
   });
 
   it('loads v_public_store during init', async () => {

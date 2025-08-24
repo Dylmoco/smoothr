@@ -7,6 +7,31 @@ import { getConfig } from '../config/globalConfig.js';
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
+const AUTH_PANEL_SELECTORS = [
+  '[data-smoothr="auth-pop-up"]',
+  '[data-smoothr="auth-wrapper"]'
+];
+function resolveAuthPanelSelector(doc = globalThis.document) {
+  if (!doc) return null;
+  for (const sel of AUTH_PANEL_SELECTORS) {
+    try {
+      if (doc.querySelector(sel)) return sel;
+    } catch {}
+  }
+  return null;
+}
+async function deferToNextFrame(times = 1) {
+  for (let i = 0; i < times; i++) {
+    await new Promise(r => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => r());
+      } else {
+        setTimeout(r, 0);
+      }
+    });
+  }
+}
+
 // Minimal CustomEvent polyfill for environments lacking it.
 if (typeof globalThis.CustomEvent !== 'function') {
   const CustomEventPoly = function CustomEvent(type, params = {}) {
@@ -187,7 +212,6 @@ export const resolveSupabase = async () => {
       return null;
     }
   }
-export { tryImportClient as __test_tryImportClient };
 
 export { lookupRedirectUrl, lookupDashboardHomeUrl };
 // Several tests spy on this name; keep it here.
@@ -463,37 +487,53 @@ export async function init(options = {}) {
       try { e.preventDefault?.(); } catch {}
       try { e.stopPropagation?.(); } catch {}
       try { e.stopImmediatePropagation?.(); } catch {}
+      const w = globalThis.window || globalThis;
+      const doc = w.document || globalThis.document;
+      let selector = null;
+      let popupExists = false;
+      let deferredCheck = false;
+      let mode = 'none';
+      let redirectTo = null;
       const user = w.Smoothr?.auth?.user?.value;
       if (user) {
-        const to = await lookupDashboardHomeUrl();
-        log('auth trigger: page → redirecting to', to);
-        if (w.location) w.location.href = to || '/';
-        return;
+        mode = 'dashboard';
+        redirectTo = await lookupDashboardHomeUrl();
+        if (redirectTo && w.location) w.location.href = redirectTo;
+      } else {
+        selector = resolveAuthPanelSelector(doc);
+        popupExists = !!selector;
+        if (!popupExists) {
+          await deferToNextFrame(2);
+          deferredCheck = true;
+          selector = resolveAuthPanelSelector(doc);
+          popupExists = !!selector;
+        }
+        if (popupExists) {
+          mode = 'popup';
+          const openEv = typeof w.CustomEvent === 'function'
+            ? new w.CustomEvent('smoothr:auth:open', { detail: { selector } })
+            : { type: 'smoothr:auth:open', detail: { selector } };
+          doc.dispatchEvent(openEv);
+          const legacy = typeof w.CustomEvent === 'function'
+            ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector } })
+            : { type: 'smoothr:open-auth', detail: { targetSelector: selector } };
+          doc.dispatchEvent(legacy);
+        } else if (trigger?.getAttribute?.('data-smoothr-auth-mode') === 'redirect') {
+          mode = 'redirect';
+          redirectTo = await lookupRedirectUrl('login');
+          if (redirectTo && w.location) w.location.href = redirectTo;
+        }
       }
-      const doc = w.document || globalThis.document;
-      let mode = 'page';
-      if (doc.querySelector('[data-smoothr="auth-pop-up"]')) mode = 'popup';
-      else if (doc.querySelector('[data-smoothr="auth-drop-down"]')) mode = 'dropdown';
-      if (mode === 'popup') {
-        const selector = '[data-smoothr="auth-pop-up"]';
-        log('auth trigger: popup → dispatch smoothr:auth:open for', selector);
-        const openEv = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:auth:open', { detail: { selector } })
-          : { type: 'smoothr:auth:open', detail: { selector } };
-        doc.dispatchEvent(openEv);
-        const legacy = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector } })
-          : { type: 'smoothr:open-auth', detail: { targetSelector: selector } };
-        doc.dispatchEvent(legacy);
-        return;
+      if (w.SMOOTHR_DEBUG) {
+        console.info('[Smoothr][auth] trigger', {
+          prevented: true,
+          foundTrigger: !!trigger,
+          popupExists,
+          deferredCheck,
+          mode,
+          redirectTo,
+        });
       }
-      if (mode === 'dropdown') {
-        log('dropdown present—external animation handles UI');
-        return;
-      }
-      const to = await lookupRedirectUrl('login');
-      log('auth trigger: page → redirecting to', to);
-      if (w.location) w.location.href = to || '/login';
     };
 
     docSubmitHandler = (e) => {
@@ -554,7 +594,7 @@ export async function initPasswordResetConfirmation(opts = {}) {
 }
 
 // Exported test helper to reset private module state between specs.
-export function __test_resetAuth() {
+function __test_resetAuth() {
   _initPromise = undefined;
   _restoredOnce = false;
   _seededUserOnce = false;
@@ -570,5 +610,15 @@ export function __test_resetAuth() {
   appleClickHandler = () => {};
   signOutHandler = () => {};
   docClickHandler = () => {};
+}
+
+if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
+  const w = window;
+  w.Smoothr = w.Smoothr || {};
+  w.Smoothr.config = w.Smoothr.config || {};
+  w.Smoothr.config.__test = {
+    tryImportClient,
+    resetAuth: __test_resetAuth,
+  };
 }
 

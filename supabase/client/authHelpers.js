@@ -139,21 +139,33 @@ export async function lookupRedirectUrl(type = 'login') {
       url =
         config?.sign_in_redirect_url ??
         config?.public_settings?.sign_in_redirect_url ??
-        window.location.origin;
+        null;
     } else {
       const key = `${type}_redirect_url`;
       url =
         config?.[key] ??
         config?.public_settings?.[key] ??
-        window.location.origin;
+        null;
     }
     cachedRedirectUrls[type] = url;
+    if (!url && typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
+      console.warn('[Smoothr][auth] redirect helper missing value', {
+        helper: 'lookupRedirectUrl',
+        type,
+        reason: 'null-or-error',
+      });
+    }
     return url;
   } catch (error) {
-    console.warn('[Smoothr Auth] Redirect lookup failed:', error);
-    const fallback = window.location.origin;
-    cachedRedirectUrls[type] = fallback;
-    return fallback;
+    if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
+      console.warn('[Smoothr][auth] redirect helper missing value', {
+        helper: 'lookupRedirectUrl',
+        type,
+        reason: 'null-or-error',
+      });
+    }
+    cachedRedirectUrls[type] = null;
+    return null;
   }
 }
 
@@ -165,14 +177,24 @@ export async function lookupDashboardHomeUrl() {
     const url =
       config?.dashboard_home_url ??
       config?.public_settings?.dashboard_home_url ??
-      window.location.origin;
+      null;
     cachedDashboardHomeUrl = url;
+    if (!url && typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
+      console.warn('[Smoothr][auth] redirect helper missing value', {
+        helper: 'lookupDashboardHomeUrl',
+        reason: 'null-or-error',
+      });
+    }
     return url;
   } catch (error) {
-    console.warn('[Smoothr Auth] Dashboard home lookup failed:', error);
-    const fallback = window.location.origin;
-    cachedDashboardHomeUrl = fallback;
-    return fallback;
+    if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
+      console.warn('[Smoothr][auth] redirect helper missing value', {
+        helper: 'lookupDashboardHomeUrl',
+        reason: 'null-or-error',
+      });
+    }
+    cachedDashboardHomeUrl = null;
+    return null;
   }
 }
 
