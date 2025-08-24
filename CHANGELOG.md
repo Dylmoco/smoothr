@@ -14,5 +14,5 @@ All notable changes to this project will be documented in this file.
 - Sanitized Authorize.Net card fields before tokenization.
 - Added client-side formatting for Webflow card number, expiry and CVC inputs.
 - Added `shared/init` to register a global `generateOrderNumber` hook used by the
-  checkout API route.
+  checkout API route..
 
