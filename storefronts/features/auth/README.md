@@ -6,7 +6,7 @@ attributes to trigger login and sign-out from any storefront.
 > **Why use a `div` for the login button?**
 > Webflow blocks password form submissions on `.webflow.io` domains. By never
 > triggering a native submit event, this pattern works seamlessly on both
-> staging and production sites.
+> staging and production sites..
 
 ## Redirect lookup
 
