@@ -3,7 +3,8 @@ import { describe, it, expect, vi } from 'vitest';
 function setup({ user = null, popup = false, dropdown = false } = {}) {
   const win = {
     Smoothr: { auth: { user: { value: user } } },
-    location: { href: '/start' }
+    location: { href: '/start' },
+    dispatchEvent: vi.fn(),
   };
   const doc = {
     readyState: 'complete',
@@ -37,13 +38,14 @@ describe('account-access trigger', () => {
     expect(evt.preventDefault).toHaveBeenCalled();
     expect(evt.stopImmediatePropagation).toHaveBeenCalled();
     expect(win.location.href).toBe('/start');
-    expect(doc.dispatchEvent).toHaveBeenCalledTimes(2);
-    const first = doc.dispatchEvent.mock.calls[0][0];
-    const second = doc.dispatchEvent.mock.calls[1][0];
-    expect(first.type).toBe('smoothr:auth:open');
-    expect(first.detail.selector).toBe('[data-smoothr="auth-pop-up"]');
-    expect(second.type).toBe('smoothr:open-auth');
-    expect(second.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+    expect(doc.dispatchEvent).toHaveBeenCalledTimes(1);
+    expect(win.dispatchEvent).toHaveBeenCalledTimes(1);
+    const docEvt = doc.dispatchEvent.mock.calls[0][0];
+    const winEvt = win.dispatchEvent.mock.calls[0][0];
+    expect(docEvt.type).toBe('smoothr:auth:open');
+    expect(winEvt.type).toBe('smoothr:auth:open');
+    expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+    expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
   });
 
   it('dropdown present, logged out skips SDK UI', async () => {
@@ -62,6 +64,7 @@ describe('account-access trigger', () => {
     expect(evt.stopImmediatePropagation).toHaveBeenCalled();
     expect(win.location.href).toBe('/start');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
+    expect(win.dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('no UI with redirect mode navigates to login URL', async () => {
@@ -88,6 +91,7 @@ describe('account-access trigger', () => {
     expect(lookupRedirectUrl).toHaveBeenCalledWith('login');
     expect(win.location.href).toBe('/login-url');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
+    expect(win.dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('logged-in users redirect to preferred URL', async () => {
@@ -111,6 +115,7 @@ describe('account-access trigger', () => {
     expect(lookupDashboardHomeUrl).toHaveBeenCalled();
     expect(win.location.href).toBe('/dashboard');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
+    expect(win.dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('registers capture-phase listener for account-access triggers', async () => {

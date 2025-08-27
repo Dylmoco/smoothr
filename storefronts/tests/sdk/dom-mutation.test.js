@@ -398,7 +398,7 @@ describe("dynamic DOM bindings", () => {
     expect(errorEl.style.display).toBe("");
   });
 
-  it("binds newly added account-access elements and dispatches open-auth", async () => {
+  it("binds newly added account-access elements and dispatches auth:open", async () => {
     const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValue({ data: { user: null } });
     const btn = {
@@ -415,11 +415,13 @@ describe("dynamic DOM bindings", () => {
 
     await docClickHandler({ target: btn, preventDefault: () => {} });
     await flushPromises();
-    expect(global.document.dispatchEvent).toHaveBeenCalledTimes(2);
-    const first = global.document.dispatchEvent.mock.calls[0][0];
-    const second = global.document.dispatchEvent.mock.calls[1][0];
-    expect(first.type).toBe("smoothr:auth:open");
-    expect(second.type).toBe("smoothr:open-auth");
-    expect(second.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+    expect(global.document.dispatchEvent).toHaveBeenCalledTimes(1);
+    expect(global.window.dispatchEvent).toHaveBeenCalledTimes(1);
+    const docEvt = global.document.dispatchEvent.mock.calls[0][0];
+    const winEvt = global.window.dispatchEvent.mock.calls[0][0];
+    expect(docEvt.type).toBe("smoothr:auth:open");
+    expect(winEvt.type).toBe("smoothr:auth:open");
+    expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+    expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
   });
 });
