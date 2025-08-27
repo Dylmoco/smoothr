@@ -67,7 +67,7 @@ describe("password reset request", () => {
     await flushPromises();
     expect(resetPasswordMock).toHaveBeenCalledWith(
       "user@example.com",
-      expect.objectContaining({ redirectTo: "" })
+      expect.objectContaining({ redirectTo: expect.stringContaining('/api/callback') })
     );
     expect(global.window.alert).toHaveBeenCalled();
   });

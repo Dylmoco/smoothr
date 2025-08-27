@@ -137,10 +137,9 @@ describe("dynamic DOM bindings", () => {
     await flushPromises();
 
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
-    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
-    const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
-    expect(evt).toBeInstanceOf(CustomEvent);
-    expect(evt.type).toBe("smoothr:login");
+    const types = global.document.dispatchEvent.mock.calls.map(c => c[0]?.type);
+    expect(types).toContain("smoothr:login");
+    expect(types.at(-1)).toBe("smoothr:auth:close");
   });
 
   it("attaches listeners to added signup elements and updates auth state", async () => {
@@ -188,10 +187,9 @@ describe("dynamic DOM bindings", () => {
     await flushPromises();
 
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
-    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
-    const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
-    expect(evt).toBeInstanceOf(CustomEvent);
-    expect(evt.type).toBe("smoothr:login");
+    const types = global.document.dispatchEvent.mock.calls.map(c => c[0]?.type);
+    expect(types).toContain("smoothr:login");
+    expect(types.at(-1)).toBe("smoothr:auth:close");
   });
 
   it("attaches listeners to added google login elements and dispatches login event", async () => {

@@ -125,7 +125,7 @@ describe("signup flow", () => {
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
-    expect(global.document.dispatchEvent).not.toHaveBeenCalled();
+    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'smoothr:auth:error' }));
     expect(global.window.location.href).toBe("");
   });
 

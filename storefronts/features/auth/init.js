@@ -326,6 +326,37 @@ export async function init(options = {}) {
     // was: /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8
     const strong = p => /[0-9]/.test(p) && p?.length >= 8;
 
+    const sessionSyncAndEmit = async (supa, userId, overrideUrl) => {
+      try {
+        const { data: sess } = await supa.auth.getSession();
+        const token = sess?.session?.access_token;
+        const storeId = w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
+        if (token && storeId) {
+          const resp = await fetch('/api/auth/session-sync', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ store_id: storeId }),
+          });
+          const json = await resp.json().catch(() => ({}));
+          if (resp.ok && json?.ok) {
+            emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
+            emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
+            const url = overrideUrl || json.dashboard_home_url || (await lookupDashboardHomeUrl?.());
+            if (url) w.location?.assign?.(url);
+            return;
+          }
+        }
+      } catch {}
+      emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
+      emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
+      if (overrideUrl) {
+        try { w.location?.assign?.(overrideUrl); } catch {}
+      }
+    };
+
     clickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       const d = w.document || globalThis.document;
@@ -342,14 +373,20 @@ export async function init(options = {}) {
         const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
         const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
         if (!emailRE.test(email)) return;
-        const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
-        w.Smoothr.auth.user.value = data?.user ?? null;
-        if (error || !data?.user) return;
-        await c.auth.getSession?.();
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:login')
-          : { type: 'smoothr:login' };
+        try {
+          const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
+          w.Smoothr.auth.user.value = data?.user ?? null;
+          if (error || !data?.user) throw error;
+          await c.auth.getSession?.();
+          const ev = typeof w.CustomEvent === 'function'
+            ? new w.CustomEvent('smoothr:login')
+            : { type: 'smoothr:login' };
           (w.document || globalThis.document)?.dispatchEvent?.(ev);
+          await sessionSyncAndEmit(c, data?.user?.id || null);
+        } catch (err) {
+          w.Smoothr.auth.user.value = null;
+          emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+        }
         return;
       }
       if (action === 'signup') {
@@ -357,18 +394,25 @@ export async function init(options = {}) {
         const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
         const confirm = form?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
         if (!emailRE.test(email) || !strong(pwd) || pwd !== confirm) return;
-        const { data, error } = await c.auth.signUp({
-          email,
-          password: pwd,
-          options: { data: { store_id: getConfig().storeId } },
-        });
-        w.Smoothr.auth.user.value = data?.user ?? null;
-        if (error || !data?.user) return;
-        await c.auth.getSession?.();
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:login')
-          : { type: 'smoothr:login' };
+        try {
+          const result = await c.auth.signUp({
+            email,
+            password: pwd,
+            options: { data: { store_id: getConfig().storeId } },
+          });
+          const { data, error } = result;
+          w.Smoothr.auth.user.value = data?.user ?? null;
+          if (error || !data?.user) throw error;
+          await c.auth.getSession?.();
+          const ev = typeof w.CustomEvent === 'function'
+            ? new w.CustomEvent('smoothr:login')
+            : { type: 'smoothr:login' };
           (w.document || globalThis.document)?.dispatchEvent?.(ev);
+          await sessionSyncAndEmit(c, data?.user?.id || null);
+        } catch (err) {
+          w.Smoothr.auth.user.value = null;
+          emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+        }
         return;
       }
       if (action === 'password-reset') {
@@ -376,8 +420,11 @@ export async function init(options = {}) {
         const successEl = form?.querySelector('[data-smoothr-success]');
         const errorEl = form?.querySelector('[data-smoothr-error]');
         try {
-          const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: '' });
-          if (error) throw error;
+          const origin = w.location?.origin || 'http://localhost';
+          const cb = new URL('/api/callback', origin);
+          if (w?.SMOOTHR_CONFIG?.storeId) cb.searchParams.set('store_id', w.SMOOTHR_CONFIG.storeId);
+          const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo: cb.toString() });
+          if (resetErr) throw resetErr;
           w.Smoothr.auth.user.value = null;
           if (successEl) {
             successEl.textContent = 'Check your email for a reset link.';
@@ -394,6 +441,7 @@ export async function init(options = {}) {
             errorEl.style && (errorEl.style.display = '');
           }
           w.alert?.(err?.message || String(err));
+          emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
         }
         return;
       }
@@ -407,10 +455,15 @@ export async function init(options = {}) {
           w.Smoothr.auth.user.value = data?.user ?? null;
           if (error) throw error;
           w.alert?.('Password updated');
-          if (_prRedirect && w.location) w.location.href = _prRedirect;
+          const ev = typeof w.CustomEvent === 'function'
+            ? new w.CustomEvent('smoothr:login')
+            : { type: 'smoothr:login' };
+          (w.document || globalThis.document)?.dispatchEvent?.(ev);
+          await sessionSyncAndEmit(c, data?.user?.id || null, _prRedirect || undefined);
         } catch (err) {
           w.Smoothr.auth.user.value = null;
           w.alert?.(err?.message || String(err));
+          emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
         }
         return;
       }
@@ -420,42 +473,50 @@ export async function init(options = {}) {
       try { e?.preventDefault?.(); } catch {}
       globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
       const c = await resolveSupabase();
-      await c?.auth?.signInWithOAuth?.({
-        provider: 'google',
-        options: {
-          redirectTo: w.location?.origin || '',
-          data: { store_id: getConfig().storeId }
-        }
-      });
       try {
+        await c?.auth?.signInWithOAuth?.({
+          provider: 'google',
+          options: {
+            redirectTo: w.location?.origin || '',
+            data: { store_id: getConfig().storeId }
+          }
+        });
         const res = await c?.auth?.getUser?.();
-        w.Smoothr.auth.user.value = res?.data?.user ?? null;
-      } catch {}
-      const ev = typeof w.CustomEvent === 'function'
-        ? new w.CustomEvent('smoothr:login')
-        : { type: 'smoothr:login' };
-      (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        const user = res?.data?.user ?? null;
+        w.Smoothr.auth.user.value = user;
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:login')
+          : { type: 'smoothr:login' };
+        (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        if (user) await sessionSyncAndEmit(c, user?.id || null);
+      } catch (err) {
+        emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+      }
     };
 
     appleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
       const c = await resolveSupabase();
-      await c?.auth?.signInWithOAuth?.({
-        provider: 'apple',
-        options: {
-          redirectTo: w.location?.origin || '',
-          data: { store_id: getConfig().storeId }
-        }
-      });
       try {
+        await c?.auth?.signInWithOAuth?.({
+          provider: 'apple',
+          options: {
+            redirectTo: w.location?.origin || '',
+            data: { store_id: getConfig().storeId }
+          }
+        });
         const res = await c?.auth?.getUser?.();
-        w.Smoothr.auth.user.value = res?.data?.user ?? null;
-      } catch {}
-      const ev = typeof w.CustomEvent === 'function'
-        ? new w.CustomEvent('smoothr:login')
-        : { type: 'smoothr:login' };
-      (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        const user = res?.data?.user ?? null;
+        w.Smoothr.auth.user.value = user;
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:login')
+          : { type: 'smoothr:login' };
+        (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        if (user) await sessionSyncAndEmit(c, user?.id || null);
+      } catch (err) {
+        emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+      }
     };
 
     signOutHandler = async (e) => {
@@ -531,14 +592,42 @@ export async function init(options = {}) {
       }
     };
 
-    docSubmitHandler = (e) => {
-      const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
-      if (!trigger) return;
+    docSubmitHandler = async (e) => {
+      const form = e?.target?.closest?.('form[data-smoothr="auth-form"]');
+      if (!form) return;
       try {
         e.preventDefault?.();
         e.stopPropagation?.();
         e.stopImmediatePropagation?.();
       } catch {}
+
+      const getVal = (sel) => form.querySelector(sel)?.value?.trim();
+      const email = getVal('[data-smoothr="email"]') ?? getVal('[name="email"]') ?? '';
+      const password = getVal('[data-smoothr="password"]') ?? getVal('[name="password"]') ?? '';
+      if (!email || !password) {
+        emitAuth?.('smoothr:auth:error', { code: 'MISSING_FIELDS', message: 'Email and password required' });
+        return;
+      }
+
+      const supa = await resolveSupabase?.();
+      if (!supa?.auth) {
+        emitAuth?.('smoothr:auth:error', { code: 'CLIENT_NOT_READY', message: 'Auth client not ready' });
+        return;
+      }
+
+      try {
+        const { data, error } = await supa.auth.signInWithPassword({ email, password });
+        w.Smoothr.auth.user.value = data?.user ?? null;
+        if (error) throw error;
+        const ev = typeof w.CustomEvent === 'function'
+          ? new w.CustomEvent('smoothr:login')
+          : { type: 'smoothr:login' };
+        (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        await sessionSyncAndEmit(supa, data?.user?.id || null);
+      } catch (err) {
+        w.Smoothr.auth.user.value = null;
+        emitAuth?.('smoothr:auth:error', { code: err?.status || 'LOGIN_FAILED', message: err?.message || 'Login failed' });
+      }
     };
 
     mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
