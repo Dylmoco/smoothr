@@ -7,6 +7,18 @@ import { getConfig } from '../config/globalConfig.js';
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
+function emitAuth(name, detail = {}) {
+  const g = globalThis;
+  const w = g.window || g;
+  const doc = w.document || g.document;
+  const init = { detail, bubbles: true, composed: true, cancelable: false };
+  try { w?.dispatchEvent?.(new CustomEvent(name, init)); } catch {}
+  try { doc?.dispatchEvent?.(new CustomEvent(name, init)); } catch {}
+  if (w?.SMOOTHR_DEBUG) {
+    try { console.info('[Smoothr][auth] dispatched', { name, detail }); } catch {}
+  }
+}
+
 const AUTH_PANEL_SELECTORS = [
   '[data-smoothr="auth-pop-up"]',
   '[data-smoothr="auth-wrapper"]'
@@ -118,33 +130,6 @@ function bindAuthElements(root = globalThis.document) {
   });
   const doc = root?.ownerDocument || globalThis.document;
   if (doc && !_bound.has(doc)) {
-    doc.addEventListener('smoothr:open-auth', (e = {}) => {
-      // Robust panel resolution: prefer requested selector, then [auth-pop-up], then panel inside [auth-wrapper], finally wrapper
-      const requested = e?.detail?.targetSelector;
-      let panel = null;
-      if (requested) panel = doc.querySelector(requested);
-      if (!panel) panel = doc.querySelector('[data-smoothr="auth-pop-up"]');
-      if (!panel) {
-        const wrapper = doc.querySelector('[data-smoothr="auth-wrapper"]');
-        if (wrapper) panel = wrapper.querySelector('[data-smoothr="auth-pop-up"]') || wrapper;
-      }
-      const shouldOpen = e?.detail?.open !== false;
-      if (panel) {
-        const evType = shouldOpen ? 'smoothr:auth:open' : 'smoothr:auth:close';
-        const payload = { selector: requested || '[data-smoothr="auth-pop-up"]' };
-        const ev = typeof globalThis.CustomEvent === 'function'
-          ? new CustomEvent(evType, { detail: payload })
-          : { type: evType, detail: payload };
-        doc.dispatchEvent(ev);
-        try { panel.setAttribute?.('data-smoothr-active', shouldOpen ? '1' : '0'); } catch {}
-        if (panel.getAttribute?.('data-smoothr-autoclass') === '1') {
-          try { panel.classList.toggle('is-active', shouldOpen); } catch {}
-        }
-        log(`auth panel ${shouldOpen ? 'opened' : 'closed'}`, panel);
-      } else {
-        log('auth pop-up not found for smoothr:open-auth', requested || '(default)');
-      }
-    });
     _bound.add(doc);
   }
 }
@@ -517,14 +502,17 @@ export async function init(options = {}) {
         }
         if (popupExists) {
           mode = 'popup';
-          const openEv = typeof w.CustomEvent === 'function'
-            ? new w.CustomEvent('smoothr:auth:open', { detail: { selector } })
-            : { type: 'smoothr:auth:open', detail: { selector } };
-          doc.dispatchEvent(openEv);
-          const legacy = typeof w.CustomEvent === 'function'
-            ? new w.CustomEvent('smoothr:open-auth', { detail: { targetSelector: selector } })
-            : { type: 'smoothr:open-auth', detail: { targetSelector: selector } };
-          doc.dispatchEvent(legacy);
+          emitAuth('smoothr:auth:open', { targetSelector: selector });
+          const panel = doc.querySelector?.(selector);
+          if (panel) {
+            try { panel.setAttribute?.('data-smoothr-active', '1'); } catch {}
+            if (panel.getAttribute?.('data-smoothr-autoclass') === '1') {
+              try { panel.classList.toggle('is-active', true); } catch {}
+            }
+            log('auth panel opened', panel);
+          } else {
+            log('auth pop-up not found for trigger', selector || '(default)');
+          }
         } else if (trigger?.getAttribute?.('data-smoothr-auth-mode') === 'redirect') {
           mode = 'redirect';
           redirectTo = await lookupRedirectUrl('login');

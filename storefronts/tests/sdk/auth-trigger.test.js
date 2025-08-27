@@ -6,7 +6,8 @@ describe('auth triggers', () => {
     vi.resetModules();
     win = {
       Smoothr: { auth: { user: { value: null } } },
-      location: { origin: 'https://example.com' }
+      location: { origin: 'https://example.com' },
+      dispatchEvent: vi.fn(),
     };
     doc = {
       readyState: 'complete',
@@ -21,7 +22,7 @@ describe('auth triggers', () => {
     await mod.init();
   });
 
-  it('popup mode dispatches smoothr:open-auth and fires lifecycle events', async () => {
+  it('popup mode dispatches smoothr:auth:open and toggles auth panel', async () => {
     const btn = {};
     const evt = {
       target: { closest: () => btn },
@@ -36,8 +37,14 @@ describe('auth triggers', () => {
     };
     doc.querySelector = vi.fn(sel => (sel.includes('auth-pop-up') ? panel : null));
     await mod.docClickHandler(evt);
-    const listener = doc.addEventListener.mock.calls.find(c => c[0] === 'smoothr:open-auth')[1];
-    listener({ detail: { targetSelector: '[data-smoothr="auth-pop-up"]' } });
+    expect(win.dispatchEvent).toHaveBeenCalledTimes(1);
+    expect(doc.dispatchEvent).toHaveBeenCalledTimes(1);
+    const winEvt = win.dispatchEvent.mock.calls[0][0];
+    const docEvt = doc.dispatchEvent.mock.calls[0][0];
+    expect(winEvt.type).toBe('smoothr:auth:open');
+    expect(docEvt.type).toBe('smoothr:auth:open');
+    expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+    expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     expect(panel.classList.toggle).toHaveBeenCalledWith('is-active', true);
   });
 
@@ -65,6 +72,7 @@ describe('auth triggers', () => {
     };
     await mod.docClickHandler(evt);
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
+    expect(win.dispatchEvent).not.toHaveBeenCalled();
   });
 });
 

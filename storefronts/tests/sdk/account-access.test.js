@@ -104,7 +104,7 @@ describe("account access trigger", () => {
     });
   });
 
-  describe("dispatches open-auth event for anonymous users", () => {
+  describe("dispatches auth:open event for anonymous users", () => {
     beforeEach(async () => {
       vi.resetModules();
       createClientMock();
@@ -116,16 +116,18 @@ describe("account access trigger", () => {
       await flushPromises();
     });
 
-    it("dispatches open-auth event for anonymous users", async () => {
+    it("dispatches auth:open event for anonymous users", async () => {
       await clickHandler({ target: btn, preventDefault: () => {} });
       await flushPromises();
 
-      expect(global.document.dispatchEvent).toHaveBeenCalledTimes(2);
-      const first = global.document.dispatchEvent.mock.calls[0][0];
-      const second = global.document.dispatchEvent.mock.calls[1][0];
-      expect(first.type).toBe("smoothr:auth:open");
-      expect(second.type).toBe("smoothr:open-auth");
-      expect(second.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+      expect(global.document.dispatchEvent).toHaveBeenCalledTimes(1);
+      expect(global.window.dispatchEvent).toHaveBeenCalledTimes(1);
+      const docEvt = global.document.dispatchEvent.mock.calls[0][0];
+      const winEvt = global.window.dispatchEvent.mock.calls[0][0];
+      expect(docEvt.type).toBe("smoothr:auth:open");
+      expect(winEvt.type).toBe("smoothr:auth:open");
+      expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+      expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     });
   });
 });
