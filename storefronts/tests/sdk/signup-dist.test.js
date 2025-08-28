@@ -9,13 +9,17 @@ const repoRoot = path.resolve(
 );
 
 const buildStorefronts = () =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const proc = spawn("pnpm", ["-C", "storefronts", "build:storefronts"], {
       stdio: "inherit",
       cwd: repoRoot,
     });
-    proc.on("close", () => resolve());
-    proc.on("error", () => resolve());
+    proc.on("exit", (code) =>
+      code === 0
+        ? resolve()
+        : reject(new Error(`storefronts build failed: ${code}`)),
+    );
+    proc.on("error", reject);
   });
 
 beforeAll(async () => {
