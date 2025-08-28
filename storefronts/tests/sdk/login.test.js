@@ -1,6 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import { createClientMock as createClientMockUtil, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var signInMock;
 var getUserMock;
@@ -36,6 +36,34 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
+it('submits login via Enter when form also contains a password-reset link', async () => {
+  vi.resetModules();
+  createClientMockUtil();
+  const auth = await import("../../features/auth/index.js");
+  await auth.init();
+  await flushPromises();
+
+  const form = document.createElement('form');
+  form.setAttribute('data-smoothr', 'auth-form');
+  form.innerHTML = `
+    <input data-smoothr="email" value="user@example.com" />
+    <input data-smoothr="password" value="hunter2" />
+    <div data-smoothr="login"></div>
+    <div data-smoothr="password-reset"></div>
+  `;
+  document.body.appendChild(form);
+
+  const { signInMock, resetPasswordMock } = currentSupabaseMocks();
+  signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+  resetPasswordMock.mockResolvedValue({ data: {}, error: null });
+
+  const evt = new Event('submit', { bubbles: true, cancelable: true });
+  form.dispatchEvent(evt);
+  await flushPromises();
+
+  expect(signInMock).toHaveBeenCalledTimes(1);
+  expect(resetPasswordMock).not.toHaveBeenCalled();
+});
 describe("login form", () => {
   let clickHandler;
   let emailValue;
@@ -43,7 +71,7 @@ describe("login form", () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    createClientMock();
+    createClientMockUtil();
     ({ signInMock, getUserMock, getSessionMock } = currentSupabaseMocks());
     getUserMock.mockResolvedValue({ data: { user: null } });
     clickHandler = undefined;
