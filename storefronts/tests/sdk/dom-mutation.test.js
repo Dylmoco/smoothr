@@ -12,7 +12,7 @@ function flushPromises() {
 
 const LOGIN_SELECTOR = '[data-smoothr="login"]';
 const OTHER_SELECTOR =
-  '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
+  '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
 const ACCOUNT_ACCESS_SELECTOR = '[data-smoothr="account-access"]';
 
 describe("dynamic DOM bindings", () => {
@@ -50,13 +50,13 @@ describe("dynamic DOM bindings", () => {
           return elements.filter((el) => el.dataset?.smoothr === "login");
         }
         if (
-          selector.includes('[data-smoothr="signup"]') ||
+          selector.includes('[data-smoothr="sign-up"]') ||
           selector.includes('[data-smoothr="login-google"]') ||
           selector.includes('[data-smoothr="login-apple"]') ||
           selector.includes('[data-smoothr="password-reset"]')
         ) {
           return elements.filter((el) =>
-            ["signup", "login-google", "login-apple", "password-reset"].includes(
+            ["sign-up", "login-google", "login-apple", "password-reset"].includes(
               el.dataset?.smoothr
             )
           );
@@ -144,7 +144,7 @@ describe("dynamic DOM bindings", () => {
     expect(types.at(-1)).toBe("smoothr:auth:close");
   });
 
-  it("attaches listeners to added signup elements and updates auth state", async () => {
+  it("attaches listeners to added sign-up elements and updates auth state", async () => {
     const emailInput = { value: "new@example.com" };
     const passwordInput = { value: "Password1" };
     const confirmInput = { value: "Password1" };
@@ -156,15 +156,15 @@ describe("dynamic DOM bindings", () => {
         if (sel === '[data-smoothr="password"]') return passwordInput;
         if (sel === '[data-smoothr="password-confirm"]')
           return confirmInput;
-        if (sel === '[data-smoothr="signup"]') return btn;
+        if (sel === '[data-smoothr="sign-up"]') return btn;
         return null;
       }),
     };
     let clickHandler;
     btn = {
       tagName: "DIV",
-      dataset: { smoothr: "signup" },
-      getAttribute: (attr) => (attr === "data-smoothr" ? "signup" : null),
+      dataset: { smoothr: "sign-up" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "sign-up" : null),
       addEventListener: vi.fn((ev, cb) => {
         if (ev === "click") clickHandler = cb;
       }),

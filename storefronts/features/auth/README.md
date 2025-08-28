@@ -59,7 +59,7 @@ Markup example:
   <div data-smoothr-password-strength></div>
   <div data-smoothr-error hidden></div>
   <div data-smoothr-success hidden></div>
-  <div data-smoothr="signup">Create Account</div>
+  <div data-smoothr="sign-up">Create Account</div>
 </form>
 <div data-smoothr="login-google">Sign in with Google</div>
 <div data-smoothr="login-apple">Sign in with Apple</div>
@@ -100,10 +100,10 @@ elements added later are also bound.
 <div data-smoothr="login">Sign In</div>
 ```
 
-### `[data-smoothr="signup"]`
+### `[data-smoothr="sign-up"]`
 
 ```html
-<div data-smoothr="signup">Create Account</div>
+<div data-smoothr="sign-up">Create Account</div>
 ```
 
 ### `[data-smoothr="login-google"]`
@@ -142,13 +142,13 @@ elements added later are also bound.
 
 ## Signup
 
-Attach `[data-smoothr="signup"]` to an element inside a
+Attach `[data-smoothr="sign-up"]` to an element inside a
 `[data-smoothr="auth-form"]` containing `[data-smoothr="email"]`,
 `[data-smoothr="password"]` and a matching `[data-smoothr="password-confirm"]`
 input. A strength meter element labelled `[data-smoothr-password-strength]` is
 optional but recommended. The SDK
 validates email format, requires a strong password and ensures both password
-fields match. When the signup succeeds a confirmation message is shown and the
+fields match. When the sign-up succeeds a confirmation message is shown and the
 user is redirected after a short delay.
 
 Environment variables required are the same as for login:

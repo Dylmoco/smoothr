@@ -61,7 +61,7 @@ describe("account access trigger", () => {
         if (selector === '[data-smoothr="login"]') return [];
         if (
           selector ===
-          '[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]'
+          '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]'
         )
           return [];
         if (selector === 'form[data-smoothr="auth-form"]') return [];

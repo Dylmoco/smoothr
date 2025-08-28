@@ -76,7 +76,7 @@ describe('webflow adapter legacy attribute normalization', () => {
     expect(elements.login.attributes['data-smoothr']).toBe('login');
     expect(elements.logout.attributes['data-smoothr']).toBe('logout');
     expect(elements.currency.attributes['data-smoothr']).toBe('currency');
-    expect(elements.signup.attributes['data-smoothr']).toBe('signup');
+    expect(elements.signup.attributes['data-smoothr']).toBe('sign-up');
     expect(elements.passwordReset.attributes['data-smoothr']).toBe(
       'password-reset'
     );
