@@ -9,7 +9,6 @@ vi.mock('../../features/auth/index.js', () => {
     props: {},
     children: [],
     lookupRedirectUrl: vi.fn(),
-    lookupDashboardHomeUrl: vi.fn(),
   };
   return { default: authMock, ...authMock };
 });
