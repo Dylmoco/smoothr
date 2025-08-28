@@ -363,7 +363,14 @@ export async function init(options = {}) {
           if (resp.ok && json?.ok) {
             emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
             emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-            const url = overrideUrl || json.dashboard_home_url || (await lookupDashboardHomeUrl?.());
+            const url =
+              overrideUrl ||
+              json.redirect_url ||
+              json.sign_in_redirect_url ||
+              json.dashboard_home_url ||
+              (await (typeof lookupRedirectUrl === 'function' ? lookupRedirectUrl() : null)) ||
+              (await (typeof lookupDashboardHomeUrl === 'function' ? lookupDashboardHomeUrl() : null)) ||
+              (w.location?.origin ?? '');
             if (url) w.location?.assign?.(url);
             return;
           }
