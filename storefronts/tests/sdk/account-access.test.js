@@ -130,5 +130,31 @@ describe("account access trigger", () => {
       expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     });
   });
+
+  it("dispatches auth:close on sign-out", async () => {
+    vi.resetModules();
+    createClientMock();
+    const { getUserMock } = currentSupabaseMocks();
+    getUserMock.mockResolvedValueOnce({ data: { user: null } });
+    const auth = await import("../../features/auth/index.js");
+    await auth.init({});
+    await flushPromises();
+
+    const listeners = {};
+    window.location.assign = vi.fn();
+    window.addEventListener.mockImplementation((evt, cb) => {
+      (listeners[evt] ||= []).push(cb);
+    });
+    window.dispatchEvent.mockImplementation((evt) => {
+      (listeners[evt.type] || []).forEach((cb) => cb(evt));
+      return true;
+    });
+
+    const closed = [];
+    window.addEventListener("smoothr:auth:close", () => closed.push(true));
+    await auth.signOutHandler({ preventDefault: () => {} });
+    await flushPromises();
+    expect(closed.length).toBeGreaterThan(0);
+  });
 });
 
