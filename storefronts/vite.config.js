@@ -37,7 +37,6 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'esnext', // ✅ Enables top-level await
-      minify: 'terser',
       rollupOptions: {
         external: [],
         input: {
