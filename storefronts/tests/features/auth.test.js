@@ -73,8 +73,8 @@ describe('auth feature init', () => {
     const { init } = await import('../../features/auth/init.js');
     await init({ storeId: '1', supabase: client });
     const clickCalls = document.addEventListener.mock.calls.filter(c => c[0] === 'click');
-    expect(clickCalls.length).toBe(1);
-    expect(clickCalls[0][2]).toBe(true);
+    expect(clickCalls.length).toBe(2);
+    clickCalls.forEach(c => expect(c[2]).toBe(true));
   });
 });
 
