@@ -1,11 +1,19 @@
+
 {
   "name": "storefronts",
   "version": "1.0.0",
   "type": "module",
+  "sideEffects": [
+    "features/auth/*",
+    "adapters/*",
+    "smoothr-sdk.js"
+  ],
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "test": "vitest run --config ../vitest.config.ts"
+    "test": "vitest run --config ../vitest.config.ts",
+    "build:storefronts": "vite build",
+    "test:dist-auth": "vitest run --config vitest.dist.config.ts"
   },
   "dependencies": {
     "esbuild": "^0.19.12",

@@ -37,12 +37,15 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'esnext', // ✅ Enables top-level await
+      minify: 'terser',
       rollupOptions: {
         external: [],
         input: {
           'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.js')
         },
-        treeshake: true,
+        treeshake: {
+          moduleSideEffects: true
+        },
         preserveEntrySignatures: 'exports-only',
         output: {
           dir: path.resolve(__dirname, 'dist'),
