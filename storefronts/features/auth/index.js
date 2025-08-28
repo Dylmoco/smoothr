@@ -14,4 +14,5 @@ export {
   docClickHandler,
   onAuthStateChangeHandler,
   mutationCallback,
+  bindAuthElements,
 } from './init.js';
