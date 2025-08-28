@@ -632,14 +632,16 @@ export async function init(options = {}) {
         e.stopImmediatePropagation?.();
       } catch {}
 
-      const hasSignUp = !!form.querySelector('[data-smoothr="sign-up"]');
+      const hasSignUp       = !!form.querySelector('[data-smoothr="sign-up"]');
       const hasResetConfirm = !!form.querySelector('[data-smoothr="password-reset-confirm"]');
+      const hasLogin        = !!form.querySelector('[data-smoothr="login"]');
       const hasResetRequest = !!form.querySelector('[data-smoothr="password-reset"]');
+      // Priority: sign-up → reset-confirm → login → reset-request
       const target =
-        (hasSignUp && form.querySelector('[data-smoothr="sign-up"]')) ||
+        (hasSignUp       && form.querySelector('[data-smoothr="sign-up"]')) ||
         (hasResetConfirm && form.querySelector('[data-smoothr="password-reset-confirm"]')) ||
-        (hasResetRequest && form.querySelector('[data-smoothr="password-reset"]')) ||
-        form.querySelector('[data-smoothr="login"]');
+        (hasLogin        && form.querySelector('[data-smoothr="login"]')) ||
+        (hasResetRequest && form.querySelector('[data-smoothr="password-reset"]'));
 
       if (!target) {
         emitAuth?.('smoothr:auth:error', { code: 'NO_ACTION', message: 'No auth action available in form' });
