@@ -3,6 +3,13 @@
 
 import { lookupRedirectUrl } from '../../../supabase/authHelpers.js';
 import { getConfig } from '../config/globalConfig.js';
+import {
+  AUTH_CONTAINER_SELECTOR,
+  ATTR_EMAIL,
+  ATTR_PASSWORD,
+  ATTR_PASSWORD_CONFIRM,
+  ATTR_SIGNUP,
+} from './constants.js';
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
@@ -108,10 +115,21 @@ export let docClickHandler = () => {};
 export let docSubmitHandler = () => {};
 export let docKeydownHandler = () => {};
 
-// Resolve the auth container (FORM or DIV) nearest a node
-function resolveAuthContainer(node) {
-  const pick = (n) => n?.closest?.('[data-smoothr="auth-form"]') || null;
-  return pick(node) || pick(document.activeElement) || null;
+// Resolve the auth container (FORM or DIV) nearest a node.
+export function resolveAuthContainer(el) {
+  return (
+    (el && el.closest?.(AUTH_CONTAINER_SELECTOR)) ||
+    document.querySelector(AUTH_CONTAINER_SELECTOR) ||
+    null
+  );
+}
+
+function extractCredsFrom(container) {
+  const email = container?.querySelector(ATTR_EMAIL)?.value?.trim() || '';
+  const password = container?.querySelector(ATTR_PASSWORD)?.value || '';
+  const confirm =
+    container?.querySelector(ATTR_PASSWORD_CONFIRM)?.value || '';
+  return { email, password, confirm };
 }
 
 const _bound = new WeakSet();
@@ -419,14 +437,19 @@ export async function init(options = {}) {
         return;
       }
       if (action === 'sign-up') {
-        const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
-        const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
-        const confirm = container?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
-        if (!emailRE.test(email) || !strong(pwd) || pwd !== confirm) return;
+        const { email, password, confirm } = extractCredsFrom(container);
+        if (!emailRE.test(email) || !strong(password)) return;
+        if (confirm && confirm !== password) {
+          emitAuth?.('smoothr:auth:error', {
+            code: 'PASSWORD_MISMATCH',
+            message: 'Passwords do not match',
+          });
+          return;
+        }
         try {
           const result = await c.auth.signUp({
             email,
-            password: pwd,
+            password,
             options: { data: { store_id: getConfig().storeId } },
           });
           const { data, error } = result;
@@ -641,13 +664,13 @@ export async function init(options = {}) {
         e.stopImmediatePropagation?.();
       } catch {}
 
-      const hasSignUp       = !!container.querySelector('[data-smoothr="sign-up"]');
+      const hasSignUp       = !!container.querySelector(ATTR_SIGNUP);
       const hasResetConfirm = !!container.querySelector('[data-smoothr="password-reset-confirm"]');
       const hasLogin        = !!container.querySelector('[data-smoothr="login"]');
       const hasResetRequest = !!container.querySelector('[data-smoothr="password-reset"]');
       // Priority (locked by tests): sign-up → reset-confirm → login → reset
       const target =
-        (hasSignUp       && container.querySelector('[data-smoothr="sign-up"]')) ||
+        (hasSignUp       && container.querySelector(ATTR_SIGNUP)) ||
         (hasResetConfirm && container.querySelector('[data-smoothr="password-reset-confirm"]')) ||
         (hasLogin        && container.querySelector('[data-smoothr="login"]')) ||
         (hasResetRequest && container.querySelector('[data-smoothr="password-reset"]'));
@@ -668,11 +691,20 @@ export async function init(options = {}) {
     // document keydown (capture) — Enter submits inside container (works for DIV)
     docKeydownHandler = async (e) => {
       try {
-        if (e?.key !== 'Enter') return;
+        if (e?.key !== 'Enter' && e?.key !== ' ') return;
         const container = resolveAuthContainer(e?.target);
         if (!container) return;
         const tag = (e.target?.tagName || '').toUpperCase();
         if (tag === 'TEXTAREA') return;
+        const signup = container.querySelector(ATTR_SIGNUP);
+        if (signup) {
+          if (e.key === ' ' && !signup.matches('[role="button"]')) return;
+          e.preventDefault?.();
+          e.stopPropagation?.();
+          signup.click();
+          return;
+        }
+        if (e.key !== 'Enter') return;
         e.preventDefault?.();
         e.stopPropagation?.();
         await docSubmitHandler({ target: container });
@@ -682,9 +714,9 @@ export async function init(options = {}) {
     // Capture click fallback: ensure dynamic action controls route even if per-node listener missed
     const ACTION_SELECTORS = [
       '[data-smoothr="login"]',
-      '[data-smoothr="sign-up"]',
+      ATTR_SIGNUP,
       '[data-smoothr="password-reset"]',
-      '[data-smoothr="password-reset-confirm"]'
+      '[data-smoothr="password-reset-confirm"]',
     ].join(',');
     const docActionClickFallback = (e) => {
       try {
@@ -726,7 +758,7 @@ export async function init(options = {}) {
         mo.observe(doc || w, { childList: true, subtree: true });
       }
       doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
-      doc?.addEventListener?.('click', docActionClickFallback, true);
+      doc?.addEventListener?.('click', docActionClickFallback, false);
       doc?.addEventListener?.('click', docClickHandler, true);
       if (w.SMOOTHR_DEBUG) {
         console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
