@@ -106,6 +106,13 @@ export let appleClickHandler = () => {};
 export let signOutHandler = () => {};
 export let docClickHandler = () => {};
 export let docSubmitHandler = () => {};
+export let docKeydownHandler = () => {};
+
+// Resolve the auth container (FORM or DIV) nearest a node
+function resolveAuthContainer(node) {
+  const pick = (n) => n?.closest?.('[data-smoothr="auth-form"]') || null;
+  return pick(node) || pick(document.activeElement) || null;
+}
 
 const _bound = new WeakSet();
 function bindAuthElements(root = globalThis.document) {
@@ -386,13 +393,13 @@ export async function init(options = {}) {
         d?.querySelectorAll?.(
           '[data-smoothr="login"], [data-smoothr="sign-up"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], [data-smoothr="login-google"], [data-smoothr="login-apple"]'
         )?.[0];
-      const form = e?.target?.closest?.('form[data-smoothr="auth-form"]') || d?.querySelectorAll?.('form[data-smoothr="auth-form"]')?.[0];
+      const container = resolveAuthContainer(el) || d;
       const action = el?.getAttribute?.('data-smoothr');
       const c = await resolveSupabase();
       if (!action || !c?.auth) return;
       if (action === 'login') {
-        const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
-        const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
+        const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
+        const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
         if (!emailRE.test(email)) return;
         try {
           const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
@@ -411,9 +418,9 @@ export async function init(options = {}) {
         return;
       }
       if (action === 'sign-up') {
-        const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
-        const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
-        const confirm = form?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
+        const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
+        const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
+        const confirm = container?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
         if (!emailRE.test(email) || !strong(pwd) || pwd !== confirm) return;
         try {
           const result = await c.auth.signUp({
@@ -437,9 +444,9 @@ export async function init(options = {}) {
         return;
       }
       if (action === 'password-reset') {
-        const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
-        const successEl = form?.querySelector('[data-smoothr-success]');
-        const errorEl = form?.querySelector('[data-smoothr-error]');
+        const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
+        const successEl = container?.querySelector('[data-smoothr-success]');
+        const errorEl = container?.querySelector('[data-smoothr-error]');
         try {
           const cb = new URL('/api/callback', getBrokerBaseUrl());
           if (w?.SMOOTHR_CONFIG?.storeId) cb.searchParams.set('store_id', w.SMOOTHR_CONFIG.storeId);
@@ -466,8 +473,8 @@ export async function init(options = {}) {
         return;
       }
       if (action === 'password-reset-confirm') {
-        const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
-        const confirm = form?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
+        const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
+        const confirm = container?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
         if (!strong(pwd) || pwd !== confirm) return;
         try {
           if (_prSession) await c.auth.setSession(_prSession);
@@ -623,37 +630,67 @@ export async function init(options = {}) {
       }
     };
 
+    // document submit (capture) — NOW: supports FORM or DIV containers
     docSubmitHandler = async (e) => {
-      const form = e?.target?.closest?.('form[data-smoothr="auth-form"]');
-      if (!form) return;
+      const container = resolveAuthContainer(e?.target);
+      if (!container) return;
       try {
         e.preventDefault?.();
         e.stopPropagation?.();
         e.stopImmediatePropagation?.();
       } catch {}
 
-      const hasSignUp       = !!form.querySelector('[data-smoothr="sign-up"]');
-      const hasResetConfirm = !!form.querySelector('[data-smoothr="password-reset-confirm"]');
-      const hasLogin        = !!form.querySelector('[data-smoothr="login"]');
-      const hasResetRequest = !!form.querySelector('[data-smoothr="password-reset"]');
-      // Priority: sign-up → reset-confirm → login → reset-request
+      const hasSignUp       = !!container.querySelector('[data-smoothr="sign-up"]');
+      const hasResetConfirm = !!container.querySelector('[data-smoothr="password-reset-confirm"]');
+      const hasLogin        = !!container.querySelector('[data-smoothr="login"]');
+      const hasResetRequest = !!container.querySelector('[data-smoothr="password-reset"]');
+      // Priority (locked by tests): sign-up → reset-confirm → login → reset
       const target =
-        (hasSignUp       && form.querySelector('[data-smoothr="sign-up"]')) ||
-        (hasResetConfirm && form.querySelector('[data-smoothr="password-reset-confirm"]')) ||
-        (hasLogin        && form.querySelector('[data-smoothr="login"]')) ||
-        (hasResetRequest && form.querySelector('[data-smoothr="password-reset"]'));
+        (hasSignUp       && container.querySelector('[data-smoothr="sign-up"]')) ||
+        (hasResetConfirm && container.querySelector('[data-smoothr="password-reset-confirm"]')) ||
+        (hasLogin        && container.querySelector('[data-smoothr="login"]')) ||
+        (hasResetRequest && container.querySelector('[data-smoothr="password-reset"]'));
 
       if (!target) {
         emitAuth?.('smoothr:auth:error', { code: 'NO_ACTION', message: 'No auth action available in form' });
         return;
       }
 
-      const fakeEvt = { preventDefault() {}, target, currentTarget: target }; // clickHandler reads data-smoothr on target
+      const fakeEvt = { preventDefault() {}, target, currentTarget: target };
       try {
         await clickHandler(fakeEvt);
       } catch (err) {
         emitAuth?.('smoothr:auth:error', { code: 'SUBMIT_FAILED', message: err?.message || 'Submit failed' });
       }
+    };
+
+    // document keydown (capture) — Enter submits inside container (works for DIV)
+    docKeydownHandler = async (e) => {
+      try {
+        if (e?.key !== 'Enter') return;
+        const container = resolveAuthContainer(e?.target);
+        if (!container) return;
+        const tag = (e.target?.tagName || '').toUpperCase();
+        if (tag === 'TEXTAREA') return;
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        await docSubmitHandler({ target: container });
+      } catch {}
+    };
+
+    // Capture click fallback: ensure dynamic action controls route even if per-node listener missed
+    const ACTION_SELECTORS = [
+      '[data-smoothr="login"]',
+      '[data-smoothr="sign-up"]',
+      '[data-smoothr="password-reset"]',
+      '[data-smoothr="password-reset-confirm"]'
+    ].join(',');
+    const docActionClickFallback = (e) => {
+      try {
+        const el = e?.target?.closest?.(ACTION_SELECTORS);
+        if (!el) return;
+        clickHandler?.({ target: el, currentTarget: el, preventDefault(){}, stopPropagation(){}, stopImmediatePropagation(){} });
+      } catch {}
     };
 
     mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
@@ -676,11 +713,13 @@ export async function init(options = {}) {
         mo.observe(doc || w, { childList: true, subtree: true });
       }
       doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
+      doc?.addEventListener?.('click', docActionClickFallback, true);
       doc?.addEventListener?.('click', docClickHandler, true);
       if (w.SMOOTHR_DEBUG) {
         console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
       }
       doc?.addEventListener?.('submit', docSubmitHandler, true);
+      doc?.addEventListener?.('keydown', docKeydownHandler, true);
     } catch {}
     try { mutationCallback(); } catch {}
     log('auth init complete');
@@ -722,6 +761,8 @@ function __test_resetAuth() {
   appleClickHandler = () => {};
   signOutHandler = () => {};
   docClickHandler = () => {};
+  docSubmitHandler = () => {};
+  docKeydownHandler = () => {};
 }
 
 if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {

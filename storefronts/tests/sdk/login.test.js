@@ -64,6 +64,33 @@ it('submits login via Enter when form also contains a password-reset link', asyn
   expect(signInMock).toHaveBeenCalledTimes(1);
   expect(resetPasswordMock).not.toHaveBeenCalled();
 });
+
+it('submits login via Enter when auth-form is a DIV with a reset link present', async () => {
+  vi.resetModules();
+  createClientMockUtil();
+  const auth = await import("../../features/auth/index.js");
+  await auth.init();
+  await flushPromises();
+
+  const div = document.createElement('div');
+  div.setAttribute('data-smoothr', 'auth-form');
+  div.innerHTML = `
+    <input data-smoothr="email" value="user@example.com" />
+    <input data-smoothr="password" value="hunter2" />
+    <div data-smoothr="login"></div>
+    <div data-smoothr="password-reset"></div>
+  `;
+  document.body.appendChild(div);
+
+  const { signInMock } = currentSupabaseMocks();
+  signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+
+  const evt = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+  div.dispatchEvent(evt);
+  await flushPromises();
+
+  expect(signInMock).toHaveBeenCalledTimes(1);
+});
 describe("login form", () => {
   let clickHandler;
   let emailValue;

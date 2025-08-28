@@ -41,6 +41,34 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
+it('routes dynamic sign-up DIV click via capture fallback when auth-form is DIV', async () => {
+  vi.resetModules();
+  setupSupabaseMock();
+  const auth = await import("../../features/auth/index.js");
+  await auth.init({ supabase: createClientMock() });
+  await flushPromises();
+
+  const div = document.createElement('div');
+  div.setAttribute('data-smoothr', 'auth-form');
+  div.innerHTML = `
+    <input data-smoothr="email" value="new@example.com" />
+    <input data-smoothr="password" value="LongerPass9" />
+    <input data-smoothr="password-confirm" value="LongerPass9" />
+  `;
+  document.body.appendChild(div);
+  const signup = document.createElement('div');
+  signup.setAttribute('data-smoothr', 'sign-up');
+  div.appendChild(signup);
+
+  const supa = await auth.resolveSupabase?.();
+  const signUpSpy = vi.spyOn(supa.auth, 'signUp').mockResolvedValue({ data: { user: { id: 'u2' } }, error: null });
+
+  signup.click();
+  await flushPromises();
+
+  expect(signUpSpy).toHaveBeenCalledTimes(1);
+});
+
 describe("signup flow", () => {
   let clickHandler;
   let emailValue;
