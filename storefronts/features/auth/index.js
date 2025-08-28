@@ -2,6 +2,7 @@
 export {
   default,
   init,
+  resolveAuthContainer,
   setSupabaseClient,
   resolveSupabase,
   lookupRedirectUrl,
@@ -16,3 +17,5 @@ export {
   mutationCallback,
   bindAuthElements,
 } from './init.js';
+
+export { AUTH_CONTAINER_SELECTOR } from './constants.js';
