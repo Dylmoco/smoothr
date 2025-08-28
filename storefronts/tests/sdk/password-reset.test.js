@@ -7,6 +7,32 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
+it('submits password-reset via Enter on reset-only form', async () => {
+  vi.resetModules();
+  createClientMock();
+  const { resetPasswordMock } = currentSupabaseMocks();
+  auth = await import("../../features/auth/index.js");
+  await auth.init();
+  await flushPromises();
+
+  const form = document.createElement('form');
+  form.setAttribute('data-smoothr', 'auth-form');
+  const email = document.createElement('input');
+  email.setAttribute('data-smoothr', 'email');
+  email.value = 'user@example.com';
+  const reset = document.createElement('div');
+  reset.setAttribute('data-smoothr', 'password-reset');
+  form.append(email, reset);
+  document.body.appendChild(form);
+
+  resetPasswordMock.mockResolvedValue({ data: {}, error: null });
+  const evt = new Event('submit', { bubbles: true, cancelable: true });
+  form.dispatchEvent(evt);
+  await flushPromises();
+
+  expect(resetPasswordMock).toHaveBeenCalledWith('user@example.com', expect.any(Object));
+});
+
 describe("password reset request", () => {
   let clickHandler;
   let emailValue;

@@ -634,13 +634,23 @@ export async function init(options = {}) {
 
       const hasSignUp = !!form.querySelector('[data-smoothr="sign-up"]');
       const hasResetConfirm = !!form.querySelector('[data-smoothr="password-reset-confirm"]');
+      const hasResetRequest = !!form.querySelector('[data-smoothr="password-reset"]');
       const target =
         (hasSignUp && form.querySelector('[data-smoothr="sign-up"]')) ||
         (hasResetConfirm && form.querySelector('[data-smoothr="password-reset-confirm"]')) ||
+        (hasResetRequest && form.querySelector('[data-smoothr="password-reset"]')) ||
         form.querySelector('[data-smoothr="login"]');
 
-      if (target) {
-        await clickHandler({ target });
+      if (!target) {
+        emitAuth?.('smoothr:auth:error', { code: 'NO_ACTION', message: 'No auth action available in form' });
+        return;
+      }
+
+      const fakeEvt = { preventDefault() {}, target, currentTarget: target }; // clickHandler reads data-smoothr on target
+      try {
+        await clickHandler(fakeEvt);
+      } catch (err) {
+        emitAuth?.('smoothr:auth:error', { code: 'SUBMIT_FAILED', message: err?.message || 'Submit failed' });
       }
     };
 
