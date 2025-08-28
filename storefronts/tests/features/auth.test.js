@@ -70,13 +70,15 @@ describe('auth feature init', () => {
   });
 
   it('binds document click handler in capture only', async () => {
-    const { init } = await import('../../features/auth/init.js');
+    const mod = await import('../../features/auth/init.js');
+    const { init } = mod;
     await init({ storeId: '1', supabase: client });
     const clickCalls = document.addEventListener.mock.calls.filter(c => c[0] === 'click');
     expect(clickCalls.length).toBe(2);
-    const captureCall = clickCalls.find(c => typeof c[2] === 'object');
+    const captureCall = clickCalls.find(([, handler, opts]) => opts?.capture === true);
+    expect(captureCall?.[1]).toBe(mod.docClickHandler);
     expect(captureCall?.[2]).toMatchObject({ capture: true, passive: false });
-    const bubbleCall = clickCalls.find(c => c[2] === false);
+    const bubbleCall = clickCalls.find(([, , opts]) => opts === false);
     expect(bubbleCall).toBeTruthy();
   });
 });
