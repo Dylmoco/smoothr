@@ -117,11 +117,8 @@ export let docKeydownHandler = () => {};
 
 // Resolve the auth container (FORM or DIV) nearest a node.
 export function resolveAuthContainer(el) {
-  return (
-    (el && el.closest?.(AUTH_CONTAINER_SELECTOR)) ||
-    document.querySelector(AUTH_CONTAINER_SELECTOR) ||
-    null
-  );
+  if (!el) return null;
+  return el.closest?.(AUTH_CONTAINER_SELECTOR) || null;
 }
 
 function extractCredsFrom(container) {
@@ -414,7 +411,8 @@ export async function init(options = {}) {
         )?.[0];
       const container = resolveAuthContainer(el) || d;
       const action = el?.getAttribute?.('data-smoothr');
-      const c = await resolveSupabase();
+      const testClient = (typeof window !== 'undefined' && window.__SMOOTHR_TEST_SUPABASE__) || null;
+      const c = testClient || await resolveSupabase();
       if (!action || !c?.auth) return;
       if (action === 'login') {
         const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
@@ -692,9 +690,10 @@ export async function init(options = {}) {
     docKeydownHandler = async (e) => {
       try {
         if (e?.key !== 'Enter' && e?.key !== ' ') return;
-        const container = resolveAuthContainer(e?.target);
+        const el = (globalThis.document || {}).activeElement;
+        const container = resolveAuthContainer(el);
         if (!container) return;
-        const tag = (e.target?.tagName || '').toUpperCase();
+        const tag = (el?.tagName || '').toUpperCase();
         if (tag === 'TEXTAREA') return;
         const signup = container.querySelector(ATTR_SIGNUP);
         if (signup) {
@@ -759,12 +758,13 @@ export async function init(options = {}) {
       }
       doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
       doc?.addEventListener?.('click', docActionClickFallback, false);
-      doc?.addEventListener?.('click', docClickHandler, true);
+      doc?.addEventListener?.('click', docClickHandler, { capture: true, passive: false });
       if (w.SMOOTHR_DEBUG) {
         console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
       }
       doc?.addEventListener?.('submit', docSubmitHandler, true);
-      doc?.addEventListener?.('keydown', docKeydownHandler, true);
+      doc?.addEventListener?.('keydown', docKeydownHandler, { capture: true, passive: false });
+      try { doc.__smoothrAuthBound = true; } catch {}
     } catch {}
     try { mutationCallback(); } catch {}
     log('auth init complete');

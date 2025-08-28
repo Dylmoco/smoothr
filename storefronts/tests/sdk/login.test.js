@@ -85,6 +85,8 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
   const { signInMock } = currentSupabaseMocks();
   signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
 
+  const active = div.querySelector('[data-smoothr="password"]');
+  Object.defineProperty(document, 'activeElement', { value: active, configurable: true });
   const evt = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
   div.dispatchEvent(evt);
   await flushPromises();
