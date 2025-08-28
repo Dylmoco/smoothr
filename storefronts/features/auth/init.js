@@ -119,7 +119,7 @@ function bindAuthElements(root = globalThis.document) {
   root.querySelectorAll('[data-smoothr="login"]').forEach(el => attach(el, clickHandler));
   root.querySelectorAll('[data-smoothr="password-reset-confirm"]').forEach(el => attach(el, clickHandler));
   root
-    .querySelectorAll('[data-smoothr="signup"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]')
+    .querySelectorAll('[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]')
     .forEach(el => {
       const action = el.getAttribute('data-smoothr');
       const handler =
@@ -384,7 +384,7 @@ export async function init(options = {}) {
       const el =
         e?.target?.closest?.('[data-smoothr]') ||
         d?.querySelectorAll?.(
-          '[data-smoothr="login"], [data-smoothr="signup"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], [data-smoothr="login-google"], [data-smoothr="login-apple"]'
+          '[data-smoothr="login"], [data-smoothr="sign-up"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], [data-smoothr="login-google"], [data-smoothr="login-apple"]'
         )?.[0];
       const form = e?.target?.closest?.('form[data-smoothr="auth-form"]') || d?.querySelectorAll?.('form[data-smoothr="auth-form"]')?.[0];
       const action = el?.getAttribute?.('data-smoothr');
@@ -410,7 +410,7 @@ export async function init(options = {}) {
         }
         return;
       }
-      if (action === 'signup') {
+      if (action === 'sign-up') {
         const email = form?.querySelector('[data-smoothr="email"]')?.value ?? '';
         const pwd = form?.querySelector('[data-smoothr="password"]')?.value ?? '';
         const confirm = form?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
@@ -632,32 +632,15 @@ export async function init(options = {}) {
         e.stopImmediatePropagation?.();
       } catch {}
 
-      const getVal = (sel) => form.querySelector(sel)?.value?.trim();
-      const email = getVal('[data-smoothr="email"]') ?? getVal('[name="email"]') ?? '';
-      const password = getVal('[data-smoothr="password"]') ?? getVal('[name="password"]') ?? '';
-      if (!email || !password) {
-        emitAuth?.('smoothr:auth:error', { code: 'MISSING_FIELDS', message: 'Email and password required' });
-        return;
-      }
+      const hasSignUp = !!form.querySelector('[data-smoothr="sign-up"]');
+      const hasResetConfirm = !!form.querySelector('[data-smoothr="password-reset-confirm"]');
+      const target =
+        (hasSignUp && form.querySelector('[data-smoothr="sign-up"]')) ||
+        (hasResetConfirm && form.querySelector('[data-smoothr="password-reset-confirm"]')) ||
+        form.querySelector('[data-smoothr="login"]');
 
-      const supa = await resolveSupabase?.();
-      if (!supa?.auth) {
-        emitAuth?.('smoothr:auth:error', { code: 'CLIENT_NOT_READY', message: 'Auth client not ready' });
-        return;
-      }
-
-      try {
-        const { data, error } = await supa.auth.signInWithPassword({ email, password });
-        w.Smoothr.auth.user.value = data?.user ?? null;
-        if (error) throw error;
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:login')
-          : { type: 'smoothr:login' };
-        (w.document || globalThis.document)?.dispatchEvent?.(ev);
-        await sessionSyncAndEmit(supa, data?.user?.id || null);
-      } catch (err) {
-        w.Smoothr.auth.user.value = null;
-        emitAuth?.('smoothr:auth:error', { code: err?.status || 'LOGIN_FAILED', message: err?.message || 'Login failed' });
+      if (target) {
+        await clickHandler({ target });
       }
     };
 

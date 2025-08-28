@@ -8,7 +8,7 @@ const legacyMap = {
   'data-smoothr-login': 'login',
   'data-smoothr-logout': 'logout',
   'data-smoothr-currency': 'currency',
-  'data-smoothr-signup': 'signup',
+  'data-smoothr-signup': 'sign-up',
   'data-smoothr-password-reset': 'password-reset',
   'data-smoothr-password-reset-confirm': 'password-reset-confirm',
   // Extra legacy conveniences for auth entry points:
