@@ -69,6 +69,37 @@ it('routes dynamic sign-up DIV click via capture fallback when auth-form is DIV'
   expect(signUpSpy).toHaveBeenCalledTimes(1);
 });
 
+it('does not double-handle sign-up clicks (direct binding vs capture fallback)', async () => {
+  vi.resetModules();
+  setupSupabaseMock();
+  const { init, resolveSupabase, bindAuthElements } = await import("../../features/auth/index.js");
+  await init({ supabase: createClientMock() });
+  await flushPromises();
+
+  const container = document.createElement('div');
+  container.setAttribute('data-smoothr', 'auth-form');
+  container.innerHTML = `
+    <input data-smoothr="email" value="unique@example.com" />
+    <input data-smoothr="password" value="Password123" />
+    <input data-smoothr="password-confirm" value="Password123" />
+    <div data-smoothr="sign-up"></div>
+  `;
+  document.body.appendChild(container);
+
+  // Force binding (bindAuthElements marks __smoothrAuthBound and attaches direct listener)
+  bindAuthElements(container);
+
+  const supa = await resolveSupabase?.();
+  const signUpSpy = vi.spyOn(supa.auth, 'signUp')
+    .mockResolvedValue({ data: { user: { id: 'u-signup' } }, error: null });
+
+  const trigger = container.querySelector('[data-smoothr="sign-up"]');
+  trigger.click();
+  await flushPromises();
+
+  expect(signUpSpy).toHaveBeenCalledTimes(1);
+});
+
 describe("signup flow", () => {
   let clickHandler;
   let emailValue;

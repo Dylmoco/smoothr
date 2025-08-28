@@ -33,6 +33,35 @@ it('submits password-reset via Enter on reset-only form', async () => {
   expect(resetPasswordMock).toHaveBeenCalledWith('user@example.com', expect.any(Object));
 });
 
+it('does not send duplicate reset emails when clicking a bound reset control', async () => {
+  vi.resetModules();
+  createClientMock();
+  auth = await import("../../features/auth/index.js");
+  await auth.init();
+  await flushPromises();
+
+  const container = document.createElement('div');
+  container.setAttribute('data-smoothr', 'auth-form');
+  container.innerHTML = `
+    <input data-smoothr="email" value="reset@example.com" />
+    <div data-smoothr="password-reset"></div>
+  `;
+  document.body.appendChild(container);
+
+  // Ensure direct binding is attached
+  auth.bindAuthElements(container);
+
+  const supa = await auth.resolveSupabase?.();
+  const resetSpy = vi.spyOn(supa.auth, 'resetPasswordForEmail')
+    .mockResolvedValue({ data: {}, error: null });
+
+  const trigger = container.querySelector('[data-smoothr="password-reset"]');
+  trigger.click();
+  await flushPromises();
+
+  expect(resetSpy).toHaveBeenCalledTimes(1);
+});
+
 describe("password reset request", () => {
   let clickHandler;
   let emailValue;

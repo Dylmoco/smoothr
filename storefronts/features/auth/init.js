@@ -115,11 +115,12 @@ function resolveAuthContainer(node) {
 }
 
 const _bound = new WeakSet();
-function bindAuthElements(root = globalThis.document) {
+export function bindAuthElements(root = globalThis.document) {
   if (!root?.querySelectorAll) return;
   const attach = (el, handler) => {
     if (!_bound.has(el) && typeof el.addEventListener === 'function') {
-      el.addEventListener('click', handler);
+      try { el.__smoothrAuthBound = true; } catch {}
+      el.addEventListener('click', handler, { passive: false });
       _bound.add(el);
     }
   };
@@ -689,7 +690,19 @@ export async function init(options = {}) {
       try {
         const el = e?.target?.closest?.(ACTION_SELECTORS);
         if (!el) return;
-        clickHandler?.({ target: el, currentTarget: el, preventDefault(){}, stopPropagation(){}, stopImmediatePropagation(){} });
+        // 1) If element already has a direct listener, skip (avoid double handling).
+        if (el.__smoothrAuthBound === true) return;
+        // 2) If this event already triggered our fallback higher up, skip.
+        if (e.__smoothrActionHandled === true) return;
+        e.__smoothrActionHandled = true;
+        // Route to clickHandler once
+        clickHandler?.({
+          target: el,
+          currentTarget: el,
+          preventDefault(){},
+          stopPropagation(){},
+          stopImmediatePropagation(){},
+        });
       } catch {}
     };
 
