@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin, supabaseAnonServer } from '../../../lib/supabaseAdmin';
 
-type Ok = { ok: true; dashboard_home_url: string | null; features?: any };
+type Ok = {
+  ok: true;
+  redirect_url: string | null;
+  dashboard_home_url: string | null;
+  sign_in_redirect_url: string | null;
+  features?: any;
+};
 type Err = { ok: false; error: string };
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
   // CORS
@@ -38,28 +44,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         { onConflict: 'store_id,user_id' }
       );
 
-    // Get dashboard_home_url from your public view/settings
+    // Fetch redirect candidates from your public settings/view
+    // Prefer view `v_public_store` if available; fallback to `public_store_settings`.
     let dashboard_home_url: string | null = null;
+    let sign_in_redirect_url: string | null = null;
 
-    const vres = await supabaseAdmin
+    const tryView = await supabaseAdmin
       .from('v_public_store')
-      .select('dashboard_home_url')
+      .select('dashboard_home_url, sign_in_redirect_url')
       .eq('store_id', store_id)
       .maybeSingle();
 
-    if (!vres.error && vres.data) {
-      dashboard_home_url = vres.data.dashboard_home_url ?? null;
+    if (!tryView.error && tryView.data) {
+      dashboard_home_url = tryView.data.dashboard_home_url ?? null;
+      sign_in_redirect_url = tryView.data.sign_in_redirect_url ?? null;
     } else {
-      const sres = await supabaseAdmin
+      const trySettings = await supabaseAdmin
         .from('public_store_settings')
-        .select('dashboard_home_url')
+        .select('dashboard_home_url, sign_in_redirect_url')
         .eq('store_id', store_id)
         .maybeSingle();
-      if (!sres.error && sres.data) dashboard_home_url = sres.data.dashboard_home_url ?? null;
+      if (!trySettings.error && trySettings.data) {
+        dashboard_home_url = trySettings.data.dashboard_home_url ?? null;
+        sign_in_redirect_url = trySettings.data.sign_in_redirect_url ?? null;
+      }
     }
 
-    // (Phase-2 will add an httpOnly smoothr_sid cookie; omitted for MVP.)
-    return res.status(200).json({ ok: true, dashboard_home_url, features: {} });
+    // Choose the final redirect (sign-in redirect wins, then dashboard)
+    const redirect_url = sign_in_redirect_url || dashboard_home_url || null;
+
+    // (Phase-2: set httpOnly cookie here)
+    return res.status(200).json({
+      ok: true,
+      redirect_url,
+      dashboard_home_url,
+      sign_in_redirect_url,
+      features: {}
+    });
   } catch (e: any) {
     console.error('[session-sync] error', e);
     return res.status(500).json({ ok: false, error: 'Internal Server Error' });
