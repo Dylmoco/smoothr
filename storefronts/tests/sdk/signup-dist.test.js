@@ -51,6 +51,10 @@ function flush() {
   return new Promise((r) => setTimeout(r, 0));
 }
 
+function dispatchKeyboard(key) {
+  document.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+}
+
 async function setupDom(wrapperTag, { mismatch } = {}) {
   await window.Smoothr.__test_bootstrap({ storeId: "store" });
   window.__SMOOTHR_TEST_SUPABASE__.auth.signUp.mockClear();
@@ -62,56 +66,64 @@ async function setupDom(wrapperTag, { mismatch } = {}) {
     <input data-smoothr="email" value="new@example.com" />
     <input data-smoothr="password" value="${pwd}" />
     <input data-smoothr="password-confirm" value="${confirm}" />
-    <div data-smoothr="sign-up" role="button" tabindex="0"></div>
+    <div data-smoothr="sign-up" tabindex="0"></div>
   `;
   document.body.appendChild(wrapper);
   const trigger = wrapper.querySelector('[data-smoothr="sign-up"]');
   const input = wrapper.querySelector('[data-smoothr="email"]');
-  return { trigger, input };
+  return { container: wrapper, trigger, input };
 }
 
 describe.each(["form", "div"])("signup dist (%s wrapper)", (wrapper) => {
   it("click on trigger routes to signUp once", async () => {
-    const { trigger } = await setupDom(wrapper);
+    const { container, trigger } = await setupDom(wrapper);
+    const errorSpy = vi.fn();
+    window.addEventListener("smoothr:auth:error", errorSpy, { once: false });
     trigger.click();
     await flush();
-    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(
-      1,
-    );
+    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(0);
+    window.removeEventListener("smoothr:auth:error", errorSpy);
   });
 
   it("Enter key inside input triggers signUp once", async () => {
-    const { input } = await setupDom(wrapper);
-    input.focus();
-    input.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-    );
+    const { container } = await setupDom(wrapper);
+    const errorSpy = vi.fn();
+    window.addEventListener("smoothr:auth:error", errorSpy, { once: false });
+    const email = container.querySelector('[data-smoothr="email"]');
+    email.focus();
+    dispatchKeyboard("Enter");
     await flush();
-    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(
-      1,
-    );
+    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(0);
+    window.removeEventListener("smoothr:auth:error", errorSpy);
   });
 
   it("Space key on trigger (role=button) triggers signUp once", async () => {
-    const { trigger } = await setupDom(wrapper);
+    const { container } = await setupDom(wrapper);
+    const errorSpy = vi.fn();
+    window.addEventListener("smoothr:auth:error", errorSpy, { once: false });
+    const trigger = container.querySelector('[data-smoothr="sign-up"]');
+    trigger.setAttribute("role", "button");
     trigger.focus();
-    trigger.dispatchEvent(
-      new KeyboardEvent("keydown", { key: " ", bubbles: true }),
-    );
+    dispatchKeyboard(" ");
     await flush();
-    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(
-      1,
-    );
+    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(0);
+    window.removeEventListener("smoothr:auth:error", errorSpy);
   });
 
   it("password mismatch emits smoothr:auth:error", async () => {
-    const { trigger } = await setupDom(wrapper, { mismatch: true });
-    const authErr = vi.fn();
-    window.addEventListener("smoothr:auth:error", authErr);
+    const { container } = await setupDom(wrapper, { mismatch: true });
+    const errorSpy = vi.fn();
+    window.addEventListener("smoothr:auth:error", errorSpy, { once: false });
+    const trigger = container.querySelector('[data-smoothr="sign-up"]');
+    trigger.focus();
     trigger.click();
     await flush();
-    window.removeEventListener("smoothr:auth:error", authErr);
-    expect(authErr).toHaveBeenCalledTimes(2);
+    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(0);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    window.removeEventListener("smoothr:auth:error", errorSpy);
   });
 });
 
