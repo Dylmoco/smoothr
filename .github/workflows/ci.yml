@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm -C storefronts install
+
+      - name: Build storefronts
+        run: pnpm -C storefronts build:storefronts
+
+      - name: Assert auth dist integrity
+        run: node ./scripts/assert-auth-dist-integrity.mjs
+
+      - name: Run compiled auth tests
+        run: pnpm -C storefronts test:dist-auth
