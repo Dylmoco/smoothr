@@ -67,7 +67,9 @@ describe("dynamic DOM bindings", () => {
         if (selector.includes('form[data-smoothr="auth-form"]')) {
           return forms;
         }
-        if (selector.includes('[data-smoothr="sign-out"]')) return [];
+        if (selector.includes('[data-smoothr="sign-out"]')) {
+          return elements.filter((el) => el.dataset?.smoothr === "sign-out");
+        }
         return [];
       }),
       querySelector: vi.fn((sel) => {
@@ -421,5 +423,40 @@ describe("dynamic DOM bindings", () => {
     expect(winEvt.type).toBe("smoothr:auth:open");
     expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+  });
+
+  it("binds newly added sign-out elements and dispatches sign-out", async () => {
+    let handler;
+    const el = {
+      tagName: "DIV",
+      dataset: { smoothr: "sign-out" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "sign-out" : null),
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") handler = cb;
+      }),
+      click: () => handler?.({ preventDefault: () => {}, target: el }),
+    };
+
+    await auth.init({ supabase: createClientMock() });
+    await flushPromises();
+    elements.push(el);
+    mutationCallback();
+    expect(el.addEventListener).toHaveBeenCalled();
+
+    const fired = [];
+    const listeners = {};
+    window.location.assign = vi.fn();
+    window.addEventListener.mockImplementation((evt, cb) => {
+      (listeners[evt] ||= []).push(cb);
+    });
+    window.dispatchEvent.mockImplementation((evt) => {
+      (listeners[evt.type] || []).forEach((cb) => cb(evt));
+      return true;
+    });
+    window.addEventListener("smoothr:sign-out", () => fired.push(true));
+
+    el.click();
+    await flushPromises();
+    expect(fired.length).toBeGreaterThan(0);
   });
 });

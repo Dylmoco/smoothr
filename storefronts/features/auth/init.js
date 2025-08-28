@@ -305,10 +305,7 @@ export async function init(options = {}) {
       if (!authState || !authState.user) return;
       if (event === 'SIGNED_OUT') {
         authState.user.value = null;
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:sign-out')
-          : { type: 'smoothr:sign-out' };
-          (w.document || globalThis.document)?.dispatchEvent?.(ev);
+        emitAuth?.('smoothr:sign-out', { reason: 'state-change' });
       } else {
         authState.user.value = payload.user ?? null;
         const ev = typeof w.CustomEvent === 'function'
@@ -543,11 +540,22 @@ export async function init(options = {}) {
     };
 
     signOutHandler = async (e) => {
-      try { e?.preventDefault?.(); } catch {}
-      const c = await resolveSupabase();
-      await c?.auth?.signOut?.();
-      const authState = w.Smoothr?.auth;
-      if (authState) authState.user.value = null;
+      try {
+        e?.preventDefault?.();
+        const supa = await resolveSupabase?.();
+        await supa?.auth?.signOut?.();
+        if (w.Smoothr?.auth?.user) w.Smoothr.auth.user.value = null;
+        emitAuth?.('smoothr:sign-out', { reason: 'manual' });
+        emitAuth?.('smoothr:auth:close', { reason: 'signedout' });
+        let url = null;
+        try {
+          url = await (typeof lookupRedirectUrl === 'function' ? lookupRedirectUrl('sign_out') : null);
+        } catch {}
+        if (!url) url = location.origin;
+        location.assign(url);
+      } catch (err) {
+        emitAuth?.('smoothr:auth:error', { code: 'SIGNOUT_FAILED', message: err?.message || 'Sign-out failed' });
+      }
     };
 
       docClickHandler = async (e) => {
