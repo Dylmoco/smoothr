@@ -4,6 +4,14 @@ import { supabaseAdmin, supabaseAnonServer } from '../../../lib/supabaseAdmin';
 type Ok = { ok: true; dashboard_home_url: string | null; features?: any };
 type Err = { ok: false; error: string };
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
+  // CORS
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
 
   try {

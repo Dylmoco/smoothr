@@ -44,6 +44,25 @@ async function deferToNextFrame(times = 1) {
   }
 }
 
+// Compute broker base URL without requiring customer markup changes.
+function getBrokerBaseUrl() {
+  const w = globalThis.window || globalThis;
+  const d = w.document || globalThis.document;
+  // 1) If loader saved the effective config URL, use its origin
+  const cfgUrl = w?.SMOOTHR_CONFIG?.__configUrl;
+  if (cfgUrl) {
+    try { return new URL(cfgUrl).origin; } catch {}
+  }
+  // 2) Otherwise, find our loader script and read its data-config-url
+  const tag = d?.getElementById?.('smoothr-sdk');
+  const attr = tag?.getAttribute?.('data-config-url');
+  if (attr) {
+    try { return new URL(attr, w.location?.href || '').origin; } catch {}
+  }
+  // 3) Fallback to your Vercel app origin (safe default)
+  return 'https://smoothr.vercel.app';
+}
+
 // Minimal CustomEvent polyfill for environments lacking it.
 if (typeof globalThis.CustomEvent !== 'function') {
   const CustomEventPoly = function CustomEvent(type, params = {}) {
@@ -332,7 +351,7 @@ export async function init(options = {}) {
         const token = sess?.session?.access_token;
         const storeId = w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
         if (token && storeId) {
-          const resp = await fetch('/api/auth/session-sync', {
+          const resp = await fetch(`${getBrokerBaseUrl()}/api/auth/session-sync`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -420,8 +439,7 @@ export async function init(options = {}) {
         const successEl = form?.querySelector('[data-smoothr-success]');
         const errorEl = form?.querySelector('[data-smoothr-error]');
         try {
-          const origin = w.location?.origin || 'http://localhost';
-          const cb = new URL('/api/callback', origin);
+          const cb = new URL('/api/callback', getBrokerBaseUrl());
           if (w?.SMOOTHR_CONFIG?.storeId) cb.searchParams.set('store_id', w.SMOOTHR_CONFIG.storeId);
           const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo: cb.toString() });
           if (resetErr) throw resetErr;
