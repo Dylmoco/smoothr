@@ -11,7 +11,7 @@ export async function loadPublicConfig(storeId, supabase) {
     const { data, error } = await supabase
       .from('v_public_store')
       .select(
-        'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,dashboard_home_url'
+        'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,sign_out_redirect_url'
       )
       .eq('store_id', storeId)
       .maybeSingle();
@@ -26,7 +26,7 @@ export async function loadPublicConfig(storeId, supabase) {
         public_settings: {},
         active_payment_gateway: null,
         sign_in_redirect_url: null,
-        dashboard_home_url: null
+        sign_out_redirect_url: null
       };
     }
 
@@ -35,7 +35,7 @@ export async function loadPublicConfig(storeId, supabase) {
       public_settings: data.public_settings || {},
       active_payment_gateway: data.active_payment_gateway ?? null,
       sign_in_redirect_url: data?.sign_in_redirect_url ?? null,
-      dashboard_home_url: data?.dashboard_home_url ?? null
+      sign_out_redirect_url: data?.sign_out_redirect_url ?? null
     };
 
     log('Config fetched');
@@ -50,7 +50,7 @@ export async function loadPublicConfig(storeId, supabase) {
       public_settings: {},
       active_payment_gateway: null,
       sign_in_redirect_url: null,
-      dashboard_home_url: null
+      sign_out_redirect_url: null
     };
   }
 }

@@ -39,7 +39,7 @@ describe('loadPublicConfig', () => {
       base_currency: 'GBP',
       public_settings: {},
       sign_in_redirect_url: '/sign-in',
-      dashboard_home_url: '/dashboard'
+      sign_out_redirect_url: '/bye'
     };
     builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
@@ -47,7 +47,7 @@ describe('loadPublicConfig', () => {
 
     expect(config).toEqual(row);
     expect(builder.select).toHaveBeenCalledWith(
-      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,dashboard_home_url'
+      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,sign_out_redirect_url'
     );
     expect(builder.eq).toHaveBeenCalledWith('store_id', storeId);
     expect(builder.maybeSingle).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('loadPublicConfig', () => {
     expect(config.active_payment_gateway).toBeNull();
     expect(config.public_settings).toEqual({});
     expect(config.sign_in_redirect_url).toBeNull();
-    expect(config.dashboard_home_url).toBeNull();
+    expect(config.sign_out_redirect_url).toBeNull();
   });
 
   it('returns fallback settings on query error', async () => {
@@ -84,7 +84,7 @@ describe('loadPublicConfig', () => {
       public_settings: {},
       active_payment_gateway: null,
       sign_in_redirect_url: null,
-      dashboard_home_url: null
+      sign_out_redirect_url: null
     });
   });
 });

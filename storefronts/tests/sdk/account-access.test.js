@@ -85,7 +85,7 @@ describe("account access trigger", () => {
       const { getUserMock } = currentSupabaseMocks();
       authHelpers = await import("../../../supabase/authHelpers.js");
       vi
-        .spyOn(authHelpers, "lookupDashboardHomeUrl")
+        .spyOn(authHelpers, "lookupRedirectUrl")
         .mockResolvedValue("/dashboard");
       user = { id: "1", email: "test@example.com" };
       getUserMock.mockResolvedValueOnce({ data: { user } });
@@ -99,7 +99,7 @@ describe("account access trigger", () => {
 
       await clickHandler({ target: btn, preventDefault: () => {} });
       await flushPromises();
-      expect(authHelpers.lookupDashboardHomeUrl).toHaveBeenCalled();
+      expect(authHelpers.lookupRedirectUrl).toHaveBeenCalled();
       expect(global.window.location.href).toBe("/dashboard");
     });
   });

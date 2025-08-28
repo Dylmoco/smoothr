@@ -73,7 +73,6 @@ describe('account-access trigger', () => {
     const lookupRedirectUrl = vi.fn().mockResolvedValue('/login-url');
     vi.doMock('../../../supabase/authHelpers.js', () => ({
       lookupRedirectUrl,
-      lookupDashboardHomeUrl: vi.fn()
     }));
     const mod = await import('../../features/auth/init.js');
     await mod.init();
@@ -97,10 +96,9 @@ describe('account-access trigger', () => {
   it('logged-in users redirect to preferred URL', async () => {
     vi.resetModules();
     const { win, doc } = setup();
-    const lookupDashboardHomeUrl = vi.fn().mockResolvedValue('/dashboard');
+    const lookupRedirectUrl = vi.fn().mockResolvedValue('/dashboard');
     vi.doMock('../../../supabase/authHelpers.js', () => ({
-      lookupRedirectUrl: vi.fn(),
-      lookupDashboardHomeUrl
+      lookupRedirectUrl,
     }));
     const mod = await import('../../features/auth/init.js');
     await mod.init();
@@ -112,7 +110,7 @@ describe('account-access trigger', () => {
       stopImmediatePropagation: vi.fn()
     };
     await mod.docClickHandler(evt);
-    expect(lookupDashboardHomeUrl).toHaveBeenCalled();
+    expect(lookupRedirectUrl).toHaveBeenCalled();
     expect(win.location.href).toBe('/dashboard');
     expect(doc.dispatchEvent).not.toHaveBeenCalled();
     expect(win.dispatchEvent).not.toHaveBeenCalled();

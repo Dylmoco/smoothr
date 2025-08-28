@@ -132,7 +132,6 @@ export function normalizeDomain(hostname) {
 }
 
 const cachedRedirectUrls = {};
-let cachedDashboardHomeUrl;
 
 export async function lookupRedirectUrl(type = 'login') {
   if (cachedRedirectUrls[type]) return cachedRedirectUrls[type];
@@ -174,34 +173,6 @@ export async function lookupRedirectUrl(type = 'login') {
   }
 }
 
-export async function lookupDashboardHomeUrl() {
-  if (cachedDashboardHomeUrl) return cachedDashboardHomeUrl;
-
-  try {
-    const config = await loadPublicConfig(SMOOTHR_CONFIG.storeId);
-    const url =
-      config?.dashboard_home_url ??
-      config?.public_settings?.dashboard_home_url ??
-      null;
-    cachedDashboardHomeUrl = url;
-    if (!url && typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
-      console.warn('[Smoothr][auth] redirect helper missing value', {
-        helper: 'lookupDashboardHomeUrl',
-        reason: 'null-or-error',
-      });
-    }
-    return url;
-  } catch (error) {
-    if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
-      console.warn('[Smoothr][auth] redirect helper missing value', {
-        helper: 'lookupDashboardHomeUrl',
-        reason: 'null-or-error',
-      });
-    }
-    cachedDashboardHomeUrl = null;
-    return null;
-  }
-}
 
 export async function initAuth() {
   try {

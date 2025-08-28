@@ -5,7 +5,6 @@ export {
   setSupabaseClient,
   resolveSupabase,
   lookupRedirectUrl,
-  lookupDashboardHomeUrl,
   normalizeDomain,
   initPasswordResetConfirmation,
   clickHandler,

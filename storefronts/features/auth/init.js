@@ -1,7 +1,7 @@
 // Auth init owns the test hooks and helpers (barrel re-exports these).
 // Keep everything side-effect light but export callable hooks immediately.
 
-import { lookupRedirectUrl, lookupDashboardHomeUrl } from '../../../supabase/authHelpers.js';
+import { lookupRedirectUrl } from '../../../supabase/authHelpers.js';
 import { getConfig } from '../config/globalConfig.js';
 
 const { debug } = getConfig();
@@ -217,7 +217,7 @@ export const resolveSupabase = async () => {
     }
   }
 
-export { lookupRedirectUrl, lookupDashboardHomeUrl };
+export { lookupRedirectUrl };
 // Several tests spy on this name; keep it here.
 export function normalizeDomain(input) {
   try {
@@ -367,9 +367,7 @@ export async function init(options = {}) {
               overrideUrl ||
               json.redirect_url ||
               json.sign_in_redirect_url ||
-              json.dashboard_home_url ||
               (await (typeof lookupRedirectUrl === 'function' ? lookupRedirectUrl() : null)) ||
-              (await (typeof lookupDashboardHomeUrl === 'function' ? lookupDashboardHomeUrl() : null)) ||
               (w.location?.origin ?? '');
             if (url) w.location?.assign?.(url);
             return;
@@ -572,39 +570,39 @@ export async function init(options = {}) {
         let deferredCheck = false;
         let mode = 'none';
         let redirectTo = null;
-      const user = w.Smoothr?.auth?.user?.value;
-      if (user) {
-        mode = 'dashboard';
-        redirectTo = await lookupDashboardHomeUrl();
-        if (redirectTo && w.location) w.location.href = redirectTo;
-      } else {
-        selector = resolveAuthPanelSelector(doc);
-        popupExists = !!selector;
-        if (!popupExists) {
-          await deferToNextFrame(2);
-          deferredCheck = true;
+        const user = w.Smoothr?.auth?.user?.value;
+        if (user) {
+          mode = 'dashboard';
+          redirectTo = await lookupRedirectUrl();
+          if (redirectTo && w.location) w.location.href = redirectTo;
+        } else {
           selector = resolveAuthPanelSelector(doc);
           popupExists = !!selector;
-        }
-        if (popupExists) {
-          mode = 'popup';
-          emitAuth('smoothr:auth:open', { targetSelector: selector });
-          const panel = doc.querySelector?.(selector);
-          if (panel) {
-            try { panel.setAttribute?.('data-smoothr-active', '1'); } catch {}
-            if (panel.getAttribute?.('data-smoothr-autoclass') === '1') {
-              try { panel.classList.toggle('is-active', true); } catch {}
-            }
-            log('auth panel opened', panel);
-          } else {
-            log('auth pop-up not found for trigger', selector || '(default)');
+          if (!popupExists) {
+            await deferToNextFrame(2);
+            deferredCheck = true;
+            selector = resolveAuthPanelSelector(doc);
+            popupExists = !!selector;
           }
-        } else if (trigger?.getAttribute?.('data-smoothr-auth-mode') === 'redirect') {
-          mode = 'redirect';
-          redirectTo = await lookupRedirectUrl('login');
-          if (redirectTo && w.location) w.location.href = redirectTo;
+          if (popupExists) {
+            mode = 'popup';
+            emitAuth('smoothr:auth:open', { targetSelector: selector });
+            const panel = doc.querySelector?.(selector);
+            if (panel) {
+              try { panel.setAttribute?.('data-smoothr-active', '1'); } catch {}
+              if (panel.getAttribute?.('data-smoothr-autoclass') === '1') {
+                try { panel.classList.toggle('is-active', true); } catch {}
+              }
+              log('auth panel opened', panel);
+            } else {
+              log('auth pop-up not found for trigger', selector || '(default)');
+            }
+          } else if (trigger?.getAttribute?.('data-smoothr-auth-mode') === 'redirect') {
+            mode = 'redirect';
+            redirectTo = await lookupRedirectUrl('login');
+            if (redirectTo && w.location) w.location.href = redirectTo;
+          }
         }
-      }
       if (w.SMOOTHR_DEBUG) {
         console.info('[Smoothr][auth] trigger', {
           prevented: true,

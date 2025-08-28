@@ -41,7 +41,7 @@ export default function SetPasswordPage() {
       const json = await resp.json();
       if (!resp.ok || !json?.ok) throw new Error(json?.error || 'Sync failed');
 
-      Router.replace(json.dashboard_home_url || '/');
+      Router.replace(json.redirect_url || json.sign_in_redirect_url || '/');
     } catch (err: any) {
       console.error('[set-password] error', err);
       setMsg(err?.message || 'Something went wrong'); setBusy(false);
