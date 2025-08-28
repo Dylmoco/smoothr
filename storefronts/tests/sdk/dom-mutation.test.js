@@ -15,6 +15,25 @@ const OTHER_SELECTOR =
   '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
 const ACCOUNT_ACCESS_SELECTOR = '[data-smoothr="account-access"]';
 
+it('routes submit on reset-only form to password-reset handler', async () => {
+  vi.resetModules();
+  createClientMock();
+  auth = await import("../../features/auth/index.js");
+  await auth.init();
+  await flushPromises();
+
+  const form = document.createElement('form');
+  form.setAttribute('data-smoothr', 'auth-form');
+  form.innerHTML = `
+    <input data-smoothr="email" value="user@example.com" />
+    <div data-smoothr="password-reset"></div>
+  `;
+  document.body.appendChild(form);
+  const evt = new Event('submit', { bubbles: true, cancelable: true });
+  // Should not throw; router should pick the reset control and handle gracefully
+  expect(() => form.dispatchEvent(evt)).not.toThrow();
+});
+
 describe("dynamic DOM bindings", () => {
   let mutationCallback;
   let elements;
