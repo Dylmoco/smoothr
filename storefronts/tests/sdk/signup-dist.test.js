@@ -1,30 +1,24 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import fs from "fs";
-import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
-
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../..",
 );
 
-const buildDist = () =>
-  new Promise((resolve, reject) => {
-    const proc = spawn("pnpm", ["-C", "storefronts", "build:storefronts"], {
-      stdio: "inherit",
-      cwd: repoRoot,
-    });
-    proc.on("exit", (code) =>
-      code === 0
-        ? resolve()
-        : reject(new Error(`storefronts build failed: ${code}`)),
-    );
-    proc.on("error", reject);
-  });
+let buildStorefronts;
+async function ensureBuilt() {
+  // Ensure Node's Uint8Array is used so esbuild's environment checks pass
+  globalThis.Uint8Array = new TextEncoder().encode("").constructor;
+  if (!buildStorefronts) {
+    ({ buildStorefronts } = await import("../../../scripts/build-storefronts-dist.mjs"));
+  }
+  await buildStorefronts(); // throws on failure
+}
 
 beforeAll(async () => {
-  await buildDist();
+  await ensureBuilt();
 
   window.__SMOOTHR_TEST_SUPABASE__ = {
     auth: {

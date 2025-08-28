@@ -14,17 +14,20 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Install root deps
+        run: npm ci
 
-      - name: Install dependencies
-        run: pnpm -C storefronts install
+      - name: Install storefronts deps
+        run: npm ci --workspace storefronts
 
-      - name: Build storefronts
-        run: pnpm -C storefronts build:storefronts
+      - name: Build storefronts (Node API via script)
+        run: node scripts/build-storefronts-dist.mjs
 
-      - name: Assert auth dist integrity
-        run: node ./scripts/assert-auth-dist-integrity.mjs
+      - name: Integrity check
+        run: node scripts/assert-auth-dist-integrity.mjs
 
-      - name: Run compiled auth tests
-        run: pnpm -C storefronts test:dist-auth
+      - name: Run unit tests (storefronts)
+        run: npm -w storefronts test
+
+      - name: Run compiled dist tests (auth)
+        run: npm -w storefronts run test:dist-auth

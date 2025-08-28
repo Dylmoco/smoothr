@@ -11,7 +11,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "test": "vitest run --config ../vitest.config.ts",
+    "test": "vitest run --config ../vitest.config.ts --exclude tests/sdk/signup-dist.test.js",
     "build:storefronts": "vite build",
     "test:dist-auth": "vitest run --config vitest.dist.config.ts"
   },
