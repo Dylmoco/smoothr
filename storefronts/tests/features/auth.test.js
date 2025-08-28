@@ -74,7 +74,10 @@ describe('auth feature init', () => {
     await init({ storeId: '1', supabase: client });
     const clickCalls = document.addEventListener.mock.calls.filter(c => c[0] === 'click');
     expect(clickCalls.length).toBe(2);
-    clickCalls.forEach(c => expect(c[2]).toBe(true));
+    const captureCall = clickCalls.find(c => typeof c[2] === 'object');
+    expect(captureCall?.[2]).toMatchObject({ capture: true, passive: false });
+    const bubbleCall = clickCalls.find(c => c[2] === false);
+    expect(bubbleCall).toBeTruthy();
   });
 });
 

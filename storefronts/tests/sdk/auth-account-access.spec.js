@@ -122,7 +122,7 @@ describe('account-access trigger', () => {
     const mod = await import('../../features/auth/init.js');
     await mod.init();
     const clickCalls = doc.addEventListener.mock.calls.filter(c => c[0] === 'click');
-    expect(clickCalls.some(c => c[2] === true)).toBe(true);
+    expect(clickCalls.some(c => typeof c[2] === 'object' && c[2].capture === true)).toBe(true);
     const evt = {
       target: { closest: () => ({}) },
       preventDefault: vi.fn(),
