@@ -116,14 +116,14 @@ describe.each(["form", "div"])("signup dist (%s wrapper)", (wrapper) => {
   it("password mismatch emits smoothr:auth:error", async () => {
     const { container } = await setupDom(wrapper, { mismatch: true });
     const errorSpy = vi.fn();
-    window.addEventListener("smoothr:auth:error", errorSpy, { once: false });
+    document.addEventListener("smoothr:auth:error", errorSpy, { once: false });
     const trigger = container.querySelector('[data-smoothr="sign-up"]');
     trigger.focus();
     trigger.click();
     await flush();
     expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(0);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    window.removeEventListener("smoothr:auth:error", errorSpy);
+    document.removeEventListener("smoothr:auth:error", errorSpy);
   });
 });
 
