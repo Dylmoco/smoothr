@@ -10,6 +10,7 @@ import {
   ATTR_PASSWORD_CONFIRM,
   ATTR_SIGNUP,
 } from './constants.js';
+import { validatePasswordsOrThrow } from './validators.js';
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
@@ -663,40 +664,78 @@ export async function init(options = {}) {
       if (action === 'password-reset-confirm') {
         const { password, confirm } = extractCredsFrom(container);
         clearAuthError(container);
-        if (password && confirm && password !== confirm) {
-          const msg = 'Passwords do not match.';
-          renderAuthError(container, msg);
-          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm' });
-          return;
-        }
-        if (password && password.length < 8) {
-          const msg = 'Please choose a stronger password.';
-          renderAuthError(container, msg);
-          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm' });
-          return;
-        }
         try {
-          if (_prSession) await c.auth.setSession(_prSession);
-          stripRecoveryHash();
-          const { data, error } = await c.auth.updateUser({ password });
-          w.Smoothr.auth.user.value = data?.user ?? null;
-          if (error) {
-            const msg = mapResetError(error);
+          validatePasswordsOrThrow(password, confirm);
+        } catch (e) {
+          const msg =
+            e?.message === 'password_mismatch'
+              ? 'Passwords do not match.'
+              : e?.message === 'password_too_weak'
+              ? 'Please choose a stronger password.'
+              : 'Invalid password.';
+          renderAuthError(container, msg);
+          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', code: e?.message || 'password_error' });
+          throw e;
+        }
+
+        const hash = (w.location?.hash || '').slice(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token') || '';
+        if (!accessToken) {
+          const msg = 'Recovery link is missing or expired.';
+          renderAuthError(container, msg);
+          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', code: 'missing_recovery_token' });
+          return;
+        }
+
+        markResetLoading?.(true);
+        try {
+          const { data: userRes, error: userErr } = await c.auth.getUser(accessToken);
+          if (userErr || !userRes?.user) {
+            const msg = 'Invalid or expired recovery token.';
             renderAuthError(container, msg);
-            emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: error });
+            emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: userErr, code: 'invalid_recovery_token' });
             return;
           }
-          w.alert?.('Password updated');
-          const ev = typeof w.CustomEvent === 'function'
-            ? new w.CustomEvent('smoothr:login')
-            : { type: 'smoothr:login' };
-          (w.document || globalThis.document)?.dispatchEvent?.(ev);
-          await sessionSyncAndEmit(c, data?.user?.id || null, _prRedirect || undefined);
-        } catch (err) {
-          w.Smoothr.auth.user.value = null;
-          const msg = mapResetError(err);
-          renderAuthError(container, msg);
-          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: err });
+          const { error: updateErr } = await c.auth.updateUser({ password });
+          if (updateErr) {
+            const msg = 'Unable to update password. Please try again.';
+            renderAuthError(container, msg);
+            emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: updateErr });
+            return;
+          }
+          w.Smoothr.auth.user.value = userRes.user;
+          stripRecoveryHash();
+
+          const storeId =
+            (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
+            w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
+          if (!storeId) {
+            history.replaceState?.(null, '', w.location?.pathname + w.location?.search);
+            w.location?.assign?.('/');
+            return;
+          }
+
+          const formEl = w.document?.createElement?.('form');
+          if (formEl) {
+            formEl.method = 'POST';
+            formEl.action = '/api/auth/session-sync';
+            const f1 = w.document.createElement('input');
+            f1.type = 'hidden';
+            f1.name = 'store_id';
+            f1.value = storeId;
+            formEl.appendChild(f1);
+            const f2 = w.document.createElement('input');
+            f2.type = 'hidden';
+            f2.name = 'access_token';
+            f2.value = accessToken;
+            formEl.appendChild(f2);
+            w.document.body.appendChild(formEl);
+            history.replaceState?.(null, '', w.location?.pathname + w.location?.search);
+            formEl.submit();
+          }
+        } finally {
+          markResetLoading?.(false);
         }
         return;
       }

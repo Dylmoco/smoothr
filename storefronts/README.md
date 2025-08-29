@@ -59,6 +59,10 @@ html.smoothr-reset-loading body { visibility: hidden; }
 
 The class is removed once the URL is cleaned (no trailing hash) and the session is set.
 
+#### Password reset (success)
+On successful password change, the SDK performs a **top-level form POST** to `/api/auth/session-sync` so the broker issues a **303** to the store’s **Sign-in Success Redirect URL**, or `/` if not configured. This guarantees landing on the client homepage.  
+If passwords don’t match, the SDK shows an inline error **and throws** (`Error('password_mismatch')`) for programmatic flows.
+
 ## Features
 
 - abandoned-cart

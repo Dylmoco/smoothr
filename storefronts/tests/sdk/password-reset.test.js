@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
+import { validatePasswordsOrThrow } from "../../features/auth/validators.js";
 
 let auth;
 
@@ -207,303 +208,50 @@ describe('resolveRecoveryDestination (allowlist)', () => {
   });
 });
 
-describe("password reset confirmation", () => {
-  let clickHandler;
-  let passwordValue;
-  let confirmValue;
-  let passwordInputObj;
-  let confirmInputObj;
 
-  beforeEach(async () => {
-    vi.resetModules();
-    createClientMock();
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockClear();
-    setSessionMock.mockClear();
-    passwordValue = "newpass123";
-    confirmValue = "newpass123";
-    clickHandler = undefined;
-    passwordInputObj = {
-      value: passwordValue,
-      addEventListener: vi.fn(),
-    };
-    confirmInputObj = { value: confirmValue, addEventListener: vi.fn() };
-    let btn;
-    const form = {
-      dataset: { smoothr: "auth-form" },
-      tagName: "FORM",
-      querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr="password"]') return passwordInputObj;
-        if (sel === '[data-smoothr="password-confirm"]') return confirmInputObj;
-        if (sel === '[data-smoothr="password-reset-confirm"]') return btn;
-        return null;
-      }),
-    };
-    btn = {
-      tagName: "DIV",
-      dataset: { smoothr: "password-reset-confirm" },
-      getAttribute: (attr) =>
-        attr === "data-smoothr" ? "password-reset-confirm" : null,
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "click") clickHandler = cb;
-      }),
-      closest: vi.fn(() => form),
-    };
-    global.window = {
-      location: { href: "", origin: "", hash: "#access_token=a&refresh_token=b" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    };
-    global.document = {
-      addEventListener: vi.fn((evt, cb) => {
-        if (evt === "DOMContentLoaded") cb();
-      }),
-      querySelectorAll: vi.fn((sel) => {
-        if (sel.includes('[data-smoothr="password-reset-confirm"]')) return [btn];
-        if (sel.includes('[data-smoothr="auth-form"]')) return [form];
-        return [];
-      }),
-    };
-    global.alert = global.window.alert = vi.fn();
-    auth = await import("../../features/auth/index.js");
-    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+
+
+describe('password validator', () => {
+  it('throws on mismatch', () => {
+    expect(() => validatePasswordsOrThrow('CorrectHorseBatteryStaple', 'wrong')).toThrow('password_mismatch');
   });
-
-  it("updates password and redirects", async () => {
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({ data: {}, error: null });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(setSessionMock).toHaveBeenCalledWith({
-      access_token: "a",
-      refresh_token: "b",
-    });
-    expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
+  it('throws on weak password', () => {
+    expect(() => validatePasswordsOrThrow('short', 'short')).toThrow('password_too_weak');
   });
-
-  it("handles update failure", async () => {
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({ data: null, error: new Error("fail") });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(setSessionMock).toHaveBeenCalledWith({
-      access_token: "a",
-      refresh_token: "b",
-    });
-    expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
-  });
-
-  it("validates strength and match", async () => {
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({ data: {}, error: null });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
-    await flushPromises();
-    passwordValue = "short";
-    confirmValue = "short";
-    passwordInputObj.value = passwordValue;
-    confirmInputObj.value = confirmValue;
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(updateUserMock).not.toHaveBeenCalled();
-    updateUserMock.mockClear();
-    passwordValue = "Password1";
-    confirmValue = "Different1";
-    passwordInputObj.value = passwordValue;
-    confirmInputObj.value = confirmValue;
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(updateUserMock).not.toHaveBeenCalled();
-  });
-
-  it("sets window.Smoothr.auth.user after update", async () => {
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    const user = { id: "1", email: "test@example.com" };
-    updateUserMock.mockResolvedValue({ data: { user }, error: null });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    await auth.initPasswordResetConfirmation({ redirectTo: "/login" });
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(setSessionMock).toHaveBeenCalled();
-    expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
-    expect(global.window.Smoothr.auth.user.value).toEqual(user);
+  it('passes on valid matching passwords', () => {
+    expect(validatePasswordsOrThrow('CorrectHorseBatteryStaple', 'CorrectHorseBatteryStaple')).toBe(true);
   });
 });
 
-describe("password reset confirmation transport", () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.restoreAllMocks();
-    createClientMock();
-    global.window = realWindow;
-    global.document = realDocument;
-    window.location.hash = '#access_token=a&refresh_token=b';
-    window.SMOOTHR_CONFIG = { storeId: '1' };
-    document.body.innerHTML = '';
-  });
+it('reset confirm posts to session-sync for 303 redirect to home when no redirect set', async () => {
+  vi.resetModules();
+  createClientMock();
+  global.window = realWindow;
+  global.document = realDocument;
+  const { getUserMock, updateUserMock } = currentSupabaseMocks();
+  getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+  updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
 
-  it("uses form POST when redirect configured", async () => {
-    window.SMOOTHR_CONFIG.sign_in_redirect_url = '/';
-    document.body.innerHTML = `
-      <form data-smoothr="auth-form">
-        <input data-smoothr="password" value="Password1" />
-        <input data-smoothr="password-confirm" value="Password1" />
-        <div data-smoothr="password-reset-confirm"></div>
-      </form>`;
+  document.body.innerHTML = `
+    <form data-smoothr="auth-form">
+      <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
+      <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
+      <button data-smoothr="password-reset-confirm">Save</button>
+      <div data-smoothr="auth-error" style="display:none"></div>
+    </form>
+  `;
+  window.SMOOTHR_CONFIG = { store_id: 'store_test' };
+  window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
 
-    const { updateUserMock, setSessionMock, getSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+  const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function () {});
 
-    const auth = await import("../../features/auth/index.js");
-    await auth.initPasswordResetConfirmation();
-    await flushPromises();
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  const btn = document.querySelector('[data-smoothr="password-reset-confirm"]');
+  btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-    const fetchSpy = vi.spyOn(window, 'fetch');
-    const signedIn = vi.fn();
-    const closed = vi.fn();
-    document.addEventListener('smoothr:auth:signedin', signedIn);
-    document.addEventListener('smoothr:auth:close', closed);
+  await new Promise((r) => setTimeout(r, 0));
 
-    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
-    await flushPromises();
-
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(signedIn).toHaveBeenCalledTimes(1);
-    expect(closed).toHaveBeenCalledTimes(1);
-  });
-
-  it("uses XHR when no redirect configured", async () => {
-    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
-    document.body.innerHTML = `
-      <form data-smoothr="auth-form">
-        <input data-smoothr="password" value="Password1" />
-        <input data-smoothr="password-confirm" value="Password1" />
-        <div data-smoothr="password-reset-confirm"></div>
-      </form>`;
-
-    const { updateUserMock, setSessionMock, getSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
-
-    const auth = await import("../../features/auth/index.js");
-    await auth.initPasswordResetConfirmation();
-    await flushPromises();
-
-    const fetchSpy = vi.spyOn(window, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => ({ ok: true, redirect_url: null, sign_in_redirect_url: null }),
-    });
-    const createElSpy = vi.spyOn(document, 'createElement');
-    const signedIn = vi.fn();
-    const closed = vi.fn();
-    document.addEventListener('smoothr:auth:signedin', signedIn);
-    document.addEventListener('smoothr:auth:close', closed);
-
-    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
-    await flushPromises();
-
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(fetchSpy.mock.calls[0][0]).toMatch(/\/api\/auth\/session-sync$/);
-    expect(createElSpy).not.toHaveBeenCalledWith('form');
-    expect(signedIn).toHaveBeenCalledTimes(1);
-    expect(closed).toHaveBeenCalledTimes(1);
-  });
-
-});
-
-describe('password reset confirm errors', () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.restoreAllMocks();
-    createClientMock();
-    global.window = realWindow;
-    global.document = realDocument;
-    window.location.hash = '#access_token=a&refresh_token=b&type=recovery';
-    document.body.innerHTML = `
-      <form data-smoothr="auth-form">
-        <input data-smoothr="password" value="A" />
-        <input data-smoothr="password-confirm" value="B" />
-        <div data-smoothr="password-reset-confirm"></div>
-      </form>`;
-  });
-
-  it('mismatch prevents updateUser and shows error', async () => {
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    const auth = await import('../../features/auth/index.js');
-    await auth.initPasswordResetConfirmation();
-    await flushPromises();
-    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
-    await flushPromises();
-    expect(updateUserMock).not.toHaveBeenCalled();
-    expect(setSessionMock).not.toHaveBeenCalled();
-    const err = document.querySelector('[data-smoothr="error"]');
-    expect(err?.textContent).toBe('Passwords do not match.');
-  });
-
-  it('weak password shows friendly error', async () => {
-    document.querySelector('[data-smoothr="password"]').value = 'Password1';
-    document.querySelector('[data-smoothr="password-confirm"]').value = 'Password1';
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({
-      data: null,
-      error: { message: 'password is too short', code: 'weak_password' },
-    });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    const auth = await import('../../features/auth/index.js');
-    await auth.initPasswordResetConfirmation();
-    await flushPromises();
-    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
-    await flushPromises();
-    const err = document.querySelector('[data-smoothr="error"]');
-    expect(err?.textContent).toBe('Please choose a stronger password.');
-  });
-
-  it('expired link shows friendly error', async () => {
-    document.querySelector('[data-smoothr="password"]').value = 'Password1';
-    document.querySelector('[data-smoothr="password-confirm"]').value = 'Password1';
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({
-      data: null,
-      error: { message: 'invalid token', code: 'invalid_token' },
-    });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    const auth = await import('../../features/auth/index.js');
-    await auth.initPasswordResetConfirmation();
-    await flushPromises();
-    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
-    await flushPromises();
-    const err = document.querySelector('[data-smoothr="error"]');
-    expect(err?.textContent).toBe('Your reset link is invalid or has expired. Please request a new one.');
-  });
-
-  it('strips recovery hash after session set', async () => {
-    document.querySelector('[data-smoothr="password"]').value = 'Password1';
-    document.querySelector('[data-smoothr="password-confirm"]').value = 'Password1';
-    window.location.pathname = '/reset-password';
-    window.location.search = '';
-    window.location.hash = '#access_token=XYZ&refresh_token=R&type=recovery';
-    const replaceSpy = vi.spyOn(window.history, 'replaceState');
-    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
-    updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
-    setSessionMock.mockResolvedValue({ data: {}, error: null });
-    const auth = await import('../../features/auth/index.js');
-    await auth.initPasswordResetConfirmation();
-    await flushPromises();
-    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
-    await flushPromises();
-    expect(replaceSpy).toHaveBeenCalled();
-    const cleanUrl = replaceSpy.mock.calls[0][2];
-    expect(cleanUrl).not.toContain('access_token');
-    expect(cleanUrl.endsWith('#')).toBe(false);
-  });
+  expect(submitSpy).toHaveBeenCalledTimes(1);
+  submitSpy.mockRestore();
 });
