@@ -519,9 +519,13 @@ export async function init(options = {}) {
         const successEl = container?.querySelector('[data-smoothr-success]');
         const errorEl = container?.querySelector('[data-smoothr-error]');
         try {
-          const cb = new URL('/api/callback', getBrokerBaseUrl());
-          if (w?.SMOOTHR_CONFIG?.storeId) cb.searchParams.set('store_id', w.SMOOTHR_CONFIG.storeId);
-          const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo: cb.toString() });
+          const cfg = (typeof getConfig === 'function' ? getConfig() : (w.SMOOTHR_CONFIG || {}));
+          const storeId = cfg.storeId || w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
+          const base = w.location?.origin || '';
+          const qs = new URLSearchParams(w.location?.search || '');
+          if (storeId && !qs.has('store_id')) qs.set('store_id', storeId);
+          const redirectTo = `${base}/reset-password${qs.toString() ? `?${qs}` : ''}`;
+          const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo });
           if (resetErr) throw resetErr;
           w.Smoothr.auth.user.value = null;
           if (successEl) {

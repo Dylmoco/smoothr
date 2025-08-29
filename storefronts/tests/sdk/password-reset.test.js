@@ -97,9 +97,10 @@ describe("password reset request", () => {
       closest: vi.fn(() => form),
     };
     global.window = {
-      location: { href: "", origin: "" },
+      location: { href: "", origin: "https://client.example", search: "" },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      SMOOTHR_CONFIG: {},
     };
     global.document = {
       addEventListener: vi.fn((evt, cb) => {
@@ -125,9 +126,23 @@ describe("password reset request", () => {
     await flushPromises();
     expect(resetPasswordMock).toHaveBeenCalledWith(
       "user@example.com",
-      expect.objectContaining({ redirectTo: expect.stringContaining('/api/callback') })
+      expect.objectContaining({
+        redirectTo: expect.stringMatching(`^${global.window.location.origin}/reset-password`),
+      })
     );
     expect(global.window.alert).toHaveBeenCalled();
+  });
+
+  it("includes store_id when available", async () => {
+    const { resetPasswordMock } = currentSupabaseMocks();
+    resetPasswordMock.mockResolvedValue({ data: {}, error: null });
+    global.window.SMOOTHR_CONFIG.storeId = "store_42";
+    await auth.init();
+    await flushPromises();
+    await clickHandler({ preventDefault: () => {} });
+    await flushPromises();
+    const redirect = resetPasswordMock.mock.calls[0][1]?.redirectTo || "";
+    expect(redirect).toContain("store_id=store_42");
   });
 
   it("handles failure", async () => {
