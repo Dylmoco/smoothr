@@ -3,6 +3,9 @@ import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 let auth;
 
+const realWindow = globalThis.window;
+const realDocument = globalThis.document;
+
 function flushPromises() {
   return new Promise(setImmediate);
 }
@@ -271,4 +274,88 @@ describe("password reset confirmation", () => {
     expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
   });
+});
+
+describe("password reset confirmation transport", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    createClientMock();
+    global.window = realWindow;
+    global.document = realDocument;
+    window.location.hash = '#access_token=a&refresh_token=b';
+    window.SMOOTHR_CONFIG = { storeId: '1' };
+    document.body.innerHTML = '';
+  });
+
+  it("uses form POST when redirect configured", async () => {
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = '/';
+    document.body.innerHTML = `
+      <form data-smoothr="auth-form">
+        <input data-smoothr="password" value="Password1" />
+        <input data-smoothr="password-confirm" value="Password1" />
+        <div data-smoothr="password-reset-confirm"></div>
+      </form>`;
+
+    const { updateUserMock, setSessionMock, getSessionMock } = currentSupabaseMocks();
+    updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+
+    const auth = await import("../../features/auth/index.js");
+    await auth.initPasswordResetConfirmation();
+    await flushPromises();
+
+    const fetchSpy = vi.spyOn(window, 'fetch');
+    const signedIn = vi.fn();
+    const closed = vi.fn();
+    document.addEventListener('smoothr:auth:signedin', signedIn);
+    document.addEventListener('smoothr:auth:close', closed);
+
+    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
+    await flushPromises();
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(signedIn).toHaveBeenCalledTimes(1);
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses XHR when no redirect configured", async () => {
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
+    document.body.innerHTML = `
+      <form data-smoothr="auth-form">
+        <input data-smoothr="password" value="Password1" />
+        <input data-smoothr="password-confirm" value="Password1" />
+        <div data-smoothr="password-reset-confirm"></div>
+      </form>`;
+
+    const { updateUserMock, setSessionMock, getSessionMock } = currentSupabaseMocks();
+    updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+
+    const auth = await import("../../features/auth/index.js");
+    await auth.initPasswordResetConfirmation();
+    await flushPromises();
+
+    const fetchSpy = vi.spyOn(window, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, redirect_url: null, sign_in_redirect_url: null }),
+    });
+    const createElSpy = vi.spyOn(document, 'createElement');
+    const signedIn = vi.fn();
+    const closed = vi.fn();
+    document.addEventListener('smoothr:auth:signedin', signedIn);
+    document.addEventListener('smoothr:auth:close', closed);
+
+    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
+    await flushPromises();
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][0]).toMatch(/\/api\/auth\/session-sync$/);
+    expect(createElSpy).not.toHaveBeenCalledWith('form');
+    expect(signedIn).toHaveBeenCalledTimes(1);
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
 });

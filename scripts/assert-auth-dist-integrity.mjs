@@ -20,6 +20,14 @@ const checks = [
     ok: content.includes('[data-smoothr="sign-up"]'),
     msg: 'missing [data-smoothr="sign-up"] marker',
   },
+  {
+    ok: content.includes('[data-smoothr="password-reset"]'),
+    msg: 'missing [data-smoothr="password-reset"] marker',
+  },
+  {
+    ok: content.includes('[data-smoothr="password-reset-confirm"]'),
+    msg: 'missing [data-smoothr="password-reset-confirm"] marker',
+  },
   { ok: content.includes('keydown'), msg: 'missing keydown handler' },
   { ok: content.includes('Enter'), msg: 'missing Enter key handler' },
   {
