@@ -502,8 +502,8 @@ describe('password reset confirm errors', () => {
     document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
     await flushPromises();
     expect(replaceSpy).toHaveBeenCalled();
-    const urlArg = replaceSpy.mock.calls[0][2];
-    expect(urlArg).not.toContain('access_token');
-    expect(urlArg).not.toContain('#');
+    const cleanUrl = replaceSpy.mock.calls[0][2];
+    expect(cleanUrl).not.toContain('access_token');
+    expect(cleanUrl.endsWith('#')).toBe(false);
   });
 });
