@@ -124,10 +124,11 @@ describe("password reset request", () => {
     await flushPromises();
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
+    const broker = auth.getBrokerBaseUrl();
     expect(resetPasswordMock).toHaveBeenCalledWith(
       "user@example.com",
       expect.objectContaining({
-        redirectTo: expect.stringMatching(`^${global.window.location.origin}/reset-password`),
+        redirectTo: expect.stringMatching(`^${broker}/auth/recovery-bridge`),
       })
     );
     expect(global.window.alert).toHaveBeenCalled();
