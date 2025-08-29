@@ -2,6 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Auth dist integrity checks...
+// Note: recovery origin selection is delegated to shared/auth/resolveRecoveryDestination.ts
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.resolve(__dirname, '../storefronts/dist/smoothr-sdk.js');
 

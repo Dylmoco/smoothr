@@ -115,6 +115,36 @@ async function deferToNextFrame(times = 1) {
   }
 }
 
+function postViaHiddenIframe(url, fields = {}) {
+  return new Promise((resolve) => {
+    const iframe = document.createElement('iframe');
+    iframe.name = 'smoothr-sync';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframe.name;
+    Object.entries(fields).forEach(([k, v]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = String(k);
+      input.value = String(v);
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
+        resolve(true);
+      }, 0);
+    });
+    form.submit();
+  });
+}
+
 // Compute broker base URL without requiring customer markup changes.
 export function getBrokerBaseUrl() {
   const w = globalThis.window || globalThis;
@@ -132,6 +162,26 @@ export function getBrokerBaseUrl() {
   }
   // 3) Fallback to your Vercel app origin (safe default)
   return 'https://smoothr.vercel.app';
+}
+
+// when no redirect is configured, we currently use XHR (console may show CORS in dev)
+// optionally use hidden-iframe to avoid CORS noise entirely
+async function sessionSyncStayOnPage(payload) {
+  const silent = !!(
+    window.SMOOTHR_CONFIG &&
+    window.SMOOTHR_CONFIG.auth &&
+    window.SMOOTHR_CONFIG.auth.silentPost
+  );
+  const url = `${getBrokerBaseUrl()}/api/auth/session-sync`;
+  if (silent) {
+    await postViaHiddenIframe(url, payload);
+    return { ok: true, json: async () => ({}) };
+  }
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 }
 
 // Minimal CustomEvent polyfill for environments lacking it.
@@ -479,15 +529,11 @@ export async function init(options = {}) {
         }
 
         log('sessionSync xhr path', { redirectUrl });
-        const resp = await fetch(`${getBrokerBaseUrl()}/api/auth/session-sync`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ store_id: storeId }),
+        const resp = await sessionSyncStayOnPage({
+          store_id: storeId,
+          access_token: token,
         });
-        const json = await resp.json().catch(() => ({}));
+        const json = await resp.json?.().catch(() => ({}));
         if (resp.ok && json?.ok) {
           emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
           emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
