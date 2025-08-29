@@ -36,8 +36,8 @@ beforeAll(async () => {
   const distPath = path.join(repoRoot, "storefronts/dist/smoothr-sdk.js");
   const code = await fs.promises.readFile(distPath, "utf8");
   const stripped = code.replace(
-    /export\{Fo as SDK_TAG,(\w+) as __test_bootstrap\};/,
-    "window.Smoothr=window.Smoothr||{};window.Smoothr.SDK_TAG=Fo;window.Smoothr.__test_bootstrap=$1;",
+    /export\{(\w+) as SDK_TAG,(\w+) as __test_bootstrap\};/,
+    'window.Smoothr=window.Smoothr||{};window.Smoothr.SDK_TAG=$1;window.Smoothr.__test_bootstrap=$2;',
   );
   new Function(stripped)();
 });
@@ -139,6 +139,73 @@ describe.each(["form", "div"])("signup dist (%s wrapper)", (wrapper) => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
     expect(errorSpy.mock.calls[0][0].detail.code).toBe('NO_CONTAINER');
     document.removeEventListener('smoothr:auth:error', errorSpy);
+  });
+});
+
+describe('sessionSync transport dist', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    vi.clearAllMocks();
+    window.__SMOOTHR_TEST_SUPABASE__.auth.getSession = vi
+      .fn()
+      .mockResolvedValue({ data: { session: { access_token: 'tok' } } });
+  });
+
+  it('uses form transport when redirect configured', async () => {
+    const { trigger } = await setupDom('div');
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = '/';
+    window.fetch = vi.fn();
+    const order = [];
+    document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
+    document.addEventListener('smoothr:auth:close', () => order.push('close'));
+    const submitSpy = vi
+      .spyOn(HTMLFormElement.prototype, 'submit')
+      .mockImplementation(() => order.push('submit'));
+    trigger.click();
+    await flush();
+    expect(window.fetch).not.toHaveBeenCalled();
+    const form = document.querySelector('form');
+    expect(form?.method).toBe('post');
+    expect(form?.enctype).toBe('application/x-www-form-urlencoded');
+    expect(form?.action.endsWith('/api/auth/session-sync')).toBe(true);
+    const storeInput = form?.querySelector('input[name="store_id"]');
+    const tokenInput = form?.querySelector('input[name="access_token"]');
+    expect(storeInput?.value).toBe('store');
+    expect(tokenInput?.value).toBe('tok');
+    expect(order).toEqual(['signedin', 'close', 'submit']);
+    submitSpy.mockRestore();
+  });
+
+  it('uses XHR when no redirect configured', async () => {
+    const { trigger } = await setupDom('div');
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
+    window.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    const initialHref = window.location.href;
+    const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit');
+    trigger.click();
+    await flush();
+    expect(window.fetch).toHaveBeenCalledTimes(1);
+    expect(submitSpy).not.toHaveBeenCalled();
+    expect(document.querySelector('form')).toBeNull();
+    expect(window.location.href).toBe(initialHref);
+    submitSpy.mockRestore();
+  });
+
+  it('override forces form transport', async () => {
+    const { trigger } = await setupDom('div');
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
+    window.SMOOTHR_CONFIG.forceFormRedirect = true;
+    window.fetch = vi.fn();
+    const submitSpy = vi
+      .spyOn(HTMLFormElement.prototype, 'submit')
+      .mockImplementation(() => {});
+    trigger.click();
+    await flush();
+    expect(window.fetch).not.toHaveBeenCalled();
+    expect(submitSpy).toHaveBeenCalled();
+    submitSpy.mockRestore();
   });
 });
 

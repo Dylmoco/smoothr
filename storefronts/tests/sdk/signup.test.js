@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { JSDOM } from "jsdom";
 
 let signUpMock;
 let getUserMock;
@@ -220,5 +221,147 @@ describe("signup flow", () => {
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
     await global.window.Smoothr.auth.client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
+  });
+});
+
+describe('sessionSync transport', () => {
+  async function flush() {
+    return new Promise(r => setTimeout(r, 0));
+  }
+
+  beforeEach(async () => {
+    vi.resetModules();
+    setupSupabaseMock();
+    signUpMock.mockResolvedValue({ data: { user: { id: 'u' } }, error: null });
+    getSessionMock.mockResolvedValue({
+      data: { session: { access_token: 'tok' } },
+      error: null,
+    });
+    const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+      url: 'https://example.com',
+    });
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.CustomEvent = dom.window.CustomEvent;
+    window.SMOOTHR_CONFIG = { storeId: config.storeId };
+    auth = await import('../../features/auth/index.js');
+    vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue(null);
+    await auth.init({ supabase: createClientMock() });
+  });
+
+  it('uses form transport when redirect configured', async () => {
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = '/';
+    document.body.innerHTML = `<div data-smoothr="auth-form">
+        <input data-smoothr="email" value="a@b.com" />
+        <input data-smoothr="password" value="Password1" />
+        <input data-smoothr="password-confirm" value="Password1" />
+        <button data-smoothr="sign-up"></button>
+      </div>`;
+    const trigger = document.querySelector('[data-smoothr="sign-up"]');
+    const order = [];
+    document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
+    document.addEventListener('smoothr:auth:close', () => order.push('close'));
+    const submitSpy = vi.fn();
+    const inputs = [];
+    let formObj = null;
+    const origCreate = document.createElement.bind(document);
+    document.createElement = vi.fn((tag) => {
+      if (tag === 'form') {
+        formObj = {
+          method: '',
+          enctype: '',
+          action: '',
+          style: {},
+          appendChild: (el) => inputs.push(el),
+          submit: submitSpy,
+        };
+        return formObj;
+      }
+      if (tag === 'input') {
+        const input = { type: '', name: '', value: '' };
+        return input;
+      }
+      return origCreate(tag);
+    });
+    document.body.appendChild = vi.fn();
+    window.fetch = vi.fn();
+    trigger.click();
+    await flush();
+    expect(window.fetch).not.toHaveBeenCalled();
+    expect(formObj?.method).toBe('POST');
+    expect(formObj?.enctype).toBe('application/x-www-form-urlencoded');
+    expect(formObj?.action.endsWith('/api/auth/session-sync')).toBe(true);
+    expect(inputs.some(i => i.name === 'store_id' && i.value === config.storeId)).toBe(true);
+    expect(inputs.some(i => i.name === 'access_token' && i.value === 'tok')).toBe(true);
+    expect(submitSpy).toHaveBeenCalled();
+    expect(order).toEqual(['signedin', 'close']);
+    document.createElement = origCreate;
+  });
+
+  it('uses XHR when no redirect configured', async () => {
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    window.fetch = global.fetch = fetchSpy;
+    const initialHref = window.location.href;
+    document.body.innerHTML = `<div data-smoothr="auth-form">
+        <input data-smoothr="email" value="a@b.com" />
+        <input data-smoothr="password" value="Password1" />
+        <input data-smoothr="password-confirm" value="Password1" />
+        <button data-smoothr="sign-up"></button>
+      </div>`;
+    const trigger = document.querySelector('[data-smoothr="sign-up"]');
+    const order = [];
+    document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
+    document.addEventListener('smoothr:auth:close', () => order.push('close'));
+    const createSpy = vi.spyOn(document, 'createElement');
+    trigger.click();
+    await flush();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(createSpy.mock.calls.some(c => c[0] === 'form')).toBe(false);
+    expect(order).toEqual(['signedin', 'close']);
+    expect(window.location.href).toBe(initialHref);
+    createSpy.mockRestore();
+  });
+
+  it('override forces form transport', async () => {
+    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
+    window.SMOOTHR_CONFIG.forceFormRedirect = true;
+    document.body.innerHTML = `<div data-smoothr="auth-form">
+        <input data-smoothr="email" value="a@b.com" />
+        <input data-smoothr="password" value="Password1" />
+        <input data-smoothr="password-confirm" value="Password1" />
+        <button data-smoothr="sign-up"></button>
+      </div>`;
+    const trigger = document.querySelector('[data-smoothr="sign-up"]');
+    const submitSpy = vi.fn();
+    const inputs = [];
+    let formObj = null;
+    const origCreate = document.createElement.bind(document);
+    document.createElement = vi.fn((tag) => {
+      if (tag === 'form') {
+        formObj = {
+          method: '',
+          enctype: '',
+          action: '',
+          style: {},
+          appendChild: (el) => inputs.push(el),
+          submit: submitSpy,
+        };
+        return formObj;
+      }
+      if (tag === 'input') {
+        const input = { type: '', name: '', value: '' };
+        return input;
+      }
+      return origCreate(tag);
+    });
+    document.body.appendChild = vi.fn();
+    window.fetch = vi.fn();
+    trigger.click();
+    await flush();
+    expect(window.fetch).not.toHaveBeenCalled();
+    expect(submitSpy).toHaveBeenCalled();
+    expect(formObj?.method).toBe('POST');
+    document.createElement = origCreate;
   });
 });

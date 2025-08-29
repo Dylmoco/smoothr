@@ -91,6 +91,22 @@ const scriptEl = document.currentScript || document.getElementById('smoothr-sdk'
 const storeId =
   scriptEl?.dataset?.storeId || scriptEl?.getAttribute?.('data-store-id') || null;
 
+const forceAttr =
+  scriptEl?.dataset?.forceFormRedirect ||
+  scriptEl?.getAttribute?.('data-force-form-redirect');
+let forceFormRedirect;
+if (typeof forceAttr === 'string') {
+  const v = forceAttr.toLowerCase();
+  if (v === 'true' || v === '1') forceFormRedirect = true;
+  else if (v === 'false' || v === '0') forceFormRedirect = false;
+}
+if (typeof forceFormRedirect === 'boolean') {
+  window.SMOOTHR_CONFIG = {
+    ...(window.SMOOTHR_CONFIG || {}),
+    forceFormRedirect,
+  };
+}
+
 if (!scriptEl || !storeId) {
   console.warn(
     '[Smoothr SDK] initialization aborted: #smoothr-sdk script element not found or data-store-id missing'
