@@ -50,6 +50,15 @@ window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 - The final `/reset-password` URL **does not include** `store_id` (the SDK/loader provides store context).
 - Optional: set `SMOOTHR_CONFIG.auth.silentPost = true` to use a hidden-iframe form POST for the “stay on page” path (silences dev CORS noise).
 
+### Reset UX polish
+To avoid URL-hash flicker on the reset page, the SDK adds/removes `smoothr-reset-loading` on `<html>` during token processing. In Webflow/Framer, add:
+
+```css
+html.smoothr-reset-loading body { visibility: hidden; }
+```
+
+The class is removed once the URL is cleaned (no trailing hash) and the session is set.
+
 ## Features
 
 - abandoned-cart

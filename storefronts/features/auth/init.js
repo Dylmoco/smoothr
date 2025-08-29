@@ -75,6 +75,14 @@ function mapResetError(err) {
   return 'Unable to reset your password. Please try again.';
 }
 
+function markResetLoading(on) {
+  // Add/remove a class on <html> so Webflow/Framer styles can hide content
+  const root = document.documentElement;
+  if (!root) return;
+  if (on) root.classList.add('smoothr-reset-loading');
+  else root.classList.remove('smoothr-reset-loading');
+}
+
 function stripRecoveryHash() {
   try {
     const h = window.location.hash || '';
@@ -84,7 +92,7 @@ function stripRecoveryHash() {
     if (hp.has('access_token') || hp.get('type') === 'recovery') {
       const clean = window.location.pathname + window.location.search;
       if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, document.title, clean);
+        window.history.replaceState(null, '', clean);
       }
     }
   } catch {}
@@ -956,16 +964,30 @@ export async function init(options = {}) {
 }
 export default init;
 
+async function handleRecoveryIfPresent() {
+  const w = globalThis.window || globalThis;
+  const hash = (w.location?.hash || '').slice(1);
+  const hasAccessToken = /(^|&)access_token=/.test(hash);
+  if (!hasAccessToken) return;
+  markResetLoading(true);
+  try {
+    const params = new URLSearchParams(hash);
+    const access = params.get('access_token');
+    const refresh = params.get('refresh_token');
+    _prSession = access && refresh ? { access_token: access, refresh_token: refresh } : null;
+    stripRecoveryHash();
+  } finally {
+    markResetLoading(false);
+  }
+}
+
 // Optional export used by some tests
 export async function initPasswordResetConfirmation(opts = {}) {
   const p = init();
   await p;
   const w = globalThis.window || globalThis;
   _prRedirect = opts.redirectTo || '';
-  const params = new URLSearchParams((w.location?.hash || '').replace(/^#/, ''));
-  const access = params.get('access_token');
-  const refresh = params.get('refresh_token');
-  _prSession = access && refresh ? { access_token: access, refresh_token: refresh } : null;
+  await handleRecoveryIfPresent();
   try { mutationCallback(); } catch {}
   return p;
 }
