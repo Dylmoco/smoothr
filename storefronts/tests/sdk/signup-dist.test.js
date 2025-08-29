@@ -179,14 +179,23 @@ describe('sessionSync transport dist', () => {
   it('uses XHR when no redirect configured', async () => {
     const { trigger } = await setupDom('div');
     window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
-    window.fetch = vi
-      .fn()
-      .mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    window.fetch = vi.fn((url) =>
+      Promise.resolve({
+        ok: true,
+        json: async () =>
+          String(url).includes('/api/auth/session-sync')
+            ? { ok: true }
+            : { sign_in_redirect_url: null, public_settings: {} }
+      })
+    );
     const initialHref = window.location.href;
     const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit');
     trigger.click();
     await flush();
-    expect(window.fetch).toHaveBeenCalledTimes(1);
+    const sessionCalls = window.fetch.mock.calls.filter((c) =>
+      String(c[0]).includes('/api/auth/session-sync')
+    ).length;
+    expect(sessionCalls).toBe(1);
     expect(submitSpy).not.toHaveBeenCalled();
     expect(document.querySelector('form')).toBeNull();
     expect(window.location.href).toBe(initialHref);

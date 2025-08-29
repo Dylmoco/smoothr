@@ -378,23 +378,21 @@ export async function init(options = {}) {
           w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
         if (!token || !storeId) throw new Error('missing token or store');
 
-        const cfg = (w && w.SMOOTHR_CONFIG) || {};
-        const explicit =
-          typeof cfg.forceFormRedirect === 'boolean'
-            ? cfg.forceFormRedirect
-            : undefined;
-        const configuredUrl =
-          cfg.sign_in_redirect_url ||
-          (cfg.redirects && cfg.redirects.sign_in) ||
-          null;
-        let hasRedirect = !!configuredUrl;
-        if (!hasRedirect && typeof lookupRedirectUrl === 'function') {
-          try { hasRedirect = !!(await lookupRedirectUrl()); } catch {}
+        const cfg = getConfig();
+        let redirectUrl = overrideUrl || cfg.sign_in_redirect_url || null;
+        if (!redirectUrl) {
+          try {
+            redirectUrl = await (typeof lookupRedirectUrl === 'function'
+              ? lookupRedirectUrl()
+              : null);
+            if (redirectUrl) cfg.sign_in_redirect_url = redirectUrl;
+          } catch {}
         }
         const shouldRedirect =
-          typeof explicit === 'boolean' ? explicit : hasRedirect;
+          cfg.forceFormRedirect === true || !!redirectUrl;
 
         if (shouldRedirect) {
+          log('sessionSync form redirect', { redirectUrl });
           emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
           emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
           const doc = w.document;
@@ -420,6 +418,7 @@ export async function init(options = {}) {
           return;
         }
 
+        log('sessionSync xhr path', { redirectUrl });
         const resp = await fetch(`${getBrokerBaseUrl()}/api/auth/session-sync`, {
           method: 'POST',
           headers: {

@@ -1,4 +1,5 @@
 import { initAdapter as initWebflowAdapter } from 'storefronts/adapters/webflow.js';
+import { loadPublicConfig } from 'storefronts/features/config/sdkConfig.js';
 
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
@@ -195,6 +196,16 @@ if (!scriptEl || !storeId) {
       ...mergedConfig,
       storeId: resolvedStoreId
     };
+    try {
+      const supabase = await Smoothr.supabaseReady;
+      const pub = await loadPublicConfig(resolvedStoreId, supabase);
+      Object.assign(window.SMOOTHR_CONFIG, pub || {});
+      if (window.SMOOTHR_DEBUG) {
+        console.info('[Smoothr] config-first ready', {
+          signInRedirect: window.SMOOTHR_CONFIG.sign_in_redirect_url
+        });
+      }
+    } catch {}
 
     await initFeatures();
   })();
