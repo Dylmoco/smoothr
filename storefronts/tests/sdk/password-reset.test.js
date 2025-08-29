@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
 
 let auth;
 
@@ -158,25 +159,38 @@ describe("password reset request", () => {
   });
 });
 
-describe("recovery bridge fallback", () => {
-  it("uses orig parameter when no store domain", async () => {
-    vi.resetModules();
-    vi.mock("../../../smoothr/lib/supabaseAdmin.ts", () => ({
-      supabaseAdmin: {
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              maybeSingle: async () => ({ data: { live_domain: null, store_domain: null } }),
-            }),
-          }),
-        }),
-      },
-    }));
-    const { getServerSideProps } = await import("../../../smoothr/pages/auth/recovery-bridge.tsx");
-    const result = await getServerSideProps({
-      query: { store_id: "store_1", orig: "https://client.example" },
+describe('resolveRecoveryDestination (allowlist)', () => {
+  it('rejects arbitrary orig in production when no domains are configured', () => {
+    const res = resolveRecoveryDestination({
+      liveDomain: null,
+      storeDomain: null,
+      signInRedirectUrl: null,
+      orig: 'https://attacker.example',
+      nodeEnv: 'production',
     });
-    expect(result).toEqual({ props: { destOrigin: "https://client.example", storeId: "store_1" } });
+    expect(res).toEqual({ type: 'error', code: 'NO_ALLOWED_ORIGIN' });
+  });
+
+  it('allows localhost orig in development when no domains are configured', () => {
+    const res = resolveRecoveryDestination({
+      liveDomain: null,
+      storeDomain: null,
+      signInRedirectUrl: null,
+      orig: 'http://localhost:3000',
+      nodeEnv: 'development',
+    });
+    expect(res).toEqual({ type: 'ok', origin: 'http://localhost:3000' });
+  });
+
+  it('prefers live over store over sign-in redirect origin', () => {
+    const res = resolveRecoveryDestination({
+      liveDomain: 'https://live.example',
+      storeDomain: 'https://store.example',
+      signInRedirectUrl: 'https://signin.example/success',
+      orig: 'http://localhost:3000',
+      nodeEnv: 'production',
+    });
+    expect(res).toEqual({ type: 'ok', origin: 'https://live.example' });
   });
 });
 
