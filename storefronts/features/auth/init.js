@@ -582,7 +582,8 @@ export async function init(options = {}) {
           const cfg = (typeof getConfig === 'function' ? getConfig() : (w.SMOOTHR_CONFIG || {}));
           const storeId = cfg.storeId || w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
           const broker = getBrokerBaseUrl();
-          const redirectTo = `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}` : ''}`;
+          const origin = encodeURIComponent(w.location?.origin || '');
+          const redirectTo = `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
           const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo });
           if (resetErr) throw resetErr;
           w.Smoothr.auth.user.value = null;
