@@ -116,7 +116,7 @@ async function deferToNextFrame(times = 1) {
 }
 
 // Compute broker base URL without requiring customer markup changes.
-function getBrokerBaseUrl() {
+export function getBrokerBaseUrl() {
   const w = globalThis.window || globalThis;
   const d = w.document || globalThis.document;
   // 1) If loader saved the effective config URL, use its origin
@@ -581,10 +581,8 @@ export async function init(options = {}) {
         try {
           const cfg = (typeof getConfig === 'function' ? getConfig() : (w.SMOOTHR_CONFIG || {}));
           const storeId = cfg.storeId || w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
-          const base = w.location?.origin || '';
-          const qs = new URLSearchParams(w.location?.search || '');
-          if (storeId && !qs.has('store_id')) qs.set('store_id', storeId);
-          const redirectTo = `${base}/reset-password${qs.toString() ? `?${qs}` : ''}`;
+          const broker = getBrokerBaseUrl();
+          const redirectTo = `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}` : ''}`;
           const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo });
           if (resetErr) throw resetErr;
           w.Smoothr.auth.user.value = null;

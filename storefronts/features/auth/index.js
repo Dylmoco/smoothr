@@ -16,6 +16,7 @@ export {
   onAuthStateChangeHandler,
   mutationCallback,
   bindAuthElements,
+  getBrokerBaseUrl,
 } from './init.js';
 
 export { AUTH_CONTAINER_SELECTOR } from './constants.js';
