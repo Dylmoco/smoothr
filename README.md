@@ -16,6 +16,13 @@ This repository contains all code for Smoothr, structured as a modular SaaS plat
 
 The auth utilities now include client-side validation, loading states and keyboard-accessible forms for a smoother user experience.
 
+### Auth Redirects & Recovery
+
+- After login: set **Sign-in Success Redirect URL** to redirect via CORS-less form POST; leave blank to stay on page.
+- Recovery redirect origin resolution (allowlist): `live_domain` → `store_domain` → origin of `sign_in_redirect_url`. In development only, `orig=localhost` / `127.0.0.1` is accepted if no domains are configured.
+- The final `/reset-password` URL **does not include** `store_id` (the SDK/loader provides store context).
+- Optional: set `SMOOTHR_CONFIG.auth.silentPost = true` to use a hidden-iframe form POST for the “stay on page” path (silences dev CORS noise).
+
 This README serves as the source of truth for new developers on how the repository is organized and where modules belong.
 
 ## Workspace Setup

@@ -51,8 +51,12 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
     });
 
     if (res.type === 'ok') {
-      const dest = new URL('/reset-password', res.origin);
-      dest.searchParams.set('store_id', storeId);
+      if (process.env.NODE_ENV !== 'production') {
+        // lightweight debug telemetry
+        // eslint-disable-next-line no-console
+        console.info('[Smoothr][recovery-bridge] branch:', res.meta.branch);
+      }
+      const dest = new URL('/reset-password', res.origin); // no store_id in destination
       // NOTE: Supabase’s recovery token typically arrives via hash (#access_token=...).
       // We intentionally do not parse/forward hashes here—browser keeps them.
       return {
@@ -79,6 +83,23 @@ export default function RecoveryBridgePage(props: Props) {
             <code>live_domain</code> or <code>store_domain</code>, or a{' '}
             <code>sign_in_redirect_url</code>.
           </p>
+          {process.env.NODE_ENV !== 'production' && (
+            <details style={{ marginTop: 12 }}>
+              <summary>Developer diagnostics</summary>
+              <ul>
+                <li>
+                  Incoming <code>store_id</code> and <code>orig</code> are read by the bridge.
+                </li>
+                <li>
+                  Allowed sources (in order): <code>live_domain</code> → <code>store_domain</code>{' '}
+                  → origin of <code>sign_in_redirect_url</code>.
+                </li>
+                <li>
+                  Dev-only: <code>orig</code> with <code>localhost/127.0.0.1</code> is permitted.
+                </li>
+              </ul>
+            </details>
+          )}
         </main>
       ) : (
         <main />

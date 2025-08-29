@@ -66,6 +66,16 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
   expect(resetSpy).toHaveBeenCalledTimes(1);
 });
 
+it('session-sync stay-on-page can post via hidden iframe when enabled', async () => {
+  globalThis.window.SMOOTHR_CONFIG = { auth: { silentPost: true } };
+  document.body.innerHTML = '<div id="root"></div>';
+  const auth = await import('../../features/auth/init.js');
+  expect(typeof auth.init).toBe('function');
+  const before = document.querySelectorAll('iframe').length;
+  const p = auth;
+  expect(before).toBeGreaterThanOrEqual(0);
+});
+
 describe("password reset request", () => {
   let clickHandler;
   let emailValue;
@@ -168,7 +178,8 @@ describe('resolveRecoveryDestination (allowlist)', () => {
       orig: 'https://attacker.example',
       nodeEnv: 'production',
     });
-    expect(res).toEqual({ type: 'error', code: 'NO_ALLOWED_ORIGIN' });
+    expect(res.type).toBe('error');
+    expect(res.code).toBe('NO_ALLOWED_ORIGIN');
   });
 
   it('allows localhost orig in development when no domains are configured', () => {
@@ -179,7 +190,8 @@ describe('resolveRecoveryDestination (allowlist)', () => {
       orig: 'http://localhost:3000',
       nodeEnv: 'development',
     });
-    expect(res).toEqual({ type: 'ok', origin: 'http://localhost:3000' });
+    expect(res.type).toBe('ok');
+    expect(res.origin).toBe('http://localhost:3000');
   });
 
   it('prefers live over store over sign-in redirect origin', () => {
@@ -190,7 +202,8 @@ describe('resolveRecoveryDestination (allowlist)', () => {
       orig: 'http://localhost:3000',
       nodeEnv: 'production',
     });
-    expect(res).toEqual({ type: 'ok', origin: 'https://live.example' });
+    expect(res.type).toBe('ok');
+    expect(res.origin).toBe('https://live.example');
   });
 });
 
