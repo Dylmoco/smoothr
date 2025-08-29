@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin, supabaseAnonServer } from '../../../lib/supabaseAdmin';
+import { getAllowOrigin } from '../../../lib/cors';
 
 type Ok = {
   ok: true;
@@ -9,25 +10,37 @@ type Ok = {
   features?: any;
 };
 type Err = { ok: false; error: string };
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
-  // CORS
-  const origin = req.headers.origin || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
-
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Ok | Err>
+) {
   try {
-    const authz = req.headers.authorization || '';
-    const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
+    const origin = req.headers.origin;
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body ?? {});
     const store_id = body?.store_id;
+    const allowOrigin = await getAllowOrigin(origin, store_id);
+    if (!allowOrigin)
+      return res.status(403).json({ ok: false, error: 'Origin not allowed' });
 
-    if (!token) return res.status(401).json({ ok: false, error: 'Missing bearer token' });
-    if (!store_id) return res.status(400).json({ ok: false, error: 'Missing store_id' });
+    res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'POST')
+      return res
+        .status(405)
+        .json({ ok: false, error: 'Method Not Allowed' });
+
+    const authz = req.headers.authorization || '';
+    const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
+
+    if (!token)
+      return res.status(401).json({ ok: false, error: 'Missing bearer token' });
+    if (!store_id)
+      return res.status(400).json({ ok: false, error: 'Missing store_id' });
 
     // Verify Supabase access token
     const { data: userRes, error: userErr } = await supabaseAnonServer.auth.getUser(token);
