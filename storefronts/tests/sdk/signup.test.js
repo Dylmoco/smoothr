@@ -152,7 +152,7 @@ describe("signup flow", () => {
       }),
       querySelectorAll: vi.fn((sel) => {
         if (sel.includes('[data-smoothr="sign-up"]')) return [btn];
-        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
+        if (sel.includes('[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
       dispatchEvent: vi.fn(),
