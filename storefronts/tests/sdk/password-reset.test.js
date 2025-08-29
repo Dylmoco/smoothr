@@ -234,7 +234,6 @@ describe("password reset confirmation", () => {
       refresh_token: "b",
     });
     expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
-    expect(global.window.alert).toHaveBeenCalled();
   });
 
   it("handles update failure", async () => {
@@ -250,7 +249,6 @@ describe("password reset confirmation", () => {
       refresh_token: "b",
     });
     expect(updateUserMock).toHaveBeenCalledWith({ password: "newpass123" });
-    expect(global.window.alert).toHaveBeenCalled();
   });
 
   it("validates strength and match", async () => {
@@ -373,4 +371,91 @@ describe("password reset confirmation transport", () => {
     expect(closed).toHaveBeenCalledTimes(1);
   });
 
+});
+
+describe('password reset confirm errors', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    createClientMock();
+    global.window = realWindow;
+    global.document = realDocument;
+    window.location.hash = '#access_token=a&refresh_token=b&type=recovery';
+    document.body.innerHTML = `
+      <form data-smoothr="auth-form">
+        <input data-smoothr="password" value="A" />
+        <input data-smoothr="password-confirm" value="B" />
+        <div data-smoothr="password-reset-confirm"></div>
+      </form>`;
+  });
+
+  it('mismatch prevents updateUser and shows error', async () => {
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
+    const auth = await import('../../features/auth/index.js');
+    await auth.initPasswordResetConfirmation();
+    await flushPromises();
+    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
+    await flushPromises();
+    expect(updateUserMock).not.toHaveBeenCalled();
+    expect(setSessionMock).not.toHaveBeenCalled();
+    const err = document.querySelector('[data-smoothr="error"]');
+    expect(err?.textContent).toBe('Passwords do not match.');
+  });
+
+  it('weak password shows friendly error', async () => {
+    document.querySelector('[data-smoothr="password"]').value = 'Password1';
+    document.querySelector('[data-smoothr="password-confirm"]').value = 'Password1';
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
+    updateUserMock.mockResolvedValue({
+      data: null,
+      error: { message: 'password is too short', code: 'weak_password' },
+    });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    const auth = await import('../../features/auth/index.js');
+    await auth.initPasswordResetConfirmation();
+    await flushPromises();
+    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
+    await flushPromises();
+    const err = document.querySelector('[data-smoothr="error"]');
+    expect(err?.textContent).toBe('Please choose a stronger password.');
+  });
+
+  it('expired link shows friendly error', async () => {
+    document.querySelector('[data-smoothr="password"]').value = 'Password1';
+    document.querySelector('[data-smoothr="password-confirm"]').value = 'Password1';
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
+    updateUserMock.mockResolvedValue({
+      data: null,
+      error: { message: 'invalid token', code: 'invalid_token' },
+    });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    const auth = await import('../../features/auth/index.js');
+    await auth.initPasswordResetConfirmation();
+    await flushPromises();
+    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
+    await flushPromises();
+    const err = document.querySelector('[data-smoothr="error"]');
+    expect(err?.textContent).toBe('Your reset link is invalid or has expired. Please request a new one.');
+  });
+
+  it('strips recovery hash after session set', async () => {
+    document.querySelector('[data-smoothr="password"]').value = 'Password1';
+    document.querySelector('[data-smoothr="password-confirm"]').value = 'Password1';
+    window.location.pathname = '/reset-password';
+    window.location.search = '';
+    window.location.hash = '#access_token=XYZ&refresh_token=R&type=recovery';
+    const replaceSpy = vi.spyOn(window.history, 'replaceState');
+    const { updateUserMock, setSessionMock } = currentSupabaseMocks();
+    updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+    setSessionMock.mockResolvedValue({ data: {}, error: null });
+    const auth = await import('../../features/auth/index.js');
+    await auth.initPasswordResetConfirmation();
+    await flushPromises();
+    document.querySelector('[data-smoothr="password-reset-confirm"]').dispatchEvent(new Event('click', { bubbles: true }));
+    await flushPromises();
+    expect(replaceSpy).toHaveBeenCalled();
+    const urlArg = replaceSpy.mock.calls[0][2];
+    expect(urlArg).not.toContain('access_token');
+    expect(urlArg).not.toContain('#');
+  });
 });
