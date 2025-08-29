@@ -30,6 +30,66 @@ function emitAuthError(code, detail = {}) {
   emitAuth('smoothr:auth:error', { code, ...detail });
 }
 
+// Renders/updates a small inline error element inside the current auth form.
+// TEMP: minimal inline styles; frontend can override or we can remove later.
+function renderAuthError(container, message) {
+  try {
+    const C = container || document.querySelector('[data-smoothr="auth-form"]');
+    if (!C) return;
+    let el = C.querySelector('[data-smoothr="error"]');
+    if (!el) {
+      el = document.createElement('div');
+      el.setAttribute('data-smoothr', 'error');
+      el.setAttribute('role', 'alert');
+      el.setAttribute('aria-live', 'polite');
+      // tiny inline style, easy to override (Webflow custom code/GSAP later)
+      el.style.marginTop = '8px';
+      el.style.fontSize = '0.95rem';
+      el.style.color = '#e11d48'; // rose-600
+      C.appendChild(el);
+    }
+    el.textContent = message || 'Something went wrong. Please try again.';
+  } catch {}
+}
+
+// Optional: clear error when typing
+function clearAuthError(container) {
+  try {
+    const C = container || document.querySelector('[data-smoothr="auth-form"]');
+    const el = C?.querySelector?.('[data-smoothr="error"]');
+    if (el) el.textContent = '';
+  } catch {}
+}
+
+function mapResetError(err) {
+  const m = (err && (err.message || err.error_description || err.error)) || '';
+  const code = (err && err.code) || '';
+  const s = (m + ' ' + code).toLowerCase();
+
+  if (s.includes('token') && (s.includes('invalid') || s.includes('expired')))
+    return 'Your reset link is invalid or has expired. Please request a new one.';
+  if (s.includes('password') && (s.includes('weak') || s.includes('too short') || s.includes('length')))
+    return 'Please choose a stronger password.';
+  if (s.includes('mismatch'))
+    return 'Passwords do not match.';
+  return 'Unable to reset your password. Please try again.';
+}
+
+function stripRecoveryHash() {
+  try {
+    const h = window.location.hash || '';
+    if (!h) return;
+    // Supabase recovery hash starts with access_token & type=recovery
+    const hp = new URLSearchParams(h.replace(/^#/, ''));
+    if (hp.has('access_token') || hp.get('type') === 'recovery') {
+      const clean = window.location.pathname + window.location.search;
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, document.title, clean);
+      }
+    }
+  } catch {}
+}
+
 const AUTH_PANEL_SELECTORS = [
   '[data-smoothr="auth-pop-up"]',
   '[data-smoothr="auth-wrapper"]'
@@ -548,14 +608,31 @@ export async function init(options = {}) {
         return;
       }
       if (action === 'password-reset-confirm') {
-        const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
-        const confirm = container?.querySelector('[data-smoothr="password-confirm"]')?.value ?? '';
-        if (!strong(pwd) || pwd !== confirm) return;
+        const { password, confirm } = extractCredsFrom(container);
+        clearAuthError(container);
+        if (password && confirm && password !== confirm) {
+          const msg = 'Passwords do not match.';
+          renderAuthError(container, msg);
+          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm' });
+          return;
+        }
+        if (password && password.length < 8) {
+          const msg = 'Please choose a stronger password.';
+          renderAuthError(container, msg);
+          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm' });
+          return;
+        }
         try {
           if (_prSession) await c.auth.setSession(_prSession);
-          const { data, error } = await c.auth.updateUser({ password: pwd });
+          stripRecoveryHash();
+          const { data, error } = await c.auth.updateUser({ password });
           w.Smoothr.auth.user.value = data?.user ?? null;
-          if (error) throw error;
+          if (error) {
+            const msg = mapResetError(error);
+            renderAuthError(container, msg);
+            emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: error });
+            return;
+          }
           w.alert?.('Password updated');
           const ev = typeof w.CustomEvent === 'function'
             ? new w.CustomEvent('smoothr:login')
@@ -564,8 +641,9 @@ export async function init(options = {}) {
           await sessionSyncAndEmit(c, data?.user?.id || null, _prRedirect || undefined);
         } catch (err) {
           w.Smoothr.auth.user.value = null;
-          w.alert?.(err?.message || String(err));
-          emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+          const msg = mapResetError(err);
+          renderAuthError(container, msg);
+          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: err });
         }
         return;
       }
@@ -867,6 +945,18 @@ function __test_resetAuth() {
   docSubmitHandler = () => {};
   docKeydownHandler = () => {};
 }
+
+// Clear inline auth errors while typing
+try {
+  globalThis.document?.addEventListener?.('input', (e) => {
+    if (!e.target?.closest) return;
+    const form = e.target.closest('[data-smoothr="auth-form"]');
+    if (!form) return;
+    if (e.target.matches('[data-smoothr="password"], [data-smoothr="password-confirm"]')) {
+      clearAuthError(form);
+    }
+  }, { capture: true });
+} catch {}
 
 if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
   const w = window;
