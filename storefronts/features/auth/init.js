@@ -26,6 +26,10 @@ function emitAuth(name, detail = {}) {
   }
 }
 
+function emitAuthError(code, detail = {}) {
+  emitAuth('smoothr:auth:error', { code, ...detail });
+}
+
 const AUTH_PANEL_SELECTORS = [
   '[data-smoothr="auth-pop-up"]',
   '[data-smoothr="auth-wrapper"]'
@@ -409,7 +413,11 @@ export async function init(options = {}) {
         d?.querySelectorAll?.(
           '[data-smoothr="login"], [data-smoothr="sign-up"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], [data-smoothr="login-google"], [data-smoothr="login-apple"]'
         )?.[0];
-      const container = resolveAuthContainer(el) || d;
+      const container = resolveAuthContainer(el);
+      if (!container) {
+        emitAuthError('NO_CONTAINER');
+        return;
+      }
       const action = el?.getAttribute?.('data-smoothr');
       const testClient = (typeof window !== 'undefined' && window.__SMOOTHR_TEST_SUPABASE__) || null;
       const c = testClient || await resolveSupabase();
@@ -655,7 +663,10 @@ export async function init(options = {}) {
     // document submit (capture) — NOW: supports FORM or DIV containers
     docSubmitHandler = async (e) => {
       const container = resolveAuthContainer(e?.target);
-      if (!container) return;
+      if (!container) {
+        emitAuthError('NO_CONTAINER');
+        return;
+      }
       try {
         e.preventDefault?.();
         e.stopPropagation?.();
@@ -752,19 +763,21 @@ export async function init(options = {}) {
     try {
       const Observer = w.MutationObserver || globalThis.MutationObserver;
       const doc = w.document || globalThis.document;
-      if (typeof Observer === 'function') {
+      if (typeof Observer === 'function' && doc) {
         const mo = new Observer(mutationCallback);
-        mo.observe(doc || w, { childList: true, subtree: true });
+        mo.observe(doc, { childList: true, subtree: true });
       }
-      doc?.addEventListener?.('DOMContentLoaded', mutationCallback);
-      doc?.addEventListener?.('click', docActionClickFallback, false);
-      doc?.addEventListener?.('click', docClickHandler, { capture: true, passive: false });
-      if (w.SMOOTHR_DEBUG) {
-        console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
+      if (doc) {
+        doc.addEventListener('DOMContentLoaded', mutationCallback);
+        doc.addEventListener('click', docActionClickFallback, false);
+        doc.addEventListener('click', docClickHandler, { capture: true, passive: false });
+        if (w.SMOOTHR_DEBUG) {
+          console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
+        }
+        doc.addEventListener('submit', docSubmitHandler, true);
+        doc.addEventListener('keydown', docKeydownHandler, { capture: true, passive: false });
+        try { doc.__smoothrAuthBound = true; } catch {}
       }
-      doc?.addEventListener?.('submit', docSubmitHandler, true);
-      doc?.addEventListener?.('keydown', docKeydownHandler, { capture: true, passive: false });
-      try { doc.__smoothrAuthBound = true; } catch {}
     } catch {}
     try { mutationCallback(); } catch {}
     log('auth init complete');
