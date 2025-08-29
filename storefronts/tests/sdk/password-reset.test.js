@@ -125,12 +125,9 @@ describe("password reset request", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     const broker = auth.getBrokerBaseUrl();
-    expect(resetPasswordMock).toHaveBeenCalledWith(
-      "user@example.com",
-      expect.objectContaining({
-        redirectTo: expect.stringMatching(`^${broker}/auth/recovery-bridge`),
-      })
-    );
+    const redirect = resetPasswordMock.mock.calls[0][1]?.redirectTo || "";
+    expect(redirect.startsWith(`${broker}/auth/recovery-bridge`)).toBe(true);
+    expect(redirect).toContain(`orig=${encodeURIComponent(global.window.location.origin)}`);
     expect(global.window.alert).toHaveBeenCalled();
   });
 
@@ -144,6 +141,7 @@ describe("password reset request", () => {
     await flushPromises();
     const redirect = resetPasswordMock.mock.calls[0][1]?.redirectTo || "";
     expect(redirect).toContain("store_id=store_42");
+    expect(redirect).toContain(`orig=${encodeURIComponent(global.window.location.origin)}`);
   });
 
   it("handles failure", async () => {
@@ -157,6 +155,28 @@ describe("password reset request", () => {
     await clickHandler({ preventDefault: () => {} });
     await flushPromises();
     expect(global.window.alert).toHaveBeenCalled();
+  });
+});
+
+describe("recovery bridge fallback", () => {
+  it("uses orig parameter when no store domain", async () => {
+    vi.resetModules();
+    vi.mock("../../../smoothr/lib/supabaseAdmin.ts", () => ({
+      supabaseAdmin: {
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { live_domain: null, store_domain: null } }),
+            }),
+          }),
+        }),
+      },
+    }));
+    const { getServerSideProps } = await import("../../../smoothr/pages/auth/recovery-bridge.tsx");
+    const result = await getServerSideProps({
+      query: { store_id: "store_1", orig: "https://client.example" },
+    });
+    expect(result).toEqual({ props: { destOrigin: "https://client.example", storeId: "store_1" } });
   });
 });
 

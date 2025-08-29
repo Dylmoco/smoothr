@@ -32,6 +32,14 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
     console.error('[recovery-bridge] lookup failed', err);
   }
   if (!destOrigin) {
+    const orig = Array.isArray(query.orig) ? query.orig[0] : (query.orig as string) || '';
+    if (orig) {
+      try {
+        destOrigin = new URL(orig).origin;
+      } catch {}
+    }
+  }
+  if (!destOrigin) {
     return { props: { destOrigin: null, storeId, error: 'Unable to determine redirect destination.' } };
   }
   return { props: { destOrigin, storeId } };
