@@ -1,77 +1,88 @@
-import { useEffect } from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { resolveRecoveryDestination } from '../../../shared/auth/resolveRecoveryDestination';
 
 interface Props {
-  destOrigin: string | null;
-  storeId: string | null;
-  error?: string | null;
+  redirect?: string | null;
+  error?: string | null; // 'NO_ALLOWED_ORIGIN' | message
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) => {
   const storeId = Array.isArray(query.store_id) ? query.store_id[0] : (query.store_id as string) || '';
   if (!storeId) {
-    return { props: { destOrigin: null, storeId: '', error: 'Missing store_id' } };
+    return { props: { redirect: null, error: 'Missing store_id' } };
   }
-  let destOrigin: string | null = null;
   try {
-    const { data } = await supabaseAdmin
+    // 1) Fetch domains from stores
+    const { data: storeRow } = await supabaseAdmin
       .from('stores')
       .select('store_domain, live_domain')
       .eq('id', storeId)
+      .single();
+
+    // 2) Fetch sign_in_redirect_url like session-sync:
+    //    session-sync.ts queries v_public_store first, then falls back to public_store_settings.
+    let signInRedirectUrl: string | null = null;
+    const { data: vps } = await supabaseAdmin
+      .from('v_public_store')
+      .select('sign_in_redirect_url')
+      .eq('store_id', storeId)
       .maybeSingle();
-    const domain = data?.live_domain || data?.store_domain || '';
-    if (domain) {
-      try {
-        const url = new URL(`https://${domain}`);
-        destOrigin = `https://${url.hostname}`;
-      } catch {}
+    if (vps?.sign_in_redirect_url) {
+      signInRedirectUrl = vps.sign_in_redirect_url as string;
+    } else {
+      const { data: pss } = await supabaseAdmin
+        .from('public_store_settings')
+        .select('sign_in_redirect_url')
+        .eq('store_id', storeId)
+        .maybeSingle();
+      signInRedirectUrl = (pss?.sign_in_redirect_url as string) ?? null;
     }
-  } catch (err) {
-    console.error('[recovery-bridge] lookup failed', err);
-  }
-  if (!destOrigin) {
-    const orig = Array.isArray(query.orig) ? query.orig[0] : (query.orig as string) || '';
-    if (orig) {
-      try {
-        destOrigin = new URL(orig).origin;
-      } catch {}
+
+    // 3) Resolve destination using allowlist logic
+    const orig = Array.isArray(query.orig) ? query.orig[0] : (query.orig as string) || null;
+    const res = resolveRecoveryDestination({
+      liveDomain: storeRow?.live_domain ?? null,
+      storeDomain: storeRow?.store_domain ?? null,
+      signInRedirectUrl,
+      orig,
+      nodeEnv: process.env.NODE_ENV,
+    });
+
+    if (res.type === 'ok') {
+      const dest = new URL('/reset-password', res.origin);
+      dest.searchParams.set('store_id', storeId);
+      // NOTE: Supabase’s recovery token typically arrives via hash (#access_token=...).
+      // We intentionally do not parse/forward hashes here—browser keeps them.
+      return {
+        redirect: { destination: dest.toString(), permanent: false },
+      };
     }
+
+    return { props: { redirect: null, error: 'NO_ALLOWED_ORIGIN' } };
+  } catch (e: any) {
+    return { props: { redirect: null, error: e?.message || 'Unknown error' } };
   }
-  if (!destOrigin) {
-    return { props: { destOrigin: null, storeId, error: 'Unable to determine redirect destination.' } };
-  }
-  return { props: { destOrigin, storeId } };
 };
 
-export default function RecoveryBridge({ destOrigin, storeId, error }: Props) {
-  useEffect(() => {
-    if (!destOrigin || !storeId) return;
-    const hash = window.location.hash || '';
-    const target = `${destOrigin}/reset-password?store_id=${encodeURIComponent(storeId)}${hash}`;
-    const link = document.getElementById('smoothr-bridge-link') as HTMLAnchorElement | null;
-    if (link) link.href = target;
-    window.location.replace(target);
-  }, [destOrigin, storeId]);
-
-  if (!destOrigin || error) {
-    return (
-      <main style={{ padding: 20, fontFamily: 'system-ui, sans-serif' }}>
-        <p>{error || 'Missing or invalid store configuration.'}</p>
-      </main>
-    );
-  }
-
-  const fallback = `${destOrigin}/reset-password?store_id=${encodeURIComponent(storeId || '')}`;
-
+export default function RecoveryBridgePage(props: Props) {
   return (
     <>
-      <Head><title>Redirecting...</title></Head>
-      <main style={{ padding: 20, fontFamily: 'system-ui, sans-serif' }}>
-        <p>Redirecting…</p>
-        <p><a id="smoothr-bridge-link" href={fallback}>Continue</a></p>
-      </main>
+      <Head><title>Password Recovery</title></Head>
+      {/* Redirect happens server-side via 303. On error, show minimal guidance. */}
+      {props.error ? (
+        <main style={{ padding: 24 }}>
+          <h1>Recovery paused</h1>
+          <p>
+            This store has no allowed domain configured yet. Ask the store owner to set{' '}
+            <code>live_domain</code> or <code>store_domain</code>, or a{' '}
+            <code>sign_in_redirect_url</code>.
+          </p>
+        </main>
+      ) : (
+        <main />
+      )}
     </>
   );
 }
