@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
-import Router, { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -9,7 +8,6 @@ const supabase = createClient(
 );
 
 export default function SetPasswordPage() {
-  const { query } = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [pwd, setPwd] = useState(''); const [pwd2, setPwd2] = useState('');
   const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false);
@@ -31,22 +29,40 @@ export default function SetPasswordPage() {
 
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
-      const store_id = (query.store_id as string) || null;
+      const storeId =
+        new URLSearchParams(window.location.search).get('store_id') ||
+        (window as any).__SMOOTHR_STORE_ID__;
 
-      const resp = await fetch('/api/auth/session-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ store_id }),
-      });
-      const json = await resp.json();
-      if (!resp.ok || !json?.ok) throw new Error(json?.error || 'Sync failed');
+      if (!token || !storeId) {
+        setMsg('Something went wrong');
+        setBusy(false);
+        return;
+      }
 
-      Router.replace(json.redirect_url || json.sign_in_redirect_url || '/');
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/api/auth/session-sync';
+      form.enctype = 'application/x-www-form-urlencoded';
+      form.target = '_self';
+
+      const mk = (name: string, value: string) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      };
+
+      mk('store_id', storeId);
+      mk('access_token', token);
+      document.body.appendChild(form);
+      form.submit();
+      return;
     } catch (err: any) {
       console.error('[set-password] error', err);
       setMsg(err?.message || 'Something went wrong'); setBusy(false);
     }
-  }, [pwd, pwd2, query.store_id]);
+  }, [pwd, pwd2]);
 
   return (
     <>
