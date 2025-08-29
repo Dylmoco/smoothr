@@ -38,6 +38,10 @@ export async function loadPublicConfig(storeId, supabase) {
       sign_out_redirect_url: data?.sign_out_redirect_url ?? null
     };
 
+    const cfg = getConfig();
+    cfg.sign_in_redirect_url = settings.sign_in_redirect_url;
+    cfg.sign_out_redirect_url = settings.sign_out_redirect_url;
+
     log('Config fetched');
     return settings;
   } catch (e) {

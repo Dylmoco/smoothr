@@ -34,6 +34,18 @@ const checks = [
     ok: !content.includes('querySelectorAll("form[data-smoothr=\'auth-form\']")'),
     msg: 'contains deprecated querySelectorAll("form[data-smoothr=\'auth-form\']") call',
   },
+  {
+    ok: content.includes('/api/auth/session-sync'),
+    msg: 'missing session-sync endpoint',
+  },
+  {
+    ok: content.includes('application/x-www-form-urlencoded'),
+    msg: 'missing form-urlencoded marker',
+  },
+  {
+    ok: content.includes('method="POST"') || content.includes('.method="POST"'),
+    msg: 'missing form POST marker',
+  },
 ];
 
 for (const c of checks) {

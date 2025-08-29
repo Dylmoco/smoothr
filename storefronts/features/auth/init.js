@@ -369,33 +369,75 @@ export async function init(options = {}) {
     // was: /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8
     const strong = p => /[0-9]/.test(p) && p?.length >= 8;
 
+    // Auto mode: if a sign-in redirect exists, use form POST + 303; otherwise XHR.
     const sessionSyncAndEmit = async (supa, userId, overrideUrl) => {
       try {
         const { data: sess } = await supa.auth.getSession();
         const token = sess?.session?.access_token;
-        const storeId = w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
-        if (token && storeId) {
-          const resp = await fetch(`${getBrokerBaseUrl()}/api/auth/session-sync`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ store_id: storeId }),
-          });
-          const json = await resp.json().catch(() => ({}));
-          if (resp.ok && json?.ok) {
-            emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
-            emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-            const url =
-              overrideUrl ||
-              json.redirect_url ||
-              json.sign_in_redirect_url ||
-              (await (typeof lookupRedirectUrl === 'function' ? lookupRedirectUrl() : null)) ||
-              (w.location?.origin ?? '');
-            if (url) w.location?.assign?.(url);
-            return;
+        const storeId =
+          w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
+        if (!token || !storeId) throw new Error('missing token or store');
+
+        const cfg = (w && w.SMOOTHR_CONFIG) || {};
+        const explicit =
+          typeof cfg.forceFormRedirect === 'boolean'
+            ? cfg.forceFormRedirect
+            : undefined;
+        const configuredUrl =
+          cfg.sign_in_redirect_url ||
+          (cfg.redirects && cfg.redirects.sign_in) ||
+          null;
+        let hasRedirect = !!configuredUrl;
+        if (!hasRedirect && typeof lookupRedirectUrl === 'function') {
+          try { hasRedirect = !!(await lookupRedirectUrl()); } catch {}
+        }
+        const shouldRedirect =
+          typeof explicit === 'boolean' ? explicit : hasRedirect;
+
+        if (shouldRedirect) {
+          emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
+          emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
+          const doc = w.document;
+          const form = doc?.createElement?.('form');
+          if (!form) return;
+          form.method = 'POST';
+          form.enctype = 'application/x-www-form-urlencoded';
+          form.action = `${getBrokerBaseUrl()}/api/auth/session-sync`;
+          form.style.display = 'none';
+          const mk = (name, value) => {
+            const input = doc?.createElement?.('input');
+            if (input) {
+              input.type = 'hidden';
+              input.name = name;
+              input.value = value || '';
+              form.appendChild(input);
+            }
+          };
+          mk('store_id', storeId);
+          mk('access_token', token);
+          try { doc?.body?.appendChild?.(form); } catch {}
+          try { form.submit(); } catch {}
+          return;
+        }
+
+        const resp = await fetch(`${getBrokerBaseUrl()}/api/auth/session-sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ store_id: storeId }),
+        });
+        const json = await resp.json().catch(() => ({}));
+        if (resp.ok && json?.ok) {
+          emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
+          emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
+          const url =
+            overrideUrl || json.redirect_url || json.sign_in_redirect_url;
+          if (url) {
+            try { w.location?.assign?.(url); } catch {}
           }
+          return;
         }
       } catch {}
       emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
