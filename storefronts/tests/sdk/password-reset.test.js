@@ -104,7 +104,7 @@ describe("password reset request", () => {
       }),
       querySelectorAll: vi.fn((sel) => {
         if (sel.includes('[data-smoothr="password-reset"]')) return [btn];
-        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
+        if (sel.includes('[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
     };
@@ -194,7 +194,7 @@ describe("password reset confirmation", () => {
       }),
       querySelectorAll: vi.fn((sel) => {
         if (sel.includes('[data-smoothr="password-reset-confirm"]')) return [btn];
-        if (sel.includes('form[data-smoothr="auth-form"]')) return [form];
+        if (sel.includes('[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
     };

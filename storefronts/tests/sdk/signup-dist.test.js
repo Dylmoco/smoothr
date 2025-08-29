@@ -36,8 +36,8 @@ beforeAll(async () => {
   const distPath = path.join(repoRoot, "storefronts/dist/smoothr-sdk.js");
   const code = await fs.promises.readFile(distPath, "utf8");
   const stripped = code.replace(
-    /export\{Fo as SDK_TAG,tu as __test_bootstrap\};/,
-    "window.Smoothr=window.Smoothr||{};window.Smoothr.SDK_TAG=Fo;window.Smoothr.__test_bootstrap=tu;",
+    /export\{Fo as SDK_TAG,(\w+) as __test_bootstrap\};/,
+    "window.Smoothr=window.Smoothr||{};window.Smoothr.SDK_TAG=Fo;window.Smoothr.__test_bootstrap=$1;",
   );
   new Function(stripped)();
 });
@@ -124,6 +124,21 @@ describe.each(["form", "div"])("signup dist (%s wrapper)", (wrapper) => {
     expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(0);
     expect(errorSpy).toHaveBeenCalledTimes(1);
     document.removeEventListener("smoothr:auth:error", errorSpy);
+  });
+
+  it("click outside container emits NO_CONTAINER error without signUp", async () => {
+    await setupDom(wrapper);
+    const outsider = document.createElement('div');
+    outsider.setAttribute('data-smoothr', 'sign-up');
+    document.body.appendChild(outsider);
+    const errorSpy = vi.fn();
+    document.addEventListener('smoothr:auth:error', errorSpy, { once: false });
+    outsider.click();
+    await flush();
+    expect(window.__SMOOTHR_TEST_SUPABASE__.auth.signUp).toHaveBeenCalledTimes(0);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy.mock.calls[0][0].detail.code).toBe('NO_CONTAINER');
+    document.removeEventListener('smoothr:auth:error', errorSpy);
   });
 });
 

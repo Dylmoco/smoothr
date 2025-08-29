@@ -83,7 +83,7 @@ describe("dynamic DOM bindings", () => {
         if (selector.includes(ACCOUNT_ACCESS_SELECTOR)) {
           return elements.filter((el) => el.dataset?.smoothr === "account-access");
         }
-        if (selector.includes('form[data-smoothr="auth-form"]') || selector.includes('[data-smoothr="auth-form"]')) {
+        if (selector.includes('[data-smoothr="auth-form"]')) {
           return forms;
         }
         if (selector.includes('[data-smoothr="sign-out"]')) {
@@ -138,7 +138,7 @@ describe("dynamic DOM bindings", () => {
     };
     btn.closest = vi.fn((sel) => {
       if (sel === '[data-smoothr]') return btn;
-      if (sel === 'form[data-smoothr="auth-form"]' || sel === '[data-smoothr="auth-form"]') return form;
+      if (sel === '[data-smoothr="auth-form"]') return form;
       return null;
     });
 
@@ -190,7 +190,7 @@ describe("dynamic DOM bindings", () => {
     };
     btn.closest = vi.fn((sel) => {
       if (sel === '[data-smoothr]') return btn;
-      if (sel === 'form[data-smoothr="auth-form"]' || sel === '[data-smoothr="auth-form"]') return form;
+      if (sel === '[data-smoothr="auth-form"]') return form;
       return null;
     });
 
@@ -376,7 +376,7 @@ describe("dynamic DOM bindings", () => {
     };
     btn.closest = vi.fn((sel) => {
       if (sel === '[data-smoothr]') return btn;
-      if (sel === 'form[data-smoothr="auth-form"]' || sel === '[data-smoothr="auth-form"]') return form;
+      if (sel === '[data-smoothr="auth-form"]') return form;
       return null;
     });
 
