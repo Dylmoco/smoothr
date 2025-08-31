@@ -114,7 +114,7 @@ export default function RecoveryBridgePage(props: Props) {
           <p>Forwarding you to the reset page…</p>
           {props.redirect && (
             <p>
-              If you’re not redirected, <a href={props.redirect}>click here</a>
+              If you’re not redirected automatically, <a href={props.redirect}>click here</a>.
               {/* The anchor cannot include the hash (not available server-side), but the effect above handles it. */}
             </p>
           )}
