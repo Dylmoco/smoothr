@@ -1,3 +1,4 @@
+import React from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
@@ -51,17 +52,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
     });
 
     if (res.type === 'ok') {
-      if (process.env.NODE_ENV !== 'production') {
-        // lightweight debug telemetry
-        // eslint-disable-next-line no-console
-        console.info('[Smoothr][recovery-bridge] branch:', res.meta.branch);
-      }
       const dest = new URL('/reset-password', res.origin); // no store_id in destination
-      // NOTE: Supabase’s recovery token typically arrives via hash (#access_token=...).
-      // We intentionally do not parse/forward hashes here—browser keeps them.
-      return {
-        redirect: { destination: dest.toString(), permanent: false },
-      };
+      return { props: { redirect: dest.toString(), error: null } };
     }
 
     return { props: { redirect: null, error: 'NO_ALLOWED_ORIGIN' } };
@@ -71,10 +63,26 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
 };
 
 export default function RecoveryBridgePage(props: Props) {
+  // Client-side redirect to preserve hash: append window.location.hash to destination
+  React.useEffect(() => {
+    if (!props.redirect) return;
+    try {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.info('[Smoothr][recovery-bridge] forwarding to', props.redirect);
+      }
+      const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
+      const target = props.redirect + hash;
+      window.location.replace(target);
+    } catch {
+      // ignore; fall through to fallback link
+    }
+  }, [props.redirect]);
+
   return (
     <>
       <Head><title>Password Recovery</title></Head>
-      {/* Redirect happens server-side via 303. On error, show minimal guidance. */}
+      {/* Redirect happens client-side to preserve the hash. On error, show minimal guidance. */}
       {props.error ? (
         <main style={{ padding: 24 }}>
           <h1>Recovery paused</h1>
@@ -102,7 +110,15 @@ export default function RecoveryBridgePage(props: Props) {
           )}
         </main>
       ) : (
-        <main />
+        <main style={{ padding: 24 }}>
+          <p>Forwarding you to the reset page…</p>
+          {props.redirect && (
+            <p>
+              If you’re not redirected, <a href={props.redirect}>click here</a>
+              {/* The anchor cannot include the hash (not available server-side), but the effect above handles it. */}
+            </p>
+          )}
+        </main>
       )}
     </>
   );
