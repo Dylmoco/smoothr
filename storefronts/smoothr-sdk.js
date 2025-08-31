@@ -7,12 +7,27 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
 }
 
 export const SDK_TAG = 'auth-popup-locked-v1';
+let __configReadyResolve;
 if (typeof window !== 'undefined') {
+  window.SMOOTHR_CONFIG_READY = new Promise(r => (__configReadyResolve = r));
   window.Smoothr = window.Smoothr || {};
   window.Smoothr.meta = Object.assign({}, window.Smoothr.meta, { sdkTag: SDK_TAG });
   if (window.SMOOTHR_DEBUG) {
     console.info('[Smoothr] build', { sdkTag: SDK_TAG, builtAt: '__BUILD_TIME__' });
   }
+}
+
+export async function ensureConfigLoaded() {
+  return window.SMOOTHR_CONFIG_READY;
+}
+
+export function getCachedBrokerBase() {
+  return window.SMOOTHR_CONFIG?.__brokerBase || null;
+}
+
+if (typeof window !== 'undefined') {
+  window.ensureConfigLoaded = ensureConfigLoaded;
+  window.getCachedBrokerBase = getCachedBrokerBase;
 }
 
 const Smoothr = (window.Smoothr = window.Smoothr || {});
@@ -206,6 +221,25 @@ if (!scriptEl || !storeId) {
         });
       }
     } catch {}
+    let brokerBase = window.SMOOTHR_CONFIG?.broker_origin || null;
+    if (!brokerBase) {
+      const cfgAttr = scriptEl?.dataset?.configUrl;
+      if (cfgAttr) {
+        try { brokerBase = new URL(cfgAttr).origin; } catch {}
+      }
+    }
+    if (!brokerBase && scriptEl?.src) {
+      try {
+        const u = new URL(scriptEl.src);
+        if (u.hostname !== 'sdk.smoothr.io') brokerBase = u.origin;
+      } catch {}
+    }
+    if (!brokerBase) brokerBase = 'https://smoothr.vercel.app';
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      __brokerBase: brokerBase
+    };
+    __configReadyResolve?.(true);
 
     await initFeatures();
   })();

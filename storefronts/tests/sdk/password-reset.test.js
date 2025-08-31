@@ -44,6 +44,8 @@ it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
   document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
   createClientMock();
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
   await auth.init();
@@ -101,6 +103,8 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
   document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
   window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
   const auth = await import('../../features/auth/index.js');
@@ -122,15 +126,35 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
 it('falls back to script origin when no config URL present', async () => {
   vi.resetModules();
   document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  vi.spyOn(auth, 'getBrokerBaseUrl').mockReturnValue(null);
   const { requestPasswordResetForEmail } = auth;
   await requestPasswordResetForEmail?.('user@example.com');
 
   expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
+  fetchSpy.mockRestore();
+});
+
+// Case C: cached broker points to SDK host -> fallback to Vercel app
+it('ignores sdk host broker and falls back to smoothr.vercel.app', async () => {
+  vi.resetModules();
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  window.SMOOTHR_CONFIG = { broker_origin: 'https://sdk.smoothr.io', store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
+  globalThis.getCachedBrokerBase = () => 'https://sdk.smoothr.io';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  const { requestPasswordResetForEmail } = auth;
+  await requestPasswordResetForEmail?.('user@example.com');
+
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://smoothr.vercel.app/api/auth/send-reset');
   expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   fetchSpy.mockRestore();
 });
