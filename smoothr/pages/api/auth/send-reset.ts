@@ -108,12 +108,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const { subject, html, text } = renderResetEmail({ storeName, logoUrl, actionLink });
 
+    const rawFrom = process.env.EMAIL_FROM || '';
+    const addressMatch = rawFrom.match(/<([^>]+)>/);
+    const fromAddress = addressMatch ? addressMatch[1] : rawFrom; // fallback if no angle brackets
+    const fromDisplay = `${storeName} via Smoothr`;
+    const fromHeader = fromAddress ? `${fromDisplay} <${fromAddress}>` : rawFrom;
+
     const send = await sendEmail({
       to: email,
       subject,
       html,
       text,
-      from: process.env.EMAIL_FROM || null,
+      from: fromHeader,
     });
     if (!send.ok) {
       const errMsg = 'error' in send && send.error ? send.error : 'send_failed';
