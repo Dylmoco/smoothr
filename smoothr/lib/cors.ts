@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabaseAdmin';
+import { getSupabaseAdmin } from './supabaseAdmin';
 
 const wildcardDomains = ['webflow.io', 'framer.website', 'webstudio.is'];
 
@@ -17,6 +17,7 @@ export async function getAllowOrigin(
 
     const allowList = [...envList];
     if (storeId) {
+      const supabaseAdmin = getSupabaseAdmin();
       const { data } = await supabaseAdmin
         .from('stores')
         .select('store_domain, live_domain')
