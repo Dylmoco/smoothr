@@ -7,24 +7,38 @@ This package contains the storefront modules located in `./features`.
 All build scripts use ECMAScript Module (ESM) syntax and require **Node.js 20 or later**. Update any local builds or Cloudflare/Vercel deployment commands to use Node 20+ if they specify an older version.
 
 The bundled SDK is designed for zero‑config installation on platforms like
-Webflow. Simply include
+Webflow. Broker resolution order is:
+1. `data-config-url`
+2. script origin
+3. `https://smoothr.vercel.app`
 
 ```html
+<!-- Modern (recommended) -->
 <script
   id="smoothr-sdk"
   type="module"
   src="https://sdk.smoothr.io/smoothr-sdk.js"
   data-store-id="…"
   platform="webflow"
-  data-config-url="https://YOUR-BROKER-DOMAIN/api/config"
-></script>
+  data-config-url="https://YOUR-BROKER-DOMAIN/api/config">
+</script>
+
+<!-- Legacy (still supported) -->
+<!-- If you host the SDK on your broker domain, config-url is optional -->
+<script
+  id="smoothr-sdk"
+  type="module"
+  src="https://YOUR-BROKER-DOMAIN/smoothr-sdk.js"
+  data-store-id="…"
+  platform="webflow">
+</script>
 ```
 
-and authentication will initialize automatically. The SDK is available as
+Authentication will initialize automatically. The SDK is available as
 `window.Smoothr` or the lowercase `window.smoothr`.
 
-Password reset requests post to the broker derived from `getBrokerBaseUrl()`,
-which uses the loader tag's `data-config-url` attribute.
+Password reset requests always `POST` to the broker and use
+`credentials:'omit'`.
 
 Create a `.env` file in this directory and provide your Supabase project details.
 These variables are injected at build time so the final SDK has no
