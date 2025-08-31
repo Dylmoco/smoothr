@@ -66,6 +66,9 @@ If a recovery code (`#access_token=…`) appears on any page that isn’t your r
 On successful password change, the SDK performs a **top-level form POST** to `/api/auth/session-sync` so the broker issues a **303** to the store’s **Sign-in Success Redirect URL**, or `/` if not configured. This guarantees landing on the client homepage.  
 If passwords don’t match, the SDK shows an inline error **and throws** (`Error('password_mismatch')`) for programmatic flows.
 
+**Reset emails are now sent by the broker**  
+The SDK calls `POST /api/auth/send-reset` with `{ email, store_id, redirectTo }`. The broker generates a Supabase recovery link and emails a branded template (logo + CTA). The `redirectTo` points to the broker’s `/auth/recovery-bridge` so the token lands on your reset page and stays in the hash.
+
 ## Features
 
 - abandoned-cart

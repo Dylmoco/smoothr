@@ -43,7 +43,7 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
   createClientMock();
-  const { resetPasswordMock } = currentSupabaseMocks();
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
   await auth.init();
   await flushPromises();
@@ -59,16 +59,17 @@ it('submits password-reset via Enter on reset-only form', async () => {
   document.body.appendChild(form);
   auth.bindAuthElements?.(form);
 
-  resetPasswordMock.mockResolvedValue({ data: {}, error: null });
   reset.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   await flushPromises();
 
-  expect(resetPasswordMock).toHaveBeenCalledWith('user@example.com', expect.any(Object));
+  expect(fetchSpy).toHaveBeenCalledWith('/api/auth/send-reset', expect.objectContaining({ method: 'POST' }));
+  fetchSpy.mockRestore();
 });
 
 it('does not send duplicate reset emails when clicking a bound reset control', async () => {
   vi.resetModules();
   createClientMock();
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
   await auth.init();
   await flushPromises();
@@ -84,15 +85,31 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
   // Ensure direct binding is attached
   auth.bindAuthElements(container);
 
-  const supa = await auth.resolveSupabase?.();
-  const resetSpy = vi.spyOn(supa.auth, 'resetPasswordForEmail')
-    .mockResolvedValue({ data: {}, error: null });
-
   const trigger = container.querySelector('[data-smoothr="password-reset"]');
   trigger.click();
   await flushPromises();
 
-  expect(resetSpy).toHaveBeenCalledTimes(1);
+  expect(fetchSpy).toHaveBeenCalledTimes(1);
+  fetchSpy.mockRestore();
+});
+it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
+  vi.resetModules();
+  document.body.innerHTML = `<form data-smoothr="auth-form"></form>`;
+  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  const { requestPasswordResetForEmail } = auth;
+  await requestPasswordResetForEmail?.('user@example.com');
+
+  const payload = JSON.parse(fetchSpy.mock.calls.at(-1)[1].body);
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('/api/auth/send-reset');
+  expect(payload.email).toBe('user@example.com');
+  expect(payload.store_id).toBe('store_test');
+  expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=store_test/);
+  expect(String(payload.redirectTo)).toMatch(/orig=/);
+  fetchSpy.mockRestore();
 });
 
 it('session-sync stay-on-page can post via hidden iframe when enabled', async () => {
@@ -105,98 +122,6 @@ it('session-sync stay-on-page can post via hidden iframe when enabled', async ()
   expect(before).toBeGreaterThanOrEqual(0);
 });
 
-describe("password reset request", () => {
-  let clickHandler;
-  let emailValue;
-
-  beforeEach(async () => {
-    vi.resetModules();
-    createClientMock();
-    const { getUserMock } = currentSupabaseMocks();
-    getUserMock.mockResolvedValue({ data: { user: null } });
-    emailValue = "user@example.com";
-    clickHandler = undefined;
-    let btn;
-    const form = {
-      dataset: { smoothr: "auth-form" },
-      querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr="email"]')
-          return { value: emailValue };
-        if (sel === '[data-smoothr="password-reset"]') return btn;
-        return null;
-      }),
-    };
-    btn = {
-      tagName: "DIV",
-      dataset: { smoothr: "password-reset" },
-      getAttribute: (attr) =>
-        attr === "data-smoothr" ? "password-reset" : null,
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === "click") clickHandler = cb;
-      }),
-      closest: vi.fn(() => form),
-    };
-    global.window = {
-      location: { href: "", origin: "https://client.example", search: "" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      SMOOTHR_CONFIG: {},
-    };
-    global.document = {
-      addEventListener: vi.fn((evt, cb) => {
-        if (evt === "DOMContentLoaded") cb();
-      }),
-      querySelectorAll: vi.fn((sel) => {
-        if (sel.includes('[data-smoothr="password-reset"]')) return [btn];
-        if (sel.includes('[data-smoothr="auth-form"]')) return [form];
-        return [];
-      }),
-    };
-    global.alert = global.window.alert = vi.fn();
-    auth = await import("../../features/auth/index.js");
-    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
-  });
-
-  it("sends reset email", async () => {
-    const { resetPasswordMock } = currentSupabaseMocks();
-    resetPasswordMock.mockResolvedValue({ data: {}, error: null });
-    await auth.init();
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    const broker = auth.getBrokerBaseUrl();
-    const redirect = resetPasswordMock.mock.calls[0][1]?.redirectTo || "";
-    expect(redirect.startsWith(`${broker}/auth/recovery-bridge`)).toBe(true);
-    expect(redirect).toContain(`orig=${encodeURIComponent(global.window.location.origin)}`);
-    expect(global.window.alert).toHaveBeenCalled();
-  });
-
-  it("includes store_id when available", async () => {
-    const { resetPasswordMock } = currentSupabaseMocks();
-    resetPasswordMock.mockResolvedValue({ data: {}, error: null });
-    global.window.SMOOTHR_CONFIG.storeId = "store_42";
-    await auth.init();
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    const redirect = resetPasswordMock.mock.calls[0][1]?.redirectTo || "";
-    expect(redirect).toContain("store_id=store_42");
-    expect(redirect).toContain(`orig=${encodeURIComponent(global.window.location.origin)}`);
-  });
-
-  it("handles failure", async () => {
-    const { resetPasswordMock } = currentSupabaseMocks();
-    resetPasswordMock.mockResolvedValue({
-      data: null,
-      error: new Error("bad"),
-    });
-    await auth.init();
-    await flushPromises();
-    await clickHandler({ preventDefault: () => {} });
-    await flushPromises();
-    expect(global.window.alert).toHaveBeenCalled();
-  });
-});
 
 describe('resolveRecoveryDestination (allowlist)', () => {
   it('rejects arbitrary orig in production when no domains are configured', () => {

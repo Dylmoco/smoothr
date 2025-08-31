@@ -9,6 +9,7 @@ export {
   normalizeDomain,
   initPasswordResetConfirmation,
   clickHandler,
+  requestPasswordResetForEmail,
   googleClickHandler,
   appleClickHandler,
   signOutHandler,
