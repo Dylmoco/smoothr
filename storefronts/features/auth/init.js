@@ -371,15 +371,18 @@ export const resolveSupabase = async () => {
 
 export async function requestPasswordResetForEmail(email) {
   const redirectTo = getPasswordResetRedirectUrl();
+  const script = document.getElementById('smoothr-sdk');
+  const brokerBase = script?.src ? new URL(script.src).origin : window.location.origin; // fallback
   const body = JSON.stringify({
     email,
     store_id:
       (window.SMOOTHR_CONFIG && window.SMOOTHR_CONFIG.store_id) ||
-      document.getElementById('smoothr-sdk')?.dataset?.storeId ||
+      script?.dataset?.storeId ||
       '',
+    // still send redirectTo for analytics/telemetry if you want, but broker ignores untrusted targets
     redirectTo,
   });
-  const resp = await fetch('/api/auth/send-reset', {
+  const resp = await fetch(`${brokerBase}/api/auth/send-reset`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body,

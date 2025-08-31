@@ -62,7 +62,10 @@ it('submits password-reset via Enter on reset-only form', async () => {
   reset.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   await flushPromises();
 
-  expect(fetchSpy).toHaveBeenCalledWith('/api/auth/send-reset', expect.objectContaining({ method: 'POST' }));
+  expect(fetchSpy).toHaveBeenCalledWith(
+    `${window.location.origin}/api/auth/send-reset`,
+    expect.objectContaining({ method: 'POST' })
+  );
   fetchSpy.mockRestore();
 });
 
@@ -94,7 +97,7 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
 });
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<form data-smoothr="auth-form"></form>`;
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
   window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
@@ -104,7 +107,9 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   await requestPasswordResetForEmail?.('user@example.com');
 
   const payload = JSON.parse(fetchSpy.mock.calls.at(-1)[1].body);
-  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('/api/auth/send-reset');
+  const script = document.getElementById('smoothr-sdk');
+  const brokerBase = new URL(script.src).origin;
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe(`${brokerBase}/api/auth/send-reset`);
   expect(payload.email).toBe('user@example.com');
   expect(payload.store_id).toBe('store_test');
   expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=store_test/);

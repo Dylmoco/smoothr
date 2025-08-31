@@ -15,10 +15,27 @@ function getBrokerOrigin(req: NextApiRequest): string {
   return `${proto}://${host}`;
 }
 
+const storeDomainCache = new Map<string, { live_domain: string | null; store_domain: string | null }>();
+async function getStoreDomains(id: string) {
+  if (storeDomainCache.has(id)) return storeDomainCache.get(id)!;
+  const supabase = getSupabaseAdmin();
+  const { data } = await supabase
+    .from('stores')
+    .select('live_domain, store_domain')
+    .eq('id', id)
+    .maybeSingle();
+  const out = {
+    live_domain: (data as any)?.live_domain || null,
+    store_domain: (data as any)?.store_domain || null,
+  };
+  storeDomainCache.set(id, out);
+  return out;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
-    const { email, store_id, redirectTo } = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) || {};
+    const { email, store_id, redirectTo: _redirectTo } = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) || {};
     if (!email || !store_id) return res.status(400).json({ ok: false, error: 'Missing email or store_id' });
 
     const supabase = getSupabaseAdmin();
@@ -27,11 +44,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { data: store } = await supabase.from('stores').select('store_name').eq('id', store_id).maybeSingle();
     const { data: settings } = await supabase.from('public_store_settings').select('logo').eq('store_id', store_id).maybeSingle();
 
-    // Build redirectTo if SDK didn’t supply
-    const origin = getBrokerOrigin(req);
-    const dest = redirectTo && typeof redirectTo === 'string'
-      ? redirectTo
-      : `${origin}/auth/recovery-bridge?store_id=${encodeURIComponent(store_id)}&orig=${encodeURIComponent(origin)}`;
+    // Always derive broker destination on the server; never trust client redirectTo
+    const brokerOrigin = getBrokerOrigin(req); // existing helper
+    // Fetch allowed store origins (adjust to your existing helper / query if available)
+    const { live_domain, store_domain } = await getStoreDomains(store_id).catch(() => ({ live_domain: null, store_domain: null }));
+    const dev = process.env.NODE_ENV !== 'production';
+    const allowedOrigins = [
+      live_domain,
+      store_domain,
+      dev ? 'http://localhost' : null,
+      dev ? 'https://localhost' : null,
+    ].filter(Boolean) as string[];
+
+    // Choose preferred origin: live → store → broker (fallback)
+    const preferredOrigin = allowedOrigins.find(Boolean) || brokerOrigin;
+
+    const dest = `${brokerOrigin}/auth/recovery-bridge?store_id=${encodeURIComponent(
+      store_id
+    )}&orig=${encodeURIComponent(preferredOrigin)}`;
 
     // Generate Supabase recovery link
     // NOTE: supabase-js v2 admin.generateLink supports redirectTo
@@ -40,12 +70,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       type: 'recovery',
       email,
       options: { redirectTo: dest },
-    } as any);
-    if (linkErr || !linkData?.action_link) {
+    });
+    const actionLink = linkData?.properties?.action_link ?? null;
+    if (linkErr || !actionLink) {
       return res.status(500).json({ ok: false, error: linkErr?.message || 'link_error' });
     }
-
-    const actionLink = linkData.action_link as string;
     const storeName = store?.store_name || 'Your Store';
     const logoUrl = (settings as any)?.logo || null;
 
