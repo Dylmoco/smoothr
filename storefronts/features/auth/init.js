@@ -163,6 +163,15 @@ export function getBrokerBaseUrl() {
   // 3) Fallback to your Vercel app origin (safe default)
   return 'https://smoothr.vercel.app';
 }
+export function getPasswordResetRedirectUrl() {
+  const w = globalThis.window || globalThis;
+  const cfg = typeof getConfig === 'function' ? getConfig() : (w.SMOOTHR_CONFIG || {});
+  const storeId = cfg.storeId || w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
+  const broker = getBrokerBaseUrl();
+  const origin = encodeURIComponent(w.location?.origin || '');
+  return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
+}
+
 
 // when no redirect is configured, we currently use XHR (console may show CORS in dev)
 // optionally use hidden-iframe to avoid CORS noise entirely
@@ -359,6 +368,35 @@ export const resolveSupabase = async () => {
     return null;
   }
 };
+
+export async function requestPasswordResetForEmail(email) {
+  const redirectTo = getPasswordResetRedirectUrl();
+  const body = JSON.stringify({
+    email,
+    store_id:
+      (window.SMOOTHR_CONFIG && window.SMOOTHR_CONFIG.store_id) ||
+      document.getElementById('smoothr-sdk')?.dataset?.storeId ||
+      '',
+    redirectTo,
+  });
+  const resp = await fetch('/api/auth/send-reset', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body,
+    credentials: 'include',
+  });
+  if (!resp.ok) {
+    try {
+      const supabase = await resolveSupabase();
+      const { error } = await supabase?.auth.resetPasswordForEmail(email, { redirectTo }) || {};
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      throw new Error('reset_email_failed');
+    }
+  }
+  return true;
+}
 
 /** @internal test-only helper to avoid bundling legacy deps */
   async function tryImportClient() {
@@ -646,13 +684,7 @@ export async function init(options = {}) {
         const successEl = container?.querySelector('[data-smoothr-success]');
         const errorEl = container?.querySelector('[data-smoothr-error]');
         try {
-          const cfg = (typeof getConfig === 'function' ? getConfig() : (w.SMOOTHR_CONFIG || {}));
-          const storeId = cfg.storeId || w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
-          const broker = getBrokerBaseUrl();
-          const origin = encodeURIComponent(w.location?.origin || '');
-          const redirectTo = `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
-          const { error: resetErr } = await c.auth.resetPasswordForEmail(email, { redirectTo });
-          if (resetErr) throw resetErr;
+          await requestPasswordResetForEmail(email);
           w.Smoothr.auth.user.value = null;
           if (successEl) {
             successEl.textContent = 'Check your email for a reset link.';
