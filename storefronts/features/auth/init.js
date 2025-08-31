@@ -372,7 +372,7 @@ export const resolveSupabase = async () => {
 export async function requestPasswordResetForEmail(email) {
   const redirectTo = getPasswordResetRedirectUrl();
   const script = document.getElementById('smoothr-sdk');
-  const brokerBase = script?.src ? new URL(script.src).origin : window.location.origin; // fallback
+  const brokerBase = getBrokerBaseUrl();
   const body = JSON.stringify({
     email,
     store_id:
@@ -386,7 +386,7 @@ export async function requestPasswordResetForEmail(email) {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body,
-    credentials: 'include',
+    credentials: 'omit',
   });
   if (!resp.ok) {
     try {

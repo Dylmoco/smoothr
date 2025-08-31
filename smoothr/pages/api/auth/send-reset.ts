@@ -45,6 +45,18 @@ async function getStoreBranding(supabaseAdmin: any, store_id: string) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
+  // CORS: allow cross-origin, no credentials needed (OPTIONS handled)
+  function setCors(res: any) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+  if (req.method === 'OPTIONS') {
+    setCors(res);
+    return res.status(204).end();
+  }
+  setCors(res);
   try {
     if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
     const { email, store_id, redirectTo: _redirectTo } = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) || {};

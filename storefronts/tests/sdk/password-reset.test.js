@@ -42,6 +42,7 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
+  document.body.innerHTML = '<script id="smoothr-sdk" data-config-url="https://broker.example/api/config"></script>';
   createClientMock();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
@@ -63,8 +64,8 @@ it('submits password-reset via Enter on reset-only form', async () => {
   await flushPromises();
 
   expect(fetchSpy).toHaveBeenCalledWith(
-    `${window.location.origin}/api/auth/send-reset`,
-    expect.objectContaining({ method: 'POST' })
+    'https://broker.example/api/auth/send-reset',
+    expect.objectContaining({ method: 'POST', credentials: 'omit' })
   );
   fetchSpy.mockRestore();
 });
@@ -97,7 +98,7 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
 });
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
   window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
@@ -107,9 +108,8 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   await requestPasswordResetForEmail?.('user@example.com');
 
   const payload = JSON.parse(fetchSpy.mock.calls.at(-1)[1].body);
-  const script = document.getElementById('smoothr-sdk');
-  const brokerBase = new URL(script.src).origin;
-  expect(fetchSpy.mock.calls.at(-1)[0]).toBe(`${brokerBase}/api/auth/send-reset`);
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   expect(payload.email).toBe('user@example.com');
   expect(payload.store_id).toBe('store_test');
   expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=store_test/);
