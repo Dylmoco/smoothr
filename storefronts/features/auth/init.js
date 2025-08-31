@@ -11,6 +11,12 @@ import {
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
+import {
+  hasRecoveryHash,
+  stripHash,
+  isOnResetRoute,
+  stripRecoveryHashIfNotOnReset,
+} from '../../core/hash.js';
 
 const { debug } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
@@ -82,21 +88,6 @@ function markResetLoading(on) {
   if (!root) return;
   if (on) root.classList.add('smoothr-reset-loading');
   else root.classList.remove('smoothr-reset-loading');
-}
-
-function stripRecoveryHash() {
-  try {
-    const h = window.location.hash || '';
-    if (!h) return;
-    // Supabase recovery hash starts with access_token & type=recovery
-    const hp = new URLSearchParams(h.replace(/^#/, ''));
-    if (hp.has('access_token') || hp.get('type') === 'recovery') {
-      const clean = window.location.pathname + window.location.search;
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, '', clean);
-      }
-    }
-  } catch {}
 }
 
 const AUTH_PANEL_SELECTORS = [
@@ -237,6 +228,25 @@ export let signOutHandler = () => {};
 export let docClickHandler = () => {};
 export let docSubmitHandler = () => {};
 export let docKeydownHandler = () => {};
+
+function accountAccessCaptureHandler(e) {
+  try {
+    const trigger = e?.target?.closest?.('[data-smoothr="account-access"]');
+    if (!trigger) return;
+    if (e.__smoothrAccountAccessHandled) return;
+    e.__smoothrAccountAccessHandled = true;
+    try { e.preventDefault?.(); } catch {}
+    try { e.stopPropagation?.(); } catch {}
+    try { e.stopImmediatePropagation?.(); } catch {}
+    docClickHandler?.(e);
+  } catch {}
+}
+
+function bindAccountAccessTriggersEarly() {
+  try {
+    document.addEventListener('click', accountAccessCaptureHandler, { capture: true, passive: false });
+  } catch {}
+}
 
 // Resolve the auth container (FORM or DIV) nearest a node.
 export function resolveAuthContainer(el) {
@@ -389,6 +399,8 @@ let _seededUserOnce = false;
 let _prSession = null;
 let _prRedirect = '';
 export async function init(options = {}) {
+  bindAccountAccessTriggersEarly();
+  stripRecoveryHashIfNotOnReset();
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
@@ -688,7 +700,7 @@ export async function init(options = {}) {
           return;
         }
 
-        markResetLoading?.(true);
+        if (isOnResetRoute()) markResetLoading?.(true);
         try {
           const { data: userRes, error: userErr } = await c.auth.getUser(accessToken);
           if (userErr || !userRes?.user) {
@@ -705,7 +717,7 @@ export async function init(options = {}) {
             return;
           }
           w.Smoothr.auth.user.value = userRes.user;
-          stripRecoveryHash();
+          if (isOnResetRoute()) stripHash();
 
           const storeId =
             (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
@@ -735,7 +747,7 @@ export async function init(options = {}) {
             formEl.submit();
           }
         } finally {
-          markResetLoading?.(false);
+          if (isOnResetRoute()) markResetLoading?.(false);
         }
         return;
       }
@@ -1008,15 +1020,15 @@ async function handleRecoveryIfPresent() {
   const hash = (w.location?.hash || '').slice(1);
   const hasAccessToken = /(^|&)access_token=/.test(hash);
   if (!hasAccessToken) return;
-  markResetLoading(true);
+  if (isOnResetRoute()) markResetLoading(true);
   try {
     const params = new URLSearchParams(hash);
     const access = params.get('access_token');
     const refresh = params.get('refresh_token');
     _prSession = access && refresh ? { access_token: access, refresh_token: refresh } : null;
-    stripRecoveryHash();
+    if (isOnResetRoute()) stripHash();
   } finally {
-    markResetLoading(false);
+    if (isOnResetRoute()) markResetLoading(false);
   }
 }
 
