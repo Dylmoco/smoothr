@@ -32,6 +32,18 @@ async function getStoreDomains(id: string) {
   return out;
 }
 
+async function getStoreBranding(supabaseAdmin: any, store_id: string) {
+  const { data, error } = await supabaseAdmin
+    .from('store_branding')
+    .select('logo_url')
+    .eq('store_id', store_id)
+    .is('deleted_at', null)
+    .limit(1)
+    .single();
+  if (error) return { logo_url: null };
+  return { logo_url: (data as any)?.logo_url ?? null };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
@@ -41,8 +53,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const supabase = getSupabaseAdmin();
 
     // Pull minimal branding
-    const { data: store } = await supabase.from('stores').select('store_name').eq('id', store_id).maybeSingle();
-    const { data: settings } = await supabase.from('public_store_settings').select('logo').eq('store_id', store_id).maybeSingle();
+    const { data: store } = await supabase
+      .from('stores')
+      .select('store_name')
+      .eq('id', store_id)
+      .maybeSingle();
+    const { logo_url } = await getStoreBranding(supabase, store_id);
+    const logoUrl = logo_url || process.env.DEFAULT_LOGO_URL || null;
 
     // Always derive broker destination on the server; never trust client redirectTo
     const brokerOrigin = getBrokerOrigin(req); // existing helper
@@ -76,7 +93,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(500).json({ ok: false, error: linkErr?.message || 'link_error' });
     }
     const storeName = store?.store_name || 'Your Store';
-    const logoUrl = (settings as any)?.logo || null;
 
     const { subject, html, text } = renderResetEmail({ storeName, logoUrl, actionLink });
 
