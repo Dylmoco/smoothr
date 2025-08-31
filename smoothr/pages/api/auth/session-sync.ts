@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabaseAdmin, supabaseAnonServer } from '../../../lib/supabaseAdmin';
+import { getSupabaseAdmin, getSupabaseAnonServer } from '../../../lib/supabaseAdmin';
 import { getAllowOrigin } from '../../../lib/cors';
 
 type Ok = {
@@ -20,6 +20,8 @@ export default async function handler(
       req.method === 'POST' &&
       contentType.startsWith('application/x-www-form-urlencoded');
 
+    const supabaseAdmin = getSupabaseAdmin();
+    const supabaseAnonServer = getSupabaseAnonServer();
     async function fetchRedirects(store_id: string) {
       let sign_in_redirect_url: string | null = null;
       let sign_out_redirect_url: string | null = null;

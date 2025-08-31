@@ -28,6 +28,15 @@ jobs:
         with:
           node-version: 20
 
+      - name: Create smoothr/.env.local
+        run: |
+          mkdir -p smoothr
+          cat > smoothr/.env.local << 'EOF'
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EOF
+
       - name: Install dependencies
         working-directory: storefronts
         run: npm ci --ignore-scripts --loglevel verbose

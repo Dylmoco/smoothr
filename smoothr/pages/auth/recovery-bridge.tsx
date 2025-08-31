@@ -1,7 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { getSupabaseAdmin } from '../../lib/supabaseAdmin';
 import { resolveRecoveryDestination } from '../../../shared/auth/resolveRecoveryDestination';
 
 interface Props {
@@ -15,6 +15,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
     return { props: { redirect: null, error: 'Missing store_id' } };
   }
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     // 1) Fetch domains from stores
     const { data: storeRow } = await supabaseAdmin
       .from('stores')
