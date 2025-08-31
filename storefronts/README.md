@@ -10,11 +10,21 @@ The bundled SDK is designed for zero‑config installation on platforms like
 Webflow. Simply include
 
 ```html
-<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+<script
+  id="smoothr-sdk"
+  type="module"
+  src="https://sdk.smoothr.io/smoothr-sdk.js"
+  data-store-id="…"
+  platform="webflow"
+  data-config-url="https://YOUR-BROKER-DOMAIN/api/config"
+></script>
 ```
 
 and authentication will initialize automatically. The SDK is available as
 `window.Smoothr` or the lowercase `window.smoothr`.
+
+Password reset requests post to the broker derived from `getBrokerBaseUrl()`,
+which uses the loader tag's `data-config-url` attribute.
 
 Create a `.env` file in this directory and provide your Supabase project details.
 These variables are injected at build time so the final SDK has no
