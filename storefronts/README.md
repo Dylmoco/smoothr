@@ -59,6 +59,9 @@ html.smoothr-reset-loading body { visibility: hidden; }
 
 The class is removed once the URL is cleaned (no trailing hash) and the session is set.
 
+**Stale reset code on other pages**  
+If a recovery code (`#access_token=…`) appears on any page that isn’t your reset page, the SDK now **removes it silently** so your site works normally (auth popup opens, links work). The code is only used on `/reset-password`, where it’s consumed and then cleared.
+
 #### Password reset (success)
 On successful password change, the SDK performs a **top-level form POST** to `/api/auth/session-sync` so the broker issues a **303** to the store’s **Sign-in Success Redirect URL**, or `/` if not configured. This guarantees landing on the client homepage.  
 If passwords don’t match, the SDK shows an inline error **and throws** (`Error('password_mismatch')`) for programmatic flows.

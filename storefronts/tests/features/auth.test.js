@@ -74,8 +74,8 @@ describe('auth feature init', () => {
     const { init } = mod;
     await init({ storeId: '1', supabase: client });
     const clickCalls = document.addEventListener.mock.calls.filter(c => c[0] === 'click');
-    expect(clickCalls.length).toBe(2);
-    const captureCall = clickCalls.find(([, handler, opts]) => opts?.capture === true);
+    expect(clickCalls.length).toBe(3);
+    const captureCall = clickCalls.find(([, handler, opts]) => opts?.capture === true && handler === mod.docClickHandler);
     expect(captureCall?.[1]).toBe(mod.docClickHandler);
     expect(captureCall?.[2]).toMatchObject({ capture: true, passive: false });
     const bubbleCall = clickCalls.find(([, , opts]) => opts === false);

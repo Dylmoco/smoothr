@@ -12,6 +12,34 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
+it('strips stale recovery hash on non-reset routes (no redirect)', async () => {
+  vi.resetModules();
+  document.body.innerHTML = `<a data-smoothr="account-access"></a>`;
+  window.SMOOTHR_CONFIG = { routes: { resetPassword: '/reset-password' } };
+  history.replaceState(null, '', '/home#access_token=abc&type=recovery');
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect(location.pathname).toBe('/home');
+  expect(location.hash).toBe('');
+  document.body.innerHTML = '';
+  delete window.SMOOTHR_CONFIG;
+});
+
+it('does not set loading class on non-reset routes when hash exists', async () => {
+  vi.resetModules();
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"></div>`;
+  history.replaceState(null, '', '/home#access_token=abc&type=recovery');
+
+  const classAdd = vi.spyOn(document.documentElement.classList, 'add');
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+
+  // should not add smoothr-reset-loading on non-reset route
+  expect(classAdd.mock.calls.find(([c]) => c === 'smoothr-reset-loading')).toBeUndefined();
+  classAdd.mockRestore();
+  document.body.innerHTML = '';
+});
+
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
   createClientMock();
@@ -29,10 +57,10 @@ it('submits password-reset via Enter on reset-only form', async () => {
   reset.setAttribute('data-smoothr', 'password-reset');
   form.append(email, reset);
   document.body.appendChild(form);
+  auth.bindAuthElements?.(form);
 
   resetPasswordMock.mockResolvedValue({ data: {}, error: null });
-  const evt = new Event('submit', { bubbles: true, cancelable: true });
-  form.dispatchEvent(evt);
+  reset.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   await flushPromises();
 
   expect(resetPasswordMock).toHaveBeenCalledWith('user@example.com', expect.any(Object));
