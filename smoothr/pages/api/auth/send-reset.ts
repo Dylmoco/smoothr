@@ -85,10 +85,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       subject,
       html,
       text,
-      from: process.env.EMAIL_FROM || `Smoothr <no-reply@smoothr.io>`,
+      from: process.env.EMAIL_FROM || null,
     });
-
-    if (!send.ok) return res.status(502).json({ ok: false, error: send.error });
+    if (!send.ok) {
+      const errMsg = 'error' in send && send.error ? send.error : 'send_failed';
+      return res.status(502).json({ ok: false, error: errMsg });
+    }
 
     // Uniform response (avoid user enumeration details)
     res.setHeader('Cache-Control', 'no-store');
