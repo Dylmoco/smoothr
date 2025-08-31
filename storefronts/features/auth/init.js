@@ -11,6 +11,10 @@ import {
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
+const ensureConfigLoaded =
+  globalThis.ensureConfigLoaded || (() => Promise.resolve());
+const getCachedBrokerBase =
+  globalThis.getCachedBrokerBase || (() => null);
 import {
   hasRecoveryHash,
   stripHash,
@@ -147,21 +151,7 @@ function postViaHiddenIframe(url, fields = {}) {
 
 // Compute broker base URL without requiring customer markup changes.
 export function getBrokerBaseUrl() {
-  const w = globalThis.window || globalThis;
-  const d = w.document || globalThis.document;
-  // 1) If loader saved the effective config URL, use its origin
-  const cfgUrl = w?.SMOOTHR_CONFIG?.__configUrl;
-  if (cfgUrl) {
-    try { return new URL(cfgUrl).origin; } catch {}
-  }
-  // 2) Otherwise, find our loader script and read its data-config-url
-  const tag = d?.getElementById?.('smoothr-sdk');
-  const attr = tag?.getAttribute?.('data-config-url');
-  if (attr) {
-    try { return new URL(attr, w.location?.href || '').origin; } catch {}
-  }
-  // 3) Fallback to your Vercel app origin (safe default)
-  return 'https://smoothr.vercel.app';
+  return getCachedBrokerBase() || 'https://smoothr.vercel.app';
 }
 export function getPasswordResetRedirectUrl() {
   const w = globalThis.window || globalThis;
@@ -370,32 +360,19 @@ export const resolveSupabase = async () => {
 };
 
 export async function requestPasswordResetForEmail(email) {
+  await ensureConfigLoaded();
   const redirectTo = getPasswordResetRedirectUrl();
-  const script = document.getElementById('smoothr-sdk');
-
-  // 1) Preferred: config-driven
-  let brokerBase = null;
+  let brokerBase = getCachedBrokerBase();
   try {
-    brokerBase = typeof getBrokerBaseUrl === 'function' ? getBrokerBaseUrl() : null;
-    if (brokerBase === 'https://smoothr.vercel.app') brokerBase = null;
-  } catch (_) {
-    brokerBase = null;
-  }
-
-  // 2) Legacy: SDK hosted on broker domain
-  if (!brokerBase && script?.src) {
-    try {
-      brokerBase = new URL(script.src).origin;
-    } catch (_) {}
-  }
-
-  // 3) Final fallback
+    const u = new URL(brokerBase);
+    if (u.hostname === 'sdk.smoothr.io') brokerBase = 'https://smoothr.vercel.app';
+  } catch {}
   if (!brokerBase) brokerBase = 'https://smoothr.vercel.app';
   const body = JSON.stringify({
     email,
     store_id:
       (window.SMOOTHR_CONFIG && window.SMOOTHR_CONFIG.store_id) ||
-      script?.dataset?.storeId ||
+      document.getElementById('smoothr-sdk')?.dataset?.storeId ||
       '',
     // still send redirectTo for analytics/telemetry if you want, but broker ignores untrusted targets
     redirectTo,
