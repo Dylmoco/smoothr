@@ -372,7 +372,25 @@ export const resolveSupabase = async () => {
 export async function requestPasswordResetForEmail(email) {
   const redirectTo = getPasswordResetRedirectUrl();
   const script = document.getElementById('smoothr-sdk');
-  const brokerBase = getBrokerBaseUrl();
+
+  // 1) Preferred: config-driven
+  let brokerBase = null;
+  try {
+    brokerBase = typeof getBrokerBaseUrl === 'function' ? getBrokerBaseUrl() : null;
+    if (brokerBase === 'https://smoothr.vercel.app') brokerBase = null;
+  } catch (_) {
+    brokerBase = null;
+  }
+
+  // 2) Legacy: SDK hosted on broker domain
+  if (!brokerBase && script?.src) {
+    try {
+      brokerBase = new URL(script.src).origin;
+    } catch (_) {}
+  }
+
+  // 3) Final fallback
+  if (!brokerBase) brokerBase = 'https://smoothr.vercel.app';
   const body = JSON.stringify({
     email,
     store_id:
@@ -386,7 +404,7 @@ export async function requestPasswordResetForEmail(email) {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body,
-    credentials: 'omit',
+    credentials: 'omit', // keep CORS happy; no cookies needed
   });
   if (!resp.ok) {
     try {

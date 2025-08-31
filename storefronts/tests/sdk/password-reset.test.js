@@ -42,7 +42,7 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
-  document.body.innerHTML = '<script id="smoothr-sdk" data-config-url="https://broker.example/api/config"></script>';
+  document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
   createClientMock();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
@@ -96,6 +96,7 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
   expect(fetchSpy).toHaveBeenCalledTimes(1);
   fetchSpy.mockRestore();
 });
+// Case A: config URL present (modern)
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
   document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
@@ -114,6 +115,23 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   expect(payload.store_id).toBe('store_test');
   expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=store_test/);
   expect(String(payload.redirectTo)).toMatch(/orig=/);
+  fetchSpy.mockRestore();
+});
+
+// Case B: no config URL (legacy), script hosted on broker
+it('falls back to script origin when no config URL present', async () => {
+  vi.resetModules();
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  vi.spyOn(auth, 'getBrokerBaseUrl').mockReturnValue(null);
+  const { requestPasswordResetForEmail } = auth;
+  await requestPasswordResetForEmail?.('user@example.com');
+
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   fetchSpy.mockRestore();
 });
 
