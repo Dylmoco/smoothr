@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "url";
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../..",
@@ -34,12 +34,12 @@ beforeAll(async () => {
   });
 
   const distPath = path.join(repoRoot, "storefronts/dist/smoothr-sdk.js");
-  const code = await fs.promises.readFile(distPath, "utf8");
-  const stripped = code.replace(
-    /export\{(\w+) as SDK_TAG,(\w+) as __test_bootstrap\};/,
-    'window.Smoothr=window.Smoothr||{};window.Smoothr.SDK_TAG=$1;window.Smoothr.__test_bootstrap=$2;',
-  );
-  new Function(stripped)();
+  expect(fs.existsSync(distPath)).toBe(true);
+  const distUrl = pathToFileURL(distPath).href;
+
+  const mod = await import(distUrl);
+  const { SDK_TAG, __test_bootstrap } = mod;
+  window.Smoothr = { SDK_TAG, __test_bootstrap };
 });
 
 beforeEach(() => {
