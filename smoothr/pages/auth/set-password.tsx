@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import { createClient } from '@supabase/supabase-js';
+import { loadStoreTheme } from '../../lib/branding';
+import type { Theme } from '../../lib/branding';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +16,7 @@ export default function SetPasswordPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [theme, setTheme] = useState<Theme | null>(null);
 
   // NEW: hydrate session from recovery hash if present, then strip hash
   useEffect(() => {
@@ -39,8 +42,22 @@ export default function SetPasswordPage() {
       } finally {
         // load email for display once session (if any) is ready
         const { data } = await supabase.auth.getUser();
-        if (mounted) setEmail(data?.user?.email ?? null);
-        if (mounted) setReady(true);
+        if (mounted) {
+          setEmail(data?.user?.email ?? null);
+          const storeId =
+            (data?.user as any)?.user_metadata?.store_id ||
+            (window as any).__SMOOTHR_STORE_ID__ ||
+            '';
+          if (storeId) {
+            try {
+              const t = await loadStoreTheme(storeId);
+              setTheme(t);
+            } catch {
+              // ignore theme load errors
+            }
+          }
+          setReady(true);
+        }
       }
     })();
     return () => {
@@ -120,23 +137,34 @@ export default function SetPasswordPage() {
     <>
       <Head>
         <title>Set your password</title>
+        {theme?.customCssUrl ? <link rel="stylesheet" href={theme.customCssUrl} /> : null}
+        {theme ? (
+          <style>{`
+            :root {
+              --brand-bg: ${theme.bg};
+              --brand-text: ${theme.text};
+              --brand-muted: ${theme.muted};
+              --brand-primary: ${theme.primary};
+              --brand-btn-radius: ${theme.btnRadius}px;
+              --brand-font: ${theme.fontFamily};
+            }
+            body { background: var(--brand-bg); font-family: var(--brand-font); color: var(--brand-text); }
+            .card { max-width: 440px; margin: 64px auto; padding: 24px; border: 1px solid #e5e5e5; border-radius: 16px; background: #fff; }
+            .btn { padding: 12px 16px; border-radius: var(--brand-btn-radius); border: 1px solid #d0d0d0; background: var(--brand-primary); color: #fff; text-align: center; cursor: pointer; }
+            .btn[aria-disabled="true"] { opacity: .6; cursor: not-allowed; }
+            .logo { max-width: 180px; display:block; margin: 0 auto 16px; }
+            .hint { color: var(--brand-muted); }
+            input { padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; }
+          `}</style>
+        ) : null}
       </Head>
-      <main
-        style={{
-          maxWidth: 420,
-          margin: '64px auto',
-          fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial',
-        }}
-      >
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Set your password</h1>
-        <p style={{ marginBottom: 16, opacity: 0.8 }}>
-          {email ? (
-            <>
-              For <strong>{email}</strong>
-            </>
-          ) : (
-            'Complete your password reset.'
-          )}
+      <main className="card">
+        {theme?.logoUrl
+          ? <img className="logo" src={theme.logoUrl} alt={email || 'Store logo'} />
+          : <div style={{fontWeight:700, fontSize:18, textAlign:'center', marginBottom:16}}>{email ? '' : 'Reset your password'}</div>}
+        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Set your password</h1>
+        <p className="hint" style={{ marginBottom: 16 }}>
+          {email ? <>For <strong>{email}</strong></> : 'Complete your password reset.'}
         </p>
         <form onSubmit={onSubmit}>
           <div style={{ display: 'grid', gap: 12 }}>
@@ -161,13 +189,7 @@ export default function SetPasswordPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') onSubmit(e as any);
               }}
-              style={{
-                padding: 10,
-                border: '1px solid #ddd',
-                textAlign: 'center',
-                cursor: busy ? 'wait' : 'pointer',
-                opacity: ready ? 1 : 0.6,
-              }}
+              className="btn"
               aria-disabled={!ready}
             >
               {busy ? 'Saving…' : ready ? 'Save password' : 'Loading…'}
