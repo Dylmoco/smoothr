@@ -7,12 +7,17 @@ import { resolveRecoveryDestination } from '../../../shared/auth/resolveRecovery
 interface Props {
   redirect?: string | null;
   error?: string | null; // 'NO_ALLOWED_ORIGIN' | message
+  auto?: '1' | null;
+  brokerHost?: string | null;
 }
-
-export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) => {
+export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req }) => {
   const storeId = Array.isArray(query.store_id) ? query.store_id[0] : (query.store_id as string) || '';
+  const auto = Array.isArray(query.auto) ? query.auto[0] : (query.auto as string) || null;
+  const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
+  const host = (req.headers['x-forwarded-host'] as string) || (req.headers.host as string);
+  const brokerOrigin = `${proto}://${host}`;
   if (!storeId) {
-    return { props: { redirect: null, error: 'Missing store_id' } };
+    return { props: { redirect: null, error: 'Missing store_id', auto: auto === '1' ? '1' : null, brokerHost: host || null } };
   }
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -53,70 +58,58 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
     });
 
     if (res.type === 'ok') {
-      const dest = new URL('/reset-password', res.origin); // no store_id in destination
-      return { props: { redirect: dest.toString(), error: null } };
+      const dest = new URL('/reset-password', brokerOrigin);
+      return { props: { redirect: dest.toString(), error: null, auto: auto === '1' ? '1' : null, brokerHost: host || null } };
     }
 
-    return { props: { redirect: null, error: 'NO_ALLOWED_ORIGIN' } };
+    return { props: { redirect: null, error: 'NO_ALLOWED_ORIGIN', auto: auto === '1' ? '1' : null, brokerHost: host || null } };
   } catch (e: any) {
-    return { props: { redirect: null, error: e?.message || 'Unknown error' } };
+    return { props: { redirect: null, error: e?.message || 'Unknown error', auto: auto === '1' ? '1' : null, brokerHost: host || null } };
   }
 };
 
 export default function RecoveryBridgePage(props: Props) {
-  // Client-side redirect to preserve hash: append window.location.hash to destination
+  const [target, setTarget] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     if (!props.redirect) return;
     try {
-      if (process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
-        console.info('[Smoothr][recovery-bridge] forwarding to', props.redirect);
-      }
       const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
-      const target = props.redirect + hash;
-      window.location.replace(target);
+      const dest = props.redirect + hash;
+      setTarget(dest);
+      if (props.auto === '1' && typeof window !== 'undefined') {
+        const onBrokerHost = props.brokerHost ? window.location.host === props.brokerHost : true;
+        if (onBrokerHost) {
+          window.location.replace(dest);
+        }
+      }
     } catch {
-      // ignore; fall through to fallback link
+      // ignore
     }
-  }, [props.redirect]);
+  }, [props.redirect, props.auto, props.brokerHost]);
 
   return (
     <>
       <Head><title>Password Recovery</title></Head>
-      {/* Redirect happens client-side to preserve the hash. On error, show minimal guidance. */}
       {props.error ? (
         <main style={{ padding: 24 }}>
           <h1>Recovery paused</h1>
-          <p>
-            This store has no allowed domain configured yet. Ask the store owner to set{' '}
-            <code>live_domain</code> or <code>store_domain</code>, or a{' '}
-            <code>sign_in_redirect_url</code>.
-          </p>
-          {process.env.NODE_ENV !== 'production' && (
-            <details style={{ marginTop: 12 }}>
-              <summary>Developer diagnostics</summary>
-              <ul>
-                <li>
-                  Incoming <code>store_id</code> and <code>orig</code> are read by the bridge.
-                </li>
-                <li>
-                  Allowed sources (in order): <code>live_domain</code> → <code>store_domain</code>{' '}
-                  → origin of <code>sign_in_redirect_url</code>.
-                </li>
-                <li>
-                  Dev-only: <code>orig</code> with <code>localhost/127.0.0.1</code> is permitted.
-                </li>
-              </ul>
-            </details>
-          )}
+          <p>This store has no allowed domain configured yet. Ask the store owner to set <code>live_domain</code> or <code>store_domain</code>, or a <code>sign_in_redirect_url</code>.</p>
         </main>
       ) : (
-        <main style={{ padding: 24 }}>
-          <p>Forwarding you to the reset page…</p>
+        <main style={{ padding: 24, maxWidth: 480, margin: '64px auto', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', border: '1px solid #e5e5e5', borderRadius: 12 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Continue to reset</h1>
+          <p style={{ marginBottom: 16, opacity: 0.8 }}>We’ll take you to the secure reset page to set a new password.</p>
+          <p>
+            {target ? (
+              <a href={target} style={{ display: 'inline-block', padding: '10px 14px', borderRadius: 8, border: '1px solid #d0d0d0', textDecoration: 'none' }}>
+                Continue
+              </a>
+            ) : 'Preparing…'}
+          </p>
           {props.redirect && (
-            <p>
-              If you’re not redirected automatically, <a href={props.redirect}>click here</a>.
-              {/* The anchor cannot include the hash (not available server-side), but the effect above handles it. */}
+            <p style={{ marginTop: 12, fontSize: 12, color: '#666' }}>
+              If the button doesn’t work, copy & paste this: {props.redirect}
             </p>
           )}
         </main>
