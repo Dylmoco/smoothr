@@ -81,10 +81,24 @@ export default async function handler(
           { store_id, user_id: user.id, email, last_seen_at: new Date().toISOString() },
           { onConflict: 'store_id,user_id' }
         );
-      const { sign_in_redirect_url, sign_out_redirect_url } = await fetchRedirects(store_id);
-      const redirect_url = sign_in_redirect_url || '/';
+      const { data: domains } = await supabaseAdmin
+        .from('stores')
+        .select('live_domain, store_domain')
+        .eq('id', store_id)
+        .maybeSingle();
+      const toOrigin = (u?: string | null) => {
+        try {
+          return u ? new URL(u).origin : null;
+        } catch {
+          return null;
+        }
+      };
+      const home =
+        toOrigin((domains as any)?.live_domain) ||
+        toOrigin((domains as any)?.store_domain) ||
+        '/';
       res.setHeader('Cache-Control', 'no-store');
-      res.setHeader('Location', redirect_url);
+      res.setHeader('Location', home);
       return res.status(303).end();
     }
 

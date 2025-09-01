@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
 import { validatePasswordsOrThrow } from "../../features/auth/validators.js";
+import React from "react";
+import * as ReactDOM from "react-dom";
+import { act } from "react-dom/test-utils";
 
 let auth;
 
@@ -254,4 +257,153 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
 
   expect(submitSpy).toHaveBeenCalledTimes(1);
   submitSpy.mockRestore();
+});
+
+describe('send-reset auto-forward flag', () => {
+  async function run(auto) {
+    vi.resetModules();
+    const generateLink = vi.fn().mockResolvedValue({
+      data: { properties: { action_link: 'https://action.link' } },
+      error: null,
+    });
+    const supabase = {
+      from(table) {
+        if (table === 'store_branding') {
+          return {
+            select() {
+              return {
+                eq() {
+                  return {
+                    is() {
+                      return {
+                        limit() {
+                          return {
+                            single: async () => ({
+                              data: { logo_url: null, auto_forward_recovery: auto },
+                              error: null,
+                            }),
+                          };
+                        },
+                      };
+                    },
+                  };
+                },
+              };
+            },
+          };
+        }
+        if (table === 'stores') {
+          return {
+            select(sel) {
+              return {
+                eq() {
+                  return {
+                    maybeSingle: async () => {
+                      if (sel.includes('store_name'))
+                        return { data: { store_name: 'Test Store' } };
+                      if (sel.includes('live_domain'))
+                        return {
+                          data: { live_domain: null, store_domain: null },
+                        };
+                      return { data: null };
+                    },
+                    single: async () => ({
+                      data: { store_domain: null, live_domain: null, store_name: 'Test Store' },
+                    }),
+                  };
+                },
+              };
+            },
+          };
+        }
+        return {};
+      },
+      auth: { admin: { generateLink } },
+    };
+    vi.doMock('../../../smoothr/lib/supabaseAdmin.ts', () => ({
+      getSupabaseAdmin: () => supabase,
+    }));
+    vi.doMock('../../../smoothr/lib/email/send.ts', () => ({
+      sendEmail: vi.fn().mockResolvedValue({ ok: true }),
+    }));
+    vi.doMock('../../../smoothr/lib/email/templates/reset.ts', () => ({
+      renderResetEmail: () => ({ subject: '', html: '', text: '' }),
+    }));
+    const { default: handler } = await import('../../../smoothr/pages/api/auth/send-reset.ts');
+    const req = {
+      method: 'POST',
+      headers: {},
+      body: JSON.stringify({ email: 'user@example.com', store_id: 's1' }),
+    };
+    const res = {
+      setHeader: () => {},
+      status: () => ({ json: () => ({}) }),
+      json: () => {},
+    };
+    await handler(req, res);
+    const redirect = generateLink.mock.calls[0][0].options.redirectTo;
+    return redirect;
+  }
+  it('includes auto=1 when enabled', async () => {
+    const redirect = await run(true);
+    expect(redirect).toMatch(/auto=1/);
+  });
+  it('omits auto when disabled', async () => {
+    const redirect = await run(false);
+    expect(redirect).not.toMatch(/auto=1/);
+  });
+});
+
+describe('recovery-bridge auto-forward', () => {
+  it('auto-forwards when auto=1 and host matches', async () => {
+    vi.resetModules();
+    const replace = vi.fn();
+    const orig = window.location;
+    delete window.location;
+    // @ts-ignore
+    window.location = { hash: '#access_token=abc', host: orig.host, replace };
+    const { default: Page } = await import('../../../smoothr/pages/auth/recovery-bridge.tsx');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await act(() => {
+      ReactDOM.render(
+        React.createElement(Page, {
+          redirect: 'https://broker.example/reset',
+          auto: '1',
+          brokerHost: window.location.host,
+          storeName: 'Test Store',
+        }),
+        container,
+      );
+    });
+    expect(replace).toHaveBeenCalledWith('https://broker.example/reset#access_token=abc');
+    window.location = orig;
+  });
+  it('shows button when auto flag missing', async () => {
+    vi.resetModules();
+    const replace = vi.fn();
+    const orig = window.location;
+    delete window.location;
+    // @ts-ignore
+    window.location = { hash: '#access_token=abc', host: orig.host, replace };
+    const { default: Page } = await import('../../../smoothr/pages/auth/recovery-bridge.tsx');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    await act(() => {
+      ReactDOM.render(
+        React.createElement(Page, {
+          redirect: 'https://broker.example/reset',
+          auto: null,
+          brokerHost: window.location.host,
+          storeName: 'Demo Store',
+        }),
+        container,
+      );
+    });
+    expect(replace).not.toHaveBeenCalled();
+    const anchor = container.querySelector('a');
+    expect(anchor?.getAttribute('href')).toBe('https://broker.example/reset#access_token=abc');
+    expect(anchor?.textContent).toBe('Continue to reset on Demo Store');
+    window.location = orig;
+  });
 });

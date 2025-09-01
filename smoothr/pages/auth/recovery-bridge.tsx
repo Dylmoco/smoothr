@@ -9,6 +9,7 @@ interface Props {
   error?: string | null; // 'NO_ALLOWED_ORIGIN' | message
   auto?: '1' | null;
   brokerHost?: string | null;
+  storeName?: string | null;
 }
 export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req }) => {
   const storeId = Array.isArray(query.store_id) ? query.store_id[0] : (query.store_id as string) || '';
@@ -21,50 +22,55 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
   }
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    // 1) Fetch domains from stores
+    // 1) Fetch domains & name from stores
     const { data: storeRow } = await supabaseAdmin
       .from('stores')
-      .select('store_domain, live_domain')
+      .select('store_domain, live_domain, store_name')
       .eq('id', storeId)
       .single();
 
-    // 2) Fetch sign_in_redirect_url like session-sync:
-    //    session-sync.ts queries v_public_store first, then falls back to public_store_settings.
-    let signInRedirectUrl: string | null = null;
-    const { data: vps } = await supabaseAdmin
-      .from('v_public_store')
-      .select('sign_in_redirect_url')
-      .eq('store_id', storeId)
-      .maybeSingle();
-    if (vps?.sign_in_redirect_url) {
-      signInRedirectUrl = vps.sign_in_redirect_url as string;
-    } else {
-      const { data: pss } = await supabaseAdmin
-        .from('public_store_settings')
-        .select('sign_in_redirect_url')
-        .eq('store_id', storeId)
-        .maybeSingle();
-      signInRedirectUrl = (pss?.sign_in_redirect_url as string) ?? null;
-    }
-
-    // 3) Resolve destination using allowlist logic
+    // 2) Resolve destination using allowlist logic
     const orig = Array.isArray(query.orig) ? query.orig[0] : (query.orig as string) || null;
     const res = resolveRecoveryDestination({
       liveDomain: storeRow?.live_domain ?? null,
       storeDomain: storeRow?.store_domain ?? null,
-      signInRedirectUrl,
+      signInRedirectUrl: null,
       orig,
       nodeEnv: process.env.NODE_ENV,
     });
 
     if (res.type === 'ok') {
       const dest = new URL('/reset-password', brokerOrigin);
-      return { props: { redirect: dest.toString(), error: null, auto: auto === '1' ? '1' : null, brokerHost: host || null } };
+      return {
+        props: {
+          redirect: dest.toString(),
+          error: null,
+          auto: auto === '1' ? '1' : null,
+          brokerHost: host || null,
+          storeName: storeRow?.store_name ?? null,
+        },
+      };
     }
 
-    return { props: { redirect: null, error: 'NO_ALLOWED_ORIGIN', auto: auto === '1' ? '1' : null, brokerHost: host || null } };
+    return {
+      props: {
+        redirect: null,
+        error: 'NO_ALLOWED_ORIGIN',
+        auto: auto === '1' ? '1' : null,
+        brokerHost: host || null,
+        storeName: storeRow?.store_name ?? null,
+      },
+    };
   } catch (e: any) {
-    return { props: { redirect: null, error: e?.message || 'Unknown error', auto: auto === '1' ? '1' : null, brokerHost: host || null } };
+    return {
+      props: {
+        redirect: null,
+        error: e?.message || 'Unknown error',
+        auto: auto === '1' ? '1' : null,
+        brokerHost: host || null,
+        storeName: null,
+      },
+    };
   }
 };
 
@@ -94,7 +100,7 @@ export default function RecoveryBridgePage(props: Props) {
       {props.error ? (
         <main style={{ padding: 24 }}>
           <h1>Recovery paused</h1>
-          <p>This store has no allowed domain configured yet. Ask the store owner to set <code>live_domain</code> or <code>store_domain</code>, or a <code>sign_in_redirect_url</code>.</p>
+          <p>This store has no allowed domain configured yet. Ask the store owner to set <code>live_domain</code> or <code>store_domain</code>.</p>
         </main>
       ) : (
         <main style={{ padding: 24, maxWidth: 480, margin: '64px auto', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', border: '1px solid #e5e5e5', borderRadius: 12 }}>
@@ -103,7 +109,7 @@ export default function RecoveryBridgePage(props: Props) {
           <p>
             {target ? (
               <a href={target} style={{ display: 'inline-block', padding: '10px 14px', borderRadius: 8, border: '1px solid #d0d0d0', textDecoration: 'none' }}>
-                Continue
+                {`Continue to reset on ${props.storeName || 'this store'}`}
               </a>
             ) : 'Preparing…'}
           </p>

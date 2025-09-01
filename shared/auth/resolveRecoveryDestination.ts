@@ -1,7 +1,7 @@
 export type ResolveArgs = {
   liveDomain?: string | null;
   storeDomain?: string | null;
-  signInRedirectUrl?: string | null; // full URL allowed
+  signInRedirectUrl?: string | null; // full URL allowed (recovery callers pass null to ignore)
   orig?: string | null;              // optional caller-provided origin (dev-only)
   nodeEnv?: string | undefined;      // process.env.NODE_ENV passthrough
 };
