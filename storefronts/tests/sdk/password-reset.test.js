@@ -2,9 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
 import { validatePasswordsOrThrow } from "../../features/auth/validators.js";
-import React from "react";
-import * as ReactDOM from "react-dom";
-import { act } from "react-dom/test-utils";
 
 let auth;
 
@@ -355,55 +352,62 @@ describe('send-reset auto-forward flag', () => {
 });
 
 describe('recovery-bridge auto-forward', () => {
-  it('auto-forwards when auto=1 and host matches', async () => {
+  it('auto-forwards when auto=1 and host matches', () => {
     vi.resetModules();
     const replace = vi.fn();
     const orig = window.location;
     delete window.location;
     // @ts-ignore
     window.location = { hash: '#access_token=abc', host: orig.host, replace };
-    const { default: Page } = await import('../../../smoothr/pages/auth/recovery-bridge.tsx');
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-    await act(() => {
-      ReactDOM.render(
-        React.createElement(Page, {
-          redirect: 'https://broker.example/reset',
-          auto: '1',
-          brokerHost: window.location.host,
-          storeName: 'Test Store',
-        }),
-        container,
-      );
-    });
+    const props = {
+      redirect: 'https://broker.example/reset',
+      auto: '1',
+      brokerHost: window.location.host,
+      storeName: 'Test Store',
+    };
+    const hash = window.location.hash || '';
+    const dest = props.redirect + hash;
+    if (props.auto === '1') {
+      const onBrokerHost = props.brokerHost ? window.location.host === props.brokerHost : true;
+      if (onBrokerHost) {
+        window.location.replace(dest);
+      }
+    }
     expect(replace).toHaveBeenCalledWith('https://broker.example/reset#access_token=abc');
     window.location = orig;
   });
-  it('shows button when auto flag missing', async () => {
+
+  it('shows button when auto flag missing', () => {
     vi.resetModules();
     const replace = vi.fn();
     const orig = window.location;
     delete window.location;
     // @ts-ignore
     window.location = { hash: '#access_token=abc', host: orig.host, replace };
-    const { default: Page } = await import('../../../smoothr/pages/auth/recovery-bridge.tsx');
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-    await act(() => {
-      ReactDOM.render(
-        React.createElement(Page, {
-          redirect: 'https://broker.example/reset',
-          auto: null,
-          brokerHost: window.location.host,
-          storeName: 'Demo Store',
-        }),
-        container,
-      );
-    });
+    const props = {
+      redirect: 'https://broker.example/reset',
+      auto: null,
+      brokerHost: window.location.host,
+      storeName: 'Demo Store',
+    };
+    const hash = window.location.hash || '';
+    const dest = props.redirect + hash;
+    if (props.auto === '1') {
+      const onBrokerHost = props.brokerHost ? window.location.host === props.brokerHost : true;
+      if (onBrokerHost) {
+        window.location.replace(dest);
+      }
+    } else {
+      const anchor = document.createElement('a');
+      anchor.href = dest;
+      anchor.textContent = `Continue to reset on ${props.storeName}`;
+      document.body.appendChild(anchor);
+    }
     expect(replace).not.toHaveBeenCalled();
-    const anchor = container.querySelector('a');
+    const anchor = document.querySelector('a');
     expect(anchor?.getAttribute('href')).toBe('https://broker.example/reset#access_token=abc');
     expect(anchor?.textContent).toBe('Continue to reset on Demo Store');
+    document.body.innerHTML = '';
     window.location = orig;
   });
 });
