@@ -35,13 +35,18 @@ async function getStoreDomains(id: string) {
 async function getStoreBranding(supabaseAdmin: any, store_id: string) {
   const { data, error } = await supabaseAdmin
     .from('store_branding')
-    .select('logo_url')
+    .select('logo_url, auto_forward_recovery')
     .eq('store_id', store_id)
     .is('deleted_at', null)
     .limit(1)
     .single();
-  if (error) return { logo_url: null };
-  return { logo_url: (data as any)?.logo_url ?? null };
+  if (error)
+    return { logo_url: null, auto_forward_recovery: true };
+  return {
+    logo_url: (data as any)?.logo_url ?? null,
+    auto_forward_recovery:
+      (data as any)?.auto_forward_recovery ?? true,
+  };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Err>) {
@@ -70,7 +75,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       .select('store_name')
       .eq('id', store_id)
       .maybeSingle();
-    const { logo_url } = await getStoreBranding(supabase, store_id);
+    const { logo_url, auto_forward_recovery } = await getStoreBranding(
+      supabase,
+      store_id,
+    );
     const logoUrl = logo_url || process.env.DEFAULT_LOGO_URL || null;
 
     // Always derive broker destination on the server; never trust client redirectTo
@@ -88,9 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Choose preferred origin: live → store → broker (fallback)
     const preferredOrigin = allowedOrigins.find(Boolean) || brokerOrigin;
 
-    const dest = `${brokerOrigin}/auth/recovery-bridge?store_id=${encodeURIComponent(
-      store_id
-    )}&orig=${encodeURIComponent(preferredOrigin)}`;
+    const dest = `${brokerOrigin}/auth/recovery-bridge?store_id=${encodeURIComponent(store_id)}&orig=${encodeURIComponent(preferredOrigin)}${auto_forward_recovery ? '&auto=1' : ''}`;
 
     // Generate Supabase recovery link
     // NOTE: supabase-js v2 admin.generateLink supports redirectTo
