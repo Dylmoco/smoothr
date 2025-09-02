@@ -162,6 +162,40 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
+export async function signInWithGoogle() {
+  await ensureConfigLoaded();
+  try {
+    globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
+  } catch {}
+  const w = globalThis.window || globalThis;
+  const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
+  const storeId =
+    (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
+    w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
+    '';
+  const orig = w.location?.origin || '';
+  const url =
+    `${brokerBase}/auth/oauth-start?provider=google&store_id=${encodeURIComponent(storeId)}&orig=${encodeURIComponent(orig)}`;
+  w.location?.assign?.(url);
+}
+
+export async function signInWithApple() {
+  await ensureConfigLoaded();
+  try {
+    globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
+  } catch {}
+  const w = globalThis.window || globalThis;
+  const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
+  const storeId =
+    (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
+    w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
+    '';
+  const orig = w.location?.origin || '';
+  const url =
+    `${brokerBase}/auth/oauth-start?provider=apple&store_id=${encodeURIComponent(storeId)}&orig=${encodeURIComponent(orig)}`;
+  w.location?.assign?.(url);
+}
+
 
 // when no redirect is configured, we currently use XHR (console may show CORS in dev)
 // optionally use hidden-iframe to avoid CORS noise entirely
@@ -785,27 +819,7 @@ export async function init(options = {}) {
 
     googleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-      const c = await resolveSupabase();
-      try {
-        await c?.auth?.signInWithOAuth?.({
-          provider: 'google',
-          options: {
-            redirectTo: w.location?.origin || '',
-            data: { store_id: getConfig().storeId }
-          }
-        });
-        const res = await c?.auth?.getUser?.();
-        const user = res?.data?.user ?? null;
-        w.Smoothr.auth.user.value = user;
-        const ev = typeof w.CustomEvent === 'function'
-          ? new w.CustomEvent('smoothr:login')
-          : { type: 'smoothr:login' };
-        (w.document || globalThis.document)?.dispatchEvent?.(ev);
-        if (user) await sessionSyncAndEmit(c, user?.id || null);
-      } catch (err) {
-        emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
-      }
+      await signInWithGoogle();
     };
 
     appleClickHandler = async (e) => {
