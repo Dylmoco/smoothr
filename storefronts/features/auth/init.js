@@ -174,9 +174,10 @@ export async function signInWithGoogle() {
     w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
     '';
   const orig = w.location?.origin || '';
-  const url =
-    `${brokerBase}/auth/oauth-start?provider=google&store_id=${encodeURIComponent(storeId)}&orig=${encodeURIComponent(orig)}`;
-  w.location?.assign?.(url);
+  const url = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
+    storeId
+  )}&orig=${encodeURIComponent(orig)}`;
+  w.location?.replace?.(url);
 }
 
 export async function signInWithApple() {
