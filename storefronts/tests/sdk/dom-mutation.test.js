@@ -100,7 +100,7 @@ describe("dynamic DOM bindings", () => {
       },
     };
       win = {
-        location: { href: "", origin: "", assign: vi.fn() },
+        location: { href: "", origin: "", assign: vi.fn(), replace: vi.fn() },
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
@@ -242,8 +242,8 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     await clickHandler({ preventDefault: () => {}, target: btn });
-    expect(global.window.location.assign).toHaveBeenCalledWith(
-      'https://smoothr.vercel.app/auth/oauth-start?provider=google&store_id=test-store&orig='
+    expect(global.window.location.replace).toHaveBeenCalledWith(
+      'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=test-store&orig='
     );
     expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
   });

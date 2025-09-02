@@ -76,9 +76,5 @@ export default function OAuthCallbackPage() {
     );
   }
 
-  return (
-    <main style={{ padding: 24 }}>
-      <p>Signing you in…</p>
-    </main>
-  );
+  return null;
 }
