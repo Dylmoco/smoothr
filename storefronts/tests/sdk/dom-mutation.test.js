@@ -100,11 +100,11 @@ describe("dynamic DOM bindings", () => {
       },
     };
       win = {
-        location: { href: "", origin: "" },
+        location: { href: "", origin: "", assign: vi.fn() },
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
-        SMOOTHR_CONFIG: { storeId: STORE_ID },
+        SMOOTHR_CONFIG: { storeId: STORE_ID, store_id: STORE_ID },
       };
       global.document = doc;
     vi.spyOn(document, "dispatchEvent").mockImplementation(() => true);
@@ -241,36 +241,11 @@ describe("dynamic DOM bindings", () => {
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
-    const { signInWithOAuthMock } = currentSupabaseMocks();
-    signInWithOAuthMock.mockResolvedValue({});
     await clickHandler({ preventDefault: () => {}, target: btn });
-    await flushPromises();
-
-      expect(signInWithOAuthMock).toHaveBeenCalledWith({
-        provider: "google",
-        options: {
-          redirectTo: expect.any(String),
-          data: { store_id: STORE_ID },
-        },
-      });
-    expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
-
-    const user = { id: "3", email: "google@example.com" };
-    document.dispatchEvent.mockClear();
-    global.window.Smoothr = {};
-    vi.resetModules();
-    auth = await import("../../features/auth/index.js");
-    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
-    const client = createClientMock();
-    const { getUserMock } = currentSupabaseMocks();
-    getUserMock.mockResolvedValue({ data: { user } });
-    await auth.init({ supabase: client });
-    await flushPromises();
-
-    expect(global.document.dispatchEvent).toHaveBeenCalledWith(expect.any(CustomEvent));
-    const evt = global.document.dispatchEvent.mock.calls.at(-1)[0];
-    expect(evt).toBeInstanceOf(CustomEvent);
-    expect(evt.type).toBe("smoothr:login");
+    expect(global.window.location.assign).toHaveBeenCalledWith(
+      'https://smoothr.vercel.app/auth/oauth-start?provider=google&store_id=test-store&orig='
+    );
+    expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
   });
 
   it("attaches listeners to added apple login elements and dispatches login event", async () => {
@@ -306,13 +281,10 @@ describe("dynamic DOM bindings", () => {
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
-      expect(signInWithOAuthMock).toHaveBeenCalledWith({
-        provider: "apple",
-        options: {
-          redirectTo: expect.any(String),
-          data: { store_id: STORE_ID },
-        },
-      });
+    expect(signInWithOAuthMock).toHaveBeenCalledWith({
+      provider: "apple",
+      options: { redirectTo: "", data: { store_id: STORE_ID } },
+    });
     expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
     const user = { id: "4", email: "apple@example.com" };
