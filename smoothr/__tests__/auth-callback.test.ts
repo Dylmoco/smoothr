@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 
 let handleAuthCallback: any;
+let mockSetSession: any;
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: () => ({ auth: { setSession: (...args: any[]) => mockSetSession(...args) } })
+}));
 
 describe('oauth callback', () => {
   beforeEach(() => {
@@ -9,8 +14,7 @@ describe('oauth callback', () => {
   });
 
   it('sets session and posts to session-sync', async () => {
-    const setSession = vi.fn().mockResolvedValue({ data: { session: { user: { user_metadata: { store_id: 'store_test' } } } } });
-    vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ auth: { setSession } }) }));
+    mockSetSession = vi.fn().mockResolvedValue({ data: { session: { user: { user_metadata: { store_id: 'store_test' } } } } });
     const formChildren: any[] = [];
     const formSubmit = vi.fn();
     const form = { method: '', action: '', appendChild: (c: any) => formChildren.push(c), submit: formSubmit } as any;
@@ -26,7 +30,7 @@ describe('oauth callback', () => {
     };
     ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
     await handleAuthCallback(window);
-    expect(setSession).toHaveBeenCalledWith({ access_token: 'tok', refresh_token: 'ref' });
+    expect(mockSetSession).toHaveBeenCalledWith({ access_token: 'tok', refresh_token: 'ref' });
     expect(window.history.replaceState).toHaveBeenCalled();
     expect(form.action).toBe('/api/auth/session-sync');
     const store = formChildren.find((f: any) => f.name === 'store_id');
@@ -36,8 +40,8 @@ describe('oauth callback', () => {
     expect(formSubmit).toHaveBeenCalled();
   });
 
-  it('renders error when tokens missing', async () => {
-    vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ auth: { setSession: vi.fn() } }) }));
+  it('returns ok false when tokens missing', async () => {
+    mockSetSession = vi.fn();
     (global as any).window = {
       location: { hash: '', pathname: '/auth/callback', search: '' },
       history: { replaceState: vi.fn() },
@@ -45,14 +49,7 @@ describe('oauth callback', () => {
       SMOOTHR_CONFIG: {}
     };
     const mod = await import('../pages/auth/callback.tsx');
-    const Page = mod.default;
-    const root = document.createElement('div');
-    document.body.appendChild(root);
-    const { createRoot } = await import('react-dom/client');
-    const { act } = await import('react-dom/test-utils');
-    await act(() => {
-      createRoot(root).render(React.createElement(Page));
-    });
-    expect(root.textContent).toContain('Something went wrong');
+    const result = await mod.handleAuthCallback(window);
+    expect(result.ok).toBe(false);
   });
 });

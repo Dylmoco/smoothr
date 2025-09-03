@@ -53,6 +53,11 @@ deploys.
 Authentication will initialize automatically. The SDK is available as
 `window.Smoothr` or the lowercase `window.smoothr`.
 
+Google sign-in obeys `oauth_popup_enabled` (from `v_public_store` via
+`/api/config`). A popup is attempted on user click; if blocked or timed out the
+SDK falls back to the redirect flow. iOS Safari and iframe contexts always use
+redirect mode.
+
 Password reset requests always `POST` to the broker and use
 `credentials:'omit'`.
 

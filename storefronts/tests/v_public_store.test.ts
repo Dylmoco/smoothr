@@ -39,7 +39,8 @@ describe('loadPublicConfig', () => {
       base_currency: 'GBP',
       public_settings: {},
       sign_in_redirect_url: '/sign-in',
-      sign_out_redirect_url: '/bye'
+      sign_out_redirect_url: '/bye',
+      oauth_popup_enabled: true
     };
     builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
@@ -47,7 +48,7 @@ describe('loadPublicConfig', () => {
 
     expect(config).toEqual(row);
     expect(builder.select).toHaveBeenCalledWith(
-      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,sign_out_redirect_url'
+      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,sign_in_redirect_url,sign_out_redirect_url,oauth_popup_enabled'
     );
     expect(builder.eq).toHaveBeenCalledWith('store_id', storeId);
     expect(builder.maybeSingle).toHaveBeenCalledTimes(1);
@@ -60,6 +61,7 @@ describe('loadPublicConfig', () => {
       publishable_key: 'pk_live_123',
       base_currency: 'GBP',
       public_settings: {},
+      oauth_popup_enabled: null
     };
     builder.maybeSingle.mockResolvedValue({ data: row, error: null });
 
@@ -69,6 +71,7 @@ describe('loadPublicConfig', () => {
     expect(config.public_settings).toEqual({});
     expect(config.sign_in_redirect_url).toBeNull();
     expect(config.sign_out_redirect_url).toBeNull();
+    expect(config.oauth_popup_enabled).toBe(false);
   });
 
   it('returns fallback settings on query error', async () => {
@@ -84,7 +87,8 @@ describe('loadPublicConfig', () => {
       public_settings: {},
       active_payment_gateway: null,
       sign_in_redirect_url: null,
-      sign_out_redirect_url: null
+      sign_out_redirect_url: null,
+      oauth_popup_enabled: false
     });
   });
 });

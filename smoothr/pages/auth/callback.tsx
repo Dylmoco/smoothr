@@ -16,6 +16,7 @@ export async function handleAuthCallback(w: any = window) {
   } = await supabase.auth.setSession({ access_token, refresh_token });
   w.history?.replaceState?.(null, '', w.location?.pathname + w.location?.search);
   let store_id: string | null = null;
+  let orig: string | null = null;
   try {
     const cookie = w.document?.cookie || '';
     const match = cookie.split('; ').find((c: string) => c.startsWith('smoothr_oauth_ctx='));
@@ -23,6 +24,7 @@ export async function handleAuthCallback(w: any = window) {
       const value = decodeURIComponent(match.split('=')[1] || '');
       const parsed = JSON.parse(value);
       store_id = parsed.store_id || null;
+      orig = parsed.orig || null;
     }
   } catch {}
   if (!store_id) {
@@ -33,6 +35,16 @@ export async function handleAuthCallback(w: any = window) {
       null;
   }
   if (!store_id || !session) return { ok: false };
+  if (w.opener) {
+    try {
+      w.opener.postMessage(
+        { type: 'smoothr:oauth', ok: true, access_token, store_id },
+        orig || '*'
+      );
+    } catch {}
+    try { w.close(); } catch {}
+    return { ok: true };
+  }
   const form = w.document.createElement('form');
   form.method = 'POST';
   form.action = '/api/auth/session-sync';
@@ -52,29 +64,8 @@ export async function handleAuthCallback(w: any = window) {
 }
 
 export default function OAuthCallbackPage() {
-  const w = typeof window !== 'undefined' ? window : undefined;
-  const hash = w?.location?.hash || '';
-  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
-  const hasTokens = !!params.get('access_token') && !!params.get('refresh_token');
-  const [error, setError] = React.useState(!hasTokens);
-
   React.useEffect(() => {
-    if (!hasTokens) return;
-    handleAuthCallback().then((res) => {
-      if (!res.ok) setError(true);
-    });
-  }, [hasTokens]);
-
-  if (error) {
-    return (
-      <main style={{ padding: 24 }}>
-        <p>Something went wrong.</p>
-        <p>
-          <a href="/">Go back</a>
-        </p>
-      </main>
-    );
-  }
-
+    handleAuthCallback().catch(() => {});
+  }, []);
   return null;
 }

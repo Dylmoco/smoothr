@@ -17,6 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const provider = (req.query.provider as string) || 'google';
   const store_id = (req.query.store_id as string) || '';
   const orig = (req.query.orig as string) || '';
+  const mode = (req.query.mode as string) || '';
   if (provider !== 'google' || !store_id || !orig) {
     return res.status(400).json({ ok: false, error: 'Invalid request' });
   }
@@ -29,6 +30,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const authorize = `https://${supaUrl.host}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(
     brokerOrigin + '/auth/callback'
   )}`;
+  if (mode === 'url') {
+    res.setHeader('Access-Control-Allow-Origin', allow);
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
+    return res.status(200).json({ ok: true, authorizeUrl: authorize });
+  }
   res.setHeader('Location', authorize);
   res.status(302).end();
 }
