@@ -162,8 +162,7 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
-export async function signInWithGoogle() {
-  await ensureConfigLoaded();
+async function signInWithGoogleRedirect() {
   try {
     globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
   } catch {}
@@ -179,6 +178,83 @@ export async function signInWithGoogle() {
   )}&orig=${encodeURIComponent(orig)}`;
   w.location?.replace?.(url);
 }
+
+async function signInWithGooglePopup() {
+  const w = globalThis.window || globalThis;
+  const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
+  const storeId =
+    (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
+    w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
+    '';
+  if (!storeId) return signInWithGoogleRedirect();
+  const orig = w.location?.origin || '';
+  const startUrl = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
+    storeId
+  )}&orig=${encodeURIComponent(orig)}&mode=url`;
+  const popup = w.open('about:blank', 'smoothr_oauth', 'width=480,height=640,noopener');
+  if (!popup) return signInWithGoogleRedirect();
+
+  return new Promise(async (resolve) => {
+    let timer;
+    const cleanUp = () => {
+      try { w.removeEventListener('message', handler); } catch {}
+      try { clearTimeout(timer); } catch {}
+      try { popup.close(); } catch {}
+    };
+    const handler = async (event) => {
+      if (event.origin !== brokerBase) return;
+      const data = event.data || {};
+      if (data.type !== 'smoothr:oauth' || !data.ok) return;
+      if (data.store_id !== storeId || !data.access_token) return;
+      cleanUp();
+      try {
+        await sessionSyncStayOnPage({
+          store_id: storeId,
+          access_token: data.access_token,
+        });
+      } catch {}
+      resolve(true);
+    };
+    w.addEventListener('message', handler);
+
+    try {
+      const resp = await fetch(startUrl, { credentials: 'omit' });
+      const json = await resp.json().catch(() => ({}));
+      if (json && json.authorizeUrl) popup.location = json.authorizeUrl;
+      else {
+        cleanUp();
+        signInWithGoogleRedirect();
+        resolve(false);
+        return;
+      }
+    } catch {
+      cleanUp();
+      signInWithGoogleRedirect();
+      resolve(false);
+      return;
+    }
+    timer = setTimeout(() => {
+      cleanUp();
+      signInWithGoogleRedirect();
+      resolve(false);
+    }, 60000);
+  });
+}
+
+export async function signInWithGoogle() {
+  await ensureConfigLoaded();
+  try {
+    globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
+  } catch {}
+  const cfg = getConfig();
+  const w = globalThis.window || globalThis;
+  const inIframe = w && w.top && w.top !== w.self;
+  const usePopup = !!(cfg && cfg.oauth_popup_enabled) && !inIframe;
+  return usePopup ? signInWithGooglePopup() : signInWithGoogleRedirect();
+}
+
+// test-only export
+export { signInWithGooglePopup };
 
 export async function signInWithApple() {
   await ensureConfigLoaded();

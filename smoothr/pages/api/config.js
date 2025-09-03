@@ -48,7 +48,7 @@ export default async function handler(req, res) {
   const response = await supabase
     .from('v_public_store')
     .select(
-      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings'
+      'store_id,active_payment_gateway,publishable_key,base_currency,public_settings,oauth_popup_enabled'
     )
     .eq('store_id', req.query.store_id)
     .maybeSingle();
@@ -75,7 +75,8 @@ export default async function handler(req, res) {
     active_payment_gateway: activePaymentGateway = null,
     publishable_key: publishableKey = null,
     base_currency: baseCurrency = null,
-    public_settings: publicSettings = {}
+    public_settings: publicSettings = {},
+    oauth_popup_enabled: oauthPopupEnabled = false
   } = data;
 
   const {
@@ -89,6 +90,7 @@ export default async function handler(req, res) {
     supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     baseCurrency,
     activePaymentGateway,
+    oauth_popup_enabled: !!oauthPopupEnabled,
     gateway: {
       stripe: { publishableKey },
       nmi: { tokenizationKey },
