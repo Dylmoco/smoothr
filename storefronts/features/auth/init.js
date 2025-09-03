@@ -191,15 +191,31 @@ async function signInWithGooglePopup() {
   const startUrl = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
     storeId
   )}&orig=${encodeURIComponent(orig)}&mode=url`;
-  const popup = w.open('about:blank', 'smoothr_oauth', 'width=480,height=640,noopener');
+  const width = 480;
+  const height = 640;
+  const sx = w.screenX ?? w.screenLeft ?? 0;
+  const sy = w.screenY ?? w.screenTop ?? 0;
+  const sw = w.outerWidth ?? w.innerWidth;
+  const sh = w.outerHeight ?? w.innerHeight;
+  const left = Math.max(0, sx + (sw - width) / 2);
+  const top = Math.max(0, sy + (sh - height) / 2);
+  const specs = `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars,noopener,noreferrer`;
+  const popup = w.open('about:blank', 'smoothr_oauth', specs);
   if (!popup) return signInWithGoogleRedirect();
 
   return new Promise(async (resolve) => {
     let timer;
+    let poll;
     const cleanUp = () => {
       try { w.removeEventListener('message', handler); } catch {}
       try { clearTimeout(timer); } catch {}
+      try { clearInterval(poll); } catch {}
       try { popup.close(); } catch {}
+    };
+    const fallback = () => {
+      cleanUp();
+      signInWithGoogleRedirect();
+      resolve(false);
     };
     const handler = async (event) => {
       if (event.origin !== brokerBase) return;
@@ -217,26 +233,21 @@ async function signInWithGooglePopup() {
     };
     w.addEventListener('message', handler);
 
+    poll = setInterval(() => {
+      if (popup.closed) fallback();
+    }, 400);
+
     try {
       const resp = await fetch(startUrl, { credentials: 'omit' });
       const json = await resp.json().catch(() => ({}));
-      if (json && json.authorizeUrl) popup.location = json.authorizeUrl;
-      else {
-        cleanUp();
-        signInWithGoogleRedirect();
-        resolve(false);
-        return;
-      }
+      if (!json || !json.authorizeUrl) return fallback();
+      if (popup.closed) return fallback();
+      popup.location = json.authorizeUrl;
     } catch {
-      cleanUp();
-      signInWithGoogleRedirect();
-      resolve(false);
-      return;
+      return fallback();
     }
     timer = setTimeout(() => {
-      cleanUp();
-      signInWithGoogleRedirect();
-      resolve(false);
+      fallback();
     }, 60000);
   });
 }

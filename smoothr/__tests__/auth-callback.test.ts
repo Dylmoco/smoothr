@@ -1,55 +1,65 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
 
 let handleAuthCallback: any;
-let mockSetSession: any;
-
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({ auth: { setSession: (...args: any[]) => mockSetSession(...args) } })
-}));
 
 describe('oauth callback', () => {
   beforeEach(() => {
     vi.resetModules();
   });
 
-  it('sets session and posts to session-sync', async () => {
-    mockSetSession = vi.fn().mockResolvedValue({ data: { session: { user: { user_metadata: { store_id: 'store_test' } } } } });
+  it('posts message and closes in popup mode', async () => {
+    const postMessage = vi.fn();
+    const close = vi.fn();
+    (global as any).window = {
+      location: { hash: '#access_token=tok', pathname: '/auth/callback', search: '', replace: vi.fn() },
+      history: { replaceState: vi.fn() },
+      document: {
+        cookie: `smoothr_oauth_ctx=${encodeURIComponent(JSON.stringify({ store_id: 'store_test', orig: 'https://foo.example' }))}`,
+        documentElement: { style: {} },
+        createElement: vi.fn(),
+        body: { appendChild: vi.fn() }
+      },
+      opener: { postMessage },
+      close,
+    } as any;
+    ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
+    const result = handleAuthCallback(window);
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'smoothr:oauth', ok: true, access_token: 'tok', store_id: 'store_test' },
+      'https://foo.example'
+    );
+    expect(close).toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+  });
+
+  it('submits hidden form in redirect mode', async () => {
     const formChildren: any[] = [];
     const formSubmit = vi.fn();
-    const form = { method: '', action: '', appendChild: (c: any) => formChildren.push(c), submit: formSubmit } as any;
+    const form = { method: '', action: '', style: {}, appendChild: (c: any) => formChildren.push(c), submit: formSubmit } as any;
     const createElement = vi.fn((tag: string) => {
       if (tag === 'form') return form;
       return { type: '', name: '', value: '' } as any;
     });
     (global as any).window = {
-      location: { hash: '#access_token=tok&refresh_token=ref', pathname: '/auth/callback', search: '' },
+      location: { hash: '#access_token=tok', pathname: '/auth/callback', search: '', replace: vi.fn() },
       history: { replaceState: vi.fn() },
-      document: { createElement, body: { appendChild: vi.fn() }, cookie: `smoothr_oauth_ctx=${encodeURIComponent(JSON.stringify({ store_id: 'store_test', orig: 'https://foo.example' }))}` },
-      SMOOTHR_CONFIG: {}
-    };
+      document: {
+        cookie: `smoothr_oauth_ctx=${encodeURIComponent(JSON.stringify({ store_id: 'store_test', orig: 'https://foo.example' }))}`,
+        documentElement: { style: {} },
+        createElement,
+        body: { appendChild: vi.fn() }
+      },
+    } as any;
     ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
-    await handleAuthCallback(window);
-    expect(mockSetSession).toHaveBeenCalledWith({ access_token: 'tok', refresh_token: 'ref' });
-    expect(window.history.replaceState).toHaveBeenCalled();
-    expect(form.action).toBe('/api/auth/session-sync');
-    const store = formChildren.find((f: any) => f.name === 'store_id');
-    const token = formChildren.find((f: any) => f.name === 'access_token');
+    const result = handleAuthCallback(window);
+    const store = formChildren.find((c: any) => c.name === 'store_id');
+    const token = formChildren.find((c: any) => c.name === 'access_token');
     expect(store.value).toBe('store_test');
     expect(token.value).toBe('tok');
+    expect(form.action).toBe('/api/auth/session-sync');
     expect(formSubmit).toHaveBeenCalled();
-  });
-
-  it('returns ok false when tokens missing', async () => {
-    mockSetSession = vi.fn();
-    (global as any).window = {
-      location: { hash: '', pathname: '/auth/callback', search: '' },
-      history: { replaceState: vi.fn() },
-      document: { createElement: vi.fn(), body: { appendChild: vi.fn() }, cookie: '' },
-      SMOOTHR_CONFIG: {}
-    };
-    const mod = await import('../pages/auth/callback.tsx');
-    const result = await mod.handleAuthCallback(window);
-    expect(result.ok).toBe(false);
+    expect(window.document.documentElement.style.visibility).toBe('hidden');
+    expect(result.ok).toBe(true);
   });
 });
+
