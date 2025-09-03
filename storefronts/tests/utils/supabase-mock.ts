@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import { __setSupabaseReadyForTests } from '../../smoothr-sdk.js';
 
 export type SupabaseClientMock = ReturnType<typeof buildSupabaseMock>["client"];
 export type SupabaseClientMocks = ReturnType<typeof buildSupabaseMock>["mocks"];
@@ -64,7 +65,7 @@ export function useWindowSupabaseMock(client: SupabaseClientMock, mocks?: Supaba
   const w: any = (globalThis as any).window || (globalThis as any);
   w.Smoothr = w.Smoothr || {};
   w.Smoothr.__supabase = client;
-  w.Smoothr.supabaseReady = Promise.resolve(client);
+  __setSupabaseReadyForTests(client);
   // stash mocks for easy access in specs
   (globalThis as any).__smoothrTest = { ...(globalThis as any).__smoothrTest, supabase: client, mocks };
 }

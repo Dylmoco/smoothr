@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getSupabaseClient } from '../../../supabase/client/browserClient.js';
+import { __setSupabaseReadyForTests } from '../../smoothr-sdk.js';
 
 describe('supabase browser client singleton', () => {
   beforeEach(() => {
     global.window = global.window || {};
-    window.Smoothr = window.Smoothr || {};
-    window.Smoothr.supabaseReady = Promise.resolve({
+    const client = {
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
         setSession: vi.fn().mockResolvedValue({}),
@@ -17,7 +17,8 @@ describe('supabase browser client singleton', () => {
       functions: {
         invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
       },
-    });
+    };
+    __setSupabaseReadyForTests(client);
     delete window.Smoothr.__supabase;
   });
 

@@ -206,32 +206,54 @@ if (!scriptEl || !storeId) {
     }
   })();
 
-  let _supabasePromise;
+  let supabaseReadyPromise = null;
+
+  // Make the property writable & configurable so tests can override it.
+  // We keep a module-level promise as the canonical source of truth.
   Object.defineProperty(Smoothr, 'supabaseReady', {
-    get() {
-      if (!_supabasePromise) {
-        _supabasePromise = (async () => {
-          const cfg = await Smoothr.ready;
-          if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return null;
-          window.SMOOTHR_CONFIG = {
-            ...(window.SMOOTHR_CONFIG || {}),
-            storeId: cfg.storeId
-          };
-          if (window.Smoothr.__supabase) return window.Smoothr.__supabase;
-          const { createClient } = await import('@supabase/supabase-js');
-          const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-            auth: {
-              persistSession: true,
-              storageKey: `smoothr_${cfg.storeId}`
-            }
-          });
-          window.Smoothr.__supabase = client;
-          return client;
-        })();
-      }
-      return _supabasePromise;
-    }
+    value: null,
+    writable: true,
+    configurable: true
   });
+
+  // Lazily create (and cache) a Supabase client promise.
+  // Always return the same promise once created.
+  export function ensureSupabaseReady() {
+    if (Smoothr.supabaseReady) return Smoothr.supabaseReady;
+    if (!supabaseReadyPromise) {
+      supabaseReadyPromise = (async () => {
+        const cfg = await Smoothr.ready;
+        if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return null;
+
+        // Expose storeId for downstream storageKey logic (stable behavior).
+        window.SMOOTHR_CONFIG = {
+          ...(window.SMOOTHR_CONFIG || {}),
+          storeId: cfg.storeId
+        };
+
+        if (window.Smoothr.__supabase) return window.Smoothr.__supabase;
+
+        const { createClient } = await import('@supabase/supabase-js');
+        const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+          auth: {
+            persistSession: true,
+            storageKey: `smoothr_${cfg.storeId}`
+          }
+        });
+
+        window.Smoothr.__supabase = client;
+        return client;
+      })();
+    }
+    Smoothr.supabaseReady = supabaseReadyPromise;
+    return supabaseReadyPromise;
+  }
+
+  // Test-only helper to inject/replace the promise safely.
+  export function __setSupabaseReadyForTests(value) {
+    supabaseReadyPromise = Promise.resolve(value);
+    Smoothr.supabaseReady = supabaseReadyPromise;
+  }
 
   (async () => {
     const fetched = await Smoothr.ready;
@@ -252,7 +274,7 @@ if (!scriptEl || !storeId) {
       storeId: resolvedStoreId
     };
     try {
-      const supabase = await Smoothr.supabaseReady;
+      const supabase = await ensureSupabaseReady();
       const pub = await loadPublicConfig(resolvedStoreId, supabase);
       Object.assign(window.SMOOTHR_CONFIG, pub || {});
       if (window.SMOOTHR_DEBUG) {
