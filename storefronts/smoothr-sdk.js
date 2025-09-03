@@ -6,6 +6,46 @@ if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
 }
 
+function ensurePreconnect(host) {
+  try {
+    const head = document.head || document.getElementsByTagName('head')[0];
+    if (!head) return;
+    const tags = [
+      ['preconnect', host, ''],
+      ['dns-prefetch', host, null]
+    ];
+    for (const [rel, href, crossOrigin] of tags) {
+      if (!head.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
+        const l = document.createElement('link');
+        l.rel = rel;
+        l.href = href;
+        if (crossOrigin !== null) l.crossOrigin = crossOrigin;
+        head.appendChild(l);
+      }
+    }
+  } catch {}
+}
+
+export function injectAuthPreconnects(cfg) {
+  try {
+    const supabaseUrl =
+      (cfg && cfg.supabase_url) ||
+      (window.SMOOTHR_CONFIG && window.SMOOTHR_CONFIG.supabase_url);
+    if (supabaseUrl) {
+      const { host } = new URL(supabaseUrl);
+      ensurePreconnect(`https://${host}`);
+    }
+    ensurePreconnect('https://accounts.google.com');
+  } catch {}
+}
+
+export function isIOSSafari() {
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/.test(ua);
+  const webkit = /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS/.test(ua);
+  return iOS && webkit;
+}
+
 export const SDK_TAG = 'auth-popup-locked-v1';
 let __configReadyResolve;
 if (typeof window !== 'undefined') {
@@ -239,6 +279,9 @@ if (!scriptEl || !storeId) {
       ...(window.SMOOTHR_CONFIG || {}),
       __brokerBase: brokerBase
     };
+    try {
+      injectAuthPreconnects(window.SMOOTHR_CONFIG);
+    } catch {}
     __configReadyResolve?.(true);
 
     await initFeatures();
