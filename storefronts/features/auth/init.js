@@ -11,7 +11,7 @@ import {
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
-import { isIOSSafari } from '../../smoothr-sdk.js';
+import { isIOSSafari, ensureSupabaseReady } from '../../smoothr-sdk.js';
 const ensureConfigLoaded =
   globalThis.ensureConfigLoaded || (() => Promise.resolve());
 const getCachedBrokerBase =
@@ -487,45 +487,19 @@ export const resolveSupabase = async () => {
   w.Smoothr = g.Smoothr = s;
   if (_injectedClient) return _injectedClient;
   if (s?.__supabase) return s.__supabase;
-  const maybeReady = s?.supabaseReady;
-  if (maybeReady) {
-    try {
-      const client = await maybeReady;
-      if (client) {
-        s.__supabase = client;
-        return client;
-      }
-    } catch {}
-  }
+  try {
+    const client = await ensureSupabaseReady();
+    if (client) {
+      s.__supabase = client;
+      return client;
+    }
+  } catch {}
   const existing = s?.auth?.client || w?.supabase || g.supabase;
   if (existing) {
     s.__supabase = existing;
     return existing;
   }
-  try {
-    const { supabaseUrl, supabaseAnonKey } = s?.config || {};
-    if (!supabaseUrl || !supabaseAnonKey) {
-      const ready = s?.supabaseReady;
-      if (ready) {
-        try {
-          const client = await ready;
-          if (client) {
-            s.__supabase = client;
-            return client;
-          }
-        } catch {}
-      }
-      return null;
-    }
-    const mod = await import('@supabase/supabase-js');
-    const create = mod.createClient || mod.default?.createClient;
-    if (!create) return null;
-    const client = create(supabaseUrl, supabaseAnonKey);
-    s.__supabase = client;
-    return client;
-  } catch {
-    return null;
-  }
+  return null;
 };
 
 export async function requestPasswordResetForEmail(email) {

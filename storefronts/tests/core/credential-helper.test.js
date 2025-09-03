@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { __setSupabaseReadyForTests } from '../../smoothr-sdk.js';
 
 const invokeMock = vi.fn();
 const ensureMock = vi.fn();
@@ -15,13 +16,11 @@ describe('credential helper', () => {
   beforeEach(() => {
     invokeMock.mockReset();
     ensureMock.mockReset();
-    globalThis.Smoothr = {
-      supabaseReady: Promise.resolve({ functions: { invoke: invokeMock } }),
-    };
+    __setSupabaseReadyForTests({ functions: { invoke: invokeMock } });
   });
 
   afterEach(() => {
-    delete globalThis.Smoothr;
+    __setSupabaseReadyForTests(null);
   });
 
   it('invokes edge function with store id and gateway', async () => {

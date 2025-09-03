@@ -1,4 +1,5 @@
 // checkout.js
+import { ensureSupabaseReady } from '../../smoothr-sdk.js';
 
 let getConfig;
 
@@ -44,7 +45,7 @@ async function init(opts = {}) {
 
     const resolvedSupabase =
       supabase ??
-      (await globalThis.Smoothr?.supabaseReady) ??
+      (await ensureSupabaseReady()) ??
       globalThis.supabaseAuth ??
       globalThis.Smoothr?.supabaseAuth ??
       globalThis.smoothr?.supabaseAuth ??

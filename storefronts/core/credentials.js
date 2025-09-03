@@ -1,12 +1,12 @@
 import { getConfig } from '../features/config/globalConfig.js';
+import { ensureSupabaseReady } from '../smoothr-sdk.js';
 
 export async function getGatewayCredential(gateway) {
   const w = typeof window !== 'undefined' ? window : globalThis;
   const debug = new URLSearchParams(w.location?.search || '').has('smoothr-debug');
 
   try {
-    const supabase =
-      (await (w.Smoothr?.supabaseReady || Promise.resolve(null))) || null;
+    const supabase = await ensureSupabaseReady();
 
     if (!supabase) {
       debug && console.warn('[Smoothr] Supabase not ready in getGatewayCredential');
