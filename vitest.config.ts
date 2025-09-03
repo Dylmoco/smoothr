@@ -1,40 +1,6 @@
+// Root config kept minimal so workspace configs (like storefronts/vitest.config.ts)
+// fully control their environment. Do not force SSR here.
 import { defineConfig } from 'vitest/config';
-import path from 'node:path';
 
-const repoRoot = __dirname;
+export default defineConfig({});
 
-export default defineConfig({
-  test: {
-    // Use jsdom so that browser globals like `window` are available in tests
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./vitest.setup.ts', './storefronts/tests/setup.ts'],
-    testTimeout: 10000,
-    deps: {
-      inline: ['@supabase/supabase-js'], // Enable npm imports
-      resolver: 'node', // Force Node resolver for npm packages
-    },
-    resolve: {
-      conditions: ['module'], // Ensure ES module resolution
-    },
-    isolate: true,
-    transformMode: {
-      web: [/\.[jt]sx?$/],
-      ssr: [/node_modules/],
-    },
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(repoRoot, 'smoothr'),
-      '@/lib/findOrCreateCustomer': path.resolve(repoRoot, 'shared/lib/findOrCreateCustomer.ts'),
-      'npm:@supabase/supabase-js@2.38.4': '@supabase/supabase-js',
-      shared: path.resolve(repoRoot, 'shared'),
-      'shared/*': path.resolve(repoRoot, 'shared'),
-      smoothr: path.resolve(repoRoot, 'smoothr'),
-      'smoothr/*': path.resolve(repoRoot, 'smoothr'),
-    },
-  },
-  esbuild: {
-    target: 'es2020',
-  },
-});

@@ -1,3 +1,6 @@
+/// <reference types="vitest" />
+/// <reference types="vitest/globals" />
+// Ensure jsdom env (belt-and-braces)
 // @vitest-environment jsdom
 // /storefronts/tests/sdk/supabase-ready.test.js
 import { describe, it, expect, beforeEach, vi } from 'vitest';
