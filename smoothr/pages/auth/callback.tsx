@@ -20,11 +20,13 @@ export function handleAuthCallback(w = window) {
   } catch {}
 
   if (w.opener) {
-    if (orig) {
-      const payload = access_token && store_id
-        ? { type: 'smoothr:oauth', ok: true, access_token, store_id }
-        : { type: 'smoothr:oauth', ok: false, reason: 'missing' };
-      try { w.opener.postMessage(payload, orig); } catch {}
+    if (access_token && store_id && orig) {
+      try {
+        w.opener.postMessage(
+          { type: 'smoothr:oauth', ok: true, access_token, store_id },
+          orig,
+        );
+      } catch {}
     }
     try { w.close(); } catch {}
     return { ok: !!(access_token && store_id && orig) };
