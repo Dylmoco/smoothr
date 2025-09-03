@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // /storefronts/tests/sdk/supabase-ready.test.js
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
