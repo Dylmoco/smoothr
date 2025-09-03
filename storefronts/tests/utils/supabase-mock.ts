@@ -64,7 +64,6 @@ export function buildSupabaseMock(overrides: Partial<SupabaseClientMock> = {}) {
 export function useWindowSupabaseMock(client: SupabaseClientMock, mocks?: SupabaseClientMocks) {
   const w: any = (globalThis as any).window || (globalThis as any);
   w.Smoothr = w.Smoothr || {};
-  w.Smoothr.__supabase = client;
   __setSupabaseReadyForTests(client);
   // stash mocks for easy access in specs
   (globalThis as any).__smoothrTest = { ...(globalThis as any).__smoothrTest, supabase: client, mocks };
