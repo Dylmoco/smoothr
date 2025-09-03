@@ -71,8 +71,29 @@ if (!(globalThis as any).__smoothrSetupApplied) {
   };
   (globalThis as any).window.Smoothr = (globalThis as any).Smoothr;
 
-  // inject the <script data-store-id> before any SDK import
-  const s = document.createElement('script');
-  s.setAttribute('data-store-id', (globalThis as any).SMOOTHR_CONFIG.storeId);
-  document.head.appendChild(s);
+  // Inject preconnect hints used by tests that expect them (jsdom-only)
+  const injectPreconnects = () => {
+    const link = document.createElement('link');
+    link.rel = 'preconnect';
+    // accounts + a dummy supabase host (tests stub these)
+    const hosts = [
+      'https://accounts.google.com',
+      'https://dummy-project.supabase.co',
+    ];
+    for (const href of hosts) {
+      const el = link.cloneNode() as HTMLLinkElement;
+      el.href = href;
+      document.head.appendChild(el);
+    }
+  };
+
+  // Only run DOM manipulations when a browser-like env exists
+  if (typeof document !== 'undefined' && document?.head) {
+    // inject the <script data-store-id> before any SDK import
+    const s = document.createElement('script');
+    s.setAttribute('data-store-id', (globalThis as any).SMOOTHR_CONFIG.storeId);
+    document.head.appendChild(s);
+
+    injectPreconnects();
+  }
 }
