@@ -1,8 +1,8 @@
 /// <reference types="vitest" />
 /// <reference types="vitest/globals" />
-// Ensure jsdom env (belt-and-braces)
 // @vitest-environment jsdom
-// /storefronts/tests/sdk/supabase-ready.test.js
+// Vitest: use browser globals for Smoothr
+// (kept as explicit env to avoid runner ambiguity)
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // IMPORTANT: mock @supabase/supabase-js at module scope for ESM friendliness
