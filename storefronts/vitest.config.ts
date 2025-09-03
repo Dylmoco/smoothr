@@ -12,32 +12,44 @@ const sharedAliasFind = /^shared\/(.*)$/;
 
 export default defineConfig({
   root: r('.'),
+  server: {
+    fs: {
+      allow: [path.resolve(__dirname, '..')],
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
     isolate: true,
     deps: {
-      // Ensure ESM libs are bundled as ESM, not required as CJS
+      optimizer: {
+        web: {
+          include: [
+            '@supabase/supabase-js',
+            'cross-fetch',
+            'whatwg-fetch',
+          ],
+        },
+      },
+      // Keep vite-node from SSR-rewriting ESM to CJS for these libs
       inline: [
         '@supabase/supabase-js',
-        // if any tests import these directly, keep them ESM too:
         'cross-fetch',
-        'whatwg-fetch'
-      ]
+        'whatwg-fetch',
+      ],
     },
     // Ensure storefront tests also load the shared setup when executed directly in this workspace.
     setupFiles: [
       r('../vitest.setup.ts'),
       r('./tests/setup.ts')
     ],
-    // Keep tests in "web" transform to preserve ESM (avoid SSR CJS rewrite)
     transformMode: {
+      // Force "web" mode for anything under this package
       web: [/\.([cm]?[jt]s)x?$/],
-      ssr: [/node_modules/]
-    }
-  },
-  esbuild: {
-    target: 'es2020'
+    },
+    esbuild: {
+      target: 'es2020',
+    },
   },
   resolve: {
     alias: [
@@ -45,15 +57,6 @@ export default defineConfig({
       { find: sharedAliasFind, replacement: (m: string) => r(`../shared/${m.replace('shared/', '')}`) },
       // Optional: alias 'smoothr' to the app package root in case tests import from it
       { find: /^smoothr\/(.*)$/, replacement: (m: string) => r(`../smoothr/${m.replace('smoothr/', '')}`) }
-    ]
-  },
-  // Make sure Vite doesn't try to pre-bundle ESM deps back to CJS for SSR
-  optimizeDeps: {
-    esbuildOptions: {
-      mainFields: ['module', 'jsnext:main', 'browser']
-    },
-    include: [
-      '@supabase/supabase-js'
     ]
   }
 });
