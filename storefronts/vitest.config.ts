@@ -16,11 +16,6 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     isolate: true,
-    // Keep tests in "web" transform to preserve ESM (avoid SSR CJS rewrite)
-    transformMode: {
-      web: [/\.([cm]?[jt]s)x?$/],
-      ssr: [/node_modules/]
-    },
     deps: {
       // Ensure ESM libs are bundled as ESM, not required as CJS
       inline: [
@@ -29,6 +24,16 @@ export default defineConfig({
         'cross-fetch',
         'whatwg-fetch'
       ]
+    },
+    // Ensure storefront tests also load the shared setup when executed directly in this workspace.
+    setupFiles: [
+      r('../vitest.setup.ts'),
+      r('./tests/setup.ts')
+    ],
+    // Keep tests in "web" transform to preserve ESM (avoid SSR CJS rewrite)
+    transformMode: {
+      web: [/\.([cm]?[jt]s)x?$/],
+      ssr: [/node_modules/]
     }
   },
   esbuild: {
