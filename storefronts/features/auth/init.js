@@ -179,6 +179,21 @@ async function signInWithGoogleRedirect() {
   w.location?.replace?.(url);
 }
 
+export async function sessionSyncAndEmit(token) {
+  try {
+    const w = globalThis.window || globalThis;
+    const storeId =
+      (w.SMOOTHR_CONFIG && (w.SMOOTHR_CONFIG.store_id || w.SMOOTHR_CONFIG.storeId)) ||
+      w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
+      '';
+    if (!token || !storeId) return false;
+    await sessionSyncStayOnPage({ store_id: storeId, access_token: token });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function signInWithGooglePopup() {
   const w = globalThis.window || globalThis;
   const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
@@ -191,64 +206,78 @@ async function signInWithGooglePopup() {
   const startUrl = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
     storeId
   )}&orig=${encodeURIComponent(orig)}&mode=url`;
-  const width = 480;
-  const height = 640;
+  const W = 480,
+    H = 640;
   const sx = w.screenX ?? w.screenLeft ?? 0;
   const sy = w.screenY ?? w.screenTop ?? 0;
-  const sw = w.outerWidth ?? w.innerWidth;
-  const sh = w.outerHeight ?? w.innerHeight;
-  const left = Math.max(0, sx + (sw - width) / 2);
-  const top = Math.max(0, sy + (sh - height) / 2);
-  const specs = `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars,noopener,noreferrer`;
+  const sw = w.outerWidth || w.innerWidth || 0;
+  const sh = w.outerHeight || w.innerHeight || 0;
+  const left = Math.max(0, Math.round(sx + (sw - W) / 2));
+  const top = Math.max(0, Math.round(sy + (sh - H) / 2));
+  const specs = `width=${W},height=${H},left=${left},top=${top},resizable,scrollbars`;
   const popup = w.open('about:blank', 'smoothr_oauth', specs);
   if (!popup) return signInWithGoogleRedirect();
+  try {
+    popup.document.title = 'Connecting…';
+    popup.document.body.innerHTML = '<div style="font:14px system-ui;margin:24px">Connecting…</div>';
+  } catch {}
 
   return new Promise(async (resolve) => {
-    let timer;
-    let poll;
-    const cleanUp = () => {
-      try { w.removeEventListener('message', handler); } catch {}
-      try { clearTimeout(timer); } catch {}
-      try { clearInterval(poll); } catch {}
+    let closePoll;
+    let hardTimeout;
+    let done = false;
+    async function onDone(fn, ok = false) {
+      if (done) return;
+      done = true;
       try { popup.close(); } catch {}
-    };
-    const fallback = () => {
-      cleanUp();
-      signInWithGoogleRedirect();
-      resolve(false);
-    };
-    const handler = async (event) => {
-      if (event.origin !== brokerBase) return;
-      const data = event.data || {};
-      if (data.type !== 'smoothr:oauth' || !data.ok) return;
-      if (data.store_id !== storeId || !data.access_token) return;
-      cleanUp();
-      try {
-        await sessionSyncStayOnPage({
-          store_id: storeId,
-          access_token: data.access_token,
-        });
-      } catch {}
-      resolve(true);
-    };
-    w.addEventListener('message', handler);
-
-    poll = setInterval(() => {
-      if (popup.closed) fallback();
-    }, 400);
-
-    try {
-      const resp = await fetch(startUrl, { credentials: 'omit' });
-      const json = await resp.json().catch(() => ({}));
-      if (!json || !json.authorizeUrl) return fallback();
-      if (popup.closed) return fallback();
-      popup.location = json.authorizeUrl;
-    } catch {
-      return fallback();
+      try { clearInterval(closePoll); } catch {}
+      try { clearTimeout(hardTimeout); } catch {}
+      try { w.removeEventListener('message', onMsg); } catch {}
+      try { await fn?.(); } catch {}
+      resolve(ok);
     }
-    timer = setTimeout(() => {
-      fallback();
-    }, 60000);
+    function onMsg(event) {
+      if (event.origin !== brokerBase) return;
+      const m = event.data || {};
+      if (
+        m.type !== 'smoothr:oauth' ||
+        !m.ok ||
+        !m.access_token ||
+        m.store_id !== storeId
+      ) {
+        onDone(() => signInWithGoogleRedirect(), false);
+        return;
+      }
+      onDone(() => sessionSyncAndEmit(m.access_token), true);
+    }
+    w.addEventListener('message', onMsg);
+    closePoll = setInterval(() => {
+      if (popup.closed) onDone(() => signInWithGoogleRedirect(), false);
+    }, 350);
+    hardTimeout = setTimeout(
+      () => onDone(() => signInWithGoogleRedirect(), false),
+      60000,
+    );
+
+    const fetchCtl = new AbortController();
+    const stall = setTimeout(() => {
+      try { fetchCtl.abort(); } catch {}
+    }, 4000);
+    let authorizeUrl = null;
+    try {
+      const r = await fetch(startUrl, {
+        credentials: 'omit',
+        signal: fetchCtl.signal,
+      });
+      const j = await r.json().catch(() => ({}));
+      authorizeUrl = j?.authorizeUrl || null;
+    } catch {}
+    clearTimeout(stall);
+    if (!authorizeUrl || popup.closed) {
+      await onDone(() => signInWithGoogleRedirect(), false);
+      return;
+    }
+    popup.location = authorizeUrl;
   });
 }
 

@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let signInWithGoogle;
 let signInWithGooglePopup;
+let realWindow;
 
 const startUrl = 'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=store_test&orig=https%3A%2F%2Fstore.example&mode=url';
 const redirectUrl = 'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=store_test&orig=https%3A%2F%2Fstore.example';
@@ -9,6 +10,7 @@ const redirectUrl = 'https://smoothr.vercel.app/api/auth/oauth-start?provider=go
 describe('signInWithGoogle popup', () => {
   beforeEach(async () => {
     vi.resetModules();
+    realWindow = global.window;
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
     const popup = { location: '', close: vi.fn(), closed: false };
@@ -27,7 +29,7 @@ describe('signInWithGoogle popup', () => {
     win.top = win;
     win.self = win;
     global.window = win;
-    global.fetch = vi.fn(async (url, opts) => {
+    global.fetch = vi.fn(async (url) => {
       if (url === startUrl) {
         return { json: async () => ({ authorizeUrl: 'https://supabase.co/auth/authorize' }) };
       }
@@ -36,9 +38,17 @@ describe('signInWithGoogle popup', () => {
       }
       return { json: async () => ({}) };
     });
-    ({ signInWithGoogle, signInWithGooglePopup } = await import('../../features/auth/init.js'));
-    // expose popup for tests
+    const mod = await import('../../features/auth/init.js');
+    signInWithGoogle = mod.signInWithGoogle;
+    signInWithGooglePopup = mod.signInWithGooglePopup;
     window.__popup = popup;
+  });
+
+  afterEach(() => {
+    global.window = realWindow;
+    // ensure no leak for other suites
+    // @ts-ignore
+    delete global.fetch;
   });
 
   it('opens popup and syncs session on message', async () => {
@@ -49,10 +59,12 @@ describe('signInWithGoogle popup', () => {
     await handler({ origin: 'https://smoothr.vercel.app', data: { type: 'smoothr:oauth', ok: true, access_token: 'tok', store_id: 'store_test' } });
     await promise;
     expect(window.open).toHaveBeenCalled();
-    expect(window.open.mock.calls[0][2]).toContain('left=272');
-    expect(window.open.mock.calls[0][2]).toContain('top=64');
+    const specs = window.open.mock.calls[0][2];
+    expect(specs).toContain('left=272');
+    expect(specs).toContain('top=64');
     expect(window.__popup.location).toBe('https://supabase.co/auth/authorize');
-    expect(fetch).toHaveBeenCalledWith('https://smoothr.vercel.app/api/auth/session-sync', expect.any(Object));
+    const syncCall = fetch.mock.calls.find(c => c[0] === 'https://smoothr.vercel.app/api/auth/session-sync');
+    expect(syncCall).toBeTruthy();
     expect(window.__popup.close).toHaveBeenCalled();
     expect(window.location.replace).not.toHaveBeenCalled();
   });
@@ -65,13 +77,13 @@ describe('signInWithGoogle popup', () => {
 
   it('falls back to redirect on timeout', async () => {
     vi.useFakeTimers();
-    let handler;
-    window.addEventListener.mockImplementation((event, fn) => { if (event === 'message') handler = fn; });
-    const promise = signInWithGoogle();
+    const promise = signInWithGooglePopup();
     await Promise.resolve();
     await vi.advanceTimersByTimeAsync(60000);
     expect(window.location.replace).toHaveBeenCalledWith(redirectUrl);
     expect(window.__popup.close).toHaveBeenCalled();
+    const syncCall = fetch.mock.calls.find(c => c[0] === 'https://smoothr.vercel.app/api/auth/session-sync');
+    expect(syncCall).toBeUndefined();
     vi.useRealTimers();
     await promise;
   });
@@ -83,6 +95,29 @@ describe('signInWithGoogle popup', () => {
     await vi.advanceTimersByTimeAsync(400);
     expect(window.location.replace).toHaveBeenCalledWith(redirectUrl);
     expect(window.__popup.close).toHaveBeenCalled();
+    const syncCall = fetch.mock.calls.find(c => c[0] === 'https://smoothr.vercel.app/api/auth/session-sync');
+    expect(syncCall).toBeUndefined();
+    vi.useRealTimers();
+    await promise;
+  });
+
+  it('falls back when authorize URL fetch stalls', async () => {
+    vi.useFakeTimers();
+    fetch.mockImplementationOnce((url, opts) => {
+      if (url === startUrl) {
+        return new Promise((resolve, reject) => {
+          opts.signal.addEventListener('abort', () => reject(new Error('aborted')));
+        });
+      }
+      return { json: async () => ({}) };
+    });
+    const promise = signInWithGooglePopup();
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(window.location.replace).toHaveBeenCalledWith(redirectUrl);
+    expect(window.__popup.close).toHaveBeenCalled();
+    const syncCall = fetch.mock.calls.find(c => c[0] === 'https://smoothr.vercel.app/api/auth/session-sync');
+    expect(syncCall).toBeUndefined();
     vi.useRealTimers();
     await promise;
   });
