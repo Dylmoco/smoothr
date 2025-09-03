@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     // Use jsdom so that browser globals like `window` are available in tests
     environment: 'jsdom',
+    globals: true,
     setupFiles: ['./vitest.setup.ts', './storefronts/tests/setup.ts'],
     testTimeout: 10000,
     deps: {
@@ -15,6 +16,11 @@ export default defineConfig({
     },
     resolve: {
       conditions: ['module'], // Ensure ES module resolution
+    },
+    isolate: true,
+    transformMode: {
+      web: [/\.[jt]sx?$/],
+      ssr: [/node_modules/],
     },
   },
   resolve: {
@@ -27,5 +33,8 @@ export default defineConfig({
       smoothr: path.resolve(repoRoot, 'smoothr'),
       'smoothr/*': path.resolve(repoRoot, 'smoothr'),
     },
+  },
+  esbuild: {
+    target: 'es2020',
   },
 });
