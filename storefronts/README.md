@@ -423,3 +423,13 @@ The workflow automatically publishes `storefronts/dist` to Cloudflare Pages.
 The latest deployed commit can be found in `DEPLOY_LOG.md`. When embedding the
 SDK on your site, perform a hard refresh after each deploy so browsers load the
 new bundle.
+
+## Testing notes (ESM)
+- Storefront tests now use a workspace-local `vitest.config.ts` to force ESM/web transforms.
+- Run: `npm --workspace storefronts test`
+- If you still see `'import'/'export' outside of module code`, clear caches and re-run:
+  ```
+  rm -rf node_modules .vite .vitest
+  npm i
+  npm --workspace storefronts test
+  ```

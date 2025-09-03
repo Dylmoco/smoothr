@@ -1,44 +1,48 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ensureSupabaseReady, __setSupabaseReadyForTests } from '../../smoothr-sdk.js';
+// @vitest-environment jsdom
+// /storefronts/tests/sdk/supabase-ready.test.js
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-describe('ensureSupabaseReady', () => {
+// IMPORTANT: mock @supabase/supabase-js at module scope for ESM friendliness
+vi.mock('@supabase/supabase-js', () => {
+  return {
+    createClient: vi.fn(() => ({})),
+  };
+});
+
+import {
+  ensureSupabaseReady,
+  __setSupabaseReadyForTests,
+} from '../../smoothr-sdk.js';
+
+describe('ensureSupabaseReady (ESM-safe)', () => {
   beforeEach(() => {
     __setSupabaseReadyForTests(null);
-    if (typeof window !== 'undefined') {
-      window.Smoothr = window.Smoothr || {};
-      delete window.Smoothr.__supabase;
-      window.Smoothr.ready = Promise.resolve({
-        storeId: 'store_test',
-        supabaseUrl: 'https://example.supabase.co',
-        supabaseAnonKey: 'anon'
-      });
+    if (globalThis.window?.Smoothr) {
+      delete globalThis.window.Smoothr.__supabase;
     }
   });
 
-  afterEach(() => {
-    __setSupabaseReadyForTests(null);
-    vi.doUnmock('@supabase/supabase-js');
-  });
+  it('initializes only once (createClient called once)', async () => {
+    const mod = await import('@supabase/supabase-js');
+    // make sure our mock is visible
+    mod.createClient.mockClear();
 
-  it('initializes only once', async () => {
-    const createClient = vi.fn(() => ({}));
-    vi.doMock('@supabase/supabase-js', () => ({ createClient }), { virtual: true });
     const p1 = ensureSupabaseReady();
     const p2 = ensureSupabaseReady();
-    await p1;
-    await p2;
-    expect(createClient).toHaveBeenCalledTimes(1);
+    await p1; await p2;
+
+    expect(mod.createClient).toHaveBeenCalledTimes(1);
   });
 
-  it('allows test override', async () => {
-    const fake = {};
+  it('allows test override to a resolved client', async () => {
+    const fake = { hello: 'world' };
     __setSupabaseReadyForTests(fake);
-    expect(await ensureSupabaseReady()).toBe(fake);
+    const client = await ensureSupabaseReady();
+    expect(client).toBe(fake);
   });
 
-  it('wraps raw client values', async () => {
-    const fake = {};
-    __setSupabaseReadyForTests(fake);
-    await expect(ensureSupabaseReady()).resolves.toBe(fake);
+  it('wraps raw value via Promise.resolve', async () => {
+    __setSupabaseReadyForTests({ x: 1 });
+    await expect(ensureSupabaseReady()).resolves.toEqual({ x: 1 });
   });
 });
