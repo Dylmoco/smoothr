@@ -1,50 +1,55 @@
 import { defineConfig } from 'vitest/config';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import path from 'node:path';
+import url from 'node:url';
 
-// Ensure the project root for Vitest is the storefronts workspace,
-// not the monorepo root (important for package.json `type` resolution).
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const wsRoot = resolve(__dirname, '.');
+// Resolve a path relative to THIS config file (storefronts/)
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+const r = (p: string) => path.resolve(__dirname, p);
+
+// Map "shared/..." to the monorepo shared folder so imports like
+// "shared/auth/resolveRecoveryDestination" resolve in tests.
+const sharedAliasFind = /^shared\/(.*)$/;
 
 export default defineConfig({
-  root: wsRoot,
-
-  // Keep ESM semantics for tests (avoid SSR/script transform on tests)
+  root: r('.'),
   test: {
     environment: 'jsdom',
     globals: true,
     isolate: true,
-    threads: false, // simplify env for jsdom + ESM
-    // Force Vite to treat our tests as web code (ESM), not SSR.
+    // Keep tests in "web" transform to preserve ESM (avoid SSR CJS rewrite)
     transformMode: {
-      web: [/\.(m?[jt]sx?)$/],
-      ssr: [/node_modules/], // only SSR-transform node_modules when required
+      web: [/\.([cm]?[jt]s)x?$/],
+      ssr: [/node_modules/]
     },
     deps: {
-      // Inline ESM deps so Vite transforms them instead of Node requiring them as CJS
+      // Ensure ESM libs are bundled as ESM, not required as CJS
       inline: [
-        /@supabase\/supabase-js/,
-      ],
-    },
-    // Helpful for diagnosing first failure file; you can toggle to 'verbose'
-    reporters: ['default'],
+        '@supabase/supabase-js',
+        // if any tests import these directly, keep them ESM too:
+        'cross-fetch',
+        'whatwg-fetch'
+      ]
+    }
   },
-
-  // Prefer ESM/browser entry points
-  resolve: {
-    conditions: ['browser', 'module', 'import', 'default'],
-  },
-
-  // Ensure TS/JS transpile target matches our ESM usage
   esbuild: {
-    target: 'es2020',
-    format: 'esm',
+    target: 'es2020'
   },
-
-  // Useful defines for modules that branch on NODE_ENV
-  define: {
-    'process.env.NODE_ENV': JSON.stringify('test'),
+  resolve: {
+    alias: [
+      // shared/* → ../shared/*
+      { find: sharedAliasFind, replacement: (m: string) => r(`../shared/${m.replace('shared/', '')}`) },
+      // Optional: alias 'smoothr' to the app package root in case tests import from it
+      { find: /^smoothr\/(.*)$/, replacement: (m: string) => r(`../smoothr/${m.replace('smoothr/', '')}`) }
+    ]
   },
+  // Make sure Vite doesn't try to pre-bundle ESM deps back to CJS for SSR
+  optimizeDeps: {
+    esbuildOptions: {
+      mainFields: ['module', 'jsnext:main', 'browser']
+    },
+    include: [
+      '@supabase/supabase-js'
+    ]
+  }
 });
+
