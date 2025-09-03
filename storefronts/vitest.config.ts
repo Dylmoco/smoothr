@@ -8,7 +8,6 @@ const r = (p: string) => path.resolve(__dirname, p);
 
 // Map "shared/..." to the monorepo shared folder so imports like
 // "shared/auth/resolveRecoveryDestination" resolve in tests.
-const sharedAliasFind = /^shared\/(.*)$/;
 
 export default defineConfig({
   root: r('.'),
@@ -31,12 +30,15 @@ export default defineConfig({
           ],
         },
       },
-      // Keep vite-node from SSR-rewriting ESM to CJS for these libs
-      inline: [
-        '@supabase/supabase-js',
-        'cross-fetch',
-        'whatwg-fetch',
-      ],
+    },
+    server: {
+      deps: {
+        inline: [
+          '@supabase/supabase-js',
+          'cross-fetch',
+          'whatwg-fetch',
+        ],
+      },
     },
     // Ensure storefront tests also load the shared setup when executed directly in this workspace.
     setupFiles: [
@@ -54,10 +56,13 @@ export default defineConfig({
   resolve: {
     alias: [
       // shared/* → ../shared/*
-      { find: sharedAliasFind, replacement: (m: string) => r(`../shared/${m.replace('shared/', '')}`) },
+      { find: /^shared\/(.*)$/, replacement: (_: string, p1: string) => r(`../shared/${p1}`) },
       // Optional: alias 'smoothr' to the app package root in case tests import from it
-      { find: /^smoothr\/(.*)$/, replacement: (m: string) => r(`../smoothr/${m.replace('smoothr/', '')}`) }
-    ]
+      { find: /^smoothr\/(.*)$/, replacement: (_: string, p1: string) => r(`../smoothr/${p1}`) },
+      // storefronts/* → ./*
+      { find: /^storefronts\/(.*)$/, replacement: (_: string, p1: string) => r(p1) }
+    ],
+    extensions: ['.mjs', '.cjs', '.js', '.mts', '.cts', '.ts', '.jsx', '.tsx', '.json']
   }
 });
 
