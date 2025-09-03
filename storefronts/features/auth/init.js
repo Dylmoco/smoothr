@@ -11,6 +11,7 @@ import {
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
+import { isIOSSafari } from '../../smoothr-sdk.js';
 const ensureConfigLoaded =
   globalThis.ensureConfigLoaded || (() => Promise.resolve());
 const getCachedBrokerBase =
@@ -206,20 +207,27 @@ async function signInWithGooglePopup() {
   const startUrl = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
     storeId
   )}&orig=${encodeURIComponent(orig)}&mode=url`;
-  const W = 480,
-    H = 640;
-  const sx = w.screenX ?? w.screenLeft ?? 0;
-  const sy = w.screenY ?? w.screenTop ?? 0;
-  const sw = w.outerWidth || w.innerWidth || 0;
-  const sh = w.outerHeight || w.innerHeight || 0;
-  const left = Math.max(0, Math.round(sx + (sw - W) / 2));
-  const top = Math.max(0, Math.round(sy + (sh - H) / 2));
-  const specs = `width=${W},height=${H},left=${left},top=${top},resizable,scrollbars`;
+  const width = 480,
+    height = 640;
+  const dualScreenLeft = w.screenLeft ?? w.screenX ?? 0;
+  const dualScreenTop = w.screenTop ?? w.screenY ?? 0;
+  const sw =
+    w.outerWidth ||
+    w.document?.documentElement?.clientWidth ||
+    w.screen?.width ||
+    0;
+  const sh =
+    w.outerHeight ||
+    w.document?.documentElement?.clientHeight ||
+    w.screen?.height ||
+    0;
+  const left = dualScreenLeft + Math.max(0, (sw - width) / 2);
+  const top = dualScreenTop + Math.max(0, (sh - height) / 2);
+  const specs = `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars`;
   const popup = w.open('about:blank', 'smoothr_oauth', specs);
   if (!popup) return signInWithGoogleRedirect();
   try {
-    popup.document.title = 'Connecting…';
-    popup.document.body.innerHTML = '<div style="font:14px system-ui;margin:24px">Connecting…</div>';
+    popup.document.write('<!doctype html><title>Connecting…</title><style>html,body{margin:0;height:100%}body{display:flex;align-items:center;justify-content:center;font:14px system-ui}</style><body>Connecting…</body>');
   } catch {}
 
   return new Promise(async (resolve) => {
@@ -236,24 +244,33 @@ async function signInWithGooglePopup() {
       try { await fn?.(); } catch {}
       resolve(ok);
     }
-    function onMsg(event) {
+    async function onMsg(event) {
       if (event.origin !== brokerBase) return;
       const m = event.data || {};
       if (
-        m.type !== 'smoothr:oauth' ||
-        !m.ok ||
+        m.type !== 'smoothr_oauth_success' ||
         !m.access_token ||
+        !m.refresh_token ||
         m.store_id !== storeId
       ) {
         onDone(() => signInWithGoogleRedirect(), false);
         return;
       }
-      onDone(() => sessionSyncAndEmit(m.access_token), true);
+      onDone(async () => {
+        try {
+          const supa = await resolveSupabase();
+          await supa?.auth?.setSession?.({
+            access_token: m.access_token,
+            refresh_token: m.refresh_token
+          });
+        } catch {}
+        await sessionSyncAndEmit(m.access_token);
+      }, true);
     }
     w.addEventListener('message', onMsg);
     closePoll = setInterval(() => {
       if (popup.closed) onDone(() => signInWithGoogleRedirect(), false);
-    }, 350);
+    }, 200);
     hardTimeout = setTimeout(
       () => onDone(() => signInWithGoogleRedirect(), false),
       60000,
@@ -277,7 +294,8 @@ async function signInWithGooglePopup() {
       await onDone(() => signInWithGoogleRedirect(), false);
       return;
     }
-    popup.location = authorizeUrl;
+    if (popup && !popup.closed) popup.location.href = authorizeUrl;
+    else await onDone(() => signInWithGoogleRedirect(), false);
   });
 }
 
@@ -289,7 +307,7 @@ export async function signInWithGoogle() {
   const cfg = getConfig();
   const w = globalThis.window || globalThis;
   const inIframe = w && w.top && w.top !== w.self;
-  const usePopup = !!(cfg && cfg.oauth_popup_enabled) && !inIframe;
+  const usePopup = !!(cfg && cfg.oauth_popup_enabled) && !inIframe && !isIOSSafari();
   return usePopup ? signInWithGooglePopup() : signInWithGoogleRedirect();
 }
 

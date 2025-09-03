@@ -4,6 +4,7 @@ export function handleAuthCallback(w = window) {
   const hash = w.location?.hash || '';
   const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
   const access_token = params.get('access_token') || '';
+  const refresh_token = params.get('refresh_token') || '';
   try { w.history?.replaceState?.(null, '', w.location?.pathname + w.location?.search); } catch {}
 
   let store_id: string | null = null;
@@ -20,19 +21,26 @@ export function handleAuthCallback(w = window) {
   } catch {}
 
   if (w.opener) {
-    if (access_token && store_id && orig) {
+    if (access_token && refresh_token && store_id && orig) {
       try {
         w.opener.postMessage(
-          { type: 'smoothr:oauth', ok: true, access_token, store_id },
+          {
+            type: 'smoothr_oauth_success',
+            access_token,
+            refresh_token,
+            store_id,
+          },
           orig,
         );
       } catch {}
+      try { w.close(); } catch {}
+      return { ok: true };
     }
     try { w.close(); } catch {}
-    return { ok: !!(access_token && store_id && orig) };
+    return { ok: false };
   }
 
-  if (access_token && store_id) {
+  if (access_token && refresh_token && store_id) {
     try { w.document?.documentElement && (w.document.documentElement.style.visibility = 'hidden'); } catch {}
     const form = w.document.createElement('form');
     form.method = 'POST';
@@ -48,6 +56,11 @@ export function handleAuthCallback(w = window) {
     f2.name = 'access_token';
     f2.value = access_token;
     form.appendChild(f2);
+    const f3 = w.document.createElement('input');
+    f3.type = 'hidden';
+    f3.name = 'refresh_token';
+    f3.value = refresh_token;
+    form.appendChild(f3);
     w.document.body.appendChild(form);
     try { form.submit(); } catch {}
     return { ok: true };
