@@ -11,7 +11,7 @@ describe('signInWithGoogle popup', () => {
     vi.resetModules();
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
-    const popup = { location: '', close: vi.fn() };
+    const popup = { location: '', close: vi.fn(), closed: false };
     const win = {
       location: { origin: 'https://store.example', replace: vi.fn() },
       document: { getElementById: vi.fn(() => ({ dataset: { storeId: 'store_test' } })) },
@@ -19,6 +19,10 @@ describe('signInWithGoogle popup', () => {
       open: vi.fn(() => popup),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      screenX: 0,
+      screenY: 0,
+      outerWidth: 1024,
+      outerHeight: 768,
     };
     win.top = win;
     win.self = win;
@@ -39,13 +43,18 @@ describe('signInWithGoogle popup', () => {
 
   it('opens popup and syncs session on message', async () => {
     const promise = signInWithGooglePopup();
+    await Promise.resolve();
     const handler = window.addEventListener.mock.calls.find(c => c[0] === 'message')?.[1];
     expect(typeof handler).toBe('function');
     await handler({ origin: 'https://smoothr.vercel.app', data: { type: 'smoothr:oauth', ok: true, access_token: 'tok', store_id: 'store_test' } });
     await promise;
     expect(window.open).toHaveBeenCalled();
+    expect(window.open.mock.calls[0][2]).toContain('left=272');
+    expect(window.open.mock.calls[0][2]).toContain('top=64');
+    expect(window.__popup.location).toBe('https://supabase.co/auth/authorize');
     expect(fetch).toHaveBeenCalledWith('https://smoothr.vercel.app/api/auth/session-sync', expect.any(Object));
     expect(window.__popup.close).toHaveBeenCalled();
+    expect(window.location.replace).not.toHaveBeenCalled();
   });
 
   it('falls back to redirect when popup blocked', async () => {
@@ -65,5 +74,24 @@ describe('signInWithGoogle popup', () => {
     expect(window.__popup.close).toHaveBeenCalled();
     vi.useRealTimers();
     await promise;
+  });
+
+  it('falls back when popup manually closed', async () => {
+    vi.useFakeTimers();
+    const promise = signInWithGooglePopup();
+    window.__popup.closed = true;
+    await vi.advanceTimersByTimeAsync(400);
+    expect(window.location.replace).toHaveBeenCalledWith(redirectUrl);
+    expect(window.__popup.close).toHaveBeenCalled();
+    vi.useRealTimers();
+    await promise;
+  });
+
+  it('redirects when framed', async () => {
+    window.top = {};
+    window.self = {};
+    await signInWithGoogle();
+    expect(window.open).not.toHaveBeenCalled();
+    expect(window.location.replace).toHaveBeenCalledWith(redirectUrl);
   });
 });
