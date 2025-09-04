@@ -42,9 +42,9 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
-  document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
-  createClientMock();
-  globalThis.getCachedBrokerBase = () => 'https://broker.example';
+    document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>';
+    createClientMock();
+    globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
@@ -101,9 +101,9 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
 // Case A: config URL present (modern)
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
-  globalThis.getCachedBrokerBase = () => 'https://broker.example';
+    document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-store-id="store_test" data-config-url="https://smoothr.vercel.app/api/config"></script><form data-smoothr="auth-form"></form>`;
+    window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
+    globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
@@ -125,8 +125,8 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
 // Case B: no config URL (legacy), script hosted on broker
 it('falls back to script origin when no config URL present', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.mjs" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
-  globalThis.getCachedBrokerBase = () => 'https://broker.example';
+    document.body.innerHTML = `<script id="smoothr-sdk" src="https://smoothr.vercel.app/smoothr-sdk.mjs" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+    globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
@@ -354,13 +354,13 @@ describe('send-reset auto-forward flag', () => {
 describe('recovery-bridge auto-forward', () => {
   it('auto-forwards when auto=1 and host matches', () => {
     vi.resetModules();
-    const replace = vi.fn();
-    const orig = window.location;
-    delete window.location;
-    // @ts-ignore
-    window.location = { hash: '#access_token=abc', host: orig.host, replace };
+      const replace = vi.fn();
+      const orig = window.location;
+      delete window.location;
+      // @ts-ignore
+      window.location = { hash: '#access_token=abc', host: orig.host, replace };
     const props = {
-      redirect: 'https://broker.example/reset',
+        redirect: 'https://smoothr.vercel.app/reset',
       auto: '1',
       brokerHost: window.location.host,
       storeName: 'Test Store',
@@ -373,7 +373,7 @@ describe('recovery-bridge auto-forward', () => {
         window.location.replace(dest);
       }
     }
-    expect(replace).toHaveBeenCalledWith('https://broker.example/reset#access_token=abc');
+      expect(replace).toHaveBeenCalledWith('https://smoothr.vercel.app/reset#access_token=abc');
     window.location = orig;
   });
 
@@ -385,7 +385,7 @@ describe('recovery-bridge auto-forward', () => {
     // @ts-ignore
     window.location = { hash: '#access_token=abc', host: orig.host, replace };
     const props = {
-      redirect: 'https://broker.example/reset',
+        redirect: 'https://smoothr.vercel.app/reset',
       auto: null,
       brokerHost: window.location.host,
       storeName: 'Demo Store',
@@ -405,7 +405,7 @@ describe('recovery-bridge auto-forward', () => {
     }
     expect(replace).not.toHaveBeenCalled();
     const anchor = document.querySelector('a');
-    expect(anchor?.getAttribute('href')).toBe('https://broker.example/reset#access_token=abc');
+      expect(anchor?.getAttribute('href')).toBe('https://smoothr.vercel.app/reset#access_token=abc');
     expect(anchor?.textContent).toBe('Continue to reset on Demo Store');
     document.body.innerHTML = '';
     window.location = orig;
