@@ -14,7 +14,12 @@ vi.mock('../../../shared/checkout/getActiveGatewayCreds.ts', () => {
   return { getActiveGatewayCreds: credsMock };
 });
 
-vi.mock('storefronts/features/gateways/stripeGateway.js', () => ({ init: vi.fn() }));
+vi.mock('storefronts/features/gateways/stripeGateway.js', () => {
+  (globalThis as any).Stripe = vi.fn(() => ({
+    paymentIntents: { create: createMock },
+  }));
+  return { init: vi.fn() };
+});
 vi.mock('storefronts/features/gateways/authorizeNet.js', () => ({ init: vi.fn() }));
 vi.mock('storefronts/features/gateways/paypal.js', () => ({ init: vi.fn() }));
 vi.mock('storefronts/features/gateways/nmiGateway.js', () => ({ init: vi.fn() }));

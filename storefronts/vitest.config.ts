@@ -39,7 +39,6 @@ try {
               'cross-fetch',
               'whatwg-fetch',
               'node-fetch',
-              'storefronts/*',
             ],
             enabled: true,
           },
@@ -54,7 +53,6 @@ try {
             'whatwg-fetch',
             'node-fetch',
             'smoothr-sdk.js',
-            'storefronts/*',
           ],
         },
       },
@@ -62,7 +60,7 @@ try {
       setupFiles,
       transformMode: {
         // Force "web" mode for storefront files only
-        web: [/^storefronts\/.*\.(m?[jt]sx?)$/],
+        web: [/\/storefronts\/.*\.(m?[jt]sx?)$/],
       },
       esbuild: {
         target: 'es2020',
