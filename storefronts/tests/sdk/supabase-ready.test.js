@@ -4,6 +4,7 @@
 // Vitest: use browser globals for Smoothr
 // (kept as explicit env to avoid runner ambiguity)
 import { describe, it, expect, beforeEach } from 'vitest';
+import '../utils/supabase-mock';
 
 import {
   ensureSupabaseReady,

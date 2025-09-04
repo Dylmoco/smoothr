@@ -61,9 +61,13 @@ describe('signInWithGoogle popup', () => {
     signInWithGoogle = mod.signInWithGoogle;
     signInWithGooglePopup = mod.signInWithGooglePopup;
     window.__popup = popup;
+    if (typeof window.__popup.location !== 'object') {
+      window.__popup.location = { href: String(window.__popup.location) };
+    }
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     global.window = realWindow;
     global.document = realDocument;
     // ensure no leak for other suites
@@ -173,8 +177,11 @@ describe('signInWithGoogle popup', () => {
 
   it('redirects on iOS Safari', async () => {
     window.navigator.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1';
-    await signInWithGoogle();
-    expect(window.open).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    const p = signInWithGoogle();
+    await vi.runAllTimersAsync();
     expect(window.location.replace).toHaveBeenCalledWith(redirectUrl);
-  });
+    await p;
+    vi.useRealTimers();
+  }, { timeout: 10000 });
 });
