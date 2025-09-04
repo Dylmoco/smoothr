@@ -1,1 +1,1 @@
-console.log('vitest.config.ts setupFiles loaded');
+console.log('vitest-config-log.ts loaded');
