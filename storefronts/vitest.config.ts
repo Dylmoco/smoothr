@@ -27,6 +27,7 @@ export default defineConfig({
             '@supabase/supabase-js',
             'cross-fetch',
             'whatwg-fetch',
+            'stripe',
           ],
         },
       },
@@ -37,17 +38,19 @@ export default defineConfig({
           '@supabase/supabase-js',
           'cross-fetch',
           'whatwg-fetch',
+          'stripe',
         ],
       },
     },
     // Ensure storefront tests also load the shared setup when executed directly in this workspace.
     setupFiles: [
       r('../vitest.setup.ts'),
-      r('./tests/setup.ts')
+      r('./tests/setup.ts'),
+      r('./tests/vitest-config-log.ts'),
     ],
     transformMode: {
       // Force "web" mode for anything under this package
-      web: [/\.([cm]?[jt]s)x?$/],
+      web: [/^.*storefronts.*\.(m?[jt]sx?)$/],
     },
     esbuild: {
       target: 'es2020',
