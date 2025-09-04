@@ -1,6 +1,7 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { JSDOM } from "jsdom";
+import { createDomStub } from "../utils/dom-stub";
 
 let signUpMock;
 let getUserMock;
@@ -106,6 +107,7 @@ describe("signup flow", () => {
   let emailValue;
   let passwordValue;
   let confirmValue;
+  let realDocument;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -147,7 +149,8 @@ describe("signup flow", () => {
       removeEventListener: vi.fn(),
       SMOOTHR_CONFIG: { storeId: config.storeId },
     };
-    global.document = {
+    realDocument = global.document;
+    global.document = createDomStub({
       addEventListener: vi.fn((evt, cb) => {
         if (evt === "DOMContentLoaded") cb();
       }),
@@ -157,10 +160,14 @@ describe("signup flow", () => {
         return [];
       }),
       dispatchEvent: vi.fn(),
-    };
+    });
     global.document.dispatchEvent.mockClear();
     auth = await import("../../features/auth/index.js");
     vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+  });
+
+  afterEach(() => {
+    global.document = realDocument;
   });
 
   it("signs up and redirects on success", async () => {

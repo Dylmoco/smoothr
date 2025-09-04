@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 let loadScriptMock;
 let stripeCtor;
@@ -20,32 +21,38 @@ vi.mock('../../core/credentials.js', () => ({
 }));
 
 describe('stripe gateway singleton', () => {
-  beforeEach(() => {
-    vi.resetModules();
-    loadScriptMock = vi.fn(() => Promise.resolve());
-    elementsCreate = vi.fn(() => ({ mount: vi.fn() }));
-    const stripeInstance = { elements: vi.fn(() => ({ create: elementsCreate })) };
-    stripeCtor = vi.fn(() => stripeInstance);
-    global.window = {
-      SMOOTHR_CONFIG: { storeId: 'store-1', active_payment_gateway: 'stripe' },
-      location: { search: '' }
-    };
-    global.document = {
-      querySelector: vi.fn(sel => {
-        const el = { getBoundingClientRect: () => ({ width: 20 }), offsetParent: {}, dataset: {} };
-        const map = {
-          '[data-smoothr-card-number]': el,
-          '[data-smoothr-card-expiry]': el,
-          '[data-smoothr-card-cvc]': el,
-          '#smoothr-checkout-theme': null
-        };
-        return map[sel] || null;
-      }),
-      activeElement: null,
-      addEventListener: vi.fn()
-    };
-    global.Stripe = stripeCtor;
-  });
+    let realDocument;
+    beforeEach(() => {
+      vi.resetModules();
+      loadScriptMock = vi.fn(() => Promise.resolve());
+      elementsCreate = vi.fn(() => ({ mount: vi.fn() }));
+      const stripeInstance = { elements: vi.fn(() => ({ create: elementsCreate })) };
+      stripeCtor = vi.fn(() => stripeInstance);
+      global.window = {
+        SMOOTHR_CONFIG: { storeId: 'store-1', active_payment_gateway: 'stripe' },
+        location: { search: '' }
+      };
+      realDocument = global.document;
+      global.document = createDomStub({
+        querySelector: vi.fn(sel => {
+          const el = { getBoundingClientRect: () => ({ width: 20 }), offsetParent: {}, dataset: {} };
+          const map = {
+            '[data-smoothr-card-number]': el,
+            '[data-smoothr-card-expiry]': el,
+            '[data-smoothr-card-cvc]': el,
+            '#smoothr-checkout-theme': null
+          };
+          return map[sel] || null;
+        }),
+        activeElement: null,
+        addEventListener: vi.fn()
+      });
+      global.Stripe = stripeCtor;
+    });
+
+    afterEach(() => {
+      global.document = realDocument;
+    });
 
   it('only loads Stripe and script once when mounted twice', async () => {
     const { mountCheckout } = await import('../../features/checkout/gateways/stripeGateway.js');

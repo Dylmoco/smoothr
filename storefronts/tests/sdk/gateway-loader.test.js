@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { createDomStub } from "../utils/dom-stub";
 
 const mocked = [];
 
@@ -52,17 +53,17 @@ function setupEnv(provider, modulePath) {
     default: loadScriptMock
   }));
 
-  const payBtn = { tagName: "button", addEventListener: vi.fn() };
-  global.document = {
-    querySelector: vi.fn(sel => {
-      if (sel === "[data-smoothr-pay]") return payBtn;
-      if (sel === "#smoothr-card-styles") return null;
-      return null;
-    }),
-    querySelectorAll: vi.fn(sel => (sel === "[data-smoothr-pay]" ? [payBtn] : [])),
-    createElement: vi.fn(() => ({ style: {}, id: "", textContent: "" })),
-    head: { appendChild: vi.fn() }
-  };
+    const payBtn = { tagName: "button", addEventListener: vi.fn() };
+    global.document = createDomStub({
+      querySelector: vi.fn(sel => {
+        if (sel === "[data-smoothr-pay]") return payBtn;
+        if (sel === "#smoothr-card-styles") return null;
+        return null;
+      }),
+      querySelectorAll: vi.fn(sel => (sel === "[data-smoothr-pay]" ? [payBtn] : [])),
+      createElement: vi.fn(() => ({ style: {}, id: "", textContent: "" })),
+      head: { appendChild: vi.fn() }
+    });
   global.window = {
     location: { pathname: "", search: "" },
     Smoothr: {
@@ -79,15 +80,19 @@ function setupEnv(provider, modulePath) {
 }
 
 describe("gateway loader", () => {
+  let realDocument;
+  let realWindow;
   beforeEach(() => {
     vi.resetModules();
+    realDocument = global.document;
+    realWindow = global.window;
   });
 
   afterEach(() => {
     mocked.forEach(m => vi.doUnmock(m));
     mocked.length = 0;
-    delete global.window;
-    delete global.document;
+    global.document = realDocument;
+    global.window = realWindow;
   });
 
   it.each([

@@ -1,15 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { initAdapter } from 'storefronts/adapters/webflow.js';
 import * as currencyAdapter from 'storefronts/adapters/webflow/currencyDomAdapter.js';
+import { createDomStub } from '../utils/dom-stub';
 
 vi.spyOn(currencyAdapter, 'initCurrencyDom').mockImplementation(() => {});
 
 describe('webflow adapter legacy attribute normalization', () => {
-  let elements;
-  let realDocument;
-  let realConfig;
+    let elements;
+    let realDocument;
+    let realConfig;
 
-  beforeEach(() => {
+    beforeEach(() => {
     elements = {};
     const createEl = (legacyAttr, existing) => {
       const attrs = { [legacyAttr]: '' };
@@ -56,12 +57,12 @@ describe('webflow adapter legacy attribute normalization', () => {
     };
 
     realConfig = globalThis.SMOOTHR_CONFIG;
-    realDocument = global.document;
-    global.document = {
-      readyState: 'complete',
-      querySelectorAll: vi.fn((sel) => selectorMap[sel] || []),
-      addEventListener: vi.fn(),
-    };
+      realDocument = global.document;
+      global.document = createDomStub({
+        readyState: 'complete',
+        querySelectorAll: vi.fn((sel) => selectorMap[sel] || []),
+        addEventListener: vi.fn(),
+      });
   });
 
   afterEach(() => {

@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 let loadPublicConfigMock;
 let supabaseMock;
@@ -25,7 +26,7 @@ let supabaseMock;
       vi.doMock('../../features/checkout/utils/resolveGateway.js', () => ({ default: vi.fn(() => null) }));
       global.window = { Smoothr: {}, smoothr: {} };
       realDocument = global.document;
-      global.document = {};
+      global.document = createDomStub();
     });
 
     afterEach(() => {

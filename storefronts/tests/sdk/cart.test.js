@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { createDomStub } from "../utils/dom-stub";
 
 vi.mock("../../features/auth/index.js", () => {
   const authMock = {
@@ -13,58 +14,64 @@ import * as auth from "../../features/auth/index.js";
 let store;
 let events;
 
-beforeEach(async () => {
-  vi.resetModules();
-  store = {};
-  events = [];
-  global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
-  );
-  global.localStorage = {
-    getItem: vi.fn(key => store[key] ?? null),
-    setItem: vi.fn((key, val) => {
-      store[key] = val;
-    }),
-    removeItem: vi.fn(key => {
-      delete store[key];
-    })
-  };
-  globalThis.il = global.localStorage;
-  global.window = {
-    dispatchEvent: vi.fn((ev) => events.push(ev)),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    location: { origin: "", href: "", hostname: "" },
-    Smoothr: {},
-  };
-  global.document = {
-    addEventListener: vi.fn((evt, cb) => {
-      if (evt === "DOMContentLoaded") cb();
-    }),
-    querySelectorAll: vi.fn((sel) => {
-      if (sel === "[data-smoothr]") {
-        return [
-          {
-            getAttribute: () => "cart",
-            dataset: { smoothr: "cart" },
-          },
-        ];
-      }
-      return [];
-    }),
-    dispatchEvent: vi.fn(),
-    currentScript: {
-      dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
-    },
-    getElementById: vi.fn(() => ({
-      dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
-    })),
-  };
+  let realDocument;
+  beforeEach(async () => {
+    vi.resetModules();
+    store = {};
+    events = [];
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+    );
+    global.localStorage = {
+      getItem: vi.fn(key => store[key] ?? null),
+      setItem: vi.fn((key, val) => {
+        store[key] = val;
+      }),
+      removeItem: vi.fn(key => {
+        delete store[key];
+      })
+    };
+    globalThis.il = global.localStorage;
+    global.window = {
+      dispatchEvent: vi.fn((ev) => events.push(ev)),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      location: { origin: "", href: "", hostname: "" },
+      Smoothr: {},
+    };
+    realDocument = global.document;
+    global.document = createDomStub({
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === "DOMContentLoaded") cb();
+      }),
+      querySelectorAll: vi.fn((sel) => {
+        if (sel === "[data-smoothr]") {
+          return [
+            {
+              getAttribute: () => "cart",
+              dataset: { smoothr: "cart" },
+            },
+          ];
+        }
+        return [];
+      }),
+      dispatchEvent: vi.fn(),
+      currentScript: {
+        dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
+      },
+      getElementById: vi.fn(() => ({
+        dataset: { storeId: "00000000-0000-0000-0000-000000000000" },
+      })),
+    });
   store["smoothr_cart"] = JSON.stringify({ items: [], meta: { lastModified: Date.now() } });
   await import("../../features/auth/init.js");
   await auth.init({
     storeId: "00000000-0000-0000-0000-000000000000",
     baseCurrency: "USD",
+  });
+
+  afterEach(() => {
+    global.document = realDocument;
   });
   const cart = await import("../../features/cart/index.js");
   global.window.Smoothr.cart = cart;

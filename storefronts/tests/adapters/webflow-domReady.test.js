@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { initAdapter } from 'storefronts/adapters/webflow.js';
 import * as currencyAdapter from 'storefronts/adapters/webflow/currencyDomAdapter.js';
+import { createDomStub } from '../utils/dom-stub';
 
 const initCurrencyDom = vi
   .spyOn(currencyAdapter, 'initCurrencyDom')
@@ -14,13 +15,13 @@ describe('webflow adapter domReady', () => {
     vi.useFakeTimers();
     realConfig = globalThis.SMOOTHR_CONFIG;
     globalThis.SMOOTHR_CONFIG = {};
-    realDocument = global.document;
-    global.document = {
-      readyState: 'loading',
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      querySelectorAll: vi.fn(() => []),
-    };
+      realDocument = global.document;
+      global.document = createDomStub({
+        readyState: 'loading',
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        querySelectorAll: vi.fn(() => []),
+      });
   });
 
   afterEach(() => {

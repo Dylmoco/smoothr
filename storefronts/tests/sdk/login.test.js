@@ -1,6 +1,7 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createClientMock as createClientMockUtil, currentSupabaseMocks } from "../utils/supabase-mock";
+import { createDomStub } from "../utils/dom-stub";
 
 var signInMock;
 var getUserMock;
@@ -99,59 +100,59 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
     let passwordValue;
     let realDocument;
 
-    beforeEach(async () => {
-      vi.resetModules();
-      createClientMockUtil();
-      ({ signInMock, getUserMock, getSessionMock } = currentSupabaseMocks());
-      getUserMock.mockResolvedValue({ data: { user: null } });
-      clickHandler = undefined;
-      emailValue = "user@example.com";
-      passwordValue = "Password1";
+      beforeEach(async () => {
+        vi.resetModules();
+        createClientMockUtil();
+        ({ signInMock, getUserMock, getSessionMock } = currentSupabaseMocks());
+        getUserMock.mockResolvedValue({ data: { user: null } });
+        clickHandler = undefined;
+        emailValue = "user@example.com";
+        passwordValue = "Password1";
 
-      let loginTrigger;
-      const form = {
-        dataset: { smoothr: "auth-form" },
-        addEventListener: vi.fn(),
-        querySelector: vi.fn((sel) => {
-          if (sel === '[data-smoothr="email"]')
-            return { value: emailValue };
-          if (sel === '[data-smoothr="password"]')
-            return { value: passwordValue };
-          if (sel === '[data-smoothr="login"]') return loginTrigger;
-          return null;
-        }),
-      };
-      loginTrigger = {
-        tagName: "DIV",
-        closest: vi.fn(() => form),
-        dataset: { smoothr: "login" },
-        getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
-        addEventListener: vi.fn((ev, cb) => {
-          if (ev === "click") clickHandler = cb;
-        }),
-        textContent: "Login",
-      };
+        let loginTrigger;
+        const form = {
+          dataset: { smoothr: "auth-form" },
+          addEventListener: vi.fn(),
+          querySelector: vi.fn((sel) => {
+            if (sel === '[data-smoothr="email"]')
+              return { value: emailValue };
+            if (sel === '[data-smoothr="password"]')
+              return { value: passwordValue };
+            if (sel === '[data-smoothr="login"]') return loginTrigger;
+            return null;
+          }),
+        };
+        loginTrigger = {
+          tagName: "DIV",
+          closest: vi.fn(() => form),
+          dataset: { smoothr: "login" },
+          getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
+          addEventListener: vi.fn((ev, cb) => {
+            if (ev === "click") clickHandler = cb;
+          }),
+          textContent: "Login",
+        };
 
-      global.window = {
-        location: { href: "" },
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      };
-      realDocument = global.document;
-      global.document = {
-        addEventListener: vi.fn((evt, cb) => {
-          if (evt === "DOMContentLoaded") cb();
-        }),
-        querySelectorAll: vi.fn((sel) => {
-          if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
-          if (sel.includes('[data-smoothr="auth-form"]')) return [form];
-          return [];
-        }),
-        dispatchEvent: vi.fn(),
-      };
-      auth = await import("../../features/auth/index.js");
-      vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
-    });
+        global.window = {
+          location: { href: "" },
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        };
+        realDocument = global.document;
+        global.document = createDomStub({
+          addEventListener: vi.fn((evt, cb) => {
+            if (evt === "DOMContentLoaded") cb();
+          }),
+          querySelectorAll: vi.fn((sel) => {
+            if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
+            if (sel.includes('[data-smoothr="auth-form"]')) return [form];
+            return [];
+          }),
+          dispatchEvent: vi.fn(),
+        });
+        auth = await import("../../features/auth/index.js");
+        vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+      });
 
     afterEach(() => {
       global.document = realDocument;
