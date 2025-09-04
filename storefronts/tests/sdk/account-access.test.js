@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import {
+  createClientMock as createClientMockUtil,
+  currentSupabaseMocks,
+} from "../utils/supabase-mock";
 import { createDomStub } from "../utils/dom-stub";
 
 var getUserMock;
-var createClientMock;
 
 vi.mock("@supabase/supabase-js", () => {
   getUserMock = vi.fn();
-  createClientMock = vi.fn(() => ({
+  const createClientMock = vi.fn(() => ({
     auth: {
       getUser: getUserMock,
       signOut: vi.fn(),
@@ -81,7 +83,7 @@ describe("account access trigger", () => {
 
     beforeEach(async () => {
       vi.resetModules();
-      createClientMock();
+      createClientMockUtil();
       const { getUserMock } = currentSupabaseMocks();
       authHelpers = await import("../../../supabase/authHelpers.js");
       vi
@@ -107,7 +109,7 @@ describe("account access trigger", () => {
   describe("dispatches auth:open event for anonymous users", () => {
     beforeEach(async () => {
       vi.resetModules();
-      createClientMock();
+      createClientMockUtil();
       const { getUserMock } = currentSupabaseMocks();
       getUserMock.mockResolvedValueOnce({ data: { user: null } });
       authHelpers = await import("../../../supabase/authHelpers.js");
@@ -133,7 +135,7 @@ describe("account access trigger", () => {
 
   it("dispatches auth:close on sign-out", async () => {
     vi.resetModules();
-    createClientMock();
+    createClientMockUtil();
     const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValueOnce({ data: { user: null } });
     const auth = await import("../../features/auth/index.js");
