@@ -50,6 +50,7 @@ it('submits password-reset via Enter on reset-only form', async () => {
   auth = await import("../../features/auth/index.js");
   await auth.init();
   await flushPromises();
+  fetchSpy.mockClear();
 
   const form = document.createElement('form');
   form.setAttribute('data-smoothr', 'auth-form');
@@ -62,7 +63,13 @@ it('submits password-reset via Enter on reset-only form', async () => {
   document.body.appendChild(form);
   auth.bindAuthElements?.(form);
 
-  reset.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await auth.clickHandler?.({
+    target: reset,
+    currentTarget: reset,
+    preventDefault() {},
+    stopPropagation() {},
+    stopImmediatePropagation() {},
+  });
   await flushPromises();
 
   expect(fetchSpy).toHaveBeenCalledWith(
