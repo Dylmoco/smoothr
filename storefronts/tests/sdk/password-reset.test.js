@@ -300,17 +300,86 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
 
-  const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function () {});
+  const realCreate = document.createElement.bind(document);
+  const formObj = { appendChild: vi.fn(), submit: vi.fn(), style: {} };
+  vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+    if (tag === 'form') return formObj;
+    return realCreate(tag);
+  });
+  const appendSpy = vi
+    .spyOn(document.body, 'appendChild')
+    .mockImplementation(() => {});
 
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  const btn = document.querySelector('[data-smoothr="password-reset-confirm"]');
-  btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  const container = document.querySelector('[data-smoothr="auth-form"]');
+  await auth.clickHandler?.({
+    target: { getAttribute: () => 'password-reset-confirm', closest: () => container },
+    preventDefault() {},
+    stopPropagation() {},
+    stopImmediatePropagation() {},
+  });
 
-  await new Promise((r) => setTimeout(r, 0));
+  await flushPromises();
 
-  expect(submitSpy).toHaveBeenCalledTimes(1);
-  submitSpy.mockRestore();
+  expect(formObj.submit).toHaveBeenCalledTimes(1);
+  expect(appendSpy).toHaveBeenCalledWith(formObj);
+  appendSpy.mockRestore();
+  document.createElement.mockRestore();
+});
+
+it('appends session-sync form and posts via submit on reset confirm', async () => {
+  vi.resetModules();
+  createClientMock();
+  global.window = realWindow;
+  global.document = realDocument;
+  const { getUserMock, updateUserMock } = currentSupabaseMocks();
+  getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+  updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
+
+  document.body.innerHTML = `
+    <script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>
+    <form data-smoothr="auth-form">
+      <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
+      <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
+      <button data-smoothr="password-reset-confirm">Save</button>
+      <div data-smoothr="auth-error" style="display:none"></div>
+    </form>
+  `;
+  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', auth: { silentPost: true } };
+  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
+  window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
+
+  const realCreate = document.createElement.bind(document);
+  const formObj = { appendChild: vi.fn(), submit: vi.fn(), style: {} };
+  vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+    if (tag === 'form') return formObj;
+    return realCreate(tag);
+  });
+  const appendSpy = vi
+    .spyOn(document.body, 'appendChild')
+    .mockImplementation(() => {});
+
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  const container = document.querySelector('[data-smoothr="auth-form"]');
+  await auth.clickHandler?.({
+    target: { getAttribute: () => 'password-reset-confirm', closest: () => container },
+    preventDefault() {},
+    stopPropagation() {},
+    stopImmediatePropagation() {},
+  });
+
+  await flushPromises();
+
+  expect(formObj.submit).toHaveBeenCalledTimes(1);
+  expect(appendSpy).toHaveBeenCalledWith(formObj);
+  expect(formObj.action).toBe('/api/auth/session-sync');
+  expect(formObj.method).toBe('POST');
+
+  appendSpy.mockRestore();
+  document.createElement.mockRestore();
 });
 
 describe('send-reset auto-forward flag', () => {
