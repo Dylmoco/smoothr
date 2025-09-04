@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { createDomStub } from "../utils/dom-stub";
 
 vi.mock("../../features/auth/index.js", () => {
   const authMock = {
@@ -56,6 +57,7 @@ vi.mock('../../features/currency/index.js', async () => {
   };
 });
 
+let realDocument;
 beforeEach(() => {
   vi.resetModules();
   global.fetch = vi.fn(() =>
@@ -67,12 +69,17 @@ beforeEach(() => {
     removeEventListener: vi.fn(),
     SMOOTHR_CONFIG: { baseCurrency: 'USD' },
   };
-  global.document = {
+  realDocument = global.document;
+  global.document = createDomStub({
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
     querySelector: vi.fn(() => null),
     currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
-  };
+  });
+});
+
+afterEach(() => {
+  global.document = realDocument;
 });
 
 describe("global smoothr alias", () => {

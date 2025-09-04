@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 vi.mock('../../utils/loadScriptOnce.js', () => ({
   default: vi.fn(() => Promise.resolve())
@@ -99,26 +100,26 @@ beforeEach(() => {
 
   submitBtn.closest = vi.fn(() => block);
 
-  originalDocument = global.document;
-  global.document = {
-    querySelector: vi.fn(sel => {
-      const map = {
-        '[data-smoothr-pay]': submitBtn,
-        '[data-smoothr-card-number]': cardNumberEl,
-        '[data-smoothr-card-expiry]': cardExpiryEl,
-        '[data-smoothr-card-cvc]': cardCvcEl,
-        '#smoothr-checkout-theme': null
-      };
-      return map[sel] || null;
-    }),
-    querySelectorAll: vi.fn(sel => {
-      if (sel === '[data-smoothr-pay]') return [submitBtn];
-      return [];
-    }),
-    addEventListener: vi.fn((ev, cb) => {
-      if (ev === 'DOMContentLoaded') domReadyCb = cb;
-    })
-  };
+    originalDocument = global.document;
+    global.document = createDomStub({
+      querySelector: vi.fn(sel => {
+        const map = {
+          '[data-smoothr-pay]': submitBtn,
+          '[data-smoothr-card-number]': cardNumberEl,
+          '[data-smoothr-card-expiry]': cardExpiryEl,
+          '[data-smoothr-card-cvc]': cardCvcEl,
+          '#smoothr-checkout-theme': null
+        };
+        return map[sel] || null;
+      }),
+      querySelectorAll: vi.fn(sel => {
+        if (sel === '[data-smoothr-pay]') return [submitBtn];
+        return [];
+      }),
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === 'DOMContentLoaded') domReadyCb = cb;
+      })
+    });
 
   global.window = {
     SMOOTHR_CONFIG: {

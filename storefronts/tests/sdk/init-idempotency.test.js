@@ -1,30 +1,37 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { createDomStub } from "../utils/dom-stub";
 import { currentSupabaseMocks } from "../utils/supabase-mock";
 import * as auth from "../../features/auth/index.js";
 import * as currency from "../../features/currency/index.js";
 
-describe("module init idempotency", () => {
-  beforeEach(() => {
-    vi.resetModules();
-    const { getUserMock } = currentSupabaseMocks();
-    getUserMock.mockResolvedValue({ data: { user: null } });
-    global.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
-    );
-    global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
-    global.window = {
-      location: { origin: "", href: "", hostname: "" },
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn()
-    };
-    global.document = {
-      addEventListener: vi.fn((evt, cb) => {
-        if (evt === "DOMContentLoaded") cb();
-      }),
-      querySelectorAll: vi.fn(() => []),
-      dispatchEvent: vi.fn()
-    };
-  });
+  describe("module init idempotency", () => {
+    let realDocument;
+    beforeEach(() => {
+      vi.resetModules();
+      const { getUserMock } = currentSupabaseMocks();
+      getUserMock.mockResolvedValue({ data: { user: null } });
+      global.fetch = vi.fn(() =>
+        Promise.resolve({ ok: true, json: () => Promise.resolve({ rates: {} }) })
+      );
+      global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
+      global.window = {
+        location: { origin: "", href: "", hostname: "" },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      };
+      realDocument = global.document;
+      global.document = createDomStub({
+        addEventListener: vi.fn((evt, cb) => {
+          if (evt === "DOMContentLoaded") cb();
+        }),
+        querySelectorAll: vi.fn(() => []),
+        dispatchEvent: vi.fn()
+      });
+    });
+
+    afterEach(() => {
+      global.document = realDocument;
+    });
 
   it("auth.init can be called twice", async () => {
     await auth.init();

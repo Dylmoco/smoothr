@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 vi.mock('../../adapters/webflow/currencyDomAdapter.js', () => ({
   initCurrencyDom: vi.fn(),
@@ -29,12 +30,14 @@ class MockElement {
 describe('webflow adapter dynamic legacy normalization', () => {
   let observer;
 
-  beforeEach(() => {
-    global.document = {
-      readyState: 'complete',
-      body: {},
-      querySelectorAll: vi.fn(() => []),
-    };
+    let realDocument;
+    beforeEach(() => {
+      realDocument = global.document;
+      global.document = createDomStub({
+        readyState: 'complete',
+        body: {},
+        querySelectorAll: vi.fn(() => []),
+      });
 
     global.MutationObserver = class {
       constructor(cb) {
@@ -49,12 +52,12 @@ describe('webflow adapter dynamic legacy normalization', () => {
     };
   });
 
-  afterEach(() => {
-    vi.clearAllMocks();
-    delete global.document;
-    delete global.MutationObserver;
-    observer = undefined;
-  });
+    afterEach(() => {
+      vi.clearAllMocks();
+      global.document = realDocument;
+      delete global.MutationObserver;
+      observer = undefined;
+    });
 
   it('normalizes late-inserted legacy attributes', () => {
     const { observeDOMChanges } = initAdapter({});

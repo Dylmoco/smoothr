@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 let fromMock;
 let supabaseMock;
@@ -51,13 +52,12 @@ describe('auth feature init', () => {
       smoothr: {},
       SMOOTHR_DEBUG: true
     };
-    realDocument = global.document;
-    global.document = {
-      readyState: 'complete',
-      addEventListener: vi.fn(),
-      currentScript: { getAttribute: vi.fn(), dataset: {} },
-      querySelectorAll: vi.fn(() => [])
-    };
+      realDocument = global.document;
+      global.document = createDomStub({
+        readyState: 'complete',
+        currentScript: { getAttribute: vi.fn(), dataset: {} },
+        querySelectorAll: vi.fn(() => [])
+      });
     const mod = await import('../../features/auth/init.js');
     const test = global.window.Smoothr.config.__test;
     client = await test.tryImportClient();

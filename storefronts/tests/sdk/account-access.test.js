@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import { createDomStub } from "../utils/dom-stub";
 
 var getUserMock;
 var createClientMock;
@@ -34,10 +35,10 @@ describe("account access trigger", () => {
   let clickHandler;
   let realWindow;
   let realDocument;
-  beforeEach(() => {
-    clickHandler = undefined;
-    realWindow = global.window;
-    realDocument = global.document;
+    beforeEach(() => {
+      clickHandler = undefined;
+      realWindow = global.window;
+      realDocument = global.document;
     btn = {
       tagName: "DIV",
       dataset: { smoothr: "account-access" },
@@ -54,30 +55,20 @@ describe("account access trigger", () => {
       dataset: { storeId: "1" },
       getAttribute: vi.fn(() => "1"),
     };
-    global.document = {
-      currentScript: null,
-      getElementById: vi.fn(() => scriptEl),
-      addEventListener: vi.fn((evt, cb) => {
-        if (evt === "DOMContentLoaded") cb();
-        if (evt === "click") clickHandler = cb;
-      }),
-      querySelectorAll: vi.fn((selector) => {
-        if (selector === '[data-smoothr="login"]') return [];
-        if (
-          selector ===
-          '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]'
-        )
-          return [];
-        if (selector === '[data-smoothr="auth-form"]') return [];
-        if (selector.includes('[data-smoothr="sign-out"]')) return [];
-        return [];
-      }),
-      querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr="auth-pop-up"]') return {};
-        return null;
-      }),
-      dispatchEvent: vi.fn(),
-    };
+      global.document = createDomStub({
+        currentScript: null,
+        getElementById: vi.fn(() => scriptEl),
+        addEventListener: vi.fn((evt, cb) => {
+          if (evt === "DOMContentLoaded") cb();
+          if (evt === "click") clickHandler = cb;
+        }),
+        querySelectorAll: vi.fn(() => []),
+        querySelector: vi.fn((sel) => {
+          if (sel === '[data-smoothr="auth-pop-up"]') return {};
+          return null;
+        }),
+        dispatchEvent: vi.fn(),
+      });
   });
 
   afterEach(() => {

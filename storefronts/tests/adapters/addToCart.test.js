@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { createDomStub } from "../utils/dom-stub";
 let bindAddToCartButtons;
 
 class CustomEvt {
@@ -14,7 +15,8 @@ describe("webflow add-to-cart binding", () => {
   let addItemMock;
   let wrapper;
 
-  beforeEach(async () => {
+    let realDocument;
+    beforeEach(async () => {
     vi.resetModules();
     events = {};
     btn = {
@@ -57,9 +59,10 @@ describe("webflow add-to-cart binding", () => {
     addItemMock = vi.fn(() => {
       global.window.dispatchEvent(new CustomEvt('smoothr:cart:updated'));
     });
-    global.document = {
-      querySelectorAll: vi.fn(() => [btn]),
-    };
+      realDocument = global.document;
+      global.document = createDomStub({
+        querySelectorAll: vi.fn(() => [btn]),
+      });
     global.window = {
       Smoothr: { cart: { addItem: addItemMock, getCart: vi.fn(() => ({ items: [] })) } },
       dispatchEvent: vi.fn((ev) => {
@@ -94,6 +97,10 @@ describe("webflow add-to-cart binding", () => {
       isSubscription: true,
       quantity: 1,
       image: "img1.jpg",
+    });
+
+    afterEach(() => {
+      global.document = realDocument;
     });
     expect(global.window.dispatchEvent).toHaveBeenCalled();
   });

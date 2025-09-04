@@ -1,4 +1,5 @@
-import { describe, it, beforeEach, vi, expect } from 'vitest';
+import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 vi.mock('../../features/auth/index.js', () => {
   const authMock = {
@@ -35,25 +36,27 @@ vi.mock('../../../supabase/browserClient.js', () => ({
   ensureSupabaseSessionAuth: vi.fn().mockResolvedValue(),
 }));
 
-beforeEach(async () => {
-  vi.resetModules();
-  process.env.NODE_ENV = 'production';
-  global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-  global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
-  global.window = {
-    location: { origin: '', href: '', hostname: '' },
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    SMOOTHR_DEBUG: true,
-  };
-  global.document = {
-    addEventListener: vi.fn((evt, cb) => {
-      if (evt === 'DOMContentLoaded') cb();
-    }),
-    querySelectorAll: vi.fn(() => []),
-    dispatchEvent: vi.fn(),
-    currentScript: { getAttribute: vi.fn(), dataset: { storeId: 's1' } },
-  };
+  let realDocument;
+  beforeEach(async () => {
+    vi.resetModules();
+    process.env.NODE_ENV = 'production';
+    global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
+    global.localStorage = { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() };
+    global.window = {
+      location: { origin: '', href: '', hostname: '' },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      SMOOTHR_DEBUG: true,
+    };
+    realDocument = global.document;
+    global.document = createDomStub({
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === 'DOMContentLoaded') cb();
+      }),
+      querySelectorAll: vi.fn(() => []),
+      dispatchEvent: vi.fn(),
+      currentScript: { getAttribute: vi.fn(), dataset: { storeId: 's1' } },
+    });
   globalThis.xc = {
     auth: {
       getSession: getSessionMock,
@@ -81,6 +84,10 @@ describe('auth init session restoration', () => {
     await mod.init({ storeId: 's1', supabase: client });
     expect(getSessionMock).toHaveBeenCalledTimes(1);
     expect(logSpy.mock.calls.filter((c) => c[0] === '[Smoothr] Auth restored').length).toBe(1);
+  });
+
+  afterEach(() => {
+    global.document = realDocument;
   });
 });
 
