@@ -18,7 +18,8 @@ export default defineConfig(({ mode }) => {
         'cross-fetch',
         'whatwg-fetch',
         'node-fetch',
-        'smoothr-sdk.js'
+        'smoothr-sdk.js',
+        'storefronts/*'
       ]
     },
     define: {
@@ -45,7 +46,7 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
       modulePreload: false,
       rollupOptions: {
-        external: [],
+        external: [/^\/smoothr\/pages\/api\/.*$/],
         input: {
           'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.js')
         },

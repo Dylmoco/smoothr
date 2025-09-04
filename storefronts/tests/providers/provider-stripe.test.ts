@@ -14,6 +14,12 @@ vi.mock('../../../shared/checkout/getActiveGatewayCreds.ts', () => {
   return { getActiveGatewayCreds: credsMock };
 });
 
+vi.mock('storefronts/features/gateways/stripeGateway.js', () => ({ init: vi.fn() }));
+vi.mock('storefronts/features/gateways/authorizeNet.js', () => ({ init: vi.fn() }));
+vi.mock('storefronts/features/gateways/paypal.js', () => ({ init: vi.fn() }));
+vi.mock('storefronts/features/gateways/nmiGateway.js', () => ({ init: vi.fn() }));
+vi.mock('storefronts/features/gateways/segpay.js', () => ({ init: vi.fn() }));
+
 async function loadModule() {
   const mod = await import('../../../shared/checkout/providers/stripeProvider.ts');
   handleStripe = mod.default;
@@ -49,6 +55,10 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+it('setup ran with debug mode', () => {
+  expect(window.Smoothr?.config?.debug).toBe(true);
 });
 
 describe('handleStripe', () => {
