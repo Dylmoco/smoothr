@@ -115,6 +115,8 @@ describe("login with immutable dataset", () => {
       addEventListener: vi.fn(),
       querySelectorAll: vi.fn((sel) => {
         if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
+        if (sel.includes('[data-smoothr="login-google"]') && sel.includes('[data-smoothr="password-reset"]'))
+          return [resetTrigger, googleTrigger];
         if (sel.includes('[data-smoothr="password-reset"]')) return [resetTrigger];
         if (sel.includes('[data-smoothr="login-google"]')) return [googleTrigger];
         if (sel.includes('[data-smoothr="auth-form"]')) return [form];
@@ -143,9 +145,10 @@ describe("login with immutable dataset", () => {
     expect(signInMock).toHaveBeenCalled();
   });
 
-  it("binds reset and oauth triggers when dataset is immutable", async () => {
+  it("binds login, reset and oauth triggers when dataset is immutable", async () => {
     await auth.init();
     await flushPromises();
+    expect(loginTrigger.addEventListener).toHaveBeenCalled();
     expect(resetTrigger.addEventListener).toHaveBeenCalled();
     expect(googleTrigger.addEventListener).toHaveBeenCalled();
   });
