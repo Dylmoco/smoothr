@@ -7,15 +7,11 @@ export const createClient = vi.fn(() => {
   return client;
 });
 
-vi.mock('@supabase/supabase-js', async () => {
-  const importOriginal = await vi.importActual<any>('@supabase/supabase-js');
-  return {
-    ...importOriginal,
-    __esModule: true,
-    default: { createClient },
-    createClient,
-  };
-});
+vi.mock('@supabase/supabase-js', () => ({
+  __esModule: true,
+  default: { createClient },
+  createClient,
+}));
 
 vi.mock('@supabase/node-fetch', () => ({
   default: vi.fn(async () => ({ json: vi.fn(async () => ({})) })),

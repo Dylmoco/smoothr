@@ -45,9 +45,24 @@ if (!(globalThis as any).__smoothrSetupApplied) {
 
     // Minimal document stubs for tests that touch the DOM without jsdom
     const doc: any = (globalThis as any).document || ((globalThis as any).document = {});
-    doc.querySelector ||= vi.fn();
-    doc.getElementById ||= vi.fn();
+    doc.querySelector ||= vi.fn(() => null);
+    doc.getElementById ||= vi.fn((id) =>
+      id === 'smoothr-sdk'
+        ? {
+            dataset: { storeId: '00000000-0000-0000-0000-000000000000' },
+            getAttribute: vi.fn((name) =>
+              name === 'data-store-id'
+                ? '00000000-0000-0000-0000-000000000000'
+                : null
+            ),
+          }
+        : null
+    );
     doc.addEventListener ||= vi.fn();
+    doc.removeEventListener ||= vi.fn();
+    doc.querySelectorAll ||= vi.fn((selector) =>
+      selector === '[data-smoothr="pay"]' ? [{ dataset: {} }] : []
+    );
     doc.createElement ||= vi.fn(() => ({ style: {} }));
     try {
       Object.defineProperty(doc, 'currentScript', {

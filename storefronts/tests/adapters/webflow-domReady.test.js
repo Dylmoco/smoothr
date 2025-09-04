@@ -8,9 +8,11 @@ const initCurrencyDom = vi
 
 describe('webflow adapter domReady', () => {
   let realDocument;
+  let realConfig;
 
   beforeEach(() => {
     vi.useFakeTimers();
+    realConfig = globalThis.SMOOTHR_CONFIG;
     globalThis.SMOOTHR_CONFIG = {};
     realDocument = global.document;
     global.document = {
@@ -23,8 +25,13 @@ describe('webflow adapter domReady', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     global.document = realDocument;
+    if (realConfig === undefined) {
+      delete globalThis.SMOOTHR_CONFIG;
+    } else {
+      globalThis.SMOOTHR_CONFIG = realConfig;
+    }
   });
 
   it('resolves when DOMContentLoaded fires', async () => {

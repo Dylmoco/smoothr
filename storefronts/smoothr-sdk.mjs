@@ -270,8 +270,13 @@ if (!scriptEl || !storeId) {
 
   // Test-only helper to inject/replace the promise safely.
   __setSupabaseReadyForTests = function (value) {
-    supabaseReadyPromise = Promise.resolve(value);
-    Smoothr.supabaseReady = supabaseReadyPromise;
+    if (value === null) {
+      supabaseReadyPromise = null;
+      delete Smoothr.supabaseReady;
+    } else {
+      supabaseReadyPromise = Promise.resolve(value);
+      Smoothr.supabaseReady = supabaseReadyPromise;
+    }
   };
 
   (async () => {

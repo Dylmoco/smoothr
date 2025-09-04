@@ -7,6 +7,7 @@ vi.spyOn(currencyAdapter, 'initCurrencyDom').mockImplementation(() => {});
 describe('webflow adapter legacy attribute normalization', () => {
   let elements;
   let realDocument;
+  let realConfig;
 
   beforeEach(() => {
     elements = {};
@@ -54,6 +55,7 @@ describe('webflow adapter legacy attribute normalization', () => {
       ],
     };
 
+    realConfig = globalThis.SMOOTHR_CONFIG;
     realDocument = global.document;
     global.document = {
       readyState: 'complete',
@@ -63,8 +65,13 @@ describe('webflow adapter legacy attribute normalization', () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     global.document = realDocument;
+    if (realConfig === undefined) {
+      delete globalThis.SMOOTHR_CONFIG;
+    } else {
+      globalThis.SMOOTHR_CONFIG = realConfig;
+    }
   });
 
   it('normalizes legacy attributes on domReady', async () => {
