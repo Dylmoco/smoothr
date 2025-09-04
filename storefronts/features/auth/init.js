@@ -769,8 +769,15 @@ export async function init(options = {}) {
         return;
       }
       const action = el?.getAttribute?.('data-smoothr');
-      const testClient = (typeof window !== 'undefined' && window.__SMOOTHR_TEST_SUPABASE__) || null;
+      const testClient =
+        (globalThis.__smoothrTest?.supabase) ||
+        ((typeof window !== 'undefined' && window.__SMOOTHR_TEST_SUPABASE__) || null);
       const c = testClient || await resolveSupabase();
+      if (testClient) {
+        const s = w.Smoothr || globalThis.Smoothr || {};
+        w.Smoothr = globalThis.Smoothr = s;
+        s.__supabase = testClient;
+      }
       if (!action || !c?.auth) return;
       if (action === 'login') {
         const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
