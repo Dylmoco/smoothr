@@ -150,6 +150,33 @@ function postViaHiddenIframe(url, fields = {}) {
   });
 }
 
+function createSessionSyncForm(action, storeId, token, doc = globalThis.document) {
+  if (!action || !storeId || !token) return null;
+  try {
+    const form = doc?.createElement?.('form');
+    if (!form) return null;
+    form.method = 'POST';
+    form.enctype = 'application/x-www-form-urlencoded';
+    form.action = action;
+    form.style.display = 'none';
+    const mk = (name, value) => {
+      const input = doc?.createElement?.('input');
+      if (input) {
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value || '';
+        form.appendChild(input);
+      }
+    };
+    mk('store_id', storeId);
+    mk('access_token', token);
+    try { doc?.body?.appendChild?.(form); } catch {}
+    return form;
+  } catch {
+    return null;
+  }
+}
+
 // Compute broker base URL without requiring customer markup changes.
 export function getBrokerBaseUrl() {
   return getCachedBrokerBase() || 'https://smoothr.vercel.app';
@@ -181,16 +208,23 @@ async function signInWithGoogleRedirect() {
 }
 
 export async function sessionSyncAndEmit(token) {
+  const w = globalThis.window || globalThis;
+  const storeId =
+    (w.SMOOTHR_CONFIG && (w.SMOOTHR_CONFIG.store_id || w.SMOOTHR_CONFIG.storeId)) ||
+    w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
+    '';
+  if (!token || !storeId) return false;
   try {
-    const w = globalThis.window || globalThis;
-    const storeId =
-      (w.SMOOTHR_CONFIG && (w.SMOOTHR_CONFIG.store_id || w.SMOOTHR_CONFIG.storeId)) ||
-      w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
-      '';
-    if (!token || !storeId) return false;
     await sessionSyncStayOnPage({ store_id: storeId, access_token: token });
     return true;
   } catch {
+    const form = createSessionSyncForm(
+      `${getBrokerBaseUrl()}/api/auth/session-sync`,
+      storeId,
+      token,
+      w.document
+    );
+    form?.submit?.();
     return false;
   }
 }
@@ -684,10 +718,12 @@ export async function init(options = {}) {
 
     // Auto mode: if a sign-in redirect exists, use form POST + 303; otherwise XHR.
     const sessionSyncAndEmit = async (supa, userId, overrideUrl) => {
+      let token = null;
+      let storeId = null;
       try {
         const { data: sess } = await supa.auth.getSession();
-        const token = sess?.session?.access_token;
-        const storeId =
+        token = sess?.session?.access_token;
+        storeId =
           w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
         if (!token || !storeId) throw new Error('missing token or store');
 
@@ -747,7 +783,19 @@ export async function init(options = {}) {
           }
           return;
         }
-      } catch {}
+      } catch {
+        if (token && storeId) {
+          try {
+            const form = createSessionSyncForm(
+              `${getBrokerBaseUrl()}/api/auth/session-sync`,
+              storeId,
+              token,
+              w.document
+            );
+            form?.submit?.();
+          } catch {}
+        }
+      }
       emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
       emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
       if (overrideUrl) {
