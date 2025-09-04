@@ -852,6 +852,7 @@ export async function init(options = {}) {
         const successEl = container?.querySelector('[data-smoothr-success]');
         const errorEl = container?.querySelector('[data-smoothr-error]');
         try {
+          // Always await the reset request so no other form actions interfere
           await requestPasswordResetForEmail(email);
           w.Smoothr.auth.user.value = null;
           if (successEl) {

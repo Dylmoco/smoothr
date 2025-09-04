@@ -128,6 +128,39 @@ it('submits password-reset via Enter on reset-only form', async () => {
   document.body.innerHTML = '';
 });
 
+it('submits reset-only form via submit event', async () => {
+  vi.resetModules();
+  const realBroker = globalThis.getCachedBrokerBase;
+  const realEnsure = globalThis.ensureConfigLoaded;
+  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
+  auth = await import("../../features/auth/index.js");
+  await auth.init();
+  await flushPromises();
+  globalThis.fetch.mockClear();
+
+  const form = document.createElement('form');
+  form.setAttribute('data-smoothr', 'auth-form');
+  form.innerHTML = `
+    <input data-smoothr="email" value="user@example.com" />
+    <div data-smoothr="password-reset"></div>
+  `;
+  document.body.appendChild(form);
+
+  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await flushPromises();
+
+  expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  expect(globalThis.fetch).toHaveBeenLastCalledWith(
+    'https://smoothr.vercel.app/api/auth/send-reset',
+    expect.objectContaining({ method: 'POST', credentials: 'omit' })
+  );
+
+  globalThis.getCachedBrokerBase = realBroker;
+  globalThis.ensureConfigLoaded = realEnsure;
+  document.body.innerHTML = '';
+});
+
 it('handles submit on reset-only form and surfaces errors', async () => {
   vi.resetModules();
   const realBroker = globalThis.getCachedBrokerBase;
