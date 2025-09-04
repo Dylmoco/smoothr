@@ -239,15 +239,18 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
   getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
   updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
 
-  document.body.innerHTML = `
-    <form data-smoothr="auth-form">
-      <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
-      <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
-      <button data-smoothr="password-reset-confirm">Save</button>
-      <div data-smoothr="auth-error" style="display:none"></div>
-    </form>
-  `;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test' };
+    document.body.innerHTML = `
+      <script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>
+      <form data-smoothr="auth-form">
+        <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
+        <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
+        <button data-smoothr="password-reset-confirm">Save</button>
+        <div data-smoothr="auth-error" style="display:none"></div>
+      </form>
+    `;
+  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', auth: { silentPost: true } };
+  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
+  globalThis.ensureConfigLoaded = () => Promise.resolve();
   window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
 
   const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function () {});
