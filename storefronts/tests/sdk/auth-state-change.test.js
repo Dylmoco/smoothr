@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { currentSupabaseMocks, createClientMock } from "../utils/supabase-mock";
-import { createDomStub } from "../utils/dom-stub";
 
 function flushPromises() {
   return new Promise(setImmediate);
@@ -9,36 +8,30 @@ function flushPromises() {
 describe("auth state change", () => {
   let auth;
 
-    let realDocument;
-    beforeEach(async () => {
-      global.window = {
-        location: { origin: "", href: "", hostname: "" },
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        Smoothr: {},
-        smoothr: {},
-        SMOOTHR_DEBUG: true
-      };
-      realDocument = global.document;
-      global.document = createDomStub({
-        addEventListener: vi.fn((evt, cb) => {
-          if (evt === "DOMContentLoaded") cb();
-        }),
-        querySelectorAll: vi.fn(() => []),
-        dispatchEvent: vi.fn()
-      });
-      createClientMock();
+  beforeEach(async () => {
+    global.window = {
+      location: { origin: "", href: "", hostname: "" },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      Smoothr: {},
+      smoothr: {},
+      SMOOTHR_DEBUG: true
+    };
+    global.document = {
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === "DOMContentLoaded") cb();
+      }),
+      querySelectorAll: vi.fn(() => []),
+      dispatchEvent: vi.fn()
+    };
+    createClientMock();
     const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValue({ data: { user: null } });
     const mod = await import("../../features/auth/index.js");
     auth = mod;
     const test = global.window.Smoothr.config.__test;
     test.resetAuth();
-    });
-
-    afterEach(() => {
-      global.document = realDocument;
-    });
+  });
 
   it("updates user and global auth on session change", async () => {
     await auth.init();

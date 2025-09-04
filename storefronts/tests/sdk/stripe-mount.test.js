@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createDomStub } from '../utils/dom-stub';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 let styleSpy = vi.fn();
 let getCredMock;
 
@@ -23,64 +22,58 @@ let cardExpiryEl;
 let cardCvcEl;
 let elementsCreate;
 
-  let realDocument;
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.resetModules();
-    styleSpy = vi.fn();
-    domReadyCb = null;
-    getCredMock = vi.fn(async () => ({ publishable_key: 'pk_test' }));
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.resetModules();
+  styleSpy = vi.fn();
+  domReadyCb = null;
+  getCredMock = vi.fn(async () => ({ publishable_key: 'pk_test' }));
 
-    cardNumberEl = { mount: vi.fn() };
-    cardExpiryEl = { mount: vi.fn() };
-    cardCvcEl = { mount: vi.fn() };
+  cardNumberEl = { mount: vi.fn() };
+  cardExpiryEl = { mount: vi.fn() };
+  cardCvcEl = { mount: vi.fn() };
 
-    elementsCreate = vi.fn(type => {
-      if (type === 'cardNumber') return cardNumberEl;
-      if (type === 'cardExpiry') return cardExpiryEl;
-      if (type === 'cardCvc') return cardCvcEl;
-      return {};
-    });
+  elementsCreate = vi.fn(type => {
+    if (type === 'cardNumber') return cardNumberEl;
+    if (type === 'cardExpiry') return cardExpiryEl;
+    if (type === 'cardCvc') return cardCvcEl;
+    return {};
+  });
 
-    global.Stripe = vi.fn(() => ({ elements: vi.fn(() => ({ create: elementsCreate })) }));
+  global.Stripe = vi.fn(() => ({ elements: vi.fn(() => ({ create: elementsCreate })) }));
 
-    const block = { querySelector: vi.fn(() => null), dataset: {} };
+  const block = { querySelector: vi.fn(() => null), dataset: {} };
 
-    realDocument = global.document;
-    global.document = createDomStub({
-      querySelector: vi.fn(sel => {
-        const map = {
-          '[data-smoothr-pay]': block,
-          '[data-smoothr-card-number]': {},
-          '[data-smoothr-card-expiry]': {},
-          '[data-smoothr-card-cvc]': {},
-          '#smoothr-checkout-theme': null
-        };
-        return map[sel] || null;
-      }),
-      addEventListener: vi.fn((ev, cb) => {
-        if (ev === 'DOMContentLoaded') domReadyCb = cb;
-      })
-    });
+  global.document = {
+    querySelector: vi.fn(sel => {
+      const map = {
+        '[data-smoothr-pay]': block,
+        '[data-smoothr-card-number]': {},
+        '[data-smoothr-card-expiry]': {},
+        '[data-smoothr-card-cvc]': {},
+        '#smoothr-checkout-theme': null
+      };
+      return map[sel] || null;
+    }),
+    addEventListener: vi.fn((ev, cb) => {
+      if (ev === 'DOMContentLoaded') domReadyCb = cb;
+    })
+  };
 
-    global.window = {
-      SMOOTHR_CONFIG: {
-        storeId: 'store-1',
-        active_payment_gateway: 'stripe'
-      },
-      Smoothr: {
-        cart: {
-          getCart: () => ({ items: [] }),
-          getSubtotal: () => 0,
-          getDiscount: () => null
-        }
+  global.window = {
+    SMOOTHR_CONFIG: {
+      storeId: 'store-1',
+      active_payment_gateway: 'stripe'
+    },
+    Smoothr: {
+      cart: {
+        getCart: () => ({ items: [] }),
+        getSubtotal: () => 0,
+        getDiscount: () => null
       }
-    };
-  });
-
-  afterEach(() => {
-    global.document = realDocument;
-  });
+    }
+  };
+});
 
 describe('stripe element mounting', () => {
   it('mounts each field to its container', async () => {

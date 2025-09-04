@@ -11,7 +11,7 @@ describe('oauth callback', () => {
     const postMessage = vi.fn();
     const close = vi.fn();
     (global as any).window = {
-      location: { hash: '#access_token=tok&refresh_token=ref', pathname: '/auth/callback', search: '', replace: vi.fn() },
+      location: { hash: '#access_token=tok', pathname: '/auth/callback', search: '', replace: vi.fn() },
       history: { replaceState: vi.fn() },
       document: {
         cookie: `smoothr_oauth_ctx=${encodeURIComponent(JSON.stringify({ store_id: 'store_test', orig: 'https://foo.example' }))}`,
@@ -22,21 +22,14 @@ describe('oauth callback', () => {
       opener: { postMessage },
       close,
     } as any;
-    (global as any).document = (global as any).window.document;
     ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
     const result = handleAuthCallback(window);
     expect(postMessage).toHaveBeenCalledWith(
-      {
-        type: 'smoothr_oauth_success',
-        access_token: 'tok',
-        refresh_token: 'ref',
-        store_id: 'store_test'
-      },
+      { type: 'smoothr:oauth', ok: true, access_token: 'tok', store_id: 'store_test' },
       'https://foo.example'
     );
     expect(close).toHaveBeenCalled();
     expect(window.document.documentElement.style.visibility).toBe('hidden');
-    expect(window.history.replaceState).toHaveBeenCalled();
     expect(result.ok).toBe(true);
   });
 
@@ -44,7 +37,7 @@ describe('oauth callback', () => {
     const postMessage = vi.fn();
     const close = vi.fn();
     (global as any).window = {
-      location: { hash: '#access_token=tok&refresh_token=ref', pathname: '/auth/callback', search: '', replace: vi.fn() },
+      location: { hash: '#access_token=tok', pathname: '/auth/callback', search: '', replace: vi.fn() },
       history: { replaceState: vi.fn() },
       document: {
         cookie: `smoothr_oauth_ctx=${encodeURIComponent(JSON.stringify({ store_id: 'store_test' }))}`,
@@ -55,7 +48,6 @@ describe('oauth callback', () => {
       opener: { postMessage },
       close,
     } as any;
-    (global as any).document = (global as any).window.document;
     ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
     const result = handleAuthCallback(window);
     expect(postMessage).not.toHaveBeenCalled();
@@ -73,7 +65,7 @@ describe('oauth callback', () => {
       return { type: '', name: '', value: '' } as any;
     });
     (global as any).window = {
-      location: { hash: '#access_token=tok&refresh_token=ref', pathname: '/auth/callback', search: '', replace: vi.fn() },
+      location: { hash: '#access_token=tok', pathname: '/auth/callback', search: '', replace: vi.fn() },
       history: { replaceState: vi.fn() },
       document: {
         cookie: `smoothr_oauth_ctx=${encodeURIComponent(JSON.stringify({ store_id: 'store_test', orig: 'https://foo.example' }))}`,
@@ -82,15 +74,12 @@ describe('oauth callback', () => {
         body: { appendChild: vi.fn() }
       },
     } as any;
-    (global as any).document = (global as any).window.document;
     ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
     const result = handleAuthCallback(window);
     const store = formChildren.find((c: any) => c.name === 'store_id');
     const token = formChildren.find((c: any) => c.name === 'access_token');
-    const refresh = formChildren.find((c: any) => c.name === 'refresh_token');
     expect(store.value).toBe('store_test');
     expect(token.value).toBe('tok');
-    expect(refresh.value).toBe('ref');
     expect(form.action).toBe('/api/auth/session-sync');
     expect(formSubmit).toHaveBeenCalled();
     expect(window.document.documentElement.style.visibility).toBe('hidden');

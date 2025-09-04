@@ -1,5 +1,4 @@
 // checkout.js
-import { ensureSupabaseReady } from '../../smoothr-sdk.mjs';
 
 let getConfig;
 
@@ -45,7 +44,7 @@ async function init(opts = {}) {
 
     const resolvedSupabase =
       supabase ??
-      (await ensureSupabaseReady()) ??
+      (await globalThis.Smoothr?.supabaseReady) ??
       globalThis.supabaseAuth ??
       globalThis.Smoothr?.supabaseAuth ??
       globalThis.smoothr?.supabaseAuth ??
@@ -335,8 +334,6 @@ async function init(opts = {}) {
           store_id,
           platform
         });
-
-        payload.gateway = provider;
 
         if (getConfig().debug) window.__latestSmoothrPayload = payload;
 

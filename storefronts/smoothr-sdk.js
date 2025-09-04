@@ -1,65 +1,9 @@
 import { initAdapter as initWebflowAdapter } from 'storefronts/adapters/webflow.js';
 import { loadPublicConfig } from 'storefronts/features/config/sdkConfig.js';
 
-// Expose auth selectors so they survive minification
-// (checked by scripts/assert-auth-dist-integrity.mjs)
-if (typeof window !== 'undefined') {
-  window.__SMOOTHR_AUTH_SELECTORS__ = [
-    '[data-smoothr="auth-form"]',
-    '[data-smoothr="sign-up"]',
-    '[data-smoothr="password-reset"]',
-    '[data-smoothr="password-reset-confirm"]',
-    'keydown',
-    'Enter',
-    '/api/auth/session-sync',
-    'application/x-www-form-urlencoded',
-    'method="POST"'
-  ];
-}
-
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
-}
-
-function ensurePreconnect(host) {
-  try {
-    const head = document.head || document.getElementsByTagName('head')[0];
-    if (!head) return;
-    const tags = [
-      ['preconnect', host, ''],
-      ['dns-prefetch', host, null]
-    ];
-    for (const [rel, href, crossOrigin] of tags) {
-      if (!head.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
-        const l = document.createElement('link');
-        l.rel = rel;
-        l.href = href;
-        if (crossOrigin !== null) l.crossOrigin = crossOrigin;
-        head.appendChild(l);
-      }
-    }
-  } catch {}
-}
-
-export function injectAuthPreconnects(cfg) {
-  try {
-    const supabaseUrl =
-      (cfg && cfg.supabase_url) ||
-      (window.SMOOTHR_CONFIG && window.SMOOTHR_CONFIG.supabase_url);
-    if (supabaseUrl) {
-      const { host } = new URL(supabaseUrl);
-      ensurePreconnect(`https://${host}`);
-    }
-    ensurePreconnect('https://accounts.google.com');
-  } catch {}
-}
-
-export function isIOSSafari() {
-  const ua = navigator.userAgent || '';
-  const iOS = /iPad|iPhone|iPod/.test(ua);
-  const webkit = /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS/.test(ua);
-  return iOS && webkit;
 }
 
 export const SDK_TAG = 'auth-popup-locked-v1';
@@ -88,9 +32,6 @@ if (typeof window !== 'undefined') {
 
 const Smoothr = (window.Smoothr = window.Smoothr || {});
 if (!window.smoothr) window.smoothr = Smoothr;
-
-let ensureSupabaseReady;
-let __setSupabaseReadyForTests = () => {};
 
 try {
   const adapter = initWebflowAdapter(Smoothr.config || {});
@@ -225,59 +166,32 @@ if (!scriptEl || !storeId) {
     }
   })();
 
-  let supabaseReadyPromise = null;
-
-  // Make the property writable & configurable so tests can override it.
-  // We keep a module-level promise as the canonical source of truth.
+  let _supabasePromise;
   Object.defineProperty(Smoothr, 'supabaseReady', {
-    value: null,
-    writable: true,
-    configurable: true
+    get() {
+      if (!_supabasePromise) {
+        _supabasePromise = (async () => {
+          const cfg = await Smoothr.ready;
+          if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return null;
+          window.SMOOTHR_CONFIG = {
+            ...(window.SMOOTHR_CONFIG || {}),
+            storeId: cfg.storeId
+          };
+          if (window.Smoothr.__supabase) return window.Smoothr.__supabase;
+          const { createClient } = await import('@supabase/supabase-js');
+          const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+            auth: {
+              persistSession: true,
+              storageKey: `smoothr_${cfg.storeId}`
+            }
+          });
+          window.Smoothr.__supabase = client;
+          return client;
+        })();
+      }
+      return _supabasePromise;
+    }
   });
-
-  // Lazily create (and cache) a Supabase client promise.
-  // Always return the same promise once created.
-  ensureSupabaseReady = function ensureSupabaseReady() {
-    if (Smoothr.supabaseReady) return Smoothr.supabaseReady;
-    if (!supabaseReadyPromise) {
-      supabaseReadyPromise = (async () => {
-        const cfg = await Smoothr.ready;
-        if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return null;
-
-        // Expose storeId for downstream storageKey logic (stable behavior).
-        window.SMOOTHR_CONFIG = {
-          ...(window.SMOOTHR_CONFIG || {}),
-          storeId: cfg.storeId
-        };
-
-        if (window.Smoothr.__supabase) return window.Smoothr.__supabase;
-
-        const { createClient } = await import('@supabase/supabase-js');
-        const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-          auth: {
-            persistSession: true,
-            storageKey: `smoothr_${cfg.storeId}`
-          }
-        });
-
-        window.Smoothr.__supabase = client;
-        return client;
-      })();
-    }
-    Smoothr.supabaseReady = supabaseReadyPromise;
-    return supabaseReadyPromise;
-  };
-
-  // Test-only helper to inject/replace the promise safely.
-  __setSupabaseReadyForTests = function (value) {
-    if (value === null) {
-      supabaseReadyPromise = null;
-      delete Smoothr.supabaseReady;
-    } else {
-      supabaseReadyPromise = Promise.resolve(value);
-      Smoothr.supabaseReady = supabaseReadyPromise;
-    }
-  };
 
   (async () => {
     const fetched = await Smoothr.ready;
@@ -298,7 +212,7 @@ if (!scriptEl || !storeId) {
       storeId: resolvedStoreId
     };
     try {
-      const supabase = await ensureSupabaseReady();
+      const supabase = await Smoothr.supabaseReady;
       const pub = await loadPublicConfig(resolvedStoreId, supabase);
       Object.assign(window.SMOOTHR_CONFIG, pub || {});
       if (window.SMOOTHR_DEBUG) {
@@ -325,16 +239,11 @@ if (!scriptEl || !storeId) {
       ...(window.SMOOTHR_CONFIG || {}),
       __brokerBase: brokerBase
     };
-    try {
-      injectAuthPreconnects(window.SMOOTHR_CONFIG);
-    } catch {}
     __configReadyResolve?.(true);
 
     await initFeatures();
   })();
 }
-
-export { ensureSupabaseReady, __setSupabaseReadyForTests };
 
 export async function __test_bootstrap(fakeConfig = {}) {
   window.Smoothr = window.Smoothr || {};

@@ -1,38 +1,27 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { initAdapter } from 'storefronts/adapters/webflow.js';
-import * as currencyAdapter from 'storefronts/adapters/webflow/currencyDomAdapter.js';
-import { createDomStub } from '../utils/dom-stub';
 
-const initCurrencyDom = vi
-  .spyOn(currencyAdapter, 'initCurrencyDom')
-  .mockImplementation(() => {});
+vi.mock('../../adapters/webflow/currencyDomAdapter.js', () => ({
+  initCurrencyDom: vi.fn(),
+}));
+
+import { initAdapter } from '../../adapters/webflow.js';
+import { initCurrencyDom } from '../../adapters/webflow/currencyDomAdapter.js';
 
 describe('webflow adapter domReady', () => {
-  let realDocument;
-  let realConfig;
-
   beforeEach(() => {
     vi.useFakeTimers();
-    realConfig = globalThis.SMOOTHR_CONFIG;
     globalThis.SMOOTHR_CONFIG = {};
-      realDocument = global.document;
-      global.document = createDomStub({
-        readyState: 'loading',
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        querySelectorAll: vi.fn(() => []),
-      });
+    global.document = {
+      readyState: 'loading',
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      querySelectorAll: vi.fn(() => []),
+    };
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.restoreAllMocks();
-    global.document = realDocument;
-    if (realConfig === undefined) {
-      delete globalThis.SMOOTHR_CONFIG;
-    } else {
-      globalThis.SMOOTHR_CONFIG = realConfig;
-    }
+    vi.clearAllMocks();
   });
 
   it('resolves when DOMContentLoaded fires', async () => {

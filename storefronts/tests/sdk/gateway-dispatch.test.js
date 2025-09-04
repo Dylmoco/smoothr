@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createDomStub } from "../utils/dom-stub";
 
 const mocked = [];
 
@@ -52,26 +51,26 @@ function setupEnv(modulePath) {
     default: vi.fn()
   }));
 
-    const payBtn = {
-      tagName: "button",
-      addEventListener: vi.fn(),
-      dataset: { smoothr: "pay" }
-    };
-    global.document = createDomStub({
-      querySelector: vi.fn(sel => {
-        if (sel === "[data-smoothr=\"pay\"]") return payBtn;
-        if (sel === "[data-smoothr=\"pay\"], [data-smoothr-pay]") return payBtn;
-        if (sel === "#smoothr-card-styles") return null;
-        return null;
-      }),
-      querySelectorAll: vi.fn(sel =>
-        sel === "[data-smoothr=\"pay\"], [data-smoothr-pay]" || sel === "[data-smoothr=\"pay\"]"
-          ? [payBtn]
-          : []
-      ),
-      createElement: vi.fn(() => ({ style: {}, id: "", textContent: "" })),
-      head: { appendChild: vi.fn() }
-    });
+  const payBtn = {
+    tagName: "button",
+    addEventListener: vi.fn(),
+    dataset: { smoothr: "pay" }
+  };
+  global.document = {
+    querySelector: vi.fn(sel => {
+      if (sel === "[data-smoothr=\"pay\"]") return payBtn;
+      if (sel === "[data-smoothr=\"pay\"], [data-smoothr-pay]") return payBtn;
+      if (sel === "#smoothr-card-styles") return null;
+      return null;
+    }),
+    querySelectorAll: vi.fn(sel =>
+      sel === "[data-smoothr=\"pay\"], [data-smoothr-pay]" || sel === "[data-smoothr=\"pay\"]"
+        ? [payBtn]
+        : []
+    ),
+    createElement: vi.fn(() => ({ style: {}, id: "", textContent: "" })),
+    head: { appendChild: vi.fn() }
+  };
   global.window = {
     location: { pathname: "", search: "" },
     Smoothr: {
@@ -88,19 +87,15 @@ function setupEnv(modulePath) {
 }
 
 describe("gateway dispatch", () => {
-  let realDocument;
-  let realWindow;
   beforeEach(() => {
     vi.resetModules();
-    realDocument = global.document;
-    realWindow = global.window;
   });
 
   afterEach(() => {
     mocked.forEach(m => vi.doUnmock(m));
     mocked.length = 0;
-    global.document = realDocument;
-    global.window = realWindow;
+    delete global.window;
+    delete global.document;
   });
 
   it.each([

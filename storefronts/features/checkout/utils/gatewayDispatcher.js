@@ -11,8 +11,6 @@ export default async function gatewayDispatcher(provider, payload, token, log, w
     return { res: null, data: null };
   }
 
-  payload.gateway = payload.gateway || provider;
-
   let res;
   try {
     if (provider === 'authorizeNet') {
@@ -22,7 +20,7 @@ export default async function gatewayDispatcher(provider, payload, token, log, w
         cart: payload.cart,
         total_price: payload.total,
         currency: payload.currency,
-        gateway: payload.gateway,
+        gateway: provider,
         shipping: payload.shipping,
         billing: payload.billing,
         store_id: payload.store_id

@@ -1,24 +1,19 @@
+
 {
   "name": "storefronts",
   "version": "1.0.0",
   "type": "module",
-  "main": "./smoothr-sdk.mjs",
-  "module": "./smoothr-sdk.mjs",
-  "exports": {
-    ".": "./smoothr-sdk.mjs"
-  },
   "sideEffects": [
     "features/auth/*",
     "adapters/*",
-    "smoothr-sdk.mjs"
+    "smoothr-sdk.js"
   ],
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "test": "vitest run --config vitest.config.ts --exclude tests/sdk/signup-dist.test.js",
+    "test": "vitest run --config ../vitest.config.ts --exclude tests/sdk/signup-dist.test.js",
     "build:storefronts": "vite build",
-    "test:dist-auth": "vitest run --config vitest.dist.config.ts",
-    "test:watch": "vitest --config vitest.config.ts --watch"
+    "test:dist-auth": "vitest run --config vitest.dist.config.ts"
   },
   "dependencies": {
     "esbuild": "^0.19.12",

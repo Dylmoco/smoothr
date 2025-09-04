@@ -1,15 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  createClientMock as createClientMockUtil,
-  currentSupabaseMocks,
-} from "../utils/supabase-mock";
-import { createDomStub } from "../utils/dom-stub";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var getUserMock;
+var createClientMock;
 
 vi.mock("@supabase/supabase-js", () => {
   getUserMock = vi.fn();
-  const createClientMock = vi.fn(() => ({
+  createClientMock = vi.fn(() => ({
     auth: {
       getUser: getUserMock,
       signOut: vi.fn(),
@@ -35,12 +32,8 @@ function flushPromises() {
 describe("account access trigger", () => {
   let btn;
   let clickHandler;
-  let realWindow;
-  let realDocument;
-    beforeEach(() => {
-      clickHandler = undefined;
-      realWindow = global.window;
-      realDocument = global.document;
+  beforeEach(() => {
+    clickHandler = undefined;
     btn = {
       tagName: "DIV",
       dataset: { smoothr: "account-access" },
@@ -57,25 +50,30 @@ describe("account access trigger", () => {
       dataset: { storeId: "1" },
       getAttribute: vi.fn(() => "1"),
     };
-      global.document = createDomStub({
-        currentScript: null,
-        getElementById: vi.fn(() => scriptEl),
-        addEventListener: vi.fn((evt, cb) => {
-          if (evt === "DOMContentLoaded") cb();
-          if (evt === "click") clickHandler = cb;
-        }),
-        querySelectorAll: vi.fn(() => []),
-        querySelector: vi.fn((sel) => {
-          if (sel === '[data-smoothr="auth-pop-up"]') return {};
-          return null;
-        }),
-        dispatchEvent: vi.fn(),
-      });
-  });
-
-  afterEach(() => {
-    global.window = realWindow;
-    global.document = realDocument;
+    global.document = {
+      currentScript: null,
+      getElementById: vi.fn(() => scriptEl),
+      addEventListener: vi.fn((evt, cb) => {
+        if (evt === "DOMContentLoaded") cb();
+        if (evt === "click") clickHandler = cb;
+      }),
+      querySelectorAll: vi.fn((selector) => {
+        if (selector === '[data-smoothr="login"]') return [];
+        if (
+          selector ===
+          '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]'
+        )
+          return [];
+        if (selector === '[data-smoothr="auth-form"]') return [];
+        if (selector.includes('[data-smoothr="sign-out"]')) return [];
+        return [];
+      }),
+      querySelector: vi.fn((sel) => {
+        if (sel === '[data-smoothr="auth-pop-up"]') return {};
+        return null;
+      }),
+      dispatchEvent: vi.fn(),
+    };
   });
 
   describe("redirects logged-in users to dashboard home", () => {
@@ -83,7 +81,7 @@ describe("account access trigger", () => {
 
     beforeEach(async () => {
       vi.resetModules();
-      const client = createClientMockUtil();
+      createClientMock();
       const { getUserMock } = currentSupabaseMocks();
       authHelpers = await import("../../../supabase/authHelpers.js");
       vi
@@ -92,7 +90,7 @@ describe("account access trigger", () => {
       user = { id: "1", email: "test@example.com" };
       getUserMock.mockResolvedValueOnce({ data: { user } });
       const { init } = await import("../../features/auth/index.js");
-      await init({ supabase: client });
+      await init({});
       await flushPromises();
     });
 
@@ -109,7 +107,7 @@ describe("account access trigger", () => {
   describe("dispatches auth:open event for anonymous users", () => {
     beforeEach(async () => {
       vi.resetModules();
-      createClientMockUtil();
+      createClientMock();
       const { getUserMock } = currentSupabaseMocks();
       getUserMock.mockResolvedValueOnce({ data: { user: null } });
       authHelpers = await import("../../../supabase/authHelpers.js");
@@ -133,26 +131,9 @@ describe("account access trigger", () => {
     });
   });
 
-  it("seeds auth.user after init", async () => {
-    vi.resetModules();
-      const client = createClientMockUtil();
-    const { getUserMock, onAuthStateChangeMock } = currentSupabaseMocks();
-    const user = { id: "1", email: "test@example.com" };
-    getUserMock.mockResolvedValueOnce({ data: { user } });
-    onAuthStateChangeMock.mockImplementation((cb) => {
-      cb("SIGNED_IN", {});
-      return { data: { subscription: { unsubscribe: vi.fn() } } };
-    });
-    const { init } = await import("../../features/auth/index.js");
-    await init({ supabase: client });
-    await flushPromises();
-    expect(getUserMock).toHaveBeenCalled();
-    expect(global.window.Smoothr.auth.user.value).toEqual(user);
-  });
-
   it("dispatches auth:close on sign-out", async () => {
     vi.resetModules();
-    createClientMockUtil();
+    createClientMock();
     const { getUserMock } = currentSupabaseMocks();
     getUserMock.mockResolvedValueOnce({ data: { user: null } });
     const auth = await import("../../features/auth/index.js");

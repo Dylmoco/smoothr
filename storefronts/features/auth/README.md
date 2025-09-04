@@ -32,7 +32,7 @@ The storefront SDK automatically initializes authentication when loaded. In
 Webflow or other drop-in platforms simply include the script tag:
 
 ```html
-<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.mjs"></script>
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
 ```
 
 No additional JavaScript configuration is required. For advanced use you can

@@ -1,16 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { initAdapter } from 'storefronts/adapters/webflow.js';
-import * as currencyAdapter from 'storefronts/adapters/webflow/currencyDomAdapter.js';
-import { createDomStub } from '../utils/dom-stub';
 
-vi.spyOn(currencyAdapter, 'initCurrencyDom').mockImplementation(() => {});
+vi.mock('../../adapters/webflow/currencyDomAdapter.js', () => ({
+  initCurrencyDom: vi.fn(),
+}));
+
+import { initAdapter } from '../../adapters/webflow.js';
 
 describe('webflow adapter legacy attribute normalization', () => {
-    let elements;
-    let realDocument;
-    let realConfig;
+  let elements;
 
-    beforeEach(() => {
+  beforeEach(() => {
     elements = {};
     const createEl = (legacyAttr, existing) => {
       const attrs = { [legacyAttr]: '' };
@@ -56,23 +55,15 @@ describe('webflow adapter legacy attribute normalization', () => {
       ],
     };
 
-    realConfig = globalThis.SMOOTHR_CONFIG;
-      realDocument = global.document;
-      global.document = createDomStub({
-        readyState: 'complete',
-        querySelectorAll: vi.fn((sel) => selectorMap[sel] || []),
-        addEventListener: vi.fn(),
-      });
+    global.document = {
+      readyState: 'complete',
+      querySelectorAll: vi.fn((sel) => selectorMap[sel] || []),
+    };
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
-    global.document = realDocument;
-    if (realConfig === undefined) {
-      delete globalThis.SMOOTHR_CONFIG;
-    } else {
-      globalThis.SMOOTHR_CONFIG = realConfig;
-    }
+    vi.clearAllMocks();
+    delete global.document;
   });
 
   it('normalizes legacy attributes on domReady', async () => {

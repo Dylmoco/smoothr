@@ -1,12 +1,10 @@
-import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
-import { createDomStub } from '../utils/dom-stub';
+import { describe, it, beforeEach, expect, vi } from 'vitest';
 
 let fromMock;
 let supabaseMock;
 let client;
 
 describe('auth feature init', () => {
-  let realDocument;
   beforeEach(async () => {
     vi.resetModules();
     fromMock = vi.fn(() => ({
@@ -31,8 +29,7 @@ describe('auth feature init', () => {
         signOut: vi.fn(),
         onAuthStateChange: vi.fn(() => ({
           data: { subscription: { unsubscribe: vi.fn() } }
-        })),
-        signInWithPassword: vi.fn()
+        }))
       }
     };
     globalThis.xc = supabaseMock;
@@ -53,20 +50,16 @@ describe('auth feature init', () => {
       smoothr: {},
       SMOOTHR_DEBUG: true
     };
-      realDocument = global.document;
-      global.document = createDomStub({
-        readyState: 'complete',
-        currentScript: { getAttribute: vi.fn(), dataset: {} },
-        querySelectorAll: vi.fn(() => [])
-      });
+    global.document = {
+      readyState: 'complete',
+      addEventListener: vi.fn(),
+      currentScript: { getAttribute: vi.fn(), dataset: {} },
+      querySelectorAll: vi.fn(() => [])
+    };
     const mod = await import('../../features/auth/init.js');
     const test = global.window.Smoothr.config.__test;
     client = await test.tryImportClient();
     test.resetAuth();
-  });
-
-  afterEach(() => {
-    global.document = realDocument;
   });
 
   it('loads v_public_store during init', async () => {
@@ -87,30 +80,6 @@ describe('auth feature init', () => {
     expect(captureCall?.[2]).toMatchObject({ capture: true, passive: false });
     const bubbleCall = clickCalls.find(([, , opts]) => opts === false);
     expect(bubbleCall).toBeTruthy();
-  });
-
-  it('does not attempt sign-in with invalid email', async () => {
-    const mod = await import('../../features/auth/init.js');
-    const { init, clickHandler } = mod;
-    await init({ storeId: '1', supabase: client });
-    const container = {
-      querySelector: vi.fn(sel => {
-        if (sel === '[data-smoothr="email"]') return { value: 'bad' };
-        if (sel === '[data-smoothr="password"]') return { value: 'pwd' };
-        return null;
-      }),
-      closest: vi.fn(() => null)
-    };
-    const loginEl = {
-      getAttribute: attr => (attr === 'data-smoothr' ? 'login' : null),
-      closest: sel => {
-        if (sel === '[data-smoothr]') return loginEl;
-        if (sel === '[data-smoothr="auth-form"]') return container;
-        return null;
-      }
-    };
-    await clickHandler({ preventDefault: () => {}, target: loginEl });
-    expect(supabaseMock.auth.signInWithPassword).not.toHaveBeenCalled();
   });
 });
 

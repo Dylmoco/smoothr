@@ -19,29 +19,9 @@ if (typeof globalThis.document === "undefined") {
   globalThis.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
-    getElementById: vi.fn(() => null),
-    querySelector: vi.fn(() => null),
-    createElement: vi.fn(() => ({
-      style: {},
-      setAttribute: vi.fn(),
-      appendChild: vi.fn(),
-    })),
     body: {},
     dispatchEvent: vi.fn(),
   };
-}
-if (!globalThis.document.getElementById) {
-  globalThis.document.getElementById = vi.fn(() => null);
-}
-if (!globalThis.document.querySelector) {
-  globalThis.document.querySelector = vi.fn(() => null);
-}
-if (!globalThis.document.createElement) {
-  globalThis.document.createElement = vi.fn(() => ({
-    style: {},
-    setAttribute: vi.fn(),
-    appendChild: vi.fn(),
-  }));
 }
 // Stub the <script> tag dataset so loadConfig gets a storeId in tests
 if (typeof document !== 'undefined' && !document.currentScript) {

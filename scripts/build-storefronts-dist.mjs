@@ -9,16 +9,6 @@ export async function buildStorefronts() {
   await build({
     root: resolve(__dirname, '../storefronts'),
     logLevel: 'info',
-    build: {
-      rollupOptions: {
-        input: {
-          'smoothr-sdk': resolve(__dirname, '../storefronts/smoothr-sdk.mjs')
-        },
-        output: {
-          entryFileNames: '[name].js'
-        }
-      }
-    }
   });
 }
 

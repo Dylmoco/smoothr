@@ -11,15 +11,8 @@ export default defineConfig(({ mode }) => {
     base: 'https://sdk.smoothr.io/',
     // Only expose env vars prefixed with VITE_
     envPrefix: ['VITE_'],
-    ssr: false,
     optimizeDeps: {
-      include: [
-        '@supabase/supabase-js',
-        'stripe',
-        'cross-fetch',
-        'whatwg-fetch',
-        'node-fetch'
-      ]
+      include: ['@supabase/supabase-js']
     },
     define: {
       // Map Cloudflare’s VITE_* secrets into process.env
@@ -42,12 +35,11 @@ export default defineConfig(({ mode }) => {
       )
     },
     build: {
-      target: 'es2020',
-      modulePreload: false,
+      target: 'esnext', // ✅ Enables top-level await
       rollupOptions: {
-        external: [/^\/smoothr\/pages\/api\/.*$/],
+        external: [],
         input: {
-          'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.mjs')
+          'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.js')
         },
         treeshake: {
           moduleSideEffects: true
@@ -57,19 +49,12 @@ export default defineConfig(({ mode }) => {
           dir: path.resolve(__dirname, 'dist'),
           entryFileNames: '[name].js',
           format: 'es',
-          preserveModules: true
+          inlineDynamicImports: true
         }
       },
       outDir: 'dist',
       emptyOutDir: true,
       assetsDir: ''
-    },
-    resolve: {
-      alias: [
-        { find: /^shared\/(.*)$/, replacement: (_, p1) => path.resolve(__dirname, `../shared/${p1}`) },
-        { find: /^smoothr\/(.*)$/, replacement: (_, p1) => path.resolve(__dirname, `../smoothr/${p1}`) },
-        { find: /^storefronts\/(.*)$/, replacement: (_, p1) => path.resolve(__dirname, p1) },
-      ],
     }
   };
 });

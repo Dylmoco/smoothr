@@ -47,11 +47,6 @@ describe("global auth", () => {
       }
       return [];
     });
-    doc.querySelector = vi.fn(() => null);
-    doc.getElementById = vi.fn(() => ({
-      dataset: { storeId: 'store_test' },
-      getAttribute: vi.fn(() => 'store_test')
-    }));
     global.document = doc;
   });
 

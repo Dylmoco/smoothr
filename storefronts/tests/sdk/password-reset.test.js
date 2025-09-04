@@ -1,12 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createDomStub } from "../utils/dom-stub";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
 import { validatePasswordsOrThrow } from "../../features/auth/validators.js";
-import { __setSupabaseReadyForTests } from "../../smoothr-sdk.mjs";
-import { buildSupabaseMock } from "../utils/supabase-mock";
 
 let auth;
-let supabaseMocks;
 
 const realWindow = globalThis.window;
 const realDocument = globalThis.document;
@@ -14,60 +11,6 @@ const realDocument = globalThis.document;
 function flushPromises() {
   return new Promise(setImmediate);
 }
-
-beforeEach(() => {
-  resetSupabase();
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-function resetSupabase() {
-  const m = buildSupabaseMock();
-  supabaseMocks = m.mocks;
-  __setSupabaseReadyForTests(m.client);
-  return m;
-}
-
-it('binds reset trigger during init without DOMContentLoaded', async () => {
-  vi.resetModules();
-  resetSupabase();
-  let clickHandler;
-  const form = {
-    dataset: { smoothr: 'auth-form' },
-    querySelector: vi.fn((sel) => {
-      if (sel === '[data-smoothr="email"]') return { value: 'user@example.com' };
-      if (sel === '[data-smoothr="password-reset"]') return resetBtn;
-      return null;
-    }),
-  };
-  const resetBtn = {
-    tagName: 'DIV',
-    dataset: { smoothr: 'password-reset' },
-    getAttribute: (attr) => (attr === 'data-smoothr' ? 'password-reset' : null),
-    closest: vi.fn(() => form),
-    addEventListener: vi.fn((ev, cb) => {
-      if (ev === 'click') clickHandler = cb;
-    }),
-  };
-  const realDocument = global.document;
-  global.document = createDomStub({
-    addEventListener: vi.fn(),
-    querySelectorAll: vi.fn((sel) => {
-      if (sel.includes('[data-smoothr="password-reset"]')) return [resetBtn];
-      if (sel.includes('[data-smoothr="auth-form"]')) return [form];
-      return [];
-    }),
-    dispatchEvent: vi.fn(),
-  });
-  const auth = await import('../../features/auth/index.js');
-  await auth.init();
-  await flushPromises();
-  expect(resetBtn.addEventListener).toHaveBeenCalled();
-  global.document = realDocument;
-});
 
 it('strips stale recovery hash on non-reset routes (no redirect)', async () => {
   vi.resetModules();
@@ -99,16 +42,14 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
-  document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>';
-  resetSupabase();
-  const realBroker = globalThis.getCachedBrokerBase;
-  const realEnsure = globalThis.ensureConfigLoaded;
-  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
+  document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
+  createClientMock();
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
   await auth.init();
   await flushPromises();
-  globalThis.fetch.mockClear();
 
   const form = document.createElement('form');
   form.setAttribute('data-smoothr', 'auth-form');
@@ -117,98 +58,23 @@ it('submits password-reset via Enter on reset-only form', async () => {
   email.value = 'user@example.com';
   const reset = document.createElement('div');
   reset.setAttribute('data-smoothr', 'password-reset');
-  const confirm = document.createElement('div');
-  confirm.setAttribute('data-smoothr', 'password-reset-confirm');
-  confirm.setAttribute('hidden', '');
-  form.append(email, reset, confirm);
+  form.append(email, reset);
   document.body.appendChild(form);
   auth.bindAuthElements?.(form);
 
-  email.focus();
-  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  reset.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   await flushPromises();
 
-  expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-  expect(globalThis.fetch).toHaveBeenLastCalledWith(
-    'https://smoothr.vercel.app/api/auth/send-reset',
+  expect(fetchSpy).toHaveBeenCalledWith(
+    'https://broker.example/api/auth/send-reset',
     expect.objectContaining({ method: 'POST', credentials: 'omit' })
   );
-  globalThis.getCachedBrokerBase = realBroker;
-  globalThis.ensureConfigLoaded = realEnsure;
-  document.body.innerHTML = '';
-});
-
-it('submits reset-only form via submit event', async () => {
-  vi.resetModules();
-  const realBroker = globalThis.getCachedBrokerBase;
-  const realEnsure = globalThis.ensureConfigLoaded;
-  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
-  globalThis.ensureConfigLoaded = () => Promise.resolve();
-  auth = await import("../../features/auth/index.js");
-  await auth.init();
-  await flushPromises();
-  globalThis.fetch.mockClear();
-
-  const form = document.createElement('form');
-  form.setAttribute('data-smoothr', 'auth-form');
-  form.innerHTML = `
-    <input data-smoothr="email" value="user@example.com" />
-    <div data-smoothr="password-reset"></div>
-  `;
-  document.body.appendChild(form);
-
-  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-  await flushPromises();
-
-  expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-  expect(globalThis.fetch).toHaveBeenLastCalledWith(
-    'https://smoothr.vercel.app/api/auth/send-reset',
-    expect.objectContaining({ method: 'POST', credentials: 'omit' })
-  );
-
-  globalThis.getCachedBrokerBase = realBroker;
-  globalThis.ensureConfigLoaded = realEnsure;
-  document.body.innerHTML = '';
-});
-
-it('handles submit on reset-only form and surfaces errors', async () => {
-  vi.resetModules();
-  const realBroker = globalThis.getCachedBrokerBase;
-  const realEnsure = globalThis.ensureConfigLoaded;
-  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
-  globalThis.ensureConfigLoaded = () => Promise.resolve();
-  auth = await import("../../features/auth/index.js");
-  vi.spyOn(auth, 'resolveSupabase').mockResolvedValue(null);
-  await auth.init();
-  await flushPromises();
-  globalThis.fetch.mockClear();
-  globalThis.fetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
-
-  const form = document.createElement('form');
-  form.setAttribute('data-smoothr', 'auth-form');
-  form.innerHTML = `
-    <input data-smoothr="email" value="user@example.com" />
-    <div data-smoothr="password-reset"></div>
-    <div data-smoothr-error></div>
-  `;
-  document.body.appendChild(form);
-
-  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-  await flushPromises();
-
-  expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-  const errEl = form.querySelector('[data-smoothr-error]');
-  expect(errEl.textContent).toBe('reset_email_failed');
-
-  auth.resolveSupabase.mockRestore();
-  globalThis.getCachedBrokerBase = realBroker;
-  globalThis.ensureConfigLoaded = realEnsure;
-  document.body.innerHTML = '';
+  fetchSpy.mockRestore();
 });
 
 it('does not send duplicate reset emails when clicking a bound reset control', async () => {
   vi.resetModules();
-  resetSupabase();
+  createClientMock();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
   await auth.init();
@@ -235,9 +101,9 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
 // Case A: config URL present (modern)
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
-    document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-store-id="store_test" data-config-url="https://smoothr.vercel.app/api/config"></script><form data-smoothr="auth-form"></form>`;
-    window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
-    globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
+  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
@@ -247,11 +113,11 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   await requestPasswordResetForEmail?.('user@example.com');
 
   const payload = JSON.parse(fetchSpy.mock.calls.at(-1)[1].body);
-  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://smoothr.vercel.app/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
   expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   expect(payload.email).toBe('user@example.com');
   expect(payload.store_id).toBe('store_test');
-  expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=/);
+  expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=store_test/);
   expect(String(payload.redirectTo)).toMatch(/orig=/);
   fetchSpy.mockRestore();
 });
@@ -259,8 +125,8 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
 // Case B: no config URL (legacy), script hosted on broker
 it('falls back to script origin when no config URL present', async () => {
   vi.resetModules();
-    document.body.innerHTML = `<script id="smoothr-sdk" src="https://smoothr.vercel.app/smoothr-sdk.mjs" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
-    globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 
@@ -269,7 +135,7 @@ it('falls back to script origin when no config URL present', async () => {
   const { requestPasswordResetForEmail } = auth;
   await requestPasswordResetForEmail?.('user@example.com');
 
-  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://smoothr.vercel.app/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
   expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   fetchSpy.mockRestore();
 });
@@ -277,7 +143,7 @@ it('falls back to script origin when no config URL present', async () => {
 // Case C: cached broker points to SDK host -> fallback to Vercel app
 it('ignores sdk host broker and falls back to smoothr.vercel.app', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
   window.SMOOTHR_CONFIG = { broker_origin: 'https://sdk.smoothr.io', store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
   globalThis.getCachedBrokerBase = () => 'https://sdk.smoothr.io';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
@@ -359,66 +225,14 @@ describe('password validator', () => {
 
 it('reset confirm posts to session-sync for 303 redirect to home when no redirect set', async () => {
   vi.resetModules();
-  resetSupabase();
+  createClientMock();
   global.window = realWindow;
   global.document = realDocument;
-  const { getUserMock, updateUserMock } = supabaseMocks;
-  getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
-  updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
-
-    document.body.innerHTML = `
-      <script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>
-      <form data-smoothr="auth-form">
-        <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
-        <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
-        <button data-smoothr="password-reset-confirm">Save</button>
-        <div data-smoothr="auth-error" style="display:none"></div>
-      </form>
-    `;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', auth: { silentPost: true } };
-  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
-  globalThis.ensureConfigLoaded = () => Promise.resolve();
-  window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
-
-  const realCreate = document.createElement.bind(document);
-  const formObj = { appendChild: vi.fn(), submit: vi.fn(), style: {} };
-  vi.spyOn(document, 'createElement').mockImplementation((tag) => {
-    if (tag === 'form') return formObj;
-    return realCreate(tag);
-  });
-  const appendSpy = vi
-    .spyOn(document.body, 'appendChild')
-    .mockImplementation(() => {});
-
-  const auth = await import('../../features/auth/index.js');
-  await auth.init();
-  const container = document.querySelector('[data-smoothr="auth-form"]');
-  await auth.clickHandler?.({
-    target: { getAttribute: () => 'password-reset-confirm', closest: () => container },
-    preventDefault() {},
-    stopPropagation() {},
-    stopImmediatePropagation() {},
-  });
-
-  await flushPromises();
-
-  expect(formObj.submit).toHaveBeenCalledTimes(1);
-  expect(appendSpy).toHaveBeenCalledWith(formObj);
-  appendSpy.mockRestore();
-  document.createElement.mockRestore();
-});
-
-it('appends session-sync form and posts via submit on reset confirm', async () => {
-  vi.resetModules();
-  resetSupabase();
-  global.window = realWindow;
-  global.document = realDocument;
-  const { getUserMock, updateUserMock } = supabaseMocks;
+  const { getUserMock, updateUserMock } = currentSupabaseMocks();
   getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
   updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
 
   document.body.innerHTML = `
-    <script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>
     <form data-smoothr="auth-form">
       <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
       <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
@@ -426,40 +240,20 @@ it('appends session-sync form and posts via submit on reset confirm', async () =
       <div data-smoothr="auth-error" style="display:none"></div>
     </form>
   `;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', auth: { silentPost: true } };
-  globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
-  globalThis.ensureConfigLoaded = () => Promise.resolve();
+  window.SMOOTHR_CONFIG = { store_id: 'store_test' };
   window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
 
-  const realCreate = document.createElement.bind(document);
-  const formObj = { appendChild: vi.fn(), submit: vi.fn(), style: {} };
-  vi.spyOn(document, 'createElement').mockImplementation((tag) => {
-    if (tag === 'form') return formObj;
-    return realCreate(tag);
-  });
-  const appendSpy = vi
-    .spyOn(document.body, 'appendChild')
-    .mockImplementation(() => {});
+  const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function () {});
 
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  const container = document.querySelector('[data-smoothr="auth-form"]');
-  await auth.clickHandler?.({
-    target: { getAttribute: () => 'password-reset-confirm', closest: () => container },
-    preventDefault() {},
-    stopPropagation() {},
-    stopImmediatePropagation() {},
-  });
+  const btn = document.querySelector('[data-smoothr="password-reset-confirm"]');
+  btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-  await flushPromises();
+  await new Promise((r) => setTimeout(r, 0));
 
-  expect(formObj.submit).toHaveBeenCalledTimes(1);
-  expect(appendSpy).toHaveBeenCalledWith(formObj);
-  expect(formObj.action).toBe('/api/auth/session-sync');
-  expect(formObj.method).toBe('POST');
-
-  appendSpy.mockRestore();
-  document.createElement.mockRestore();
+  expect(submitSpy).toHaveBeenCalledTimes(1);
+  submitSpy.mockRestore();
 });
 
 describe('send-reset auto-forward flag', () => {
@@ -560,13 +354,13 @@ describe('send-reset auto-forward flag', () => {
 describe('recovery-bridge auto-forward', () => {
   it('auto-forwards when auto=1 and host matches', () => {
     vi.resetModules();
-      const replace = vi.fn();
-      const orig = window.location;
-      delete window.location;
-      // @ts-ignore
-      window.location = { hash: '#access_token=abc', host: orig.host, replace };
+    const replace = vi.fn();
+    const orig = window.location;
+    delete window.location;
+    // @ts-ignore
+    window.location = { hash: '#access_token=abc', host: orig.host, replace };
     const props = {
-        redirect: 'https://smoothr.vercel.app/reset',
+      redirect: 'https://broker.example/reset',
       auto: '1',
       brokerHost: window.location.host,
       storeName: 'Test Store',
@@ -579,7 +373,7 @@ describe('recovery-bridge auto-forward', () => {
         window.location.replace(dest);
       }
     }
-      expect(replace).toHaveBeenCalledWith('https://smoothr.vercel.app/reset#access_token=abc');
+    expect(replace).toHaveBeenCalledWith('https://broker.example/reset#access_token=abc');
     window.location = orig;
   });
 
@@ -591,7 +385,7 @@ describe('recovery-bridge auto-forward', () => {
     // @ts-ignore
     window.location = { hash: '#access_token=abc', host: orig.host, replace };
     const props = {
-        redirect: 'https://smoothr.vercel.app/reset',
+      redirect: 'https://broker.example/reset',
       auto: null,
       brokerHost: window.location.host,
       storeName: 'Demo Store',
@@ -611,7 +405,7 @@ describe('recovery-bridge auto-forward', () => {
     }
     expect(replace).not.toHaveBeenCalled();
     const anchor = document.querySelector('a');
-      expect(anchor?.getAttribute('href')).toBe('https://smoothr.vercel.app/reset#access_token=abc');
+    expect(anchor?.getAttribute('href')).toBe('https://broker.example/reset#access_token=abc');
     expect(anchor?.textContent).toBe('Continue to reset on Demo Store');
     document.body.innerHTML = '';
     window.location = orig;

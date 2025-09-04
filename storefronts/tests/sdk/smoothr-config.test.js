@@ -1,12 +1,10 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createDomStub } from "../utils/dom-stub";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 function flushPromises() {
   return new Promise(setImmediate);
 }
 
-let realDocument;
 beforeEach(() => {
   vi.resetModules();
   global.fetch = vi
@@ -27,22 +25,17 @@ beforeEach(() => {
       debug: true,
     },
   };
-  realDocument = global.document;
-  global.document = createDomStub({
+  global.document = {
     addEventListener: vi.fn(),
     querySelectorAll: vi.fn(() => []),
     querySelector: vi.fn(() => null),
     currentScript: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
-  });
+  };
   global.localStorage = {
     getItem: vi.fn(),
     setItem: vi.fn(),
     removeItem: vi.fn(),
   };
-});
-
-afterEach(() => {
-  global.document = realDocument;
 });
 
 describe("SMOOTHR_CONFIG integration", () => {

@@ -31,25 +31,25 @@ describe("platform detection", () => {
   });
 
   it("uses existing Smoothr.config.platform for webflow", async () => {
-    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn(), src: 'https://example.com/smoothr-sdk.mjs' };
+    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn(), src: 'https://example.com/smoothr-sdk.js' };
     global.document.getElementById.mockReturnValue(scriptEl);
     Object.defineProperty(document, 'currentScript', { value: scriptEl, configurable: true });
     window.Smoothr = { config: { platform: "webflow" } };
     window.smoothr = {};
 
-    await import("../../smoothr-sdk.mjs");
+    await import("../../smoothr-sdk.js");
     await window.Smoothr.ready;
     expect(window.Smoothr.config.platform).toBe("webflow");
   });
 
   it("uses existing Smoothr.config.platform for magento", async () => {
-    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn(), src: 'https://example.com/smoothr-sdk.mjs' };
+    scriptEl = { dataset: { storeId: "1" }, getAttribute: vi.fn(), src: 'https://example.com/smoothr-sdk.js' };
     global.document.getElementById.mockReturnValue(scriptEl);
     Object.defineProperty(document, 'currentScript', { value: scriptEl, configurable: true });
     window.Smoothr = { config: { platform: "magento" } };
     window.smoothr = {};
 
-    await import("../../smoothr-sdk.mjs");
+    await import("../../smoothr-sdk.js");
     await window.Smoothr.ready;
     expect(window.Smoothr.config.platform).toBe("magento");
   });

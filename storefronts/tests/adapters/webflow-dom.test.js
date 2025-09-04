@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createDomStub } from "../utils/dom-stub";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   setSelectedCurrency,
   initCurrencyDom,
@@ -18,8 +17,7 @@ describe("webflow adapter price replacement", () => {
   let els;
   let store;
 
-    let realDocument;
-    beforeEach(async () => {
+  beforeEach(async () => {
     await currency.init({ baseCurrency: "USD" });
     currency.updateRates({ USD: 1, EUR: 0.5 });
 
@@ -80,16 +78,15 @@ describe("webflow adapter price replacement", () => {
       },
     ];
 
-      realDocument = global.document;
-      global.document = createDomStub({
-        addEventListener: vi.fn((evt, cb) => {
-          events[evt] = cb;
-        }),
-        querySelectorAll: vi.fn(() => els),
-        dispatchEvent: vi.fn((ev) => {
-          events[ev.type]?.(ev);
-        }),
-      });
+    global.document = {
+      addEventListener: vi.fn((evt, cb) => {
+        events[evt] = cb;
+      }),
+      querySelectorAll: vi.fn(() => els),
+      dispatchEvent: vi.fn((ev) => {
+        events[ev.type]?.(ev);
+      }),
+    };
     global.window = {
       location: { origin: "", href: "", hostname: "" },
       addEventListener: vi.fn(),
@@ -98,11 +95,7 @@ describe("webflow adapter price replacement", () => {
     global.CustomEvent = CustomEvt;
 
     initCurrencyDom();
-    });
-
-    afterEach(() => {
-      global.document = realDocument;
-    });
+  });
 
   it("replaces prices immediately", () => {
     expect(els[0].textContent).toBe("$10.00");

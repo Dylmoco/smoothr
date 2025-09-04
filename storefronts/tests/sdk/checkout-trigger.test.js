@@ -1,5 +1,5 @@
 import { vi, expect, test, beforeEach, afterEach } from 'vitest';
-import { __test_bootstrap } from 'storefronts/smoothr-sdk.mjs';
+import { __test_bootstrap } from 'storefronts/smoothr-sdk.js';
 
 const checkoutInitMock = vi.fn();
 vi.mock('storefronts/features/checkout/init.js', () => ({

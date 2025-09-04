@@ -1,21 +1,4 @@
 import { vi } from "vitest";
-import { __setSupabaseReadyForTests } from '../../smoothr-sdk.mjs';
-
-export const createClient = vi.fn(() => {
-  const { client, mocks } = buildSupabaseMock();
-  useWindowSupabaseMock(client, mocks);
-  return client;
-});
-
-vi.mock('@supabase/supabase-js', () => ({
-  __esModule: true,
-  default: { createClient },
-  createClient,
-}));
-
-vi.mock('@supabase/node-fetch', () => ({
-  default: vi.fn(async () => ({ json: vi.fn(async () => ({})) })),
-}));
 
 export type SupabaseClientMock = ReturnType<typeof buildSupabaseMock>["client"];
 export type SupabaseClientMocks = ReturnType<typeof buildSupabaseMock>["mocks"];
@@ -80,7 +63,8 @@ export function buildSupabaseMock(overrides: Partial<SupabaseClientMock> = {}) {
 export function useWindowSupabaseMock(client: SupabaseClientMock, mocks?: SupabaseClientMocks) {
   const w: any = (globalThis as any).window || (globalThis as any);
   w.Smoothr = w.Smoothr || {};
-  __setSupabaseReadyForTests(client);
+  w.Smoothr.__supabase = client;
+  w.Smoothr.supabaseReady = Promise.resolve(client);
   // stash mocks for easy access in specs
   (globalThis as any).__smoothrTest = { ...(globalThis as any).__smoothrTest, supabase: client, mocks };
 }
@@ -91,8 +75,7 @@ export function currentSupabaseMocks(): SupabaseClientMocks {
 
 // Back-compat for specs that expect to call createClientMock()
 export function createClientMock() {
-  return createClient();
+  const { client, mocks } = buildSupabaseMock();
+  useWindowSupabaseMock(client, mocks);
+  return client;
 }
-
-// Some modules import the Supabase client as a default export
-export default { createClient };

@@ -1,24 +1,31 @@
-// Root keeps shared setup (globals/shims), but does NOT force environment/transform.
-// Each workspace still controls jsdom/transform/deps in its own config.
 import { defineConfig } from 'vitest/config';
-import { fileURLToPath, URL } from 'node:url';
+import path from 'node:path';
+
+const repoRoot = __dirname;
 
 export default defineConfig({
   test: {
-    // These setup files existed before and are needed by many SDK tests.
-    // If a path does not exist in this repo, skip that entry gracefully.
-    setupFiles: [
-      './vitest.setup.ts',
-      './storefronts/tests/setup.ts'
-    ].filter(Boolean)
+    // Use jsdom so that browser globals like `window` are available in tests
+    environment: 'jsdom',
+    setupFiles: ['./vitest.setup.ts', './storefronts/tests/setup.ts'],
+    testTimeout: 10000,
+    deps: {
+      inline: ['@supabase/supabase-js'], // Enable npm imports
+      resolver: 'node', // Force Node resolver for npm packages
+    },
+    resolve: {
+      conditions: ['module'], // Ensure ES module resolution
+    },
   },
   resolve: {
     alias: {
-      // mirror storefronts workspace aliases so root runs behave the same
-      'shared/': fileURLToPath(new URL('./shared/', import.meta.url)),
-      'smoothr/': fileURLToPath(new URL('./smoothr/', import.meta.url)),
-      'storefronts/': fileURLToPath(new URL('./storefronts/', import.meta.url))
-    }
-  }
+      '@': path.resolve(repoRoot, 'smoothr'),
+      '@/lib/findOrCreateCustomer': path.resolve(repoRoot, 'shared/lib/findOrCreateCustomer.ts'),
+      'npm:@supabase/supabase-js@2.38.4': '@supabase/supabase-js',
+      shared: path.resolve(repoRoot, 'shared'),
+      'shared/*': path.resolve(repoRoot, 'shared'),
+      smoothr: path.resolve(repoRoot, 'smoothr'),
+      'smoothr/*': path.resolve(repoRoot, 'smoothr'),
+    },
+  },
 });
-
