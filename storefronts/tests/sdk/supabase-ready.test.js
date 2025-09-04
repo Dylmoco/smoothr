@@ -3,14 +3,7 @@
 // @vitest-environment jsdom
 // Vitest: use browser globals for Smoothr
 // (kept as explicit env to avoid runner ambiguity)
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// IMPORTANT: mock @supabase/supabase-js at module scope for ESM friendliness
-const createClient = vi.fn(() => ({}));
-vi.mock('@supabase/supabase-js', () => ({
-  createClient,
-  default: { createClient },
-}));
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import {
   ensureSupabaseReady,

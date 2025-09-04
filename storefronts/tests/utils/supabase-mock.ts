@@ -1,6 +1,26 @@
 import { vi } from "vitest";
 import { __setSupabaseReadyForTests } from '../../smoothr-sdk.mjs';
 
+export const createClient = vi.fn(() => {
+  const { client, mocks } = buildSupabaseMock();
+  useWindowSupabaseMock(client, mocks);
+  return client;
+});
+
+vi.mock('@supabase/supabase-js', async () => {
+  const importOriginal = await vi.importActual<any>('@supabase/supabase-js');
+  return {
+    ...importOriginal,
+    __esModule: true,
+    default: { createClient },
+    createClient,
+  };
+});
+
+vi.mock('@supabase/node-fetch', () => ({
+  default: vi.fn(async () => ({ json: vi.fn(async () => ({})) })),
+}));
+
 export type SupabaseClientMock = ReturnType<typeof buildSupabaseMock>["client"];
 export type SupabaseClientMocks = ReturnType<typeof buildSupabaseMock>["mocks"];
 
@@ -77,13 +97,6 @@ export function currentSupabaseMocks(): SupabaseClientMocks {
 export function createClientMock() {
   return createClient();
 }
-
-// Named export that mirrors the real SDK's import style
-export const createClient = vi.fn(() => {
-  const { client, mocks } = buildSupabaseMock();
-  useWindowSupabaseMock(client, mocks);
-  return client;
-});
 
 // Some modules import the Supabase client as a default export
 export default { createClient };

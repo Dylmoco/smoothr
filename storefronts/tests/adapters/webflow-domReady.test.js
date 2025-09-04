@@ -1,16 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { initAdapter } from 'storefronts/adapters/webflow.js';
+import * as currencyAdapter from 'storefronts/adapters/webflow/currencyDomAdapter.js';
 
-vi.mock('../../adapters/webflow/currencyDomAdapter.js', () => ({
-  initCurrencyDom: vi.fn(),
-}));
-
-import { initAdapter } from '../../adapters/webflow.js';
-import { initCurrencyDom } from '../../adapters/webflow/currencyDomAdapter.js';
+const initCurrencyDom = vi
+  .spyOn(currencyAdapter, 'initCurrencyDom')
+  .mockImplementation(() => {});
 
 describe('webflow adapter domReady', () => {
+  let realDocument;
+
   beforeEach(() => {
     vi.useFakeTimers();
     globalThis.SMOOTHR_CONFIG = {};
+    realDocument = global.document;
     global.document = {
       readyState: 'loading',
       addEventListener: vi.fn(),
@@ -22,6 +24,7 @@ describe('webflow adapter domReady', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    global.document = realDocument;
   });
 
   it('resolves when DOMContentLoaded fires', async () => {
