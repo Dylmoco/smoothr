@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createDomStub } from '../utils/dom-stub';
 
 describe('auth triggers', () => {
   let win, doc, mod;
@@ -9,13 +10,12 @@ describe('auth triggers', () => {
       location: { origin: 'https://example.com' },
       dispatchEvent: vi.fn(),
     };
-    doc = {
+    doc = createDomStub({
       readyState: 'complete',
-      addEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
       querySelector: vi.fn(() => null),
       querySelectorAll: vi.fn(() => []),
-    };
+    });
     global.window = win;
     global.document = doc;
     mod = await import('../../features/auth/init.js');

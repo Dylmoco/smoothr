@@ -96,6 +96,16 @@ it('routes submit on reset-only form to password-reset handler', async () => {
           if (sel === '[data-smoothr="auth-pop-up"]') return {};
           return null;
         }),
+        getElementById: vi.fn((id) =>
+          id === "smoothr-sdk"
+            ? {
+                dataset: { storeId: STORE_ID },
+                getAttribute: vi.fn((name) =>
+                  name === "data-store-id" ? STORE_ID : null
+                ),
+              }
+            : null
+        ),
         dispatchEvent() {
           return true;
         },
