@@ -42,6 +42,20 @@ if (!(globalThis as any).__smoothrSetupApplied) {
       observe() {}
       disconnect() {}
     };
+
+    // Minimal document stubs for tests that touch the DOM without jsdom
+    const doc: any = (globalThis as any).document || ((globalThis as any).document = {});
+    doc.querySelector ||= vi.fn();
+    doc.getElementById ||= vi.fn();
+    doc.addEventListener ||= vi.fn();
+    doc.createElement ||= vi.fn(() => ({ style: {} }));
+    try {
+      Object.defineProperty(doc, 'currentScript', {
+        value: { dataset: { storeId: '00000000-0000-0000-0000-000000000000' } },
+        configurable: true,
+        writable: true,
+      });
+    } catch {}
   }
 
   // ————————————————————————————————————————————————————————————————
