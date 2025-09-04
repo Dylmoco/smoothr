@@ -626,6 +626,7 @@ export async function init(options = {}) {
         const res = await client?.auth?.getUser?.();
         const initialUser = res?.data?.user ?? null;
         api.user.value = initialUser;
+        w.Smoothr.auth.user.value = initialUser;
         if (initialUser) {
           const ev = typeof w.CustomEvent === 'function'
             ? new w.CustomEvent('smoothr:login')
@@ -644,7 +645,9 @@ export async function init(options = {}) {
         authState.user.value = null;
         emitAuth?.('smoothr:sign-out', { reason: 'state-change' });
       } else {
-        authState.user.value = payload.user ?? null;
+        if (payload.user) {
+          authState.user.value = payload.user;
+        }
         const ev = typeof w.CustomEvent === 'function'
           ? new w.CustomEvent('smoothr:login')
           : { type: 'smoothr:login' };
