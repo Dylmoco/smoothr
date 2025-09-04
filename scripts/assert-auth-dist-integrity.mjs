@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 // Note: recovery origin selection is delegated to shared/auth/resolveRecoveryDestination.ts
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distPath = path.resolve(__dirname, '../storefronts/dist/smoothr-sdk.mjs');
+const distPath = path.resolve(__dirname, '../storefronts/dist/smoothr-sdk.js');
 
 if (!fs.existsSync(distPath)) {
   throw new Error(`assert-auth-dist-integrity: missing bundle at ${distPath}`);
@@ -65,4 +65,4 @@ for (const c of checks) {
   }
 }
 
-console.log('smoothr-sdk.mjs auth markers verified');
+console.log('smoothr-sdk.js auth markers verified');

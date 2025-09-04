@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => {
         preserveEntrySignatures: 'exports-only',
         output: {
           dir: path.resolve(__dirname, 'dist'),
-          entryFileNames: '[name].mjs',
+          entryFileNames: '[name].js',
           format: 'es',
           preserveModules: true
         }
