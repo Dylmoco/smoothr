@@ -212,7 +212,7 @@ it('routes submit on reset-only form to password-reset handler', async () => {
 
     forms.push(form);
     elements.push(btn);
-    mutationCallback();
+    mutationCallback([{ addedNodes: [btn] }]);
     expect(btn.addEventListener).toHaveBeenCalled();
 
     const user = { id: "1", email: "user@example.com" };
@@ -262,7 +262,7 @@ it('routes submit on reset-only form to password-reset handler', async () => {
     await flushPromises();
     forms.push(form);
     elements.push(btn);
-    mutationCallback();
+    mutationCallback([{ addedNodes: [btn] }]);
     expect(btn.addEventListener).toHaveBeenCalled();
 
     const user = { id: "2", email: "new@example.com" };
@@ -302,10 +302,13 @@ it('routes submit on reset-only form to password-reset handler', async () => {
       await auth.init({ supabase: createClientMock() });
     await flushPromises();
     elements.push(btn);
-    mutationCallback();
+    mutationCallback([{ addedNodes: [btn] }]);
     expect(btn.addEventListener).toHaveBeenCalled();
 
     await clickHandler({ preventDefault: () => {}, target: btn });
+    await flushPromises();
+    const types = global.document.dispatchEvent.mock.calls.map(c => c[0]?.type);
+    expect(types).toContain("smoothr:login");
     expect(global.window.location.replace).toHaveBeenCalledWith(
       'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=test-store&orig='
     );
