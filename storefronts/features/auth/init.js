@@ -1066,7 +1066,10 @@ export async function init(options = {}) {
 
     // document submit (capture) — NOW: supports FORM or DIV containers
     docSubmitHandler = async (e) => {
-      const container = resolveAuthContainer(e?.target);
+      let container = resolveAuthContainer(e?.target);
+      if (!container) {
+        container = resolveAuthContainer(e?.currentTarget);
+      }
       if (!container) {
         emitAuthError('NO_CONTAINER');
         return;
@@ -1107,7 +1110,8 @@ export async function init(options = {}) {
       try {
         if (e?.key !== 'Enter' && e?.key !== ' ') return;
         const el = (globalThis.document || {}).activeElement;
-        const container = resolveAuthContainer(el);
+        let container = resolveAuthContainer(el);
+        if (!container) container = resolveAuthContainer(el?.form);
         if (!container) return;
         const tag = (el?.tagName || '').toUpperCase();
         if (tag === 'TEXTAREA') return;
