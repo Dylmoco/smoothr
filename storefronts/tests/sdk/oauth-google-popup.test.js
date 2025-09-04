@@ -7,6 +7,7 @@ vi.mock('storefronts/features/checkout/init.js', () => ({
 let signInWithGoogle;
 let signInWithGooglePopup;
 let realWindow;
+let realDocument;
 
 test('setup ran with debug mode', () => {
   expect(window.Smoothr?.config?.debug).toBe(true);
@@ -19,13 +20,18 @@ describe('signInWithGoogle popup', () => {
   beforeEach(async () => {
     vi.resetModules();
     realWindow = global.window;
+    realDocument = global.document;
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
     const popup = { location: '', close: vi.fn(), closed: false };
     const supabase = { auth: { setSession: vi.fn().mockResolvedValue({}) } };
     const win = {
       location: { origin: 'https://store.example', replace: vi.fn() },
-      document: { getElementById: vi.fn(() => ({ dataset: { storeId: 'store_test' } })) },
+      document: {
+        getElementById: vi.fn(() => ({ dataset: { storeId: 'store_test' } })),
+        querySelector: vi.fn(() => null),
+        querySelectorAll: vi.fn(() => []),
+      },
       SMOOTHR_CONFIG: { store_id: 'store_test', oauth_popup_enabled: true },
       open: vi.fn(() => popup),
       addEventListener: vi.fn(),
@@ -59,6 +65,7 @@ describe('signInWithGoogle popup', () => {
 
   afterEach(() => {
     global.window = realWindow;
+    global.document = realDocument;
     // ensure no leak for other suites
     // @ts-ignore
     delete global.fetch;

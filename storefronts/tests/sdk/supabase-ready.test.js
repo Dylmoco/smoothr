@@ -6,11 +6,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // IMPORTANT: mock @supabase/supabase-js at module scope for ESM friendliness
-vi.mock('@supabase/supabase-js', () => {
-  return {
-    createClient: vi.fn(() => ({})),
-  };
-});
+const createClient = vi.fn(() => ({}));
+vi.mock('@supabase/supabase-js', () => ({
+  createClient,
+  default: { createClient },
+}));
 
 import {
   ensureSupabaseReady,
@@ -22,6 +22,11 @@ describe('ensureSupabaseReady (ESM-safe)', () => {
     __setSupabaseReadyForTests(null);
     if (globalThis.window?.Smoothr) {
       delete globalThis.window.Smoothr.__supabase;
+      globalThis.window.Smoothr.ready = Promise.resolve({
+        supabaseUrl: 'https://supabase.test',
+        supabaseAnonKey: 'anon',
+        storeId: 'test',
+      });
     }
   });
 
