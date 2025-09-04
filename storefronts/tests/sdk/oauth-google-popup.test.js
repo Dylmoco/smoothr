@@ -1,8 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { test, describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let signInWithGoogle;
 let signInWithGooglePopup;
 let realWindow;
+
+test('setup ran with debug mode', () => {
+  expect(window.Smoothr?.config?.debug).toBe(true);
+});
 
 const startUrl = 'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=store_test&orig=https%3A%2F%2Fstore.example&mode=url';
 const redirectUrl = 'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=store_test&orig=https%3A%2F%2Fstore.example';

@@ -12,7 +12,14 @@ export default defineConfig(({ mode }) => {
     // Only expose env vars prefixed with VITE_
     envPrefix: ['VITE_'],
     optimizeDeps: {
-      include: ['@supabase/supabase-js', 'stripe', 'cross-fetch', 'whatwg-fetch']
+      include: [
+        '@supabase/supabase-js',
+        'stripe',
+        'cross-fetch',
+        'whatwg-fetch',
+        'node-fetch',
+        'smoothr-sdk.js'
+      ]
     },
     define: {
       // Map Cloudflare’s VITE_* secrets into process.env
@@ -49,7 +56,8 @@ export default defineConfig(({ mode }) => {
           dir: path.resolve(__dirname, 'dist'),
           entryFileNames: '[name].js',
           format: 'es',
-          inlineDynamicImports: true
+          inlineDynamicImports: true,
+          preserveModules: true
         }
       },
       outDir: 'dist',

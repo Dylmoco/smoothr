@@ -25,9 +25,10 @@ export default defineConfig({
         web: {
           include: [
             '@supabase/supabase-js',
+            'stripe',
             'cross-fetch',
             'whatwg-fetch',
-            'stripe',
+            'node-fetch',
           ],
         },
       },
@@ -36,9 +37,11 @@ export default defineConfig({
       deps: {
         inline: [
           '@supabase/supabase-js',
+          'stripe',
           'cross-fetch',
           'whatwg-fetch',
-          'stripe',
+          'node-fetch',
+          'smoothr-sdk.js',
         ],
       },
     },
@@ -50,7 +53,7 @@ export default defineConfig({
     ],
     transformMode: {
       // Force "web" mode for anything under this package
-      web: [/^.*storefronts.*\.(m?[jt]sx?)$/],
+      web: [/.*\.(m?[jt]sx?)$/],
     },
     esbuild: {
       target: 'es2020',
