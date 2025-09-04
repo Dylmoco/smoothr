@@ -469,7 +469,6 @@ export function bindAuthElements(root = globalThis.document) {
   if (!root?.querySelectorAll) return;
   const attach = (el, handler) => {
     if (!_bound.has(el) && typeof el.addEventListener === 'function') {
-      try { el.__smoothrAuthBound = true; } catch {}
       el.addEventListener('click', handler, { passive: false });
       _bound.add(el);
     }
@@ -1209,7 +1208,7 @@ export async function init(options = {}) {
         const el = e?.target?.closest?.(ACTION_SELECTORS);
         if (!el) return;
         // 1) If element already has a direct listener, skip (avoid double handling).
-        if (el.__smoothrAuthBound === true) return;
+        if (_bound.has(el)) return;
         // 2) If this event already triggered our fallback higher up, skip.
         if (e.__smoothrActionHandled === true) return;
         e.__smoothrActionHandled = true;
@@ -1232,7 +1231,6 @@ export async function init(options = {}) {
             if (!n || n.nodeType !== 1) return;
             if (n.matches?.('[data-smoothr="login-google"]')) {
               if (!_bound.has(n) && typeof n.addEventListener === 'function') {
-                try { n.__smoothrAuthBound = true; } catch {}
                 n.addEventListener('click', googleClickHandler, { passive: false });
                 _bound.add(n);
               }
@@ -1270,7 +1268,7 @@ export async function init(options = {}) {
         }
         doc.addEventListener('submit', docSubmitHandler, true);
         doc.addEventListener('keydown', docKeydownHandler, { capture: true, passive: false });
-        try { doc.__smoothrAuthBound = true; } catch {}
+        _bound.add(doc);
       }
     } catch {}
     log('auth init complete');
