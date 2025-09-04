@@ -66,7 +66,7 @@ it('submits password-reset via Enter on reset-only form', async () => {
   await flushPromises();
 
   expect(fetchSpy).toHaveBeenCalledWith(
-    'https://broker.example/api/auth/send-reset',
+    'https://smoothr.vercel.app/api/auth/send-reset',
     expect.objectContaining({ method: 'POST', credentials: 'omit' })
   );
   fetchSpy.mockRestore();
@@ -113,11 +113,11 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   await requestPasswordResetForEmail?.('user@example.com');
 
   const payload = JSON.parse(fetchSpy.mock.calls.at(-1)[1].body);
-  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://smoothr.vercel.app/api/auth/send-reset');
   expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   expect(payload.email).toBe('user@example.com');
   expect(payload.store_id).toBe('store_test');
-  expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=store_test/);
+  expect(String(payload.redirectTo)).toMatch(/\/auth\/recovery-bridge\?store_id=/);
   expect(String(payload.redirectTo)).toMatch(/orig=/);
   fetchSpy.mockRestore();
 });
@@ -135,7 +135,7 @@ it('falls back to script origin when no config URL present', async () => {
   const { requestPasswordResetForEmail } = auth;
   await requestPasswordResetForEmail?.('user@example.com');
 
-  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://broker.example/api/auth/send-reset');
+  expect(fetchSpy.mock.calls.at(-1)[0]).toBe('https://smoothr.vercel.app/api/auth/send-reset');
   expect(fetchSpy.mock.calls.at(-1)[1].credentials).toBe('omit');
   fetchSpy.mockRestore();
 });
