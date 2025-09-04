@@ -2,6 +2,11 @@
   "name": "storefronts",
   "version": "1.0.0",
   "type": "module",
+  "main": "./smoothr-sdk.js",
+  "module": "./smoothr-sdk.js",
+  "exports": {
+    ".": "./smoothr-sdk.js"
+  },
   "sideEffects": [
     "features/auth/*",
     "adapters/*",
