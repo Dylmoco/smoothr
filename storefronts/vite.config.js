@@ -11,15 +11,14 @@ export default defineConfig(({ mode }) => {
     base: 'https://sdk.smoothr.io/',
     // Only expose env vars prefixed with VITE_
     envPrefix: ['VITE_'],
+    ssr: false,
     optimizeDeps: {
       include: [
         '@supabase/supabase-js',
         'stripe',
         'cross-fetch',
         'whatwg-fetch',
-        'node-fetch',
-        'smoothr-sdk.js',
-        'storefronts/*'
+        'node-fetch'
       ]
     },
     define: {
