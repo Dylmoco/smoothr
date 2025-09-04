@@ -6,6 +6,13 @@ import url from 'node:url';
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const r = (p: string) => path.resolve(__dirname, p);
 
+const setupFiles = [
+  r('../vitest.setup.ts'),
+  r('./tests/setup.ts'),
+  r('./tests/vitest-config-log.ts'),
+];
+console.log('vitest.config.ts setupFiles loaded', setupFiles);
+
 // Map "shared/..." to the monorepo shared folder so imports like
 // "shared/auth/resolveRecoveryDestination" resolve in tests.
 
@@ -30,6 +37,7 @@ export default defineConfig({
             'whatwg-fetch',
             'node-fetch',
           ],
+          enabled: true,
         },
       },
     },
@@ -42,15 +50,12 @@ export default defineConfig({
           'whatwg-fetch',
           'node-fetch',
           'smoothr-sdk.js',
+          'storefronts/*',
         ],
       },
     },
     // Ensure storefront tests also load the shared setup when executed directly in this workspace.
-    setupFiles: [
-      r('../vitest.setup.ts'),
-      r('./tests/setup.ts'),
-      r('./tests/vitest-config-log.ts'),
-    ],
+    setupFiles,
     transformMode: {
       // Force "web" mode for anything under this package
       web: [/.*\.(m?[jt]sx?)$/],

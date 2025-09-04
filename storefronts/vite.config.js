@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'es2020',
+      modulePreload: false,
       rollupOptions: {
         external: [],
         input: {

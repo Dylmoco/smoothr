@@ -1,6 +1,8 @@
 // vitest.setup.ts
 import { vi } from 'vitest';
 
+console.log('vitest.setup.ts ran');
+
 // Idempotent global bootstrapping for tests.
 // If these shims are applied twice (root + workspace), guard with flags.
 if (!(globalThis as any).__smoothrSetupApplied) {
