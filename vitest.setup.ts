@@ -1,5 +1,8 @@
 // vitest.setup.ts
-import { vi } from 'vitest';
+import { vi, afterEach } from 'vitest';
+
+let originalConfig: any;
+let originalDocument: any;
 
 console.log('vitest.setup.ts ran');
 
@@ -92,6 +95,8 @@ if (!(globalThis as any).__smoothrSetupApplied) {
     debug: true,
     // you can add platform, currency, etc. here if needed
   };
+  originalConfig = { ...(globalThis as any).SMOOTHR_CONFIG };
+  originalDocument = (globalThis as any).document;
 
   (globalThis as any).Smoothr = (globalThis as any).Smoothr || {};
   (globalThis as any).Smoothr.config = {
@@ -128,3 +133,9 @@ if (!(globalThis as any).__smoothrSetupApplied) {
     injectPreconnects();
   }
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  (globalThis as any).document = originalDocument;
+  (globalThis as any).SMOOTHR_CONFIG = { ...originalConfig };
+});

@@ -34,13 +34,14 @@ it('routes submit on reset-only form to password-reset handler', async () => {
   expect(() => form.dispatchEvent(evt)).not.toThrow();
 });
 
-describe("dynamic DOM bindings", () => {
-  let mutationCallback;
-  let elements;
-  let forms;
-  let doc;
-  let win;
-  let docClickHandler;
+  describe("dynamic DOM bindings", () => {
+    let mutationCallback;
+    let elements;
+    let forms;
+    let doc;
+    let win;
+    let docClickHandler;
+    let realDocument;
 
     beforeEach(async () => {
       vi.resetModules();
@@ -52,53 +53,53 @@ describe("dynamic DOM bindings", () => {
       forms = [];
       mutationCallback = undefined;
       docClickHandler = undefined;
-    global.MutationObserver = class {
-      constructor(cb) {
-        mutationCallback = cb;
-      }
-      observe() {}
-      disconnect() {}
-    };
-    doc = {
-      addEventListener: vi.fn((evt, cb) => {
-        if (evt === "DOMContentLoaded") cb();
-        if (evt === "click") docClickHandler = cb;
-      }),
-      querySelectorAll: vi.fn((selector) => {
-        if (selector.includes(LOGIN_SELECTOR)) {
-          return elements.filter((el) => el.dataset?.smoothr === "login");
+      global.MutationObserver = class {
+        constructor(cb) {
+          mutationCallback = cb;
         }
-        if (
-          selector.includes('[data-smoothr="sign-up"]') ||
-          selector.includes('[data-smoothr="login-google"]') ||
-          selector.includes('[data-smoothr="login-apple"]') ||
-          selector.includes('[data-smoothr="password-reset"]')
-        ) {
-          return elements.filter((el) =>
-            ["sign-up", "login-google", "login-apple", "password-reset"].includes(
-              el.dataset?.smoothr
-            )
-          );
-        }
-        if (selector.includes(ACCOUNT_ACCESS_SELECTOR)) {
-          return elements.filter((el) => el.dataset?.smoothr === "account-access");
-        }
-        if (selector.includes('[data-smoothr="auth-form"]')) {
-          return forms;
-        }
-        if (selector.includes('[data-smoothr="sign-out"]')) {
-          return elements.filter((el) => el.dataset?.smoothr === "sign-out");
-        }
-        return [];
-      }),
-      querySelector: vi.fn((sel) => {
-        if (sel === '[data-smoothr="auth-pop-up"]') return {};
-        return null;
-      }),
-      dispatchEvent() {
-        return true;
-      },
-    };
+        observe() {}
+        disconnect() {}
+      };
+      doc = {
+        addEventListener: vi.fn((evt, cb) => {
+          if (evt === "DOMContentLoaded") cb();
+          if (evt === "click") docClickHandler = cb;
+        }),
+        querySelectorAll: vi.fn((selector) => {
+          if (selector.includes(LOGIN_SELECTOR)) {
+            return elements.filter((el) => el.dataset?.smoothr === "login");
+          }
+          if (
+            selector.includes('[data-smoothr="sign-up"]') ||
+            selector.includes('[data-smoothr="login-google"]') ||
+            selector.includes('[data-smoothr="login-apple"]') ||
+            selector.includes('[data-smoothr="password-reset"]')
+          ) {
+            return elements.filter((el) =>
+              ["sign-up", "login-google", "login-apple", "password-reset"].includes(
+                el.dataset?.smoothr
+              )
+            );
+          }
+          if (selector.includes(ACCOUNT_ACCESS_SELECTOR)) {
+            return elements.filter((el) => el.dataset?.smoothr === "account-access");
+          }
+          if (selector.includes('[data-smoothr="auth-form"]')) {
+            return forms;
+          }
+          if (selector.includes('[data-smoothr="sign-out"]')) {
+            return elements.filter((el) => el.dataset?.smoothr === "sign-out");
+          }
+          return [];
+        }),
+        querySelector: vi.fn((sel) => {
+          if (sel === '[data-smoothr="auth-pop-up"]') return {};
+          return null;
+        }),
+        dispatchEvent() {
+          return true;
+        },
+      };
       win = {
         location: { href: "", origin: "", assign: vi.fn(), replace: vi.fn() },
         addEventListener: vi.fn(),
@@ -106,13 +107,18 @@ describe("dynamic DOM bindings", () => {
         dispatchEvent: vi.fn(),
         SMOOTHR_CONFIG: { storeId: STORE_ID, store_id: STORE_ID },
       };
+      realDocument = global.document;
       global.document = doc;
-    vi.spyOn(document, "dispatchEvent").mockImplementation(() => true);
-    document.dispatchEvent.mockClear();
-    global.window = win;
-    auth = await import("../../features/auth/index.js");
-    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
-  });
+      vi.spyOn(document, "dispatchEvent").mockImplementation(() => true);
+      document.dispatchEvent.mockClear();
+      global.window = win;
+      auth = await import("../../features/auth/index.js");
+      vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+    });
+
+    afterEach(() => {
+      global.document = realDocument;
+    });
 
   it("attaches listeners to added login elements and updates auth state", async () => {
     const emailInput = { value: "user@example.com" };

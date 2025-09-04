@@ -1,10 +1,11 @@
-import { describe, it, beforeEach, expect, vi } from 'vitest';
+import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 
 let fromMock;
 let supabaseMock;
 let client;
 
 describe('auth feature init', () => {
+  let realDocument;
   beforeEach(async () => {
     vi.resetModules();
     fromMock = vi.fn(() => ({
@@ -50,6 +51,7 @@ describe('auth feature init', () => {
       smoothr: {},
       SMOOTHR_DEBUG: true
     };
+    realDocument = global.document;
     global.document = {
       readyState: 'complete',
       addEventListener: vi.fn(),
@@ -60,6 +62,10 @@ describe('auth feature init', () => {
     const test = global.window.Smoothr.config.__test;
     client = await test.tryImportClient();
     test.resetAuth();
+  });
+
+  afterEach(() => {
+    global.document = realDocument;
   });
 
   it('loads v_public_store during init', async () => {
