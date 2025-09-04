@@ -946,6 +946,10 @@ export async function init(options = {}) {
     googleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
       await signInWithGoogle();
+      const ev = typeof w.CustomEvent === 'function'
+        ? new w.CustomEvent('smoothr:login')
+        : { type: 'smoothr:login' };
+      (w.document || globalThis.document)?.dispatchEvent?.(ev);
     };
 
     appleClickHandler = async (e) => {
@@ -1157,7 +1161,25 @@ export async function init(options = {}) {
       } catch {}
     };
 
-    mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
+    mutationCallback = (records = []) => {
+      const list = Array.isArray(records) ? records : [];
+      try {
+        for (const r of list) {
+          r?.addedNodes?.forEach?.(n => {
+            if (!n || n.nodeType !== 1) return;
+            if (n.matches?.('[data-smoothr="login-google"]')) {
+              if (!_bound.has(n) && typeof n.addEventListener === 'function') {
+                try { n.__smoothrAuthBound = true; } catch {}
+                n.addEventListener('click', googleClickHandler, { passive: false });
+                _bound.add(n);
+              }
+            }
+            try { bindAuthElements(n); } catch {}
+          });
+        }
+      } catch {}
+      try { bindAuthElements(w.document || globalThis.document); } catch {}
+    };
 
     api.clickHandler = clickHandler;
     api.googleClickHandler = googleClickHandler;
