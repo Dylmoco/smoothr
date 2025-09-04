@@ -1,6 +1,7 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import { createDomStub } from "../utils/dom-stub";
 let auth;
 
 const STORE_ID = "test-store";
@@ -14,6 +15,53 @@ const LOGIN_SELECTOR = '[data-smoothr="login"]';
 const OTHER_SELECTOR =
   '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
 const ACCOUNT_ACCESS_SELECTOR = '[data-smoothr="account-access"]';
+
+beforeEach(() => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({}) });
+});
+
+afterEach(() => {
+  globalThis.fetch?.mockRestore?.();
+});
+
+it('binds oauth trigger during init without DOMContentLoaded', async () => {
+  vi.resetModules();
+  createClientMock();
+  let handler;
+  const googleBtn = {
+    tagName: 'DIV',
+    dataset: { smoothr: 'login-google' },
+    getAttribute: (attr) => (attr === 'data-smoothr' ? 'login-google' : null),
+    addEventListener: vi.fn((ev, cb) => {
+      if (ev === 'click') handler = cb;
+    }),
+  };
+  const doc = createDomStub({
+    addEventListener: vi.fn(),
+    querySelectorAll: vi.fn((sel) => {
+      if (sel.includes('[data-smoothr="login-google"]')) return [googleBtn];
+      return [];
+    }),
+    dispatchEvent: vi.fn(),
+  });
+  const win = {
+    location: { href: '', origin: '', assign: vi.fn(), replace: vi.fn() },
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+    SMOOTHR_CONFIG: { storeId: STORE_ID, store_id: STORE_ID },
+  };
+  const realDoc = global.document;
+  const realWin = global.window;
+  global.document = doc;
+  global.window = win;
+  auth = await import('../../features/auth/index.js');
+  await auth.init();
+  await flushPromises();
+  expect(googleBtn.addEventListener).toHaveBeenCalled();
+  global.document = realDoc;
+  global.window = realWin;
+});
 
 it('routes submit on reset-only form to password-reset handler', async () => {
   vi.resetModules();

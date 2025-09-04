@@ -36,6 +36,14 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
+beforeEach(() => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({}) });
+});
+
+afterEach(() => {
+  globalThis.fetch?.mockRestore?.();
+});
+
 it('submits login via Enter when form also contains a password-reset link', async () => {
   vi.resetModules();
   createClientMockUtil();
@@ -50,6 +58,10 @@ it('submits login via Enter when form also contains a password-reset link', asyn
     <div data-smoothr="password-reset"></div>
   `;
   document.body.appendChild(form);
+  const script = document.createElement('script');
+  script.id = 'smoothr-sdk';
+  script.dataset.storeId = 'store_test';
+  document.body.appendChild(script);
 
   await auth.init();
   await flushPromises();
@@ -80,6 +92,10 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
     <div data-smoothr="password-reset"></div>
   `;
   document.body.appendChild(div);
+  const script = document.createElement('script');
+  script.id = 'smoothr-sdk';
+  script.dataset.storeId = 'store_test';
+  document.body.appendChild(script);
 
   await auth.init();
   await flushPromises();
@@ -100,6 +116,8 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
     let emailValue;
     let passwordValue;
     let realDocument;
+    let loginTrigger;
+    let resetTrigger;
 
       beforeEach(async () => {
         vi.resetModules();
@@ -110,54 +128,67 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
         emailValue = "user@example.com";
         passwordValue = "Password1";
 
-        let loginTrigger;
-        const form = {
-          dataset: { smoothr: "auth-form" },
-          addEventListener: vi.fn(),
-          querySelector: vi.fn((sel) => {
-            if (sel === '[data-smoothr="email"]')
-              return { value: emailValue };
-            if (sel === '[data-smoothr="password"]')
-              return { value: passwordValue };
-            if (sel === '[data-smoothr="login"]') return loginTrigger;
-            return null;
-          }),
-        };
-        loginTrigger = {
-          tagName: "DIV",
-          closest: vi.fn(() => form),
-          dataset: { smoothr: "login" },
-          getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
-          addEventListener: vi.fn((ev, cb) => {
-            if (ev === "click") clickHandler = cb;
-          }),
-          textContent: "Login",
-        };
+    const form = {
+      dataset: { smoothr: "auth-form" },
+      addEventListener: vi.fn(),
+      querySelector: vi.fn((sel) => {
+        if (sel === '[data-smoothr="email"]')
+          return { value: emailValue };
+        if (sel === '[data-smoothr="password"]')
+          return { value: passwordValue };
+        if (sel === '[data-smoothr="login"]') return loginTrigger;
+        if (sel === '[data-smoothr="password-reset"]') return resetTrigger;
+        return null;
+      }),
+    };
+    loginTrigger = {
+      tagName: "DIV",
+      closest: vi.fn(() => form),
+      dataset: { smoothr: "login" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "login" : null),
+      addEventListener: vi.fn((ev, cb) => {
+        if (ev === "click") clickHandler = cb;
+      }),
+      textContent: "Login",
+    };
+    resetTrigger = {
+      tagName: "DIV",
+      closest: vi.fn(() => form),
+      dataset: { smoothr: "password-reset" },
+      getAttribute: (attr) => (attr === "data-smoothr" ? "password-reset" : null),
+      addEventListener: vi.fn(),
+    };
 
-        global.window = {
-          location: { href: "" },
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-        };
-        realDocument = global.document;
-        global.document = createDomStub({
-          addEventListener: vi.fn((evt, cb) => {
-            if (evt === "DOMContentLoaded") cb();
-          }),
-          querySelectorAll: vi.fn((sel) => {
-            if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
-            if (sel.includes('[data-smoothr="auth-form"]')) return [form];
-            return [];
-          }),
-          dispatchEvent: vi.fn(),
-        });
-        auth = await import("../../features/auth/index.js");
-        vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
+    global.window = {
+      location: { href: "" },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    realDocument = global.document;
+    global.document = createDomStub({
+      addEventListener: vi.fn(),
+      querySelectorAll: vi.fn((sel) => {
+        if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
+        if (sel.includes('[data-smoothr="password-reset"]')) return [resetTrigger];
+        if (sel.includes('[data-smoothr="auth-form"]')) return [form];
+        return [];
+      }),
+      dispatchEvent: vi.fn(),
+    });
+    auth = await import("../../features/auth/index.js");
+    vi.spyOn(auth, "lookupRedirectUrl").mockResolvedValue("/redirect");
       });
 
-    afterEach(() => {
-      global.document = realDocument;
-    });
+  afterEach(() => {
+    global.document = realDocument;
+  });
+
+  it("binds login and reset triggers during init", async () => {
+    await auth.init();
+    await flushPromises();
+    expect(loginTrigger.addEventListener).toHaveBeenCalled();
+    expect(resetTrigger.addEventListener).toHaveBeenCalled();
+  });
 
   it("validates email before login", async () => {
     signInMock.mockResolvedValue({ data: {}, error: null });

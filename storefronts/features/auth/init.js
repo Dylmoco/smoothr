@@ -1176,11 +1176,11 @@ export async function init(options = {}) {
         try { doc.__smoothrAuthBound = true; } catch {}
       }
     } catch {}
-    try { mutationCallback(); } catch {}
     log('auth init complete');
 
     return api;
   })();
+  _initPromise.then(() => { try { mutationCallback(); } catch {} });
   return _initPromise;
 }
 export default init;

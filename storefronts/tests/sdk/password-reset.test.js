@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import { createDomStub } from "../utils/dom-stub";
 import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
 import { validatePasswordsOrThrow } from "../../features/auth/validators.js";
 
@@ -11,6 +12,52 @@ const realDocument = globalThis.document;
 function flushPromises() {
   return new Promise(setImmediate);
 }
+
+beforeEach(() => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+});
+
+afterEach(() => {
+  globalThis.fetch?.mockRestore?.();
+});
+
+it('binds reset trigger during init without DOMContentLoaded', async () => {
+  vi.resetModules();
+  createClientMock();
+  let clickHandler;
+  const form = {
+    dataset: { smoothr: 'auth-form' },
+    querySelector: vi.fn((sel) => {
+      if (sel === '[data-smoothr="email"]') return { value: 'user@example.com' };
+      if (sel === '[data-smoothr="password-reset"]') return resetBtn;
+      return null;
+    }),
+  };
+  const resetBtn = {
+    tagName: 'DIV',
+    dataset: { smoothr: 'password-reset' },
+    getAttribute: (attr) => (attr === 'data-smoothr' ? 'password-reset' : null),
+    closest: vi.fn(() => form),
+    addEventListener: vi.fn((ev, cb) => {
+      if (ev === 'click') clickHandler = cb;
+    }),
+  };
+  const realDocument = global.document;
+  global.document = createDomStub({
+    addEventListener: vi.fn(),
+    querySelectorAll: vi.fn((sel) => {
+      if (sel.includes('[data-smoothr="password-reset"]')) return [resetBtn];
+      if (sel.includes('[data-smoothr="auth-form"]')) return [form];
+      return [];
+    }),
+    dispatchEvent: vi.fn(),
+  });
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  await flushPromises();
+  expect(resetBtn.addEventListener).toHaveBeenCalled();
+  global.document = realDocument;
+});
 
 it('strips stale recovery hash on non-reset routes (no redirect)', async () => {
   vi.resetModules();
