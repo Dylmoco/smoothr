@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const createClientMock = vi.hoisted(() => vi.fn());
 vi.mock('@supabase/supabase-js', () => ({
-  createClient: createClientMock,
+  __esModule: true,
   default: { createClient: createClientMock },
+  createClient: createClientMock,
+}));
+vi.mock('@supabase/node-fetch', () => ({
+  default: vi.fn(async () => ({ json: vi.fn(async () => ({})) })),
 }));
 
 import { getSupabaseClient } from '../../../supabase/client/browserClient.js';

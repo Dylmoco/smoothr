@@ -23,7 +23,7 @@ describe('signInWithGoogle popup', () => {
     realDocument = global.document;
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
-    const popup = { location: '', close: vi.fn(), closed: false };
+    const popup = { location: { href: '' }, close: vi.fn(), closed: false };
     const supabase = { auth: { setSession: vi.fn().mockResolvedValue({}) } };
     const win = {
       location: { origin: 'https://store.example', replace: vi.fn() },
@@ -79,9 +79,9 @@ describe('signInWithGoogle popup', () => {
     await Promise.resolve();
     const handler = window.addEventListener.mock.calls.find(c => c[0] === 'message')?.[1];
     expect(typeof handler).toBe('function');
-    expect(window.__popup.location).toBe('https://supabase.co/auth/authorize');
     await handler({ origin: 'https://smoothr.vercel.app', data: { type: 'smoothr_oauth_success', access_token: 'tok', refresh_token: 'ref', store_id: 'store_test' } });
     await promise;
+    expect(window.__popup.location.href).toBe('https://supabase.co/auth/authorize');
     expect(window.open).toHaveBeenCalled();
     const specs = window.open.mock.calls[0][2];
     expect(specs).toContain('width=480');
