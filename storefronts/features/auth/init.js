@@ -775,7 +775,10 @@ export async function init(options = {}) {
       if (action === 'login') {
         const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
         const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
-        if (!emailRE.test(email)) return;
+        if (!emailRE.test(email)) {
+          emitAuthError('INVALID_EMAIL');
+          return;
+        }
         let userId = null;
         try {
           const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
