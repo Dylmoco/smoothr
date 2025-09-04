@@ -24,7 +24,7 @@ const base = getCachedBrokerBase();
 The SDK never treats `https://sdk.smoothr.io` as a broker; it falls back to
 `https://smoothr.vercel.app` instead.
 
-Cloudflare Pages caches `smoothr-sdk.js` at the edge for about five minutes.
+Cloudflare Pages caches `smoothr-sdk.mjs` at the edge for about five minutes.
 Use **Purge Cache** in Cloudflare for immediate invalidation after critical
 deploys.
 
@@ -33,7 +33,7 @@ deploys.
 <script
   id="smoothr-sdk"
   type="module"
-  src="https://sdk.smoothr.io/smoothr-sdk.js"
+  src="https://sdk.smoothr.io/smoothr-sdk.mjs"
   data-store-id="…"
   platform="webflow"
   data-config-url="https://YOUR-BROKER-DOMAIN/api/config">
@@ -44,7 +44,7 @@ deploys.
 <script
   id="smoothr-sdk"
   type="module"
-  src="https://YOUR-BROKER-DOMAIN/smoothr-sdk.js"
+  src="https://YOUR-BROKER-DOMAIN/smoothr-sdk.mjs"
   data-store-id="…"
   platform="webflow">
 </script>
@@ -162,7 +162,7 @@ object, so values you define beforehand remain in place.
     rateSource: 'https://<your-project-id>.functions.supabase.co/proxy-live-rates'
   };
 </script>
-<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.mjs"></script>
 ```
 
 To allow shoppers to pick a currency, pair the `setSelectedCurrency` helper with
@@ -293,7 +293,7 @@ field container.
 
 ```html
 <script src="https://secure.networkmerchants.com/token/Collect.js"></script>
-<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
+<script type="module" src="https://sdk.smoothr.io/smoothr-sdk.mjs"></script>
 <script>
   Smoothr.mountNMIFields({
     number: '#card-number',
@@ -316,12 +316,12 @@ shared checkout module. `init` runs automatically once the DOM is ready,
 so no polling logic is required.
 
 For pages that only need authentication and user management, include the
-lightweight `smoothr-sdk.js` bundle:
+lightweight `smoothr-sdk.mjs` bundle:
 
 ```html
 <script
   type="module"
-  src="https://sdk.smoothr.io/smoothr-sdk.js?v=dev-final"
+  src="https://sdk.smoothr.io/smoothr-sdk.mjs?v=dev-final"
 ></script>
 ```
 

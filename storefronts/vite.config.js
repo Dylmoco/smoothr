@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         external: [/^\/smoothr\/pages\/api\/.*$/],
         input: {
-          'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.js')
+          'smoothr-sdk': path.resolve(__dirname, 'smoothr-sdk.mjs')
         },
         treeshake: {
           moduleSideEffects: true
@@ -55,9 +55,8 @@ export default defineConfig(({ mode }) => {
         preserveEntrySignatures: 'exports-only',
         output: {
           dir: path.resolve(__dirname, 'dist'),
-          entryFileNames: '[name].js',
+          entryFileNames: '[name].mjs',
           format: 'es',
-          inlineDynamicImports: true,
           preserveModules: true
         }
       },

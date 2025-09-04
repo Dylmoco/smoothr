@@ -55,7 +55,6 @@ try {
             'cross-fetch',
             'whatwg-fetch',
             'node-fetch',
-            'smoothr-sdk.js',
           ],
         },
       },

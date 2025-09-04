@@ -1,5 +1,5 @@
 // checkout.js
-import { ensureSupabaseReady } from '../../smoothr-sdk.js';
+import { ensureSupabaseReady } from '../../smoothr-sdk.mjs';
 
 let getConfig;
 

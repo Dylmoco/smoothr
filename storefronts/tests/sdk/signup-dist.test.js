@@ -33,7 +33,7 @@ beforeAll(async () => {
     json: async () => ({ redirect_url: "/" }),
   });
 
-  const distPath = path.join(repoRoot, "storefronts/dist/smoothr-sdk.js");
+  const distPath = path.join(repoRoot, "storefronts/dist/smoothr-sdk.mjs");
   expect(fs.existsSync(distPath)).toBe(true);
   const distUrl = pathToFileURL(distPath).href;
 

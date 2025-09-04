@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { __setSupabaseReadyForTests } from '../../smoothr-sdk.js';
+import { __setSupabaseReadyForTests } from '../../smoothr-sdk.mjs';
 
 export type SupabaseClientMock = ReturnType<typeof buildSupabaseMock>["client"];
 export type SupabaseClientMocks = ReturnType<typeof buildSupabaseMock>["mocks"];

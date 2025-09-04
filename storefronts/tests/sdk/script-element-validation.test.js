@@ -20,7 +20,7 @@ describe('Smoothr SDK script element validation', () => {
   it('warns and aborts when script element is missing', async () => {
     global.document = { getElementById: vi.fn(() => null) };
 
-    await import('../../smoothr-sdk.js');
+    await import('../../smoothr-sdk.mjs');
 
     expect(warnSpy).toHaveBeenCalled();
     expect(global.window.Smoothr?.ready).toBeUndefined();
@@ -30,7 +30,7 @@ describe('Smoothr SDK script element validation', () => {
     const el = { dataset: {}, getAttribute: vi.fn() };
     global.document = { getElementById: vi.fn(() => el) };
 
-    await import('../../smoothr-sdk.js');
+    await import('../../smoothr-sdk.mjs');
 
     expect(warnSpy).toHaveBeenCalled();
     expect(global.window.Smoothr?.ready).toBeUndefined();

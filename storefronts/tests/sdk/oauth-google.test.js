@@ -14,7 +14,7 @@ describe('signInWithGoogle', () => {
       SMOOTHR_CONFIG: { store_id: 'store_test' }
     };
     ({ signInWithGoogle } = await import('../../features/auth/init.js'));
-    ({ injectAuthPreconnects } = await import('../../smoothr-sdk.js'));
+    ({ injectAuthPreconnects } = await import('../../smoothr-sdk.mjs'));
   });
 
   it('navigates to broker oauth-start with store and origin', async () => {
