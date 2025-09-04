@@ -2,6 +2,6 @@
 node_modules/
 .vite/
 dist/*
-!dist/smoothr-sdk.mjs
+!dist/smoothr-sdk.js
 !dist/gateways/nmi.mjs
 !dist/platforms/webflow/checkout.mjs

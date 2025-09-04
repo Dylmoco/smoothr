@@ -13,6 +13,9 @@ export async function buildStorefronts() {
       rollupOptions: {
         input: {
           'smoothr-sdk': resolve(__dirname, '../storefronts/smoothr-sdk.mjs')
+        },
+        output: {
+          entryFileNames: '[name].js'
         }
       }
     }
