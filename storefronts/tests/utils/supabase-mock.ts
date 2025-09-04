@@ -75,7 +75,12 @@ export function currentSupabaseMocks(): SupabaseClientMocks {
 
 // Back-compat for specs that expect to call createClientMock()
 export function createClientMock() {
+  return createClient();
+}
+
+// Named export that mirrors the real SDK's import style
+export const createClient = vi.fn(() => {
   const { client, mocks } = buildSupabaseMock();
   useWindowSupabaseMock(client, mocks);
   return client;
-}
+});
