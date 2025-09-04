@@ -336,6 +336,8 @@ async function init(opts = {}) {
           platform
         });
 
+        payload.gateway = provider;
+
         if (getConfig().debug) window.__latestSmoothrPayload = payload;
 
         const { res, data: resp } = await gatewayDispatcher(
