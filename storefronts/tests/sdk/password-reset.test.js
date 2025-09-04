@@ -91,6 +91,8 @@ it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
     document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>';
     createClientMock();
+    const realBroker = globalThis.getCachedBrokerBase;
+    const realEnsure = globalThis.ensureConfigLoaded;
     globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
@@ -106,17 +108,16 @@ it('submits password-reset via Enter on reset-only form', async () => {
   email.value = 'user@example.com';
   const reset = document.createElement('div');
   reset.setAttribute('data-smoothr', 'password-reset');
-  form.append(email, reset);
+  const confirm = document.createElement('div');
+  confirm.setAttribute('data-smoothr', 'password-reset-confirm');
+  confirm.setAttribute('hidden', '');
+  form.append(email, reset, confirm);
   document.body.appendChild(form);
   auth.bindAuthElements?.(form);
 
-  await auth.clickHandler?.({
-    target: reset,
-    currentTarget: reset,
-    preventDefault() {},
-    stopPropagation() {},
-    stopImmediatePropagation() {},
-  });
+  email.focus();
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  await flushPromises();
   await flushPromises();
 
   expect(fetchSpy).toHaveBeenCalledWith(
@@ -124,6 +125,9 @@ it('submits password-reset via Enter on reset-only form', async () => {
     expect.objectContaining({ method: 'POST', credentials: 'omit' })
   );
   fetchSpy.mockRestore();
+  globalThis.getCachedBrokerBase = realBroker;
+  globalThis.ensureConfigLoaded = realEnsure;
+  document.body.innerHTML = '';
 });
 
 it('does not send duplicate reset emails when clicking a bound reset control', async () => {

@@ -1074,8 +1074,9 @@ export async function init(options = {}) {
       const hasResetConfirm = !!container.querySelector('[data-smoothr="password-reset-confirm"]');
       const hasLogin        = !!container.querySelector('[data-smoothr="login"]');
       const hasResetRequest = !!container.querySelector('[data-smoothr="password-reset"]');
-      // Priority (locked by tests): sign-up → reset-confirm → login → reset
+      // If login/signup absent, prefer reset request over reset-confirm
       const target =
+        (!hasSignUp && !hasLogin && hasResetRequest && container.querySelector('[data-smoothr="password-reset"]')) ||
         (hasSignUp       && container.querySelector(ATTR_SIGNUP)) ||
         (hasResetConfirm && container.querySelector('[data-smoothr="password-reset-confirm"]')) ||
         (hasLogin        && container.querySelector('[data-smoothr="login"]')) ||
@@ -1104,6 +1105,17 @@ export async function init(options = {}) {
         const tag = (el?.tagName || '').toUpperCase();
         if (tag === 'TEXTAREA') return;
         const signup = container.querySelector(ATTR_SIGNUP);
+        const login = container.querySelector('[data-smoothr="login"]');
+        if (!login && !signup) {
+          const reset = container.querySelector('[data-smoothr="password-reset"]');
+          if (reset) {
+            if (e.key === ' ' && !reset.matches('[role="button"]')) return;
+            e.preventDefault?.();
+            e.stopPropagation?.();
+            reset.click();
+            return;
+          }
+        }
         if (signup) {
           if (e.key === ' ' && !signup.matches('[role="button"]')) return;
           e.preventDefault?.();
