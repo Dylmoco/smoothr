@@ -83,7 +83,7 @@ describe("account access trigger", () => {
 
     beforeEach(async () => {
       vi.resetModules();
-      createClientMockUtil();
+      const client = createClientMockUtil();
       const { getUserMock } = currentSupabaseMocks();
       authHelpers = await import("../../../supabase/authHelpers.js");
       vi
@@ -92,7 +92,7 @@ describe("account access trigger", () => {
       user = { id: "1", email: "test@example.com" };
       getUserMock.mockResolvedValueOnce({ data: { user } });
       const { init } = await import("../../features/auth/index.js");
-      await init({});
+      await init({ supabase: client });
       await flushPromises();
     });
 
@@ -131,6 +131,23 @@ describe("account access trigger", () => {
       expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
       expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     });
+  });
+
+  it("seeds auth.user after init", async () => {
+    vi.resetModules();
+      const client = createClientMockUtil();
+    const { getUserMock, onAuthStateChangeMock } = currentSupabaseMocks();
+    const user = { id: "1", email: "test@example.com" };
+    getUserMock.mockResolvedValueOnce({ data: { user } });
+    onAuthStateChangeMock.mockImplementation((cb) => {
+      cb("SIGNED_IN", {});
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
+    });
+    const { init } = await import("../../features/auth/index.js");
+    await init({ supabase: client });
+    await flushPromises();
+    expect(getUserMock).toHaveBeenCalled();
+    expect(global.window.Smoothr.auth.user.value).toEqual(user);
   });
 
   it("dispatches auth:close on sign-out", async () => {
