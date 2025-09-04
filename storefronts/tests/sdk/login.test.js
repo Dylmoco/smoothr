@@ -5,14 +5,13 @@ import { createDomStub } from "../utils/dom-stub";
 
 var signInMock;
 var getUserMock;
-var createClientMock;
 var getSessionMock;
 
 vi.mock("@supabase/supabase-js", () => {
   signInMock = vi.fn();
   getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
   getSessionMock = vi.fn(() => Promise.resolve({ data: { session: {} }, error: null }));
-  createClientMock = vi.fn(() => ({
+  const createClientMock = vi.fn(() => ({
     auth: {
       getUser: getUserMock,
       signInWithPassword: signInMock,
