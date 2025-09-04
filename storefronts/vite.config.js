@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
     // Only expose env vars prefixed with VITE_
     envPrefix: ['VITE_'],
     optimizeDeps: {
-      include: ['@supabase/supabase-js']
+      include: ['@supabase/supabase-js', 'stripe', 'cross-fetch', 'whatwg-fetch']
     },
     define: {
       // Map Cloudflare’s VITE_* secrets into process.env
@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
       )
     },
     build: {
-      target: 'esnext', // ✅ Enables top-level await
+      target: 'es2020',
       rollupOptions: {
         external: [],
         input: {
@@ -55,6 +55,13 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       emptyOutDir: true,
       assetsDir: ''
+    },
+    resolve: {
+      alias: [
+        { find: /^shared\/(.*)$/, replacement: (_, p1) => path.resolve(__dirname, `../shared/${p1}`) },
+        { find: /^smoothr\/(.*)$/, replacement: (_, p1) => path.resolve(__dirname, `../smoothr/${p1}`) },
+        { find: /^storefronts\/(.*)$/, replacement: (_, p1) => path.resolve(__dirname, p1) },
+      ],
     }
   };
 });
