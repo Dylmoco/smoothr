@@ -1,5 +1,9 @@
 import { test, describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+vi.mock('storefronts/features/checkout/init.js', () => ({
+  init: vi.fn(),
+}));
+
 let signInWithGoogle;
 let signInWithGooglePopup;
 let realWindow;
