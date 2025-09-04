@@ -40,8 +40,6 @@ it('submits login via Enter when form also contains a password-reset link', asyn
   vi.resetModules();
   createClientMockUtil();
   const auth = await import("../../features/auth/index.js");
-  await auth.init();
-  await flushPromises();
 
   const form = document.createElement('form');
   form.setAttribute('data-smoothr', 'auth-form');
@@ -52,6 +50,9 @@ it('submits login via Enter when form also contains a password-reset link', asyn
     <div data-smoothr="password-reset"></div>
   `;
   document.body.appendChild(form);
+
+  await auth.init();
+  await flushPromises();
 
   const { signInMock, resetPasswordMock } = currentSupabaseMocks();
   signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
@@ -69,8 +70,6 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
   vi.resetModules();
   createClientMockUtil();
   const auth = await import("../../features/auth/index.js");
-  await auth.init();
-  await flushPromises();
 
   const div = document.createElement('div');
   div.setAttribute('data-smoothr', 'auth-form');
@@ -81,6 +80,9 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
     <div data-smoothr="password-reset"></div>
   `;
   document.body.appendChild(div);
+
+  await auth.init();
+  await flushPromises();
 
   const { signInMock } = currentSupabaseMocks();
   signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
