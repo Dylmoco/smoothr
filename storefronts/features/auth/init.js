@@ -773,19 +773,26 @@ export async function init(options = {}) {
         const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
         const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
         if (!emailRE.test(email)) return;
+        let userId = null;
         try {
           const { data, error } = await c.auth.signInWithPassword({ email, password: pwd });
           w.Smoothr.auth.user.value = data?.user ?? null;
           if (error || !data?.user) throw error;
+          userId = data?.user?.id || null;
           await c.auth.getSession?.();
           const ev = typeof w.CustomEvent === 'function'
             ? new w.CustomEvent('smoothr:login')
             : { type: 'smoothr:login' };
           (w.document || globalThis.document)?.dispatchEvent?.(ev);
-          await sessionSyncAndEmit(c, data?.user?.id || null);
         } catch (err) {
           w.Smoothr.auth.user.value = null;
           emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+          return;
+        }
+        try {
+          await sessionSyncAndEmit(c, userId);
+        } catch (err) {
+          emitAuth?.('smoothr:auth:error', { code: err?.status || 'SESSION_SYNC_FAILED', message: err?.message || 'Authentication failed' });
         }
         return;
       }
@@ -799,6 +806,7 @@ export async function init(options = {}) {
           });
           return;
         }
+        let userId = null;
         try {
           const result = await c.auth.signUp({
             email,
@@ -808,15 +816,21 @@ export async function init(options = {}) {
           const { data, error } = result;
           w.Smoothr.auth.user.value = data?.user ?? null;
           if (error || !data?.user) throw error;
+          userId = data?.user?.id || null;
           await c.auth.getSession?.();
           const ev = typeof w.CustomEvent === 'function'
             ? new w.CustomEvent('smoothr:login')
             : { type: 'smoothr:login' };
           (w.document || globalThis.document)?.dispatchEvent?.(ev);
-          await sessionSyncAndEmit(c, data?.user?.id || null);
         } catch (err) {
           w.Smoothr.auth.user.value = null;
           emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
+          return;
+        }
+        try {
+          await sessionSyncAndEmit(c, userId);
+        } catch (err) {
+          emitAuth?.('smoothr:auth:error', { code: err?.status || 'SESSION_SYNC_FAILED', message: err?.message || 'Authentication failed' });
         }
         return;
       }
