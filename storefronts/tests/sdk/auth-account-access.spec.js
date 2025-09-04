@@ -1,4 +1,17 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+let realWindow;
+let realDocument;
+
+beforeEach(() => {
+  realWindow = global.window;
+  realDocument = global.document;
+});
+
+afterEach(() => {
+  global.window = realWindow;
+  global.document = realDocument;
+});
 
 function setup({ user = null, popup = false, dropdown = false } = {}) {
   const win = {
@@ -15,7 +28,11 @@ function setup({ user = null, popup = false, dropdown = false } = {}) {
       if (dropdown && sel === '[data-smoothr="auth-drop-down"]') return {};
       return null;
     }),
-    querySelectorAll: vi.fn(() => [])
+    querySelectorAll: vi.fn(() => []),
+    getElementById: vi.fn(() => ({
+      dataset: { storeId: 'store_test' },
+      getAttribute: vi.fn(() => 'store_test')
+    })),
   };
   global.window = win;
   global.document = doc;

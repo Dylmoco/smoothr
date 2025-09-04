@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var getUserMock;
@@ -32,8 +32,12 @@ function flushPromises() {
 describe("account access trigger", () => {
   let btn;
   let clickHandler;
+  let realWindow;
+  let realDocument;
   beforeEach(() => {
     clickHandler = undefined;
+    realWindow = global.window;
+    realDocument = global.document;
     btn = {
       tagName: "DIV",
       dataset: { smoothr: "account-access" },
@@ -74,6 +78,11 @@ describe("account access trigger", () => {
       }),
       dispatchEvent: vi.fn(),
     };
+  });
+
+  afterEach(() => {
+    global.window = realWindow;
+    global.document = realDocument;
   });
 
   describe("redirects logged-in users to dashboard home", () => {
