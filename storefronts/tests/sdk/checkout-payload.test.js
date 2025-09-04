@@ -167,9 +167,8 @@ describe('checkout payload', () => {
 
 
     if (global.fetch.mock.calls.length) {
-      const args = global.fetch.mock.calls[0];
-      const payload = JSON.parse(args[1].body);
-      expect(payload).toHaveProperty('gateway');
+      const [, opts] = global.fetch.mock.calls.find(([, o]) => o?.body) || [];
+      expect(JSON.parse(opts.body)).toHaveProperty('gateway');
     }
   });
 });
