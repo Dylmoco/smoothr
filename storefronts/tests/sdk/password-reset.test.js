@@ -42,7 +42,7 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
-  document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
+  document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
   createClientMock();
   globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
@@ -101,7 +101,7 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
 // Case A: config URL present (modern)
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
   window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
   globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
@@ -125,7 +125,7 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
 // Case B: no config URL (legacy), script hosted on broker
 it('falls back to script origin when no config URL present', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://broker.example/smoothr-sdk.mjs" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
   globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
@@ -143,7 +143,7 @@ it('falls back to script origin when no config URL present', async () => {
 // Case C: cached broker points to SDK host -> fallback to Vercel app
 it('ignores sdk host broker and falls back to smoothr.vercel.app', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
+  document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-store-id="store_test"></script><form data-smoothr="auth-form"></form>`;
   window.SMOOTHR_CONFIG = { broker_origin: 'https://sdk.smoothr.io', store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
   globalThis.getCachedBrokerBase = () => 'https://sdk.smoothr.io';
   globalThis.ensureConfigLoaded = () => Promise.resolve();

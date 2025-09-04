@@ -73,6 +73,9 @@ if (typeof window !== 'undefined') {
 const Smoothr = (window.Smoothr = window.Smoothr || {});
 if (!window.smoothr) window.smoothr = Smoothr;
 
+let ensureSupabaseReady;
+let __setSupabaseReadyForTests = () => {};
+
 try {
   const adapter = initWebflowAdapter(Smoothr.config || {});
   Smoothr.adapter = adapter;
@@ -218,7 +221,7 @@ if (!scriptEl || !storeId) {
 
   // Lazily create (and cache) a Supabase client promise.
   // Always return the same promise once created.
-  export function ensureSupabaseReady() {
+  ensureSupabaseReady = function ensureSupabaseReady() {
     if (Smoothr.supabaseReady) return Smoothr.supabaseReady;
     if (!supabaseReadyPromise) {
       supabaseReadyPromise = (async () => {
@@ -247,13 +250,13 @@ if (!scriptEl || !storeId) {
     }
     Smoothr.supabaseReady = supabaseReadyPromise;
     return supabaseReadyPromise;
-  }
+  };
 
   // Test-only helper to inject/replace the promise safely.
-  export function __setSupabaseReadyForTests(value) {
+  __setSupabaseReadyForTests = function (value) {
     supabaseReadyPromise = Promise.resolve(value);
     Smoothr.supabaseReady = supabaseReadyPromise;
-  }
+  };
 
   (async () => {
     const fetched = await Smoothr.ready;
@@ -309,6 +312,8 @@ if (!scriptEl || !storeId) {
     await initFeatures();
   })();
 }
+
+export { ensureSupabaseReady, __setSupabaseReadyForTests };
 
 export async function __test_bootstrap(fakeConfig = {}) {
   window.Smoothr = window.Smoothr || {};

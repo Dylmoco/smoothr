@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { __setSupabaseReadyForTests } from '../../smoothr-sdk.js';
+import { __setSupabaseReadyForTests } from '../../smoothr-sdk.mjs';
 
 const invokeMock = vi.fn();
 const ensureMock = vi.fn();

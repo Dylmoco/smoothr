@@ -1,5 +1,5 @@
 import { getConfig } from '../features/config/globalConfig.js';
-import { ensureSupabaseReady } from '../smoothr-sdk.js';
+import { ensureSupabaseReady } from '../smoothr-sdk.mjs';
 
 export async function getGatewayCredential(gateway) {
   const w = typeof window !== 'undefined' ? window : globalThis;

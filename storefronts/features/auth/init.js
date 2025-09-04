@@ -11,7 +11,7 @@ import {
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
-import { isIOSSafari, ensureSupabaseReady } from '../../smoothr-sdk.js';
+import { isIOSSafari, ensureSupabaseReady } from '../../smoothr-sdk.mjs';
 const ensureConfigLoaded =
   globalThis.ensureConfigLoaded || (() => Promise.resolve());
 const getCachedBrokerBase =

@@ -15,7 +15,7 @@ vi.mock('@supabase/supabase-js', () => {
 import {
   ensureSupabaseReady,
   __setSupabaseReadyForTests,
-} from '../../smoothr-sdk.js';
+} from '../../smoothr-sdk.mjs';
 
 describe('ensureSupabaseReady (ESM-safe)', () => {
   beforeEach(() => {
