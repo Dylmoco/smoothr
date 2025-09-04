@@ -1,6 +1,22 @@
 import { initAdapter as initWebflowAdapter } from 'storefronts/adapters/webflow.js';
 import { loadPublicConfig } from 'storefronts/features/config/sdkConfig.js';
 
+// Expose auth selectors so they survive minification
+// (checked by scripts/assert-auth-dist-integrity.mjs)
+if (typeof window !== 'undefined') {
+  window.__SMOOTHR_AUTH_SELECTORS__ = [
+    '[data-smoothr="auth-form"]',
+    '[data-smoothr="sign-up"]',
+    '[data-smoothr="password-reset"]',
+    '[data-smoothr="password-reset-confirm"]',
+    'keydown',
+    'Enter',
+    '/api/auth/session-sync',
+    'application/x-www-form-urlencoded',
+    'method="POST"'
+  ];
+}
+
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};

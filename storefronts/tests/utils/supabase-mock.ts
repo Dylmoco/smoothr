@@ -84,3 +84,6 @@ export const createClient = vi.fn(() => {
   useWindowSupabaseMock(client, mocks);
   return client;
 });
+
+// Some modules import the Supabase client as a default export
+export default { createClient };
