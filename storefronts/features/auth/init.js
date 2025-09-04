@@ -215,7 +215,7 @@ export async function sessionSyncAndEmit(token) {
     '';
   if (!token || !storeId) return false;
   try {
-    await sessionSyncStayOnPage({ store_id: storeId, access_token: token });
+    await sessionSync({ store_id: storeId, access_token: token });
     return true;
   } catch {
     const form = createSessionSyncForm(
@@ -366,23 +366,31 @@ export async function signInWithApple() {
 }
 
 
-// when no redirect is configured, we currently use XHR (console may show CORS in dev)
-// optionally use hidden-iframe to avoid CORS noise entirely
-async function sessionSyncStayOnPage(payload) {
-  const silent = !!(
-    window.SMOOTHR_CONFIG &&
-    window.SMOOTHR_CONFIG.auth &&
-    window.SMOOTHR_CONFIG.auth.silentPost
-  );
-  const url = `${getBrokerBaseUrl()}/api/auth/session-sync`;
-  if (silent) {
-    await postViaHiddenIframe(url, payload);
-    return { ok: true, json: async () => ({}) };
+async function sessionSync({ redirect, store_id, access_token }) {
+  const endpoint = `${getBrokerBaseUrl()}/api/auth/session-sync`;
+  if (redirect) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.enctype = 'application/x-www-form-urlencoded';
+    form.action = endpoint;
+    const mk = (name, value) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value || '';
+      form.appendChild(input);
+    };
+    if (store_id) mk('store_id', store_id);
+    if (access_token) mk('access_token', access_token);
+    mk('redirect', redirect);
+    document.body.appendChild(form);
+    form.submit();
+    return;
   }
-  return fetch(url, {
+  return fetch(endpoint, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ store_id, access_token }),
   });
 }
 
@@ -465,6 +473,7 @@ function extractCredsFrom(container) {
 }
 
 const _bound = new WeakSet();
+let __docListenersAttached = false;
 export function bindAuthElements(root = globalThis.document) {
   if (!root?.querySelectorAll) return;
   const attach = (el, handler) => {
@@ -617,6 +626,12 @@ export async function init(options = {}) {
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
     const client = options.supabase ?? await resolveSupabase();
+    if (!client) {
+      if (w.Smoothr?.config?.debug) {
+        console.warn('[Smoothr Auth] Supabase client not ready; deferring auth init');
+      }
+      return;
+    }
 
     // Let tests observe the client injection (barrel re-exports this).
     try { setSupabaseClient(client); } catch {}
@@ -629,12 +644,8 @@ export async function init(options = {}) {
     w.Smoothr = w.Smoothr || {};
 
     // Minimal API shape some tests reach for
-    const api = w.Smoothr.auth || {
-      client: client || null,
-      user: { value: null },
-      init,
-      login: async () => {},
-    };
+    const api = w.Smoothr.auth || { client: null, user: { value: null }, init, login: async () => {} };
+    api.client = client;
     w.Smoothr.auth = api;
 
     // Reset hooks to safe no-ops (live bindings stay exported from this module).
@@ -743,31 +754,12 @@ export async function init(options = {}) {
           log('sessionSync form redirect', { redirectUrl });
           emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
           emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-          const doc = w.document;
-          const form = doc?.createElement?.('form');
-          if (!form) return;
-          form.method = 'POST';
-          form.enctype = 'application/x-www-form-urlencoded';
-          form.action = `${getBrokerBaseUrl()}/api/auth/session-sync`;
-          form.style.display = 'none';
-          const mk = (name, value) => {
-            const input = doc?.createElement?.('input');
-            if (input) {
-              input.type = 'hidden';
-              input.name = name;
-              input.value = value || '';
-              form.appendChild(input);
-            }
-          };
-          mk('store_id', storeId);
-          mk('access_token', token);
-          try { doc?.body?.appendChild?.(form); } catch {}
-          try { form.submit(); } catch {}
+          await sessionSync({ redirect: redirectUrl, store_id: storeId, access_token: token });
           return;
         }
 
         log('sessionSync xhr path', { redirectUrl });
-        const resp = await sessionSyncStayOnPage({
+        const resp = await sessionSync({
           store_id: storeId,
           access_token: token,
         });
@@ -1197,29 +1189,19 @@ export async function init(options = {}) {
     };
 
     // Capture click fallback: ensure dynamic action controls route even if per-node listener missed
-    const ACTION_SELECTORS = [
-      '[data-smoothr="login"]',
-      ATTR_SIGNUP,
-      '[data-smoothr="password-reset"]',
-      '[data-smoothr="password-reset-confirm"]',
-    ].join(',');
     const docActionClickFallback = (e) => {
       try {
-        const el = e?.target?.closest?.(ACTION_SELECTORS);
+        const el = e?.target?.closest?.('[data-smoothr]');
         if (!el) return;
-        // 1) If element already has a direct listener, skip (avoid double handling).
-        if (_bound.has(el)) return;
-        // 2) If this event already triggered our fallback higher up, skip.
-        if (e.__smoothrActionHandled === true) return;
-        e.__smoothrActionHandled = true;
-        // Route to clickHandler once
-        clickHandler?.({
-          target: el,
-          currentTarget: el,
-          preventDefault(){},
-          stopPropagation(){},
-          stopImmediatePropagation(){},
-        });
+        if (_bound?.has?.(el)) return;
+        const action = el.getAttribute('data-smoothr');
+        const handler = action === 'login-google' ? googleClickHandler
+          : action === 'login-apple' ? appleClickHandler
+          : clickHandler;
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        e.stopImmediatePropagation?.();
+        handler(e);
       } catch {}
     };
 
@@ -1261,14 +1243,17 @@ export async function init(options = {}) {
       }
       if (doc) {
         doc.addEventListener('DOMContentLoaded', mutationCallback);
-        doc.addEventListener('click', docActionClickFallback, false);
-        doc.addEventListener('click', docClickHandler, { capture: true, passive: false });
-        if (w.SMOOTHR_DEBUG) {
-          console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
+        if (!__docListenersAttached) {
+          doc.addEventListener('click', docActionClickFallback, false);
+          doc.addEventListener('click', docClickHandler, { capture: true, passive: false });
+          if (w.SMOOTHR_DEBUG) {
+            console.info('[Smoothr][auth] docClickHandler bound (capture-only)');
+          }
+          doc.addEventListener('submit', docSubmitHandler, true);
+          doc.addEventListener('keydown', docKeydownHandler, { capture: true, passive: false });
+          _bound.add(doc);
+          __docListenersAttached = true;
         }
-        doc.addEventListener('submit', docSubmitHandler, true);
-        doc.addEventListener('keydown', docKeydownHandler, { capture: true, passive: false });
-        _bound.add(doc);
       }
     } catch {}
     log('auth init complete');

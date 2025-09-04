@@ -1,10 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createClientMock, currentSupabaseMocks } from "../utils/supabase-mock";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createDomStub } from "../utils/dom-stub";
 import { resolveRecoveryDestination } from "shared/auth/resolveRecoveryDestination";
 import { validatePasswordsOrThrow } from "../../features/auth/validators.js";
+import { __setSupabaseReadyForTests } from "../../smoothr-sdk.mjs";
+import { buildSupabaseMock } from "../utils/supabase-mock";
 
 let auth;
+let supabaseMocks;
 
 const realWindow = globalThis.window;
 const realDocument = globalThis.document;
@@ -14,16 +16,24 @@ function flushPromises() {
 }
 
 beforeEach(() => {
+  resetSupabase();
   vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
 });
 
 afterEach(() => {
-  globalThis.fetch?.mockRestore?.();
+  vi.restoreAllMocks();
 });
+
+function resetSupabase() {
+  const m = buildSupabaseMock();
+  supabaseMocks = m.mocks;
+  __setSupabaseReadyForTests(m.client);
+  return m;
+}
 
 it('binds reset trigger during init without DOMContentLoaded', async () => {
   vi.resetModules();
-  createClientMock();
+  resetSupabase();
   let clickHandler;
   const form = {
     dataset: { smoothr: 'auth-form' },
@@ -90,7 +100,7 @@ it('does not set loading class on non-reset routes when hash exists', async () =
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
   document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.mjs" data-config-url="https://smoothr.vercel.app/api/config" data-store-id="store_test"></script>';
-  createClientMock();
+  resetSupabase();
   const realBroker = globalThis.getCachedBrokerBase;
   const realEnsure = globalThis.ensureConfigLoaded;
   globalThis.getCachedBrokerBase = () => 'https://smoothr.vercel.app';
@@ -198,7 +208,7 @@ it('handles submit on reset-only form and surfaces errors', async () => {
 
 it('does not send duplicate reset emails when clicking a bound reset control', async () => {
   vi.resetModules();
-  createClientMock();
+  resetSupabase();
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
   auth = await import("../../features/auth/index.js");
   await auth.init();
@@ -349,10 +359,10 @@ describe('password validator', () => {
 
 it('reset confirm posts to session-sync for 303 redirect to home when no redirect set', async () => {
   vi.resetModules();
-  createClientMock();
+  resetSupabase();
   global.window = realWindow;
   global.document = realDocument;
-  const { getUserMock, updateUserMock } = currentSupabaseMocks();
+  const { getUserMock, updateUserMock } = supabaseMocks;
   getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
   updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
 
@@ -400,10 +410,10 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
 
 it('appends session-sync form and posts via submit on reset confirm', async () => {
   vi.resetModules();
-  createClientMock();
+  resetSupabase();
   global.window = realWindow;
   global.document = realDocument;
-  const { getUserMock, updateUserMock } = currentSupabaseMocks();
+  const { getUserMock, updateUserMock } = supabaseMocks;
   getUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
   updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
 

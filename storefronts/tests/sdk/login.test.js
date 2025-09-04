@@ -1,33 +1,27 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createClientMock as createClientMockUtil, currentSupabaseMocks } from "../utils/supabase-mock";
 import { createDomStub } from "../utils/dom-stub";
+import { __setSupabaseReadyForTests } from "../../smoothr-sdk.mjs";
+import { buildSupabaseMock } from "../utils/supabase-mock";
 
-var signInMock;
-var getUserMock;
-var getSessionMock;
+let signInMock, getSessionMock, client, supabaseMocks;
 
-vi.mock("@supabase/supabase-js", () => {
-  signInMock = vi.fn();
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  getSessionMock = vi.fn(() => Promise.resolve({ data: { session: {} }, error: null }));
-  const createClientMock = vi.fn(() => ({
-    auth: {
-      getUser: getUserMock,
-      signInWithPassword: signInMock,
-      signOut: vi.fn(),
-      onAuthStateChange: vi.fn(),
-      getSession: getSessionMock,
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  }));
-  return { createClient: createClientMock };
+function resetSupabase() {
+  const m = buildSupabaseMock();
+  client = m.client;
+  supabaseMocks = m.mocks;
+  signInMock = supabaseMocks.signInMock;
+  getSessionMock = supabaseMocks.getSessionMock;
+  __setSupabaseReadyForTests(client);
+}
+
+beforeEach(() => {
+  resetSupabase();
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({}) });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 let auth;
@@ -36,17 +30,9 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
-beforeEach(() => {
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({}) });
-});
-
-afterEach(() => {
-  globalThis.fetch?.mockRestore?.();
-});
-
 it('submits login via Enter when form also contains a password-reset link', async () => {
   vi.resetModules();
-  createClientMockUtil();
+  resetSupabase();
   const auth = await import("../../features/auth/index.js");
 
   const form = document.createElement('form');
@@ -63,24 +49,24 @@ it('submits login via Enter when form also contains a password-reset link', asyn
   script.dataset.storeId = 'store_test';
   document.body.appendChild(script);
 
-  await auth.init();
+  await auth.init({ supabase: client });
   await flushPromises();
 
-  const { signInMock, resetPasswordMock } = currentSupabaseMocks();
-  signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+  const { signInMock: sMock, resetPasswordMock } = supabaseMocks;
+  sMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
   resetPasswordMock.mockResolvedValue({ data: {}, error: null });
 
   const evt = new Event('submit', { bubbles: true, cancelable: true });
   form.dispatchEvent(evt);
   await flushPromises();
 
-  expect(signInMock).toHaveBeenCalledTimes(1);
+  expect(sMock).toHaveBeenCalledTimes(1);
   expect(resetPasswordMock).not.toHaveBeenCalled();
 });
 
 it('submits login via Enter when auth-form is a DIV with a reset link present', async () => {
   vi.resetModules();
-  createClientMockUtil();
+  resetSupabase();
   const auth = await import("../../features/auth/index.js");
 
   const div = document.createElement('div');
@@ -97,11 +83,10 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
   script.dataset.storeId = 'store_test';
   document.body.appendChild(script);
 
-  await auth.init();
+  await auth.init({ supabase: client });
   await flushPromises();
 
-  const { signInMock } = currentSupabaseMocks();
-  signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+  supabaseMocks.signInMock.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
 
   const active = div.querySelector('[data-smoothr="password"]');
   Object.defineProperty(document, 'activeElement', { value: active, configurable: true });
@@ -109,7 +94,7 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
   div.dispatchEvent(evt);
   await flushPromises();
 
-  expect(signInMock).toHaveBeenCalledTimes(1);
+  expect(supabaseMocks.signInMock).toHaveBeenCalledTimes(1);
 });
   describe("login form", () => {
     let clickHandler;
@@ -118,11 +103,12 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
     let realDocument;
     let loginTrigger;
     let resetTrigger;
+    let getUserMock;
 
       beforeEach(async () => {
         vi.resetModules();
-        createClientMockUtil();
-        ({ signInMock, getUserMock, getSessionMock } = currentSupabaseMocks());
+        resetSupabase();
+        ({ signInMock, getUserMock, getSessionMock } = supabaseMocks);
         getUserMock.mockResolvedValue({ data: { user: null } });
         clickHandler = undefined;
         emailValue = "user@example.com";

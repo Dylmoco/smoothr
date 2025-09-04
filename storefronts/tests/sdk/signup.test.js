@@ -1,40 +1,26 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { JSDOM } from "jsdom";
 import { createDomStub } from "../utils/dom-stub";
+import { __setSupabaseReadyForTests } from "../../smoothr-sdk.mjs";
+import { buildSupabaseMock } from "../utils/supabase-mock";
 
-let signUpMock;
-let getUserMock;
-let createClientMock;
-let getSessionMock;
+let signUpMock, getSessionMock, client;
 
-function setupSupabaseMock() {
-  signUpMock = vi.fn();
-  getUserMock = vi.fn(() => Promise.resolve({ data: { user: null } }));
-  getSessionMock = vi.fn(() =>
-    Promise.resolve({ data: { session: {} }, error: null })
-  );
-  createClientMock = vi.fn(() => ({
-    auth: {
-      getUser: getUserMock,
-      signUp: signUpMock,
-      signOut: vi.fn(),
-      signInWithOAuth: vi.fn(),
-      onAuthStateChange: vi.fn(),
-      getSession: getSessionMock,
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  }));
-  vi.doMock("@supabase/supabase-js", () => ({
-    createClient: createClientMock,
-  }));
+function resetSupabase() {
+  const m = buildSupabaseMock();
+  client = m.client;
+  signUpMock = m.mocks.signUp;
+  getSessionMock = m.mocks.getSession;
+  __setSupabaseReadyForTests(client);
 }
+
+beforeEach(() => {
+  resetSupabase();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 let auth;
 const config = { storeId: "00000000-0000-0000-0000-000000000000" };
@@ -45,9 +31,9 @@ function flushPromises() {
 
 it('routes dynamic sign-up DIV click via capture fallback when auth-form is DIV', async () => {
   vi.resetModules();
-  setupSupabaseMock();
+  resetSupabase();
   const auth = await import("../../features/auth/index.js");
-  await auth.init({ supabase: createClientMock() });
+  await auth.init({ supabase: client });
   await flushPromises();
 
   const div = document.createElement('div');
@@ -73,9 +59,9 @@ it('routes dynamic sign-up DIV click via capture fallback when auth-form is DIV'
 
 it('does not double-handle sign-up clicks (direct binding vs capture fallback)', async () => {
   vi.resetModules();
-  setupSupabaseMock();
+  resetSupabase();
   const { init, resolveSupabase, bindAuthElements } = await import("../../features/auth/index.js");
-  await init({ supabase: createClientMock() });
+  await init({ supabase: client });
   await flushPromises();
 
   const container = document.createElement('div');
@@ -112,9 +98,8 @@ describe("signup flow", () => {
   beforeEach(async () => {
     vi.resetModules();
     delete globalThis["__supabaseAuthClientsmoothr-browser-client"];
-    setupSupabaseMock();
+    resetSupabase();
     signUpMock.mockClear();
-    getUserMock.mockClear();
     getSessionMock.mockClear();
     emailValue = "test@example.com";
     passwordValue = "Password1";
@@ -172,7 +157,7 @@ describe("signup flow", () => {
 
   it("signs up and redirects on success", async () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
@@ -187,7 +172,7 @@ describe("signup flow", () => {
 
   it("does nothing on signup failure", async () => {
     signUpMock.mockResolvedValue({ data: null, error: new Error("bad") });
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
@@ -198,7 +183,7 @@ describe("signup flow", () => {
 
   it("validates email and password", async () => {
     signUpMock.mockResolvedValue({ data: { user: { id: "1" } }, error: null });
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     emailValue = "bademail";
@@ -220,7 +205,7 @@ describe("signup flow", () => {
   it("sets window.Smoothr.auth.user on success", async () => {
     const user = { id: "1" };
     signUpMock.mockResolvedValue({ data: { user }, error: null });
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
     await flushPromises();
     global.document.dispatchEvent.mockClear();
     await clickHandler({ preventDefault: () => {} });
@@ -238,22 +223,18 @@ describe('sessionSync transport', () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    setupSupabaseMock();
+    resetSupabase();
     signUpMock.mockResolvedValue({ data: { user: { id: 'u' } }, error: null });
     getSessionMock.mockResolvedValue({
       data: { session: { access_token: 'tok' } },
       error: null,
     });
-    const dom = new JSDOM('<!doctype html><html><body></body></html>', {
-      url: 'https://example.com',
-    });
-    global.window = dom.window;
-    global.document = dom.window.document;
-    global.CustomEvent = dom.window.CustomEvent;
+    document.body.innerHTML = '';
+    window.history.replaceState(null, '', 'https://example.com/');
     window.SMOOTHR_CONFIG = { storeId: config.storeId };
     auth = await import('../../features/auth/index.js');
     vi.spyOn(auth, 'lookupRedirectUrl').mockResolvedValue(null);
-    await auth.init({ supabase: createClientMock() });
+    await auth.init({ supabase: client });
   });
 
   it('uses form transport when redirect configured', async () => {
