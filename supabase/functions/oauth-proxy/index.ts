@@ -49,6 +49,15 @@ function path(url: URL) {
   return url.pathname.replace(/^\/?oauth-proxy/, "") || "/";
 }
 
+function corsHeaders(origin: string) {
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "content-type",
+    Vary: "Origin",
+  } as const;
+}
+
 Deno.serve(async (req) => {
   const ip = req.headers.get("x-forwarded-for") ||
     req.headers.get("cf-connecting-ip") ||
@@ -154,6 +163,7 @@ Deno.serve(async (req) => {
     await supabase.from("auth_state_management").insert({
       code: otc,
       session: sessData.session,
+      metadata: row.metadata,
       type: "exchange", // one-time code
       expires_at: new Date(Date.now() + 60_000).toISOString(),
     });
@@ -178,34 +188,46 @@ Deno.serve(async (req) => {
         "Content-Type": "text/html",
         "Cross-Origin-Opener-Policy": "unsafe-none",
         "Cross-Origin-Embedder-Policy": "unsafe-none",
+        ...corsHeaders(targetOrigin),
       },
     });
+  }
+
+  if (p === "/exchange" && req.method === "OPTIONS") {
+    const origin = req.headers.get("Origin") || "";
+    return new Response(null, { headers: corsHeaders(origin) });
   }
 
   if (p === "/exchange" && req.method === "POST") {
     const body = await req.json().catch(() => ({}));
     const code = body.code as string;
     if (!code) {
+      const origin = req.headers.get("Origin") || "";
       return new Response(JSON.stringify({ error: "missing_code" }), {
         status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io",
-          "Access-Control-Allow-Methods": "POST",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Vary": "Origin",
-        },
+        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
       });
     }
     const { data: row } = await supabase
       .from("auth_state_management")
-      .select("session, expires_at, used_at")
+      .select("session, expires_at, used_at, metadata")
       .eq("code", code)
       .single();
+    let storeOrigin = "";
+    if (row) {
+      try {
+        storeOrigin = new URL((row.metadata as any).redirect_to).origin;
+      } catch (_) {
+        storeOrigin = "";
+      }
+    }
     if (!row || row.used_at || new Date(row.expires_at) < new Date()) {
       return new Response(JSON.stringify({ error: "invalid_code" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(storeOrigin),
+        },
       });
     }
     await supabase
@@ -215,10 +237,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(row.session), {
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io",
-        "Access-Control-Allow-Methods": "POST",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Vary": "Origin",
+        ...corsHeaders(storeOrigin),
       },
     });
   }
