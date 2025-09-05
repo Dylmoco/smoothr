@@ -262,24 +262,35 @@ export async function signInWithGoogle() {
   w.addEventListener('message', onMsg);
 
   try {
+    log('Fetching authorize API:', authorizeApi);
     const r = await fetch(authorizeApi);
-    if (!r.ok) throw new Error('Authorize failed');
+    log('Authorize response status:', r.status, 'ok:', r.ok);
+    if (!r.ok) {
+      log('Authorize failed, redirecting main page');
+      cleanup();
+      w.location.replace(authorizeApi);
+      return;
+    }
     const j = await r.json();
+    log('Authorize response:', j);
     if (j?.url && popup && !popup.closed) {
+      log('Setting popup location:', j.url);
       popup.location.href = j.url;
-      // Poll briefly to ensure popup loads
       const checkPopup = setInterval(() => {
         if (popup.closed) {
+          log('Popup closed prematurely, redirecting main page');
           clearInterval(checkPopup);
           cleanup();
           w.location.replace(authorizeApi);
         }
       }, 100);
     } else {
+      log('No URL or popup closed, redirecting main page');
       cleanup();
       w.location.replace(authorizeApi);
     }
-  } catch {
+  } catch (e) {
+    log('Authorize fetch error:', e.message);
     cleanup();
     w.location.replace(authorizeApi);
   }
