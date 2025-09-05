@@ -10,7 +10,22 @@ describe('signInWithGoogle', () => {
     vi.resetModules();
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
-    global.fetch = vi.fn();
+    const usedCodes = new Set();
+    global.fetch = vi.fn(async (url) => {
+      if (url === authorizeUrl) {
+        return { ok: true, json: async () => ({ url: 'https://accounts.google.com/o/oauth2/auth' }) };
+      }
+      const m = url.match(/oauth-proxy\/exchange\?code=(.*)$/);
+      if (m) {
+        const code = m[1];
+        if (usedCodes.has(code)) {
+          return { ok: false, json: async () => ({}) };
+        }
+        usedCodes.add(code);
+        return { ok: true, json: async () => ({ access_token: 'a', refresh_token: 'r' }) };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
     const location = { origin: 'https://store.example', host: 'store.example', replace: vi.fn() };
     Object.defineProperty(location, 'href', {
       set(url) {
