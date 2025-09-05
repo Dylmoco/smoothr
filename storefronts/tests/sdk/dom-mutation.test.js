@@ -236,7 +236,7 @@ describe("dynamic DOM bindings", () => {
 
     await clickHandler({ preventDefault: () => {}, target: btn });
     expect(global.window.location.replace).toHaveBeenCalledWith(
-      'https://auth.smoothr.io/authorize?store_id=test-store&redirect_to=%2Fauth%2Fcallback'
+      'https://lpuqrzvokroazwlricgn.supabase.co/authorize?store_id=test-store&redirect_to=%2Fauth%2Fcallback'
     );
   });
 

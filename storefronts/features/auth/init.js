@@ -192,7 +192,7 @@ function toggleSpinner(on) {
 function addPreconnect() {
   const head = globalThis.document?.head;
   if (!head) return;
-  ['https://accounts.google.com', 'https://auth.smoothr.io'].forEach((href) => {
+  ['https://accounts.google.com', 'https://lpuqrzvokroazwlricgn.supabase.co'].forEach((href) => {
     if (head.querySelector(`link[rel="preconnect"][href="${href}"]`)) return;
     const link = document.createElement('link');
     link.rel = 'preconnect';
@@ -207,7 +207,7 @@ export async function signInWithGoogle() {
   addPreconnect();
   const storeId = getStoreId();
   const redirect = encodeURIComponent(`${w.location.origin}/auth/callback`);
-  const authorizeApi = `https://auth.smoothr.io/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+  const authorizeApi = `https://lpuqrzvokroazwlricgn.supabase.co/authorize?store_id=${storeId}&redirect_to=${redirect}`;
 
   if (w.top !== w.self) {
     w.location.replace(authorizeApi);
@@ -250,7 +250,7 @@ export async function signInWithGoogle() {
     if (data.type !== 'smoothr:auth' || !data.code) return;
     cleanup();
     try {
-      const resp = await fetch(`https://auth.smoothr.io/exchange?code=${data.code}`);
+      const resp = await fetch(`https://lpuqrzvokroazwlricgn.supabase.co/exchange?code=${data.code}`);
       const json = await resp.json();
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
