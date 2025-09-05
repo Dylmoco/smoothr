@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       provider,
       options: {
         skipBrowserRedirect: true,
-        redirectTo: `${url.origin}/oauth-proxy/callback`,
+        redirectTo: `https://${url.host}/functions/v1/oauth-proxy/callback`,
         queryParams: { state },
       },
     });
