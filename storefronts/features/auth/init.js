@@ -162,21 +162,117 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
-async function signInWithGoogleRedirect() {
-  try {
-    globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-  } catch {}
+function getStoreId() {
   const w = globalThis.window || globalThis;
-  const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
-  const storeId =
-    (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
+  return (
+    w.SMOOTHR_CONFIG?.store_id ||
     w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
-    '';
-  const orig = w.location?.origin || '';
-  const url = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
-    storeId
-  )}&orig=${encodeURIComponent(orig)}`;
-  w.location?.replace?.(url);
+    ''
+  );
+}
+
+function ensureSpinner() {
+  const doc = globalThis.document;
+  let el = doc?.querySelector?.('[data-smoothr="loading"]');
+  if (!el) {
+    el = doc?.createElement?.('div');
+    el?.setAttribute?.('data-smoothr', 'loading');
+    el && (el.textContent = 'Logging in...');
+    el && (el.style.display = 'none');
+    doc?.body?.appendChild?.(el);
+  }
+  return el;
+}
+
+function toggleSpinner(on) {
+  const el = ensureSpinner();
+  if (el) el.style.display = on ? '' : 'none';
+}
+
+function addPreconnect() {
+  const head = globalThis.document?.head;
+  if (!head) return;
+  ['https://accounts.google.com', 'https://auth.smoothr.io'].forEach((href) => {
+    if (head.querySelector(`link[rel="preconnect"][href="${href}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'preconnect';
+    link.href = href;
+    head.appendChild(link);
+  });
+}
+
+export async function signInWithGoogle() {
+  await ensureConfigLoaded();
+  const w = globalThis.window || globalThis;
+  addPreconnect();
+  const storeId = getStoreId();
+  const redirect = encodeURIComponent(`${w.location.origin}/auth/callback`);
+  const authorizeApi = `https://auth.smoothr.io/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+
+  if (w.top !== w.self) {
+    w.alert?.('Open published site to sign in');
+    return;
+  }
+
+  const ua = w.navigator?.userAgent || '';
+  if (/iPhone|iPad/i.test(ua)) {
+    w.location.href = authorizeApi;
+    return;
+  }
+
+  const width = 600;
+  const height = 700;
+  const left = (w.screenLeft || 0) + (w.innerWidth - width) / 2;
+  const top = (w.screenTop || 0) + (w.innerHeight - height) / 2;
+  const popup = w.open('', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
+  if (!popup) {
+    w.location.href = authorizeApi;
+    return;
+  }
+
+  toggleSpinner(true);
+
+  const timeout = setTimeout(() => {
+    try { popup.close(); } catch {}
+    w.location.href = authorizeApi;
+  }, 5000);
+
+  function cleanup() {
+    clearTimeout(timeout);
+    toggleSpinner(false);
+    try { popup.close(); } catch {}
+    w.removeEventListener('message', onMsg);
+  }
+
+  async function onMsg(event) {
+    if (event.origin !== w.location.origin) return;
+    const data = event.data || {};
+    if (data.type !== 'smoothr:auth' || !data.code) return;
+    cleanup();
+    try {
+      const resp = await fetch(`https://auth.smoothr.io/exchange?code=${data.code}`);
+      const json = await resp.json();
+      const { access_token, refresh_token } = json;
+      const client = await resolveSupabase();
+      await client?.auth.setSession({ access_token, refresh_token });
+      await sessionSyncAndEmit(access_token);
+    } catch {}
+  }
+
+  w.addEventListener('message', onMsg);
+
+  try {
+    const r = await fetch(authorizeApi);
+    const j = await r.json().catch(() => ({}));
+    if (j?.url) popup.location = j.url;
+    else {
+      cleanup();
+      w.location.href = authorizeApi;
+    }
+  } catch {
+    cleanup();
+    w.location.href = authorizeApi;
+  }
 }
 
 export async function sessionSyncAndEmit(token) {
@@ -194,113 +290,8 @@ export async function sessionSyncAndEmit(token) {
   }
 }
 
-async function signInWithGooglePopup() {
-  const w = globalThis.window || globalThis;
-  const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
-  const storeId =
-    (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
-    w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
-    '';
-  if (!storeId) return signInWithGoogleRedirect();
-  const orig = w.location?.origin || '';
-  const startUrl = `${brokerBase}/api/auth/oauth-start?provider=google&store_id=${encodeURIComponent(
-    storeId
-  )}&orig=${encodeURIComponent(orig)}&mode=url`;
-  const W = 480,
-    H = 640;
-  const sx = w.screenX ?? w.screenLeft ?? 0;
-  const sy = w.screenY ?? w.screenTop ?? 0;
-  const sw = w.outerWidth || w.innerWidth || 0;
-  const sh = w.outerHeight || w.innerHeight || 0;
-  const left = Math.max(0, Math.round(sx + (sw - W) / 2));
-  const top = Math.max(0, Math.round(sy + (sh - H) / 2));
-  const specs = `width=${W},height=${H},left=${left},top=${top},resizable,scrollbars`;
-  const popup = w.open('about:blank', 'smoothr_oauth', specs);
-  if (!popup) return signInWithGoogleRedirect();
-  try {
-    popup.document.title = 'Connecting…';
-    popup.document.body.innerHTML = '<div style="font:14px system-ui;margin:24px">Connecting…</div>';
-  } catch {}
-
-  return new Promise(async (resolve) => {
-    let closePoll;
-    let hardTimeout;
-    let done = false;
-    async function onDone(fn, ok = false) {
-      if (done) return;
-      done = true;
-      try { popup.close(); } catch {}
-      try { clearInterval(closePoll); } catch {}
-      try { clearTimeout(hardTimeout); } catch {}
-      try { w.removeEventListener('message', onMsg); } catch {}
-      try { await fn?.(); } catch {}
-      resolve(ok);
-    }
-    function onMsg(event) {
-      if (event.origin !== brokerBase) return;
-      const m = event.data || {};
-      if (
-        m.type !== 'smoothr:oauth' ||
-        !m.ok ||
-        !m.access_token ||
-        m.store_id !== storeId
-      ) {
-        onDone(() => signInWithGoogleRedirect(), false);
-        return;
-      }
-      onDone(() => sessionSyncAndEmit(m.access_token), true);
-    }
-    w.addEventListener('message', onMsg);
-    closePoll = setInterval(() => {
-      if (popup.closed) onDone(() => signInWithGoogleRedirect(), false);
-    }, 350);
-    hardTimeout = setTimeout(
-      () => onDone(() => signInWithGoogleRedirect(), false),
-      60000,
-    );
-
-    const fetchCtl = new AbortController();
-    const stall = setTimeout(() => {
-      try { fetchCtl.abort(); } catch {}
-    }, 4000);
-    let authorizeUrl = null;
-    try {
-      const r = await fetch(startUrl, {
-        credentials: 'omit',
-        signal: fetchCtl.signal,
-      });
-      const j = await r.json().catch(() => ({}));
-      authorizeUrl = j?.authorizeUrl || null;
-    } catch {}
-    clearTimeout(stall);
-    if (!authorizeUrl || popup.closed) {
-      await onDone(() => signInWithGoogleRedirect(), false);
-      return;
-    }
-    popup.location = authorizeUrl;
-  });
-}
-
-export async function signInWithGoogle() {
-  await ensureConfigLoaded();
-  try {
-    globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-  } catch {}
-  const cfg = getConfig();
-  const w = globalThis.window || globalThis;
-  const inIframe = w && w.top && w.top !== w.self;
-  const usePopup = !!(cfg && cfg.oauth_popup_enabled) && !inIframe;
-  return usePopup ? signInWithGooglePopup() : signInWithGoogleRedirect();
-}
-
-// test-only export
-export { signInWithGooglePopup };
-
 export async function signInWithApple() {
   await ensureConfigLoaded();
-  try {
-    globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
-  } catch {}
   const w = globalThis.window || globalThis;
   const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
   const storeId =
@@ -510,41 +501,58 @@ export const resolveSupabase = async () => {
   }
 };
 
-export async function requestPasswordResetForEmail(email) {
-  await ensureConfigLoaded();
-  const redirectTo = getPasswordResetRedirectUrl();
-  let brokerBase = getCachedBrokerBase();
+resolveSupabase().then((client) => {
   try {
-    const u = new URL(brokerBase);
-    if (u.hostname === 'sdk.smoothr.io') brokerBase = 'https://smoothr.vercel.app';
+    client?.auth?.onAuthStateChange?.((_event, session) => {
+      const meta = session?.user?.user_metadata || {};
+      const name = meta.store_name;
+      const logo = meta.logo_url;
+      const el = globalThis.document?.querySelector?.('[data-smoothr="auth-status"]');
+      if (el && name) {
+        el.textContent = `Signed into ${name} via Smoothr`;
+        if (logo) {
+          let img = el.querySelector('img');
+          if (!img) {
+            img = document.createElement('img');
+            el.prepend(img);
+          }
+          img.src = logo;
+          img.alt = name;
+        }
+      }
+    });
   } catch {}
-  if (!brokerBase) brokerBase = 'https://smoothr.vercel.app';
-  const body = JSON.stringify({
-    email,
-    store_id:
-      (window.SMOOTHR_CONFIG && window.SMOOTHR_CONFIG.store_id) ||
-      document.getElementById('smoothr-sdk')?.dataset?.storeId ||
-      '',
-    // still send redirectTo for analytics/telemetry if you want, but broker ignores untrusted targets
-    redirectTo,
-  });
-  const resp = await fetch(`${brokerBase}/api/auth/send-reset`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body,
-    credentials: 'omit', // keep CORS happy; no cookies needed
-  });
-  if (!resp.ok) {
-    try {
-      const supabase = await resolveSupabase();
-      const { error } = await supabase?.auth.resetPasswordForEmail(email, { redirectTo }) || {};
-      if (error) throw error;
-      return true;
-    } catch (e) {
-      throw new Error('reset_email_failed');
-    }
-  }
+});
+
+export async function requestPasswordReset(email) {
+  await ensureConfigLoaded();
+  const w = globalThis.window || globalThis;
+  const storeId = getStoreId();
+  const redirectTo =
+    `https://auth.smoothr.io/reset?store_id=${storeId}&redirect_to=${encodeURIComponent(
+      `${w.location.origin}/reset-password`
+    )}`;
+  const supabase = await resolveSupabase();
+  const { error } = await supabase?.auth.resetPasswordForEmail(email, { redirectTo }) || {};
+  if (error) throw error;
   return true;
+}
+
+export async function verifyResetToken(tokenHash) {
+  const supabase = await resolveSupabase();
+  const { data, error } = await supabase?.auth.verifyOtp({
+    type: 'recovery',
+    token_hash: tokenHash,
+  }) || {};
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePassword(newPassword) {
+  const supabase = await resolveSupabase();
+  const { data, error } = await supabase?.auth.updateUser({ password: newPassword }) || {};
+  if (error) throw error;
+  return data;
 }
 
 /** @internal test-only helper to avoid bundling legacy deps */
@@ -833,7 +841,7 @@ export async function init(options = {}) {
         const successEl = container?.querySelector('[data-smoothr-success]');
         const errorEl = container?.querySelector('[data-smoothr-error]');
         try {
-          await requestPasswordResetForEmail(email);
+          await requestPasswordReset(email);
           w.Smoothr.auth.user.value = null;
           if (successEl) {
             successEl.textContent = 'Check your email for a reset link.';
@@ -941,7 +949,6 @@ export async function init(options = {}) {
 
     appleClickHandler = async (e) => {
       try { e?.preventDefault?.(); } catch {}
-      globalThis.localStorage?.setItem?.('smoothr_oauth', '1');
       const c = await resolveSupabase();
       try {
         await c?.auth?.signInWithOAuth?.({
@@ -1237,13 +1244,12 @@ try {
   }, { capture: true });
 } catch {}
 
-if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
-  const w = window;
-  w.Smoothr = w.Smoothr || {};
-  w.Smoothr.config = w.Smoothr.config || {};
-  w.Smoothr.config.__test = {
-    tryImportClient,
-    resetAuth: __test_resetAuth,
-  };
-}
-
+  if (typeof window !== 'undefined' && window.SMOOTHR_DEBUG) {
+    const w = window;
+    w.Smoothr = w.Smoothr || {};
+    w.Smoothr.config = w.Smoothr.config || {};
+    w.Smoothr.config.__test = {
+      tryImportClient,
+      resetAuth: __test_resetAuth,
+    };
+  }
