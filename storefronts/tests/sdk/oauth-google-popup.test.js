@@ -73,17 +73,6 @@ describe('signInWithGoogle popup', () => {
     expect(window.location.replace).toHaveBeenCalledWith(authorizeUrl);
   });
 
-  it('falls back to redirect on timeout', async () => {
-    vi.useFakeTimers();
-    const promise = signInWithGoogle();
-    await Promise.resolve();
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(window.location.replace).toHaveBeenCalledWith(authorizeUrl);
-    expect(window.__popup.close).toHaveBeenCalled();
-    vi.useRealTimers();
-    await promise;
-  });
-
   it('falls back when popup manually closed', async () => {
     vi.useFakeTimers();
     const promise = signInWithGoogle();

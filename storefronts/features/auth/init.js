@@ -22,7 +22,7 @@ import {
   stripRecoveryHashIfNotOnReset,
 } from '../../core/hash.js';
 
-const { debug } = getConfig();
+const { debug = true } = getConfig();
 const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
 
 function emitAuth(name, detail = {}) {
@@ -233,13 +233,7 @@ export async function signInWithGoogle() {
 
   toggleSpinner(true);
 
-  const timeout = setTimeout(() => {
-    try { popup.close(); } catch {}
-    w.location.replace(authorizeApi);
-  }, 5000);
-
   function cleanup() {
-    clearTimeout(timeout);
     toggleSpinner(false);
     try { popup.close(); } catch {}
     w.removeEventListener('message', onMsg);
@@ -263,38 +257,39 @@ export async function signInWithGoogle() {
   w.addEventListener('message', onMsg);
 
   try {
-    log('Fetching authorize API:', authorizeApi);
+    log('Starting fetch for authorize API:', authorizeApi);
     const r = await fetch(authorizeApi);
     log('Authorize response status:', r.status, 'ok:', r.ok);
     if (!r.ok) {
-      log('Authorize failed, redirecting main page');
+      log('Authorize failed with status:', r.status);
       cleanup();
       w.location.replace(authorizeApi);
       return;
     }
     const j = await r.json();
-    log('Authorize response:', j);
+    log('Authorize response JSON:', JSON.stringify(j));
     if (j?.url && popup && !popup.closed) {
       log('Setting popup location:', j.url);
       popup.location.href = j.url;
-      // Wait for popup to load before polling
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for popup load
       if (!popup.closed) {
+        log('Starting popup poll');
         const checkPopup = setInterval(() => {
+          log('Checking popup state, closed:', popup.closed);
           if (popup.closed) {
-            log('Popup closed prematurely, redirecting main page');
+            log('Popup closed, redirecting main page');
             clearInterval(checkPopup);
             cleanup();
             w.location.replace(authorizeApi);
           }
-        }, 500);
+        }, 1000);
       } else {
         log('Popup closed before polling, redirecting main page');
         cleanup();
         w.location.replace(authorizeApi);
       }
     } else {
-      log('No URL or popup closed, redirecting main page');
+      log('Invalid response or popup closed, url:', !!j?.url, 'popup exists:', !!popup, 'popup closed:', popup?.closed);
       cleanup();
       w.location.replace(authorizeApi);
     }
