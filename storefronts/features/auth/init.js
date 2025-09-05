@@ -240,18 +240,31 @@ export async function signInWithGoogle() {
   }
 
   async function onMsg(event) {
-    if (event.origin !== w.location.origin) return;
+    log('Received postMessage:', event);
+    if (event.origin !== w.location.origin) {
+      log('Invalid origin:', event.origin, 'expected:', w.location.origin);
+      return;
+    }
     const data = event.data || {};
-    if (data.type !== 'smoothr:auth' || !data.code) return;
+    log('postMessage data:', data);
+    if (data.type !== 'smoothr:auth' || !data.code) {
+      log('Invalid postMessage type or no code:', data.type, data.code);
+      return;
+    }
     cleanup();
     try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange?code=${data.code}`);
+      log('Fetching exchange API:', `https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange?code=${data.code}`);
+      const resp = await fetch(`https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange?code=${data.code}`);
       const json = await resp.json();
+      log('Exchange response:', json);
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
       await client?.auth.setSession({ access_token, refresh_token });
+      log('Session set, syncing');
       await sessionSyncAndEmit(access_token);
-    } catch {}
+    } catch (e) {
+      log('Exchange error:', e.message);
+    }
   }
 
   w.addEventListener('message', onMsg);
