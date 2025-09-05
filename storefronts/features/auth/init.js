@@ -189,10 +189,11 @@ function toggleSpinner(on) {
   if (el) el.style.display = on ? '' : 'none';
 }
 
+const SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';
 function addPreconnect() {
   const head = globalThis.document?.head;
   if (!head) return;
-  ['https://accounts.google.com', 'https://lpuqrzvokroazwlricgn.supabase.co'].forEach((href) => {
+  ['https://accounts.google.com', SUPABASE_URL].forEach((href) => {
     if (head.querySelector(`link[rel="preconnect"][href="${href}"]`)) return;
     const link = document.createElement('link');
     link.rel = 'preconnect';
@@ -207,7 +208,7 @@ export async function signInWithGoogle() {
   addPreconnect();
   const storeId = getStoreId();
   const redirect = encodeURIComponent(`https://${w.location.host}/auth/callback`);
-  const authorizeApi = `https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+  const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
 
   if (w.top !== w.self) {
     w.location.replace(authorizeApi);
@@ -250,7 +251,7 @@ export async function signInWithGoogle() {
     if (data.type !== 'smoothr:auth' || !data.code) return;
     cleanup();
     try {
-      const resp = await fetch(`https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange?code=${data.code}`);
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange?code=${data.code}`);
       const json = await resp.json();
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
