@@ -207,7 +207,7 @@ export async function signInWithGoogle() {
   addPreconnect();
   const storeId = getStoreId();
   const redirect = encodeURIComponent(`${w.location.origin}/auth/callback`);
-  const authorizeApi = `https://lpuqrzvokroazwlricgn.supabase.co/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+  const authorizeApi = `https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
 
   if (w.top !== w.self) {
     w.location.replace(authorizeApi);
@@ -250,7 +250,7 @@ export async function signInWithGoogle() {
     if (data.type !== 'smoothr:auth' || !data.code) return;
     cleanup();
     try {
-      const resp = await fetch(`https://lpuqrzvokroazwlricgn.supabase.co/exchange?code=${data.code}`);
+      const resp = await fetch(`https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange?code=${data.code}`);
       const json = await resp.json();
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
@@ -529,7 +529,7 @@ export async function requestPasswordReset(email) {
   const w = globalThis.window || globalThis;
   const storeId = getStoreId();
   const redirectTo =
-    `https://auth.smoothr.io/reset?store_id=${storeId}&redirect_to=${encodeURIComponent(
+    `https://lpuqrzvokroazwlricgn.supabase.co/reset?store_id=${storeId}&redirect_to=${encodeURIComponent(
       `${w.location.origin}/reset-password`
     )}`;
   const supabase = await resolveSupabase();

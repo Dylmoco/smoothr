@@ -67,7 +67,7 @@ it('submits password-reset via Enter on reset-only form', async () => {
 
     expect(resetPasswordMock).toHaveBeenCalledWith(
       "user@example.com",
-      expect.objectContaining({ redirectTo: expect.stringContaining("https://auth.smoothr.io/reset?store_id=store_test") })
+      expect.objectContaining({ redirectTo: expect.stringContaining("https://lpuqrzvokroazwlricgn.supabase.co/reset?store_id=store_test") })
     );
 });
 
@@ -113,7 +113,7 @@ it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
 
     expect(resetPasswordMock).toHaveBeenCalledWith(
       "user@example.com",
-      expect.objectContaining({ redirectTo: expect.stringContaining("https://auth.smoothr.io/reset?store_id=store_test") })
+      expect.objectContaining({ redirectTo: expect.stringContaining("https://lpuqrzvokroazwlricgn.supabase.co/reset?store_id=store_test") })
     );
 });
 
