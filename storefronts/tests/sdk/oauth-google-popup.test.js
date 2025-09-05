@@ -12,7 +12,7 @@ describe('signInWithGoogle popup', () => {
     realWindow = global.window;
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
-    const popup = { location: '', close: vi.fn(), closed: false };
+    const popup = { location: { href: '' }, close: vi.fn(), closed: false };
     const doc = {
       getElementById: vi.fn(() => ({ dataset: { storeId: 'store_test' } })),
       head: { querySelector: vi.fn(), appendChild: vi.fn() },
@@ -20,7 +20,7 @@ describe('signInWithGoogle popup', () => {
       createElement: vi.fn(() => ({ setAttribute: vi.fn(), style: {} })),
       querySelector: vi.fn(() => null),
     };
-    const location = { origin: 'https://store.example', replace: vi.fn() };
+    const location = { origin: 'https://store.example', host: 'store.example', replace: vi.fn() };
     Object.defineProperty(location, 'href', {
       set(url) { this.replace(url); },
       get() { return ''; },
@@ -63,7 +63,7 @@ describe('signInWithGoogle popup', () => {
     const specs = window.open.mock.calls[0][2];
     expect(specs).toContain('left=212');
     expect(specs).toContain('top=34');
-    expect(window.__popup.location).toBe('https://accounts.google.com/o/oauth2/auth');
+    expect(window.__popup.location.href).toBe('https://accounts.google.com/o/oauth2/auth');
     expect(window.location.replace).not.toHaveBeenCalled();
   });
 
