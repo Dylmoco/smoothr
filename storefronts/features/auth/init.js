@@ -190,6 +190,10 @@ function toggleSpinner(on) {
 }
 
 const SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';
+const BROKER_ORIGINS = new Set([
+  'https://lpuqrzvokroazwlricgn.supabase.co',
+  'https://auth.smoothr.io'
+]);
 function addPreconnect() {
   const head = globalThis.document?.head;
   if (!head) return;
@@ -209,6 +213,7 @@ export async function signInWithGoogle() {
   const storeId = getStoreId();
   const redirect = encodeURIComponent(`https://${w.location.host}/auth/callback`);
   const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+  log('Authorize URL:', authorizeApi);
 
   if (w.top !== w.self) {
     w.location.replace(authorizeApi);
@@ -225,45 +230,50 @@ export async function signInWithGoogle() {
   const height = 700;
   const left = (w.screenLeft || 0) + (w.innerWidth - width) / 2;
   const top = (w.screenTop || 0) + (w.innerHeight - height) / 2;
-  const popup = w.open('', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
-  if (!popup) {
+  log('Opening popup', { width, height, left, top });
+  const popupRef = w.open('', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
+  if (!popupRef) {
     w.location.replace(authorizeApi);
     return;
   }
 
   toggleSpinner(true);
 
-  function cleanup() {
+  function cleanup(close) {
     toggleSpinner(false);
-    try { popup.close(); } catch {}
+    if (close) {
+      try { popupRef?.close?.(); } catch {}
+    }
     w.removeEventListener('message', onMsg);
   }
 
   async function onMsg(event) {
-    log('Received postMessage:', event);
-    if (event.origin !== w.location.origin) {
-      log('Invalid origin:', event.origin, 'expected:', w.location.origin);
+    log('Message event from', event.origin, event.data);
+    if (!BROKER_ORIGINS.has(event.origin)) {
+      log('Invalid origin:', event.origin);
       return;
     }
     const data = event.data || {};
-    log('postMessage data:', data);
     if (data.type !== 'smoothr:auth' || !data.code) {
       log('Invalid postMessage type or no code:', data.type, data.code);
       return;
     }
-    cleanup();
     try {
-      log('Fetching exchange API:', `https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange?code=${data.code}`);
-      const resp = await fetch(`https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange?code=${data.code}`);
+      log('Fetching exchange API:', `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange?code=${data.code}`);
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange?code=${data.code}`);
       const json = await resp.json();
-      log('Exchange response:', json);
+      log('Exchange ok:', json);
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
       await client?.auth.setSession({ access_token, refresh_token });
-      log('Session set, syncing');
+      log('setSession ok');
+      try { popupRef?.close?.(); log('popup closed'); } catch (_) {}
       await sessionSyncAndEmit(access_token);
     } catch (e) {
       log('Exchange error:', e.message);
+      try { popupRef?.close?.(); } catch (_) {}
+    } finally {
+      cleanup();
     }
   }
 
@@ -275,46 +285,46 @@ export async function signInWithGoogle() {
     log('Authorize response status:', r.status, 'ok:', r.ok);
     if (!r.ok) {
       log('Authorize failed with status:', r.status);
-      cleanup();
+      cleanup(true);
       w.location.replace(authorizeApi);
       return;
     }
     const j = await r.json();
     log('Authorize response JSON:', JSON.stringify(j));
-    if (j?.url && popup && !popup.closed) {
+    if (j?.url && popupRef && !popupRef.closed) {
       log('Setting popup location:', j.url);
-      popup.location.href = j.url;
+      popupRef.location.href = j.url;
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for popup load
-      if (!popup.closed) {
+      if (!popupRef.closed) {
         log('Starting popup poll');
         const checkPopup = setInterval(() => {
-          log('Checking popup state, closed:', popup.closed);
-          if (popup.closed) {
+          log('Checking popup state, closed:', popupRef.closed);
+          if (popupRef.closed) {
             log('Popup closed by user, treating as cancel - no main page redirect');
             clearInterval(checkPopup);
-            cleanup();
+            cleanup(true);
             w.alert?.('Login cancelled.');
           }
         }, 1000);
       } else {
         log('Popup closed before polling, treating as cancel - no main page redirect');
-        cleanup();
+        cleanup(true);
         w.alert?.('Login cancelled.');
       }
     } else {
-      if (popup?.closed) {
+      if (popupRef?.closed) {
         log('Popup closed before polling, treating as cancel - no main page redirect');
-        cleanup();
+        cleanup(true);
         w.alert?.('Login cancelled.');
       } else {
-        log('Invalid response, url:', !!j?.url, 'popup exists:', !!popup, 'popup closed:', popup?.closed);
-        cleanup();
+        log('Invalid response, url:', !!j?.url, 'popup exists:', !!popupRef, 'popup closed:', popupRef?.closed);
+        cleanup(true);
         w.location.replace(authorizeApi);
       }
     }
   } catch (e) {
     log('Authorize fetch error:', e.message);
-    cleanup();
+    cleanup(true);
     w.location.replace(authorizeApi);
   }
 }
