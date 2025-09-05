@@ -35,10 +35,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, res }) => 
     return { props: {} };
   }
 
-  const { data: sessData, error } = await supabase.auth.exchangeCodeForSession({
-    authCode: code,
-    codeVerifier: row.code_verifier,
-  });
+  const { data: sessData, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error || !sessData.session) {
     res.statusCode = 400;
     res.end('Exchange failed');

@@ -210,13 +210,13 @@ export async function signInWithGoogle() {
   const authorizeApi = `https://auth.smoothr.io/authorize?store_id=${storeId}&redirect_to=${redirect}`;
 
   if (w.top !== w.self) {
-    w.alert?.('Open published site to sign in');
+    w.location.replace(authorizeApi);
     return;
   }
 
   const ua = w.navigator?.userAgent || '';
   if (/iPhone|iPad/i.test(ua)) {
-    w.location.href = authorizeApi;
+    w.location.replace(authorizeApi);
     return;
   }
 
@@ -226,7 +226,7 @@ export async function signInWithGoogle() {
   const top = (w.screenTop || 0) + (w.innerHeight - height) / 2;
   const popup = w.open('', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
   if (!popup) {
-    w.location.href = authorizeApi;
+    w.location.replace(authorizeApi);
     return;
   }
 
@@ -234,7 +234,7 @@ export async function signInWithGoogle() {
 
   const timeout = setTimeout(() => {
     try { popup.close(); } catch {}
-    w.location.href = authorizeApi;
+    w.location.replace(authorizeApi);
   }, 5000);
 
   function cleanup() {
@@ -267,11 +267,11 @@ export async function signInWithGoogle() {
     if (j?.url) popup.location = j.url;
     else {
       cleanup();
-      w.location.href = authorizeApi;
+      w.location.replace(authorizeApi);
     }
   } catch {
     cleanup();
-    w.location.href = authorizeApi;
+    w.location.replace(authorizeApi);
   }
 }
 
