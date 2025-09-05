@@ -11,7 +11,7 @@ describe('signInWithGoogle', () => {
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
     global.fetch = vi.fn();
-    const location = { origin: 'https://store.example', replace: vi.fn() };
+    const location = { origin: 'https://store.example', host: 'store.example', replace: vi.fn() };
     Object.defineProperty(location, 'href', {
       set(url) {
         this.replace(url);

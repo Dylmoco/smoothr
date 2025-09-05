@@ -206,7 +206,7 @@ export async function signInWithGoogle() {
   const w = globalThis.window || globalThis;
   addPreconnect();
   const storeId = getStoreId();
-  const redirect = encodeURIComponent(`${w.location.origin}/auth/callback`);
+  const redirect = encodeURIComponent(`https://${w.location.host}/auth/callback`);
   const authorizeApi = `https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
 
   if (w.top !== w.self) {
@@ -264,8 +264,9 @@ export async function signInWithGoogle() {
   try {
     const r = await fetch(authorizeApi);
     const j = await r.json().catch(() => ({}));
-    if (j?.url) popup.location = j.url;
-    else {
+    if (j?.url && popup && !popup.closed) {
+      popup.location.href = j.url;
+    } else {
       cleanup();
       w.location.replace(authorizeApi);
     }

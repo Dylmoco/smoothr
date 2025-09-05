@@ -99,7 +99,7 @@ describe("dynamic DOM bindings", () => {
         return true;
       },
     };
-      const loc = { origin: "", assign: vi.fn(), replace: vi.fn() };
+      const loc = { origin: "", host: "store.example", assign: vi.fn(), replace: vi.fn() };
     Object.defineProperty(loc, "href", { get() { return ""; }, set(url) { this.replace(url); } });
     win = {
       location: loc,
@@ -236,7 +236,7 @@ describe("dynamic DOM bindings", () => {
 
     await clickHandler({ preventDefault: () => {}, target: btn });
     expect(global.window.location.replace).toHaveBeenCalledWith(
-      'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=test-store&redirect_to=%2Fauth%2Fcallback'
+      'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=test-store&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback'
     );
   });
 
