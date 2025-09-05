@@ -6,7 +6,7 @@ let fromMock: any;
 let counters: Record<string, number>;
 
 async function loadModule() {
-  ({ createOrder } = await import('../../shared/checkout/createOrder.ts'));
+  ({ createOrder } = await import('../../../shared/checkout/createOrder.ts'));
 }
 
 describe('createOrder', () => {
@@ -25,7 +25,7 @@ describe('createOrder', () => {
 
     fromMock = vi.fn(() => ({ insert: insertMock }));
 
-    vi.mock('../../shared/supabase/client', () => ({
+    vi.mock('../../../shared/supabase/client', () => ({
       supabase: { from: fromMock },
       createSupabaseClient: () => ({ from: fromMock }),
       testMarker: '✅ supabase client loaded'

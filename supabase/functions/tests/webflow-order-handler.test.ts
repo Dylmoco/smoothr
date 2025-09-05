@@ -7,7 +7,7 @@ let insertCustomerMock: any;
 let maybeSingleMock: any;
 
 async function loadModule() {
-  const mod = await import('./webflow-order-handler/index.ts');
+  const mod = await import('../webflow-order-handler/index.ts');
   handleRequest = mod.handleRequest;
 }
 
@@ -93,7 +93,7 @@ describe.skip('missing env vars', () => {
       serve: vi.fn()
     };
     vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn() }));
-    const mod = await import('./webflow-order-handler/index.ts');
+    const mod = await import('../webflow-order-handler/index.ts');
     const fn = mod.handleRequest;
     const res = await fn(new Request('https://example.com', { method: 'POST', body: '{}' }));
     expect(res.status).toBe(500);

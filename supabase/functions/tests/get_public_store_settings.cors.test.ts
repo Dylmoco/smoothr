@@ -58,7 +58,7 @@ afterEach(() => {
 
 describe("get_public_store_settings CORS", () => {
   it("includes CORS headers on OPTIONS", async () => {
-    await import("./get_public_store_settings/index.ts");
+    await import("../get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "OPTIONS",
@@ -70,7 +70,7 @@ describe("get_public_store_settings CORS", () => {
   });
 
   it("includes CORS headers on success", async () => {
-    await import("./get_public_store_settings/index.ts");
+    await import("../get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
@@ -90,7 +90,7 @@ describe("get_public_store_settings CORS", () => {
       throw new Error("boom");
     };
 
-    await import("./get_public_store_settings/index.ts");
+    await import("../get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",
@@ -110,7 +110,7 @@ describe("get_public_store_settings CORS", () => {
   });
 
   it("includes CORS headers on invalid body", async () => {
-    await import("./get_public_store_settings/index.ts");
+    await import("../get_public_store_settings/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",

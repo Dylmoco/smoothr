@@ -1,4 +1,4 @@
-import { createSupabaseClient } from "./_shared/supabase-client.ts";
+import { createSupabaseClient } from "../_shared/supabase-client.ts";
 import Handlebars from "npm:handlebars@4.7.7";
 
 interface EmailPayload {
