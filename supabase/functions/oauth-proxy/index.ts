@@ -102,7 +102,14 @@ Deno.serve(async (req) => {
       created_at: new Date().toISOString(),
     });
     return new Response(JSON.stringify({ url: data.url }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io",
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Vary": "Origin",
+        "Cross-Origin-Opener-Policy": "unsafe-none",
+      },
     });
   }
 
@@ -143,7 +150,12 @@ Deno.serve(async (req) => {
         try{ window.close(); }catch(e){}
       })();
     </script>`;
-    return new Response(body, { headers: { "Content-Type": "text/html" } });
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/html",
+        "Cross-Origin-Opener-Policy": "unsafe-none",
+      },
+    });
   }
 
   if (p === "/exchange" && req.method === "POST") {
