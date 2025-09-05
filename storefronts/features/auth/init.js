@@ -263,9 +263,18 @@ export async function signInWithGoogle() {
 
   try {
     const r = await fetch(authorizeApi);
-    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error('Authorize failed');
+    const j = await r.json();
     if (j?.url && popup && !popup.closed) {
       popup.location.href = j.url;
+      // Poll briefly to ensure popup loads
+      const checkPopup = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkPopup);
+          cleanup();
+          w.location.replace(authorizeApi);
+        }
+      }, 100);
     } else {
       cleanup();
       w.location.replace(authorizeApi);

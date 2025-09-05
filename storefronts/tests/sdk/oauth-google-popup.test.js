@@ -42,9 +42,9 @@ describe('signInWithGoogle popup', () => {
     global.window = win;
     global.fetch = vi.fn(async (url) => {
       if (url === authorizeUrl) {
-        return { json: async () => ({ url: 'https://accounts.google.com/o/oauth2/auth' }) };
+        return { ok: true, json: async () => ({ url: 'https://accounts.google.com/o/oauth2/auth' }) };
       }
-      return { json: async () => ({}) };
+      return { ok: true, json: async () => ({}) };
     });
     const mod = await import('../../features/auth/init.js');
     signInWithGoogle = mod.signInWithGoogle;
