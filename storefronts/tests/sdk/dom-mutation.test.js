@@ -99,9 +99,11 @@ describe("dynamic DOM bindings", () => {
         return true;
       },
     };
-      win = {
-        location: { href: "", origin: "", assign: vi.fn(), replace: vi.fn() },
-        addEventListener: vi.fn(),
+      const loc = { origin: "", assign: vi.fn(), replace: vi.fn() };
+    Object.defineProperty(loc, "href", { get() { return ""; }, set(url) { this.replace(url); } });
+    win = {
+      location: loc,
+      addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
         SMOOTHR_CONFIG: { storeId: STORE_ID, store_id: STORE_ID },
@@ -215,16 +217,6 @@ describe("dynamic DOM bindings", () => {
 
   it("attaches listeners to added google login elements and dispatches login event", async () => {
     let clickHandler;
-    let store = null;
-    global.localStorage = {
-      getItem: vi.fn(() => store),
-      setItem: vi.fn((k, v) => {
-        store = v;
-      }),
-      removeItem: vi.fn(() => {
-        store = null;
-      }),
-    };
     const btn = {
       tagName: "DIV",
       dataset: { smoothr: "login-google" },
@@ -235,6 +227,7 @@ describe("dynamic DOM bindings", () => {
       }),
     };
 
+    global.window.open = vi.fn().mockReturnValue(null);
       await auth.init({ supabase: createClientMock() });
     await flushPromises();
     elements.push(btn);
@@ -243,23 +236,12 @@ describe("dynamic DOM bindings", () => {
 
     await clickHandler({ preventDefault: () => {}, target: btn });
     expect(global.window.location.replace).toHaveBeenCalledWith(
-      'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=test-store&orig='
+      'https://auth.smoothr.io/authorize?store_id=test-store&redirect_to=%2Fauth%2Fcallback'
     );
-    expect(global.localStorage.getItem('smoothr_oauth')).toBe('1');
   });
 
   it("attaches listeners to added apple login elements and dispatches login event", async () => {
     let clickHandler;
-    let store = null;
-    global.localStorage = {
-      getItem: vi.fn(() => store),
-      setItem: vi.fn((k, v) => {
-        store = v;
-      }),
-      removeItem: vi.fn(() => {
-        store = null;
-      }),
-    };
     const btn = {
       tagName: "DIV",
       dataset: { smoothr: "login-apple" },
@@ -285,7 +267,6 @@ describe("dynamic DOM bindings", () => {
       provider: "apple",
       options: { redirectTo: "", data: { store_id: STORE_ID } },
     });
-    expect(global.localStorage.getItem("smoothr_oauth")).toBe("1");
 
     const user = { id: "4", email: "apple@example.com" };
     document.dispatchEvent.mockClear();

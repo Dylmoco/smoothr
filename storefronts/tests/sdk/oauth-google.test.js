@@ -2,23 +2,40 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signInWithGoogle;
 
+const authorizeUrl =
+  'https://auth.smoothr.io/authorize?store_id=store_test&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback';
+
 describe('signInWithGoogle', () => {
   beforeEach(async () => {
     vi.resetModules();
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
+    global.fetch = vi.fn();
+    const location = { origin: 'https://store.example', replace: vi.fn() };
+    Object.defineProperty(location, 'href', {
+      set(url) {
+        this.replace(url);
+      },
+      get() {
+        return '';
+      }
+    });
     global.window = {
-      location: { origin: 'https://store.example', replace: vi.fn() },
-      document: { getElementById: vi.fn(() => ({ dataset: { storeId: 'store_test' } })) },
-      SMOOTHR_CONFIG: { store_id: 'store_test' }
+      location,
+      document: {
+        getElementById: vi.fn(() => ({ dataset: { storeId: 'store_test' } })),
+        head: { querySelector: vi.fn(), appendChild: vi.fn() }
+      },
+      SMOOTHR_CONFIG: { store_id: 'store_test' },
+      open: vi.fn().mockReturnValue(null),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     };
     ({ signInWithGoogle } = await import('../../features/auth/init.js'));
   });
 
-  it('navigates to broker oauth-start with store and origin', async () => {
+  it('navigates to auth authorize when popup blocked', async () => {
     await signInWithGoogle();
-    expect(global.window.location.replace).toHaveBeenCalledWith(
-      'https://smoothr.vercel.app/api/auth/oauth-start?provider=google&store_id=store_test&orig=https%3A%2F%2Fstore.example'
-    );
+    expect(global.window.location.replace).toHaveBeenCalledWith(authorizeUrl);
   });
 });
