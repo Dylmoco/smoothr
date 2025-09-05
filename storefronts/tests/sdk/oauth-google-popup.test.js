@@ -73,13 +73,15 @@ describe('signInWithGoogle popup', () => {
     expect(window.location.replace).toHaveBeenCalledWith(authorizeUrl);
   });
 
-  it('falls back when popup manually closed', async () => {
+  it('handles manual popup closure without redirect', async () => {
     vi.useFakeTimers();
+    window.alert = vi.fn();
     const promise = signInWithGoogle();
     window.__popup.closed = true;
     await vi.advanceTimersByTimeAsync(5000);
-    expect(window.location.replace).toHaveBeenCalledWith(authorizeUrl);
+    expect(window.location.replace).not.toHaveBeenCalled();
     expect(window.__popup.close).toHaveBeenCalled();
+    expect(window.alert).toHaveBeenCalledWith('Login cancelled.');
     vi.useRealTimers();
     await promise;
   });

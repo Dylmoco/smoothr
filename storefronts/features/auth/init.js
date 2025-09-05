@@ -277,21 +277,27 @@ export async function signInWithGoogle() {
         const checkPopup = setInterval(() => {
           log('Checking popup state, closed:', popup.closed);
           if (popup.closed) {
-            log('Popup closed, redirecting main page');
+            log('Popup closed by user, treating as cancel - no main page redirect');
             clearInterval(checkPopup);
             cleanup();
-            w.location.replace(authorizeApi);
+            w.alert?.('Login cancelled.');
           }
         }, 1000);
       } else {
-        log('Popup closed before polling, redirecting main page');
+        log('Popup closed before polling, treating as cancel - no main page redirect');
+        cleanup();
+        w.alert?.('Login cancelled.');
+      }
+    } else {
+      if (popup?.closed) {
+        log('Popup closed before polling, treating as cancel - no main page redirect');
+        cleanup();
+        w.alert?.('Login cancelled.');
+      } else {
+        log('Invalid response, url:', !!j?.url, 'popup exists:', !!popup, 'popup closed:', popup?.closed);
         cleanup();
         w.location.replace(authorizeApi);
       }
-    } else {
-      log('Invalid response or popup closed, url:', !!j?.url, 'popup exists:', !!popup, 'popup closed:', popup?.closed);
-      cleanup();
-      w.location.replace(authorizeApi);
     }
   } catch (e) {
     log('Authorize fetch error:', e.message);
