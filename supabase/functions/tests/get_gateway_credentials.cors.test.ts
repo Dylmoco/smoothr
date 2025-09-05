@@ -57,7 +57,7 @@ afterEach(() => {
 
 describe("get_gateway_credentials CORS", () => {
   it("includes CORS headers on OPTIONS", async () => {
-    await import("./get_gateway_credentials/index.ts");
+    await import("../get_gateway_credentials/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "OPTIONS",
@@ -69,7 +69,7 @@ describe("get_gateway_credentials CORS", () => {
   });
 
   it("includes CORS headers on invalid method", async () => {
-    await import("./get_gateway_credentials/index.ts");
+    await import("../get_gateway_credentials/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "GET",
@@ -81,7 +81,7 @@ describe("get_gateway_credentials CORS", () => {
   });
 
   it("includes CORS headers on 403 response", async () => {
-    await import("./get_gateway_credentials/index.ts");
+    await import("../get_gateway_credentials/index.ts");
     const res = await handler(
       new Request("http://localhost", {
         method: "POST",

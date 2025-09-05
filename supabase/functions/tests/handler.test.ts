@@ -5,7 +5,7 @@ let handleRequest: (req: Request, fetchFn?: typeof fetch) => Promise<Response>;
 describe.skip('handleRequest', () => {
   beforeEach(async () => {
     (globalThis as any).Deno = { env: { get: () => 'token' } };
-    ({ handleRequest } = await import('./handler.js'));
+    ({ handleRequest } = await import('../proxy-live-rates/handler.js'));
   });
 
   afterEach(() => {
@@ -85,7 +85,7 @@ describe.skip('token missing', () => {
   it('returns 500 when token is absent', async () => {
     (globalThis as any).Deno = { env: { get: () => undefined } };
     const fetchFn = vi.fn();
-    ({ handleRequest } = await import('./handler.js'));
+    ({ handleRequest } = await import('../proxy-live-rates/handler.js'));
     global.fetch = fetchFn as any;
     const res = await handleRequest(new Request('https://example.com'));
     expect(fetchFn).not.toHaveBeenCalled();
