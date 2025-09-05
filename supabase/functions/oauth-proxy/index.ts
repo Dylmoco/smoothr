@@ -6,6 +6,9 @@ const HMAC_SECRET = Deno.env.get("HMAC_SECRET")!;
 
 const supabase = createClient(supabaseUrl, serviceKey);
 
+const FUNCTION_CALLBACK =
+  "https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/callback";
+
 const rateMap = new Map<string, { count: number; ts: number }>();
 const LIMIT = 100; // requests per minute
 
@@ -47,8 +50,8 @@ function path(url: URL) {
 }
 
 Deno.serve(async (req) => {
-  const ip =
-    req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") ||
+  const ip = req.headers.get("x-forwarded-for") ||
+    req.headers.get("cf-connecting-ip") ||
     "unknown";
   if (!checkRate(ip)) {
     return new Response("Too many requests", { status: 429 });
@@ -59,57 +62,62 @@ Deno.serve(async (req) => {
   if (p === "/authorize") {
     const storeId = url.searchParams.get("store_id") || "";
     const redirect = url.searchParams.get("redirect_to") || "";
-    const provider = url.searchParams.get("provider") || "google";
     if (!storeId || !redirect) {
       return new Response(JSON.stringify({ error: "missing_params" }), {
         status: 400,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     // fetch store data (not used here but ensures store exists)
     await Promise.all([
       supabase.from("stores").select("id").eq("id", storeId).maybeSingle(),
-      supabase.from("store_branding").select("logo_url").eq("store_id", storeId).maybeSingle(),
-      supabase.from("store_settings").select("id").eq("store_id", storeId).maybeSingle(),
+      supabase.from("store_branding").select("logo_url").eq("store_id", storeId)
+        .maybeSingle(),
+      supabase.from("store_settings").select("id").eq("store_id", storeId)
+        .maybeSingle(),
     ]);
 
-    const state = crypto.randomUUID();
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
+    const stateToken = crypto.randomUUID();
+    const { data: authData, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
       options: {
+        redirectTo: FUNCTION_CALLBACK,
         skipBrowserRedirect: true,
-        redirectTo: `https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/callback`,
-        queryParams: { state },
+        queryParams: {
+          state: stateToken,
+          prompt: "select_account",
+          access_type: "offline",
+        },
       },
     });
-    if (error || !data?.url) {
-      return new Response(JSON.stringify({ error: error?.message || "oauth_error" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (error || !authData?.url) {
+      return new Response(
+        JSON.stringify({ error: error?.message || "oauth_error" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
-    const codeVerifier: string = (data as any)?.pkce?.code_verifier || "";
-    const metadata = { store_id: storeId, redirect_to: redirect, provider };
+    const codeVerifier: string = (authData as any)?.pkce?.code_verifier || "";
+    const metadata = {
+      store_id: storeId,
+      redirect_to: redirect,
+      provider: "google",
+    };
     const metaJson = JSON.stringify(metadata);
     const sig = await hmac(metaJson);
     await supabase.from("auth_state_management").insert({
-      state,
-      metadata: metadata,
+      state: stateToken,
+      metadata,
       hmac: sig,
       code_verifier: codeVerifier,
       type: "state",
       created_at: new Date().toISOString(),
     });
-    return new Response(JSON.stringify({ url: data.url }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io",
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Vary": "Origin",
-        "Cross-Origin-Opener-Policy": "unsafe-none",
-      },
+    return new Response(JSON.stringify({ url: authData?.url }), {
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -121,16 +129,24 @@ Deno.serve(async (req) => {
     }
     const { data: row } = await supabase
       .from("auth_state_management")
-      .select("metadata, hmac, code_verifier")
+      .select("metadata, hmac, code_verifier, used_at")
       .eq("state", state)
       .single();
-    if (!row || !(await verify(JSON.stringify(row.metadata), row.hmac))) {
+    if (
+      !row || row.used_at ||
+      !(await verify(JSON.stringify(row.metadata), row.hmac))
+    ) {
       return new Response("Invalid state", { status: 400 });
     }
-    const { data: sessData, error } = await supabase.auth.exchangeCodeForSession({
-      authCode: code,
-      codeVerifier: row.code_verifier,
-    });
+    await supabase
+      .from("auth_state_management")
+      .update({ used_at: new Date().toISOString() })
+      .eq("state", state);
+    const { data: sessData, error } = await supabase.auth
+      .exchangeCodeForSession({
+        authCode: code,
+        codeVerifier: row.code_verifier,
+      });
     if (error || !sessData.session) {
       return new Response("Exchange failed", { status: 400 });
     }
@@ -141,19 +157,27 @@ Deno.serve(async (req) => {
       type: "exchange", // one-time code
       expires_at: new Date(Date.now() + 60_000).toISOString(),
     });
-    const target = (row.metadata as any).redirect_to;
+    let targetOrigin: string;
+    try {
+      targetOrigin = new URL((row.metadata as any).redirect_to).origin;
+    } catch (_) {
+      return new Response("Invalid redirect URL", { status: 400 });
+    }
     const body = `<!DOCTYPE html><script>
       (function(){
-        const t = ${JSON.stringify(target)};
+        const o = ${JSON.stringify(targetOrigin)};
         const code = ${JSON.stringify(otc)};
-        try{ window.opener && window.opener.postMessage({ type: 'smoothr:auth', code }, t); }catch(e){}
-        try{ window.close(); }catch(e){}
+        try { window.opener.postMessage({ type: 'SUPABASE_AUTH_CODE', code }, o); } catch (e) {}
+        function close(){ try{ window.close(); }catch(e){} }
+        close();
+        setTimeout(close, 1000);
       })();
     </script>`;
     return new Response(body, {
       headers: {
         "Content-Type": "text/html",
         "Cross-Origin-Opener-Policy": "unsafe-none",
+        "Cross-Origin-Embedder-Policy": "unsafe-none",
       },
     });
   }
@@ -164,7 +188,13 @@ Deno.serve(async (req) => {
     if (!code) {
       return new Response(JSON.stringify({ error: "missing_code" }), {
         status: 400,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io",
+          "Access-Control-Allow-Methods": "POST",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Vary": "Origin",
+        },
       });
     }
     const { data: row } = await supabase
@@ -183,10 +213,15 @@ Deno.serve(async (req) => {
       .update({ used_at: new Date().toISOString() })
       .eq("code", code);
     return new Response(JSON.stringify(row.session), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io",
+        "Access-Control-Allow-Methods": "POST",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Vary": "Origin",
+      },
     });
   }
 
   return new Response("Not found", { status: 404 });
 });
-
