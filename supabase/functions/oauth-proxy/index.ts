@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     if (!storeId || !redirect) {
       return new Response(JSON.stringify({ error: "missing_params" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
       });
     }
 
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       created_at: new Date().toISOString(),
     });
     return new Response(JSON.stringify({ url: data.url }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
     });
   }
 
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
     if (!code) {
       return new Response(JSON.stringify({ error: "missing_code" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
       });
     }
     const { data: row } = await supabase
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
       .update({ used_at: new Date().toISOString() })
       .eq("code", code);
     return new Response(JSON.stringify(row.session), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://smoothr-cms.webflow.io", "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" },
     });
   }
 
