@@ -25,7 +25,7 @@ describe('oauth callback', () => {
     ({ handleAuthCallback } = await import('../pages/auth/callback.tsx'));
     const result = handleAuthCallback(window);
     expect(postMessage).toHaveBeenCalledWith(
-      { type: 'smoothr:oauth', ok: true, access_token: 'tok', store_id: 'store_test' },
+      { type: 'smoothr:auth', ok: true, access_token: 'tok', store_id: 'store_test' },
       'https://foo.example'
     );
     expect(close).toHaveBeenCalled();

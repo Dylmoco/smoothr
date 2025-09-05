@@ -4,7 +4,7 @@ let signInWithGoogle;
 let realWindow;
 
 const authorizeUrl =
-  'https://lpuqrzvokroazwlricgn.supabase.co/authorize?store_id=store_test&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback';
+  'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=store_test&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback';
 
 describe('signInWithGoogle popup', () => {
   beforeEach(async () => {

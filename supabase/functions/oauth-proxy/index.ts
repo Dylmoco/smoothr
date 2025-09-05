@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
       (function(){
         const t = ${JSON.stringify(target)};
         const code = ${JSON.stringify(otc)};
-        try{ window.opener && window.opener.postMessage({ type: 'smoothr:oauth', code }, t); }catch(e){}
+        try{ window.opener && window.opener.postMessage({ type: 'smoothr:auth', code }, t); }catch(e){}
         try{ window.close(); }catch(e){}
       })();
     </script>`;
