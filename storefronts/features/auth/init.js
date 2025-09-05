@@ -277,14 +277,22 @@ export async function signInWithGoogle() {
     if (j?.url && popup && !popup.closed) {
       log('Setting popup location:', j.url);
       popup.location.href = j.url;
-      const checkPopup = setInterval(() => {
-        if (popup.closed) {
-          log('Popup closed prematurely, redirecting main page');
-          clearInterval(checkPopup);
-          cleanup();
-          w.location.replace(authorizeApi);
-        }
-      }, 100);
+      // Wait for popup to load before polling
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!popup.closed) {
+        const checkPopup = setInterval(() => {
+          if (popup.closed) {
+            log('Popup closed prematurely, redirecting main page');
+            clearInterval(checkPopup);
+            cleanup();
+            w.location.replace(authorizeApi);
+          }
+        }, 500);
+      } else {
+        log('Popup closed before polling, redirecting main page');
+        cleanup();
+        w.location.replace(authorizeApi);
+      }
     } else {
       log('No URL or popup closed, redirecting main page');
       cleanup();
