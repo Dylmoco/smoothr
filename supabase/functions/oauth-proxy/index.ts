@@ -1,298 +1,282 @@
+// supabase/functions/oauth-proxy/index.ts
+// Edge function: OAuth broker for multi-tenant Google sign-in
+// - /authorize: validates domains, builds signed state (HMAC), returns provider URL (JSON)
+// - /callback : verifies state, posts { code, state, store_id } to opener (targetOrigin = redirect_to origin), closes
+//
+// CORS: echoes request Origin (with Vary: Origin) on all routes; OPTIONS preflight supported
+// JWT: deploy with --no-verify-jwt (browser calls pre-auth)
+
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
-import { applyCors, withCors } from "../_shared/cors.ts";
 
-// Match host against domain (supports leading wildcard "*.")
-function hostMatches(host: string, domain?: string | null): boolean {
-  if (!host || !domain) return false;
-  const d = String(domain);
-  if (d.startsWith("*.")) {
-    const base = d.slice(2);
-    return host === base || host.endsWith(`.${base}`);
-  }
-  return host === d;
+// ---------- Config ----------
+const PROJECT_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const HMAC_SECRET = Deno.env.get("HMAC_SECRET") ?? "";
+
+if (!PROJECT_URL || !ANON_KEY || !SERVICE_ROLE || !HMAC_SECRET) {
+  console.error("Missing required env (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, HMAC_SECRET)");
 }
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const HMAC_SECRET = Deno.env.get("HMAC_SECRET")!;
+// Signed state TTL (seconds)
+const STATE_TTL = 10 * 60; // 10 minutes
 
-const supabase = createClient(supabaseUrl, serviceKey);
-
-const FUNCTION_CALLBACK =
-  "https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/callback";
-
-const rateMap = new Map<string, { count: number; ts: number }>();
-const LIMIT = 100; // requests per minute
-
-function checkRate(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateMap.get(ip);
-  if (!entry || now - entry.ts > 60_000) {
-    rateMap.set(ip, { count: 1, ts: now });
-    return true;
+// ---------- CORS helpers ----------
+function corsPreflight(req: Request): Response | null {
+  const origin = req.headers.get("origin");
+  if (req.method === "OPTIONS" && origin) {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400",
+        "Vary": "Origin",
+        "Cache-Control": "no-store",
+      },
+    });
   }
-  if (entry.count >= LIMIT) return false;
-  entry.count++;
-  return true;
+  return null;
 }
 
-async function hmac(data: string): Promise<string> {
+function withCors(req: Request, resp: Response): Response {
+  const origin = req.headers.get("origin");
+  if (!origin) return resp;
+  const h = new Headers(resp.headers);
+  h.set("Access-Control-Allow-Origin", origin);
+  h.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  h.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Client-Info");
+  h.set("Access-Control-Allow-Credentials", "true");
+  h.set("Vary", "Origin");
+  return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+}
+
+// ---------- Supabase clients ----------
+const sbAnon = (req: Request) =>
+  createClient(PROJECT_URL, ANON_KEY, {
+    global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+  });
+
+const sbService = () => createClient(PROJECT_URL, SERVICE_ROLE);
+
+// ---------- Tiny utils ----------
+function b64url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+}
+function encUtf8(s: string): Uint8Array {
+  return new TextEncoder().encode(s);
+}
+async function hmacHex(msg: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(HMAC_SECRET),
+    encUtf8(HMAC_SECRET),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
   );
-  const sig = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(data),
-  );
-  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+  const sig = await crypto.subtle.sign("HMAC", key, encUtf8(msg));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+function nowSec(): number {
+  return Math.floor(Date.now() / 1000);
+}
+function safeJson(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
 
-async function verify(data: string, sig: string): Promise<boolean> {
-  const expected = await hmac(data);
-  return expected === sig;
+// ---------- Domain validation via RPC ----------
+type ValidationResult = {
+  is_valid: boolean;
+  origin_valid: boolean;
+  redirect_valid: boolean;
+  messages: string[];
+};
+
+async function validateDomains(origin: string | null, redirectTo: string, storeId: string): Promise<ValidationResult> {
+  try {
+    const svc = sbService();
+    const { data, error } = await svc.rpc("validate_oauth_domains", {
+      p_origin: origin ?? "",
+      p_redirect: redirectTo,
+      p_store_id: storeId,
+    });
+    if (error) {
+      console.error("validate_oauth_domains error:", error);
+      return { is_valid: false, origin_valid: false, redirect_valid: false, messages: ["Validation RPC error"] };
+    }
+    return data as ValidationResult;
+  } catch (e) {
+    console.error("validateDomains exception:", e);
+    return { is_valid: false, origin_valid: false, redirect_valid: false, messages: ["Validation system error"] };
+  }
 }
 
-function path(url: URL) {
-  return url.pathname.replace(/^\/?oauth-proxy/, "") || "/";
+// ---------- Signed state (compact "s.h") ----------
+type StatePayload = {
+  store_id: string;
+  redirect_to: string;
+  ts: number; // issued-at seconds
+  n: string; // nonce
+};
+
+async function signState(payload: StatePayload): Promise<string> {
+  const s = b64url(encUtf8(JSON.stringify(payload)));
+  const h = await hmacHex(s);
+  return `${s}.${h}`;
 }
 
-// Dynamic CORS is applied per-request and validated against store domains
-Deno.serve(async (req) => {
+async function verifyState(compact: string): Promise<StatePayload | null> {
+  const [s, h] = compact.split(".", 2);
+  if (!s || !h) return null;
+  const expected = await hmacHex(s);
+  if (expected !== h) return null;
+  try {
+    const json = new TextDecoder().decode(Uint8Array.from(atob(s.replaceAll("-", "+").replaceAll("_", "/")), c => c.charCodeAt(0)));
+    const obj = JSON.parse(json) as StatePayload;
+    if (!obj || !obj.store_id || !obj.redirect_to || !obj.ts || !obj.n) return null;
+    if (nowSec() - obj.ts > STATE_TTL) return null; // expired
+    return obj;
+  } catch {
+    return null;
+  }
+}
+
+// ---------- /authorize ----------
+async function handleAuthorize(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const storeIdParam = url.searchParams.get("store_id") || undefined;
-  const maybeOptions = await applyCors(req, undefined, storeIdParam);
-  if (maybeOptions) return maybeOptions;
+  const storeId = url.searchParams.get("store_id") ?? "";
+  const redirectTo = url.searchParams.get("redirect_to") ?? "";
+  const origin = req.headers.get("origin");
 
-  const ip = req.headers.get("x-forwarded-for") ||
-    req.headers.get("cf-connecting-ip") ||
-    "unknown";
-  if (!checkRate(ip)) {
-    return withCors(req, new Response("Too many requests", { status: 429 }));
+  if (!storeId || !redirectTo) {
+    return safeJson({ error: "Missing required parameters: store_id and redirect_to" }, 400);
   }
-  const p = path(url);
 
-  if (p === "/authorize") {
-    const storeId = url.searchParams.get("store_id") || "";
-    const redirect = url.searchParams.get("redirect_to") || "";
-    if (!storeId || !redirect) {
-      return withCors(
-        req,
-        new Response(JSON.stringify({ error: "missing_params" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
+  // Validate origin + redirect_to against DB-driven patterns
+  const vr = await validateDomains(origin, redirectTo, storeId);
+  if (!vr.is_valid) {
+    console.error("Domain validation failed:", vr.messages);
+    return safeJson({ error: "Domain validation failed", details: vr.messages }, 403);
+  }
 
-    const { data: store } = await supabase
-      .from("stores")
-      .select("store_domain, live_domain, domains")
-      .eq("id", storeId)
-      .single();
-    if (!store) {
-      return withCors(
-        req,
-        new Response(JSON.stringify({ error: "invalid_store" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
+  // Build signed state
+  const state = await signState({
+    store_id: storeId,
+    redirect_to: redirectTo,
+    ts: nowSec(),
+    n: crypto.randomUUID(),
+  });
 
-    let redirectUrl: URL;
-    try {
-      redirectUrl = new URL(redirect);
-    } catch (_) {
-      return withCors(
-        req,
-        new Response(JSON.stringify({ error: "invalid_redirect" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
-    const redirectHost = redirectUrl.hostname;
-    const candidates: string[] = [];
-    if (store.store_domain) candidates.push(store.store_domain);
-    if (store.live_domain) candidates.push(store.live_domain);
-    if (Array.isArray(store.domains)) candidates.push(...store.domains);
-    const validRedirect = candidates.some((d) => hostMatches(redirectHost, d));
-    if (!validRedirect) {
-      return withCors(
-        req,
-        new Response(JSON.stringify({ error: "invalid_redirect" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
-
-    // override allowed origin to redirect origin so CORS ACAO matches
-    const hdrs = new Headers(req.headers);
-    hdrs.set("x-cors-allowed-origin", redirectUrl.origin);
-    const corsReq = new Request(req.url, { method: req.method, headers: hdrs });
-
-    const payload = { sid: storeId, rid: redirect, ts: Date.now() };
-    const s = btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(
-      /\//g,
-      "_",
-    ).replace(/=+$/, "");
-    const h = await hmac(s);
-    const expires = new Date(Date.now() + 10 * 60_000).toISOString();
-
-    await supabase.from("auth_state_management").insert({
-      state: s,
-      hmac: h,
-      metadata: payload,
-      type: "state",
-      expires_at: expires,
-    });
-
-    const { data: authData, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: FUNCTION_CALLBACK,
-        skipBrowserRedirect: true,
-        queryParams: {
-          state: s,
-          prompt: "select_account",
-          access_type: "offline",
-        },
+  // Ask Supabase to build provider URL (no redirect here)
+  const { data, error } = await sbAnon(req).auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${PROJECT_URL}/functions/v1/oauth-proxy/callback`,
+      skipBrowserRedirect: true,
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
       },
-    });
-    if (error || !authData?.url) {
-      return withCors(
-        corsReq,
-        new Response(
-          JSON.stringify({ error: error?.message || "oauth_error" }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-      );
-    }
+      state,
+    },
+  });
 
-    return withCors(
-      corsReq,
-      new Response(JSON.stringify({ url: authData.url }), {
-        headers: { "Content-Type": "application/json" },
-      }),
-    );
+  if (error) {
+    console.error("signInWithOAuth error:", error);
+    return safeJson({ error: error.message }, 500);
   }
 
-  if (p === "/callback") {
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    if (!code || !state) {
-      return withCors(req, new Response("Invalid callback", { status: 400 }));
-    }
-    const { data: row } = await supabase
-      .from("auth_state_management")
-      .select("hmac, metadata, used_at")
-      .eq("state", state)
-      .single();
-    if (!row || row.used_at || !(await verify(state, row.hmac))) {
-      return withCors(req, new Response("Invalid state", { status: 400 }));
-    }
-    await supabase
-      .from("auth_state_management")
-      .update({ used_at: new Date().toISOString() })
-      .eq("state", state);
-    const { data: sessData, error } = await supabase.auth
-      .exchangeCodeForSession({
-        authCode: code,
-      });
-    if (error || !sessData.session) {
-      return withCors(req, new Response("Exchange failed", { status: 400 }));
-    }
-    const otc = crypto.randomUUID();
-    await supabase.from("auth_state_management").insert({
-      code: otc,
-      session: sessData.session,
-      metadata: row.metadata,
-      type: "exchange",
-      expires_at: new Date(Date.now() + 60_000).toISOString(),
-    });
-    let targetOrigin = "";
+  // Return JSON containing the provider authorization URL
+  return safeJson({ url: data.url }, 200);
+}
+
+// ---------- /callback (broker-led; posts message to opener) ----------
+function htmlPostMessagePage(targetOrigin: string, payload: Record<string, unknown>): Response {
+  const body = `
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Authenticating…</title></head>
+<body>
+<script>
+  (function () {
     try {
-      targetOrigin = new URL((row.metadata as any).rid).origin;
-    } catch (_) {
-      return withCors(
-        req,
-        new Response("Invalid redirect URL", { status: 400 }),
-      );
-    }
-    const body = `<!DOCTYPE html><script>(function(){const o=${
-      JSON.stringify(targetOrigin)
-    };const c=${
-      JSON.stringify(otc)
-    };try{window.opener.postMessage({ type: 'SUPABASE_AUTH_COMPLETE', otc:c }, o);}catch(e){};try{window.close();}catch(e){};setTimeout(function(){try{window.close();}catch(e){}},1000);})();</script>`;
-    return withCors(
-      req,
-      new Response(body, {
-        headers: {
-          "Content-Type": "text/html",
-          "Cross-Origin-Opener-Policy": "unsafe-none",
-          "Cross-Origin-Embedder-Policy": "unsafe-none",
-        },
-      }),
-    );
+      var payload = ${JSON.stringify(payload)};
+      var target = ${JSON.stringify(targetOrigin)};
+      if (window.opener && typeof window.opener.postMessage === 'function') {
+        window.opener.postMessage({ type: 'smoothr:oauth:code', payload: payload }, target);
+      }
+    } catch (e) { /* noop */ }
+    // Close quickly; some browsers require a small delay
+    setTimeout(function(){ window.close(); }, 50);
+  })();
+</script>
+</body>
+</html>`;
+  return new Response(body, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
+
+async function handleCallback(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const code = url.searchParams.get("code") ?? "";
+  const state = url.searchParams.get("state") ?? "";
+  if (!code || !state) {
+    return safeJson({ error: "Missing required OAuth parameters" }, 400);
   }
 
-  if (p === "/exchange" && req.method === "POST") {
-    const body = await req.json().catch(() => ({}));
-    const code = body.otc as string;
-    if (!code) {
-      return withCors(
-        req,
-        new Response(JSON.stringify({ error: "missing_code" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
-    const { data: row } = await supabase
-      .from("auth_state_management")
-      .select("session, expires_at, used_at, metadata")
-      .eq("code", code)
-      .single();
-    if (!row || row.used_at || new Date(row.expires_at) < new Date()) {
-      return withCors(
-        req,
-        new Response(JSON.stringify({ error: "invalid_code" }), {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }),
-      );
-    }
-    await supabase
-      .from("auth_state_management")
-      .update({ used_at: new Date().toISOString() })
-      .eq("code", code);
-    const sess = row.session as any;
-    const respBody = {
-      access_token: sess.access_token,
-      refresh_token: sess.refresh_token,
-      expires_at: sess.expires_at,
-      provider_token: sess.provider_token,
-    };
-    return withCors(
-      req,
-      new Response(JSON.stringify(respBody), {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }),
-    );
+  // Verify signed state
+  const decoded = await verifyState(state);
+  if (!decoded) {
+    return safeJson({ error: "Invalid or expired state" }, 400);
   }
 
-  return withCors(req, new Response("Not found", { status: 404 }));
+  // Compute strict target origin from redirect_to
+  let targetOrigin: string;
+  try {
+    const u = new URL(decoded.redirect_to);
+    targetOrigin = `${u.protocol}//${u.host}`;
+  } catch {
+    return safeJson({ error: "Bad redirect_to in state" }, 400);
+  }
+
+  // Post only the minimal info needed; the opener will complete the client-side exchange
+  const payload = {
+    code,
+    state, // opener may re-verify if desired
+    store_id: decoded.store_id,
+  };
+
+  return htmlPostMessagePage(targetOrigin, payload);
+}
+
+// ---------- Router ----------
+Deno.serve(async (req: Request) => {
+  // CORS preflight first
+  const pre = corsPreflight(req);
+  if (pre) return pre;
+
+  try {
+    const u = new URL(req.url);
+    const path = u.pathname.replace(/^\/oauth-proxy/, "") || "/";
+
+    if (req.method === "GET" && (path === "/" || path === "/authorize")) {
+      return withCors(req, await handleAuthorize(req));
+    }
+    if (req.method === "GET" && path === "/callback") {
+      return withCors(req, await handleCallback(req));
+    }
+
+    // Not found
+    return withCors(req, safeJson({ error: "Not found" }, 404));
+  } catch (e) {
+    console.error("Unhandled error:", e);
+    return withCors(req, safeJson({ error: "Server error" }, 500));
+  }
 });
