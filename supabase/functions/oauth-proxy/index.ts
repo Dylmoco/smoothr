@@ -207,197 +207,150 @@ async function handleAuthorize(req: Request): Promise<Response> {
 }
 
 /* ---------------------- Callback (HTML) ---------------------- */
-async function handleCallback(_req: Request): Promise<Response> {
-  const html =
-    `<!doctype html><html><meta charset="utf-8" /><title>Authenticating…</title>
-  <script>(async () => {
-    try {
-      const url = new URL(location.href);
-      const hash = new URLSearchParams(url.hash.slice(1));
-      const state = url.searchParams.get('state');
-      const access_token = hash.get('access_token');
-      const refresh_token = hash.get('refresh_token');
-      const expires_in = hash.get('expires_in');
-      const bytes = new Uint8Array(32);
-      crypto.getRandomValues(bytes);
-      const otc = btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-      await fetch('/oauth-proxy/callback/store', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ state, otc, access_token, refresh_token, expires_in })
-      });
-      const origin = new URL(document.referrer || window.origin).origin || '*';
-      window.opener?.postMessage({ type: 'SUPABASE_AUTH_COMPLETE', otc }, origin);
-    } catch (e) {
-      console.error('callback error:', e);
-    } finally {
-      window.close();
+async function handleCallbackGet(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const stateRaw = url.searchParams.get("state") || "";
+  let openerOrigin = "*";
+  try {
+    const { ok, payload } = await verifyState(stateRaw);
+    if (ok && payload?.redirect_to) {
+      openerOrigin = new URL(payload.redirect_to).origin;
     }
-  })();</script>
-  <body style="background:#000;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh;">
-    <div>Completing sign-in… you can close this window.</div>
-  </body></html>`;
+  } catch {
+    /* ignore - fall back to '*' */
+  }
+
+  const html = `<!doctype html><html><meta charset="utf-8" />
+<title>Authenticating…</title>
+<script>
+(async () => {
+  function b64url(bytes) {
+    return btoa(String.fromCharCode(...bytes))
+      .replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+  }
+  try {
+    const url = new URL(location.href);
+    const hash = new URLSearchParams(url.hash.slice(1));
+    const state = url.searchParams.get('state') || '';
+    const access_token = hash.get('access_token');
+    const refresh_token = hash.get('refresh_token');
+    const expires_in = hash.get('expires_in');
+
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    const otc = b64url(bytes);
+
+    await fetch('/functions/v1/oauth-proxy/callback/store', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ state, otc, access_token, refresh_token, expires_in })
+    });
+
+    window.opener?.postMessage({ type: 'SUPABASE_AUTH_COMPLETE', otc }, ${JSON.stringify(
+      openerOrigin,
+    )});
+  } catch (e) {
+    console.error('callback error:', e);
+  } finally {
+    window.close();
+  }
+})();
+</script>
+<body style="background:#000;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh;">
+  <div>Completing sign-in… you can close this window.</div>
+</body></html>`;
+
   return new Response(html, {
     status: 200,
-    headers: { "Content-Type": "text/html" },
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+    },
   });
 }
 
 /* ---------------------- Callback Store (POST) ---------------------- */
 async function handleCallbackStore(req: Request): Promise<Response> {
-  if (!req.headers.get("content-type")?.includes("application/json")) {
-    return new Response(JSON.stringify({ error: "Invalid content-type" }), {
-      status: 415,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-    });
-  }
-  const { state, otc, access_token, refresh_token, expires_in } = await req
-    .json();
-  if (!state || !otc) {
-    return new Response(JSON.stringify({ error: "Missing state or otc" }), {
+  const body = await req.json().catch(() => ({}));
+  const {
+    state: stateRaw,
+    otc,
+    access_token,
+    refresh_token,
+    expires_in,
+  } = body || {};
+
+  let state: StatePayload;
+  try {
+    const { ok, payload } = await verifyState(stateRaw);
+    if (!ok) throw new Error("invalid state");
+    state = payload as StatePayload;
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid_state" }), {
       status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
+      headers: { "content-type": "application/json" },
     });
   }
-  const { ok, payload } = await verifyState(state);
-  if (!ok || !payload) {
-    return new Response(JSON.stringify({ error: "Invalid state" }), {
+
+  if (!otc || !access_token || !refresh_token) {
+    return new Response(JSON.stringify({ error: "missing_tokens_or_otc" }), {
       status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
+      headers: { "content-type": "application/json" },
     });
   }
-  const s = payload as StatePayload;
-  if (typeof s.iat !== "number" || nowSec() - s.iat > 5 * 60) {
-    return new Response(JSON.stringify({ error: "State expired" }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-    });
-  }
-  const supa = adminClient();
-  const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-  const { error } = await supa
-    .from("oauth_one_time_codes")
-    .upsert(
-      {
-        code: otc,
-        store_id: s.store_id,
-        data: { access_token, refresh_token, expires_in } as any,
-        expires_at,
-      },
-      { onConflict: "code" },
-    );
-  if (error) {
-    console.error("callback/store upsert error:", error);
-    return new Response(JSON.stringify({ error: "Store failed" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-    });
-  }
-  return new Response(null, {
-    status: 204,
-    headers: { "Cache-Control": "no-store" },
+
+  const admin = adminClient();
+  const ttl = Number(expires_in) || 3600;
+  const expires_at = new Date(Date.now() + ttl * 1000).toISOString();
+  const { error } = await admin.from("oauth_one_time_codes").insert({
+    code: otc,
+    store_id: state.store_id,
+    data: { access_token, refresh_token, expires_in: ttl } as any,
+    expires_at,
   });
+
+  if (error) {
+    return new Response(
+      JSON.stringify({ error: "otc_persist_failed", details: error.message }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
+  }
+
+  return new Response(null, { status: 204 });
 }
 
 /* ---------------------- Exchange (redeem OTC) ---------------------- */
 async function handleExchange(req: Request): Promise<Response> {
-  if (!req.headers.get("content-type")?.includes("application/json")) {
-    return new Response(JSON.stringify({ error: "Invalid content-type" }), {
-      status: 415,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-    });
-  }
-  try {
-    const { otc } = await req.json();
-    if (!otc) {
-      return new Response(JSON.stringify({ error: "Missing otc" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-      });
-    }
-    const supa = adminClient();
-    const { data, error } = await supa
-      .from("oauth_one_time_codes")
-      .select("code, data, expires_at, used_at")
-      .eq("code", otc)
-      .maybeSingle();
-    if (
-      error || !data || data.used_at ||
-      new Date(data.expires_at).getTime() <= Date.now()
-    ) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired code" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store",
-          },
-        },
-      );
-    }
-    const { error: upErr } = await supa
-      .from("oauth_one_time_codes")
-      .update({ used_at: new Date().toISOString() })
-      .eq("code", otc);
-    if (upErr) {
-      console.error("exchange mark used error:", upErr);
-      return new Response(JSON.stringify({ error: "Exchange failed" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-      });
-    }
-    const tokens = data.data as {
-      access_token?: string;
-      refresh_token?: string;
-    };
-    return new Response(
-      JSON.stringify({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-      },
-    );
-  } catch (e) {
-    console.error("exchange error:", e);
-    return new Response(JSON.stringify({ error: "Exchange failed" }), {
+  const { otc, store_id } = await req.json().catch(() => ({}));
+  if (!otc || !store_id) {
+    return new Response(JSON.stringify({ error: "missing_params" }), {
       status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
+      headers: { "content-type": "application/json" },
     });
   }
+
+  const admin = adminClient();
+  const { data, error } = await admin
+    .from("oauth_one_time_codes")
+    .delete()
+    .eq("code", otc)
+    .eq("store_id", store_id)
+    .gt("expires_at", new Date().toISOString())
+    .is("used_at", null)
+    .select("data")
+    .single();
+
+  if (error || !data) {
+    return new Response(JSON.stringify({ error: "invalid_or_used_otc" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify(data.data), {
+    status: 200,
+    headers: { "content-type": "application/json", "cache-control": "no-store" },
+  });
 }
 
 /* ---------------------- Main router ---------------------- */
@@ -410,9 +363,12 @@ Deno.serve(async (req: Request) => {
 
   let res: Response;
   if (path === "/authorize" || path === "/") res = await handleAuthorize(req);
-  else if (path === "/callback") res = await handleCallback(req);
-  else if (path === "/callback/store") res = await handleCallbackStore(req);
-  else if (path === "/exchange") res = await handleExchange(req);
+  else if (path === "/callback" && req.method === "GET")
+    res = await handleCallbackGet(req);
+  else if (path === "/callback/store" && req.method === "POST")
+    res = await handleCallbackStore(req);
+  else if (path === "/exchange" && req.method === "POST")
+    res = await handleExchange(req);
   else {
     res = new Response(JSON.stringify({ error: "Not found" }), {
       status: 404,
