@@ -128,6 +128,13 @@ if (!scriptEl || !storeId) {
     '[Smoothr SDK] initialization aborted: #smoothr-sdk script element not found or data-store-id missing'
   );
 } else {
+  const earlyBroker = scriptEl?.dataset?.brokerOrigin;
+  if (earlyBroker) {
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      __brokerBase: earlyBroker
+    };
+  }
   const scriptOrigin = scriptEl?.src ? new URL(scriptEl.src).origin : location.origin;
   const candidateUrls = [
     scriptEl?.dataset?.configUrl,
@@ -221,7 +228,8 @@ if (!scriptEl || !storeId) {
         });
       }
     } catch {}
-    let brokerBase = window.SMOOTHR_CONFIG?.broker_origin || null;
+    let brokerBase =
+      scriptEl?.dataset?.brokerOrigin || window.SMOOTHR_CONFIG?.broker_origin || null;
     if (!brokerBase) {
       const cfgAttr = scriptEl?.dataset?.configUrl;
       if (cfgAttr) {
@@ -234,7 +242,7 @@ if (!scriptEl || !storeId) {
         if (u.hostname !== 'sdk.smoothr.io') brokerBase = u.origin;
       } catch {}
     }
-    if (!brokerBase) brokerBase = 'https://smoothr.vercel.app';
+    if (!brokerBase) brokerBase = 'https://lpuqrzvokroazwlricgn.supabase.co';
     window.SMOOTHR_CONFIG = {
       ...(window.SMOOTHR_CONFIG || {}),
       __brokerBase: brokerBase

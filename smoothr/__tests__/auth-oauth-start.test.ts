@@ -4,7 +4,7 @@ describe('oauth-start api', () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://proj.supabase.co';
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://smoothr.vercel.app';
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://auth.smoothr.io';
     process.env.SESSION_SYNC_ALLOWED_ORIGINS = 'foo.example';
   });
 
@@ -54,7 +54,7 @@ describe('oauth-start api', () => {
     expect(res.statusCode).toBe(302);
     expect(res.headers['Set-Cookie']).toMatch(/smoothr_oauth_ctx=/);
     expect(res.headers.Location).toBe(
-      'https://proj.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fsmoothr.vercel.app%2Fauth%2Fcallback'
+      'https://proj.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fauth.smoothr.io%2Fauth%2Fcallback'
     );
   });
 });

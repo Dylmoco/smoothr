@@ -8,21 +8,21 @@ All build scripts use ECMAScript Module (ESM) syntax and require **Node.js 20 or
 
 The bundled SDK is designed for zero‑config installation on platforms like
 Webflow. Broker resolution order is:
-1. `broker_origin` from `/api/config`
-2. `<script data-config-url>` origin
-3. script origin (ignored if `sdk.smoothr.io`)
-4. `https://smoothr.vercel.app`
+1. `<script data-broker-origin>` attribute
+2. `broker_origin` from `/api/config`
+3. `<script data-config-url>` origin
+4. script origin (ignored if `sdk.smoothr.io`)
+5. `https://lpuqrzvokroazwlricgn.supabase.co`
 
-The loader caches the chosen broker at `SMOOTHR_CONFIG.__brokerBase` and
-exposes a config gate:
+The loader caches the chosen broker at `SMOOTHR_CONFIG.__brokerBase` and exposes a config gate:
 
 ```js
 await ensureConfigLoaded();
 const base = getCachedBrokerBase();
 ```
 
-The SDK never treats `https://sdk.smoothr.io` as a broker; it falls back to
-`https://smoothr.vercel.app` instead.
+The SDK never treats `https://sdk.smoothr.io` as a broker; it falls back to the
+Supabase project origin above.
 
 Cloudflare Pages caches `smoothr-sdk.js` at the edge for about five minutes.
 Use **Purge Cache** in Cloudflare for immediate invalidation after critical
