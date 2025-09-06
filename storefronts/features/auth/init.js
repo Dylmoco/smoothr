@@ -22,8 +22,10 @@ import {
   stripRecoveryHashIfNotOnReset,
 } from '../../core/hash.js';
 
-const { debug = true } = getConfig();
-const log = (...args) => debug && console.log('[Smoothr Auth]', ...args);
+const { debug: cfgDebug } = getConfig();
+const debug =
+  cfgDebug || /smoothr-debug=1/.test(globalThis.location?.search || '');
+const log = (...args) => debug && console.log('[Smoothr][oauth]', ...args);
 
 function emitAuth(name, detail = {}) {
   const g = globalThis;
@@ -149,9 +151,35 @@ function postViaHiddenIframe(url, fields = {}) {
   });
 }
 
+function getBrokerBase() {
+  const w = globalThis.window || globalThis;
+  const script = w.document?.getElementById('smoothr-sdk');
+  const attr = script?.dataset?.brokerOrigin;
+  if (attr) return attr;
+  const cfg = w.SMOOTHR_CONFIG || {};
+  if (cfg.broker_origin || cfg.brokerOrigin)
+    return cfg.broker_origin || cfg.brokerOrigin;
+  const cfgUrl = script?.dataset?.configUrl;
+  if (cfgUrl) {
+    try { return new URL(cfgUrl).origin; } catch {}
+  }
+  if (script?.src) {
+    try {
+      const o = new URL(script.src).origin;
+      if (o !== 'https://sdk.smoothr.io') return o;
+    } catch {}
+  }
+  return 'https://lpuqrzvokroazwlricgn.supabase.co';
+}
+
 // Compute broker base URL without requiring customer markup changes.
 export function getBrokerBaseUrl() {
-  return getCachedBrokerBase() || 'https://smoothr.vercel.app';
+  const cached = getCachedBrokerBase();
+  if (cached) return cached;
+  const base = getBrokerBase();
+  const w = globalThis.window || globalThis;
+  w.SMOOTHR_CONFIG = { ...(w.SMOOTHR_CONFIG || {}), __brokerBase: base };
+  return base;
 }
 export function getPasswordResetRedirectUrl() {
   const w = globalThis.window || globalThis;
@@ -211,30 +239,20 @@ export async function signInWithGoogle() {
   const w = globalThis.window || globalThis;
   addPreconnect();
   const storeId = getStoreId();
-  const redirect = encodeURIComponent(`https://${w.location.host}/auth/callback`);
+  const redirect = encodeURIComponent(w.location.href);
   const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
   log('Authorize URL:', authorizeApi);
 
-  if (w.top !== w.self) {
-    w.location.replace(authorizeApi);
-    return;
-  }
-
   const ua = w.navigator?.userAgent || '';
-  if (/iPhone|iPad/i.test(ua)) {
-    w.location.replace(authorizeApi);
-    return;
-  }
-
-  const width = 600;
-  const height = 700;
-  const left = (w.screenLeft || 0) + (w.innerWidth - width) / 2;
-  const top = (w.screenTop || 0) + (w.innerHeight - height) / 2;
-  log('Opening popup', { width, height, left, top });
-  const popupRef = w.open('', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
-  if (!popupRef) {
-    w.location.replace(authorizeApi);
-    return;
+  const canPopup = w.top === w.self && !/iPhone|iPad/i.test(ua);
+  let popupRef = null;
+  if (canPopup) {
+    const width = 600;
+    const height = 700;
+    const left = (w.screenLeft || 0) + (w.innerWidth - width) / 2;
+    const top = (w.screenTop || 0) + (w.innerHeight - height) / 2;
+    log('Opening popup', { width, height, left, top });
+    popupRef = w.open('about:blank', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
   }
 
   toggleSpinner(true);
@@ -254,19 +272,23 @@ export async function signInWithGoogle() {
       return;
     }
     const data = event.data || {};
-    if (data.type !== 'smoothr:auth' || !data.code) {
-      log('Invalid postMessage type or no code:', data.type, data.code);
+    if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) {
+      log('Invalid postMessage type or no code:', data.type, data.otc);
       return;
     }
     try {
-      log('Fetching exchange API:', `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange?code=${data.code}`);
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange?code=${data.code}`);
+      log('Fetching exchange API');
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ otc: data.otc })
+      });
       const json = await resp.json();
       log('Exchange ok:', json);
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
       await client?.auth.setSession({ access_token, refresh_token });
-      log('setSession ok');
+      log('session set');
       try { popupRef?.close?.(); log('popup closed'); } catch (_) {}
       await sessionSyncAndEmit(access_token);
     } catch (e) {
@@ -279,53 +301,55 @@ export async function signInWithGoogle() {
 
   w.addEventListener('message', onMsg);
 
+  let providerUrl = '';
   try {
     log('Starting fetch for authorize API:', authorizeApi);
-    const r = await fetch(authorizeApi);
+    const r = await fetch(authorizeApi, { headers: { accept: 'application/json' } });
     log('Authorize response status:', r.status, 'ok:', r.ok);
-    if (!r.ok) {
-      log('Authorize failed with status:', r.status);
-      cleanup(true);
-      w.location.replace(authorizeApi);
-      return;
-    }
-    const j = await r.json();
-    log('Authorize response JSON:', JSON.stringify(j));
-    if (j?.url && popupRef && !popupRef.closed) {
-      log('Setting popup location:', j.url);
-      popupRef.location.href = j.url;
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for popup load
-      if (!popupRef.closed) {
-        log('Starting popup poll');
-        const checkPopup = setInterval(() => {
-          log('Checking popup state, closed:', popupRef.closed);
-          if (popupRef.closed) {
-            log('Popup closed by user, treating as cancel - no main page redirect');
-            clearInterval(checkPopup);
-            cleanup(true);
-            w.alert?.('Login cancelled.');
-          }
-        }, 1000);
-      } else {
-        log('Popup closed before polling, treating as cancel - no main page redirect');
-        cleanup(true);
-        w.alert?.('Login cancelled.');
-      }
-    } else {
-      if (popupRef?.closed) {
-        log('Popup closed before polling, treating as cancel - no main page redirect');
-        cleanup(true);
-        w.alert?.('Login cancelled.');
-      } else {
-        log('Invalid response, url:', !!j?.url, 'popup exists:', !!popupRef, 'popup closed:', popupRef?.closed);
-        cleanup(true);
-        w.location.replace(authorizeApi);
-      }
+    if (r.ok) {
+      const j = await r.json();
+      providerUrl = j?.url || '';
+      log('Authorize response JSON:', JSON.stringify(j));
     }
   } catch (e) {
     log('Authorize fetch error:', e.message);
+  }
+
+  if (!providerUrl) {
     cleanup(true);
-    w.location.replace(authorizeApi);
+    return;
+  }
+
+  if (!popupRef) {
+    cleanup();
+    w.location.replace(providerUrl);
+    return;
+  }
+
+  try {
+    log('Setting popup location:', providerUrl);
+    popupRef.location.href = providerUrl;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!popupRef.closed) {
+      log('Starting popup poll');
+      const checkPopup = setInterval(() => {
+        log('Checking popup state, closed:', popupRef.closed);
+        if (popupRef.closed) {
+          log('Popup closed by user, treating as cancel - no main page redirect');
+          clearInterval(checkPopup);
+          cleanup(true);
+          w.alert?.('Login cancelled.');
+        }
+      }, 1000);
+    } else {
+      log('Popup closed before polling, treating as cancel - no main page redirect');
+      cleanup(true);
+      w.alert?.('Login cancelled.');
+    }
+  } catch (e) {
+    log('Popup navigation error:', e.message);
+    cleanup(true);
+    w.location.replace(providerUrl);
   }
 }
 
@@ -347,7 +371,7 @@ export async function sessionSyncAndEmit(token) {
 export async function signInWithApple() {
   await ensureConfigLoaded();
   const w = globalThis.window || globalThis;
-  const brokerBase = getCachedBrokerBase() || 'https://smoothr.vercel.app';
+  const brokerBase = getBrokerBaseUrl();
   const storeId =
     (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
     w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||

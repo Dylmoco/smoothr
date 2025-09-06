@@ -54,6 +54,7 @@ function corsHeaders(origin: string) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": "content-type",
+    "Access-Control-Allow-Credentials": "true",
     Vary: "Origin",
   } as const;
 }
@@ -68,6 +69,11 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const p = path(url);
 
+  if (p === "/authorize" && req.method === "OPTIONS") {
+    const origin = req.headers.get("Origin") || "";
+    return new Response(null, { headers: corsHeaders(origin) });
+  }
+
   if (p === "/authorize") {
     const storeId = url.searchParams.get("store_id") || "";
     const redirect = url.searchParams.get("redirect_to") || "";
@@ -78,23 +84,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // fetch store data (not used here but ensures store exists)
-    await Promise.all([
-      supabase.from("stores").select("id").eq("id", storeId).maybeSingle(),
-      supabase.from("store_branding").select("logo_url").eq("store_id", storeId)
-        .maybeSingle(),
-      supabase.from("store_settings").select("id").eq("store_id", storeId)
-        .maybeSingle(),
-    ]);
+    const payload = { sid: storeId, rid: redirect, ts: Date.now() };
+    const s = btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const h = await hmac(s);
+    const expires = new Date(Date.now() + 10 * 60_000).toISOString();
 
-    const stateToken = crypto.randomUUID();
+    await supabase.from("auth_state_management").insert({
+      state: s,
+      hmac: h,
+      metadata: payload,
+      type: "state",
+      expires_at: expires,
+    });
+
     const { data: authData, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: FUNCTION_CALLBACK,
         skipBrowserRedirect: true,
         queryParams: {
-          state: stateToken,
+          state: s,
           prompt: "select_account",
           access_type: "offline",
         },
@@ -109,24 +118,10 @@ Deno.serve(async (req) => {
         },
       );
     }
-    const codeVerifier: string = (authData as any)?.pkce?.code_verifier || "";
-    const metadata = {
-      store_id: storeId,
-      redirect_to: redirect,
-      provider: "google",
-    };
-    const metaJson = JSON.stringify(metadata);
-    const sig = await hmac(metaJson);
-    await supabase.from("auth_state_management").insert({
-      state: stateToken,
-      metadata,
-      hmac: sig,
-      code_verifier: codeVerifier,
-      type: "state",
-      created_at: new Date().toISOString(),
-    });
-    return new Response(JSON.stringify({ url: authData?.url }), {
-      headers: { "Content-Type": "application/json" },
+
+    const storeOrigin = (() => { try { return new URL(redirect).origin; } catch { return ""; } })();
+    return new Response(JSON.stringify({ url: authData.url }), {
+      headers: { "Content-Type": "application/json", ...corsHeaders(storeOrigin) },
     });
   }
 
@@ -138,24 +133,19 @@ Deno.serve(async (req) => {
     }
     const { data: row } = await supabase
       .from("auth_state_management")
-      .select("metadata, hmac, code_verifier, used_at")
+      .select("hmac, metadata, used_at")
       .eq("state", state)
       .single();
-    if (
-      !row || row.used_at ||
-      !(await verify(JSON.stringify(row.metadata), row.hmac))
-    ) {
+    if (!row || row.used_at || !(await verify(state, row.hmac))) {
       return new Response("Invalid state", { status: 400 });
     }
     await supabase
       .from("auth_state_management")
       .update({ used_at: new Date().toISOString() })
       .eq("state", state);
-    const { data: sessData, error } = await supabase.auth
-      .exchangeCodeForSession({
-        authCode: code,
-        codeVerifier: row.code_verifier,
-      });
+    const { data: sessData, error } = await supabase.auth.exchangeCodeForSession({
+      authCode: code,
+    });
     if (error || !sessData.session) {
       return new Response("Exchange failed", { status: 400 });
     }
@@ -164,25 +154,16 @@ Deno.serve(async (req) => {
       code: otc,
       session: sessData.session,
       metadata: row.metadata,
-      type: "exchange", // one-time code
+      type: "exchange",
       expires_at: new Date(Date.now() + 60_000).toISOString(),
     });
-    let targetOrigin: string;
+    let targetOrigin = "";
     try {
-      targetOrigin = new URL((row.metadata as any).redirect_to).origin;
+      targetOrigin = new URL((row.metadata as any).rid).origin;
     } catch (_) {
       return new Response("Invalid redirect URL", { status: 400 });
     }
-    const body = `<!DOCTYPE html><script>
-      (function(){
-        const o = ${JSON.stringify(targetOrigin)};
-        const code = ${JSON.stringify(otc)};
-        try { window.opener.postMessage({ type: 'SUPABASE_AUTH_CODE', code }, o); } catch (e) {}
-        function close(){ try{ window.close(); }catch(e){} }
-        close();
-        setTimeout(close, 1000);
-      })();
-    </script>`;
+    const body = `<!DOCTYPE html><script>(function(){const o=${JSON.stringify(targetOrigin)};const c=${JSON.stringify(otc)};try{window.opener.postMessage({ type: 'SUPABASE_AUTH_COMPLETE', otc:c }, o);}catch(e){};try{window.close();}catch(e){};setTimeout(function(){try{window.close();}catch(e){}},1000);})();</script>`;
     return new Response(body, {
       headers: {
         "Content-Type": "text/html",
@@ -200,7 +181,7 @@ Deno.serve(async (req) => {
 
   if (p === "/exchange" && req.method === "POST") {
     const body = await req.json().catch(() => ({}));
-    const code = body.code as string;
+    const code = body.otc as string;
     if (!code) {
       const origin = req.headers.get("Origin") || "";
       return new Response(JSON.stringify({ error: "missing_code" }), {
@@ -216,7 +197,7 @@ Deno.serve(async (req) => {
     let storeOrigin = "";
     if (row) {
       try {
-        storeOrigin = new URL((row.metadata as any).redirect_to).origin;
+        storeOrigin = new URL((row.metadata as any).rid).origin;
       } catch (_) {
         storeOrigin = "";
       }
@@ -234,7 +215,14 @@ Deno.serve(async (req) => {
       .from("auth_state_management")
       .update({ used_at: new Date().toISOString() })
       .eq("code", code);
-    return new Response(JSON.stringify(row.session), {
+    const sess = row.session as any;
+    const respBody = {
+      access_token: sess.access_token,
+      refresh_token: sess.refresh_token,
+      expires_at: sess.expires_at,
+      provider_token: sess.provider_token,
+    };
+    return new Response(JSON.stringify(respBody), {
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders(storeOrigin),

@@ -25,8 +25,7 @@ console.info('get_gateway_credentials function started');
 const ALLOWED_TEST_DOMAINS = [
   'smoothr-cms.webflow.io',
   'localhost',
-  '127.0.0.1',
-  'smoothr.vercel.app'
+  '127.0.0.1'
 ];
 
 Deno.serve(async (req: Request) => {

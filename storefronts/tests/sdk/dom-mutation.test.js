@@ -228,16 +228,15 @@ describe("dynamic DOM bindings", () => {
     };
 
     global.window.open = vi.fn().mockReturnValue(null);
-      await auth.init({ supabase: createClientMock() });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ url: 'https://accounts.google.com/o/oauth2/auth' }) });
+    await auth.init({ supabase: createClientMock() });
     await flushPromises();
     elements.push(btn);
     mutationCallback();
     expect(btn.addEventListener).toHaveBeenCalled();
 
     await clickHandler({ preventDefault: () => {}, target: btn });
-    expect(global.window.location.replace).toHaveBeenCalledWith(
-      'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=test-store&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback'
-    );
+    expect(global.window.location.replace).toHaveBeenCalledWith('https://accounts.google.com/o/oauth2/auth');
   });
 
   it("attaches listeners to added apple login elements and dispatches login event", async () => {

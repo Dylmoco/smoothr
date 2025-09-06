@@ -2,38 +2,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signInWithGoogle;
 
-const authorizeUrl =
-  'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=store_test&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback';
+const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/auth';
 
 describe('signInWithGoogle', () => {
   beforeEach(async () => {
     vi.resetModules();
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
-    globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://smoothr.vercel.app');
+    globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://auth.smoothr.io');
     const usedCodes = new Set();
     global.fetch = vi.fn(async (url) => {
-      if (url === authorizeUrl) {
-        return { ok: true, json: async () => ({ url: 'https://accounts.google.com/o/oauth2/auth' }) };
-      }
-      const m = url.match(/oauth-proxy\/exchange\?code=(.*)$/);
-      if (m) {
-        const code = m[1];
-        if (usedCodes.has(code)) {
-          return { ok: false, json: async () => ({}) };
-        }
-        usedCodes.add(code);
-        return { ok: true, json: async () => ({ access_token: 'a', refresh_token: 'r' }) };
+      if (url.startsWith('https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize')) {
+        return { ok: true, json: async () => ({ url: PROVIDER_URL }) };
       }
       return { ok: true, json: async () => ({}) };
     });
     const location = { origin: 'https://store.example', host: 'store.example', replace: vi.fn() };
     Object.defineProperty(location, 'href', {
-      set(url) {
-        this.replace(url);
-      },
-      get() {
-        return '';
-      }
+      set(url) { this.replace(url); },
+      get() { return 'https://store.example'; }
     });
     global.window = {
       location,
@@ -45,12 +31,15 @@ describe('signInWithGoogle', () => {
       open: vi.fn().mockReturnValue(null),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      top: {},
+      self: {}
     };
     ({ signInWithGoogle } = await import('../../features/auth/init.js'));
   });
 
-  it('navigates to auth authorize when popup blocked', async () => {
+  it('navigates to provider url when popup blocked', async () => {
     await signInWithGoogle();
-    expect(global.window.location.replace).toHaveBeenCalledWith(authorizeUrl);
+    expect(global.window.location.replace).toHaveBeenCalledWith(PROVIDER_URL);
   });
 });
+
