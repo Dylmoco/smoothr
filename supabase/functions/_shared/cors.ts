@@ -12,14 +12,18 @@ export interface CorsOptions {
 const defaults: Required<CorsOptions> = {
   allowedOrigins: [],
   validateAgainstStores: true,
-  allowedMethods: ["GET","POST","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","X-Client-Info"],
+  allowedMethods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Client-Info"],
   maxAge: 86400,
   defaultOrigin: "",
 };
 
 function hostnameOf(origin: string): string | null {
-  try { return new URL(origin).hostname; } catch { return null; }
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    return null;
+  }
 }
 
 function wildcardMatch(host: string, pattern: string): boolean {
@@ -31,19 +35,21 @@ function wildcardMatch(host: string, pattern: string): boolean {
 
 async function originAllowedByStore(
   origin: string,
-  storeId?: string
+  storeId?: string,
 ): Promise<boolean> {
   const host = hostnameOf(origin);
   if (!host) return false;
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") || "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
   );
 
   // Adjust this select to match your schema:
   // We’ll accept any of: live_domain, store_domain, and optional array column "domains"
-  let q = supabase.from("stores").select("id, live_domain, store_domain, domains");
+  let q = supabase.from("stores").select(
+    "id, live_domain, store_domain, domains",
+  );
   if (storeId) q = q.eq("id", storeId);
   const { data: rows, error } = await q;
   if (error || !rows?.length) return false;
@@ -67,7 +73,7 @@ async function originAllowedByStore(
 export async function applyCors(
   req: Request,
   opts?: CorsOptions,
-  storeId?: string
+  storeId?: string,
 ): Promise<Response | null> {
   const o = { ...defaults, ...opts };
   const origin = req.headers.get("origin");
@@ -99,22 +105,29 @@ export async function applyCors(
   }
   // Stash allowed origin on the request via a header we’ll read later
   if (useOrigin) {
-    req.headers.set("x-allowed-origin", useOrigin);
+    req.headers.set("x-cors-allowed-origin", useOrigin);
   }
   return null;
 }
 
 export function withCors(req: Request, res: Response): Response;
 export function withCors(res: Response, origin?: string): Response;
-export function withCors(a: Request | Response, b?: Response | string): Response {
+export function withCors(
+  a: Request | Response,
+  b?: Response | string,
+): Response {
   if (a instanceof Request && b instanceof Response) {
-    const allowed = a.headers.get("x-allowed-origin");
+    const allowed = a.headers.get("x-cors-allowed-origin");
     if (!allowed) return b;
     const h = new Headers(b.headers);
     h.set("Access-Control-Allow-Origin", allowed);
     h.set("Access-Control-Allow-Credentials", "true");
     h.set("Vary", "Origin");
-    return new Response(b.body, { status: b.status, statusText: b.statusText, headers: h });
+    return new Response(b.body, {
+      status: b.status,
+      statusText: b.statusText,
+      headers: h,
+    });
   }
   const res = a as Response;
   const origin = (b as string) || "*";
@@ -131,4 +144,3 @@ export function withCors(a: Request | Response, b?: Response | string): Response
 export function preflight(origin: string = "*"): Response {
   return withCors(new Response(null, { status: 204 }), origin);
 }
-
