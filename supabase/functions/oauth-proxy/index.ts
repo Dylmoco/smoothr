@@ -1,4 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+import { applyCors, withCors } from "../_shared/cors.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -49,39 +50,29 @@ function path(url: URL) {
   return url.pathname.replace(/^\/?oauth-proxy/, "") || "/";
 }
 
-function corsHeaders(origin: string) {
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "content-type",
-    "Access-Control-Allow-Credentials": "true",
-    Vary: "Origin",
-  } as const;
-}
-
+// Dynamic CORS is applied per-request and validated against store domains
 Deno.serve(async (req) => {
+  const url = new URL(req.url);
+  const storeIdParam = url.searchParams.get("store_id") || undefined;
+  const maybeOptions = await applyCors(req, undefined, storeIdParam);
+  if (maybeOptions) return maybeOptions;
+
   const ip = req.headers.get("x-forwarded-for") ||
     req.headers.get("cf-connecting-ip") ||
     "unknown";
   if (!checkRate(ip)) {
-    return new Response("Too many requests", { status: 429 });
+    return withCors(req, new Response("Too many requests", { status: 429 }));
   }
-  const url = new URL(req.url);
   const p = path(url);
-
-  if (p === "/authorize" && req.method === "OPTIONS") {
-    const origin = req.headers.get("Origin") || "";
-    return new Response(null, { headers: corsHeaders(origin) });
-  }
 
   if (p === "/authorize") {
     const storeId = url.searchParams.get("store_id") || "";
     const redirect = url.searchParams.get("redirect_to") || "";
     if (!storeId || !redirect) {
-      return new Response(JSON.stringify({ error: "missing_params" }), {
+      return withCors(req, new Response(JSON.stringify({ error: "missing_params" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
-      });
+      }));
     }
 
     const payload = { sid: storeId, rid: redirect, ts: Date.now() };
@@ -110,26 +101,25 @@ Deno.serve(async (req) => {
       },
     });
     if (error || !authData?.url) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: error?.message || "oauth_error" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
         },
-      );
+      ));
     }
 
-    const storeOrigin = (() => { try { return new URL(redirect).origin; } catch { return ""; } })();
-    return new Response(JSON.stringify({ url: authData.url }), {
-      headers: { "Content-Type": "application/json", ...corsHeaders(storeOrigin) },
-    });
+    return withCors(req, new Response(JSON.stringify({ url: authData.url }), {
+      headers: { "Content-Type": "application/json" },
+    }));
   }
 
   if (p === "/callback") {
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
     if (!code || !state) {
-      return new Response("Invalid callback", { status: 400 });
+      return withCors(req, new Response("Invalid callback", { status: 400 }));
     }
     const { data: row } = await supabase
       .from("auth_state_management")
@@ -137,7 +127,7 @@ Deno.serve(async (req) => {
       .eq("state", state)
       .single();
     if (!row || row.used_at || !(await verify(state, row.hmac))) {
-      return new Response("Invalid state", { status: 400 });
+      return withCors(req, new Response("Invalid state", { status: 400 }));
     }
     await supabase
       .from("auth_state_management")
@@ -147,7 +137,7 @@ Deno.serve(async (req) => {
       authCode: code,
     });
     if (error || !sessData.session) {
-      return new Response("Exchange failed", { status: 400 });
+      return withCors(req, new Response("Exchange failed", { status: 400 }));
     }
     const otc = crypto.randomUUID();
     await supabase.from("auth_state_management").insert({
@@ -161,55 +151,39 @@ Deno.serve(async (req) => {
     try {
       targetOrigin = new URL((row.metadata as any).rid).origin;
     } catch (_) {
-      return new Response("Invalid redirect URL", { status: 400 });
+      return withCors(req, new Response("Invalid redirect URL", { status: 400 }));
     }
     const body = `<!DOCTYPE html><script>(function(){const o=${JSON.stringify(targetOrigin)};const c=${JSON.stringify(otc)};try{window.opener.postMessage({ type: 'SUPABASE_AUTH_COMPLETE', otc:c }, o);}catch(e){};try{window.close();}catch(e){};setTimeout(function(){try{window.close();}catch(e){}},1000);})();</script>`;
-    return new Response(body, {
+    return withCors(req, new Response(body, {
       headers: {
         "Content-Type": "text/html",
         "Cross-Origin-Opener-Policy": "unsafe-none",
         "Cross-Origin-Embedder-Policy": "unsafe-none",
-        ...corsHeaders(targetOrigin),
       },
-    });
-  }
-
-  if (p === "/exchange" && req.method === "OPTIONS") {
-    const origin = req.headers.get("Origin") || "";
-    return new Response(null, { headers: corsHeaders(origin) });
+    }));
   }
 
   if (p === "/exchange" && req.method === "POST") {
     const body = await req.json().catch(() => ({}));
     const code = body.otc as string;
     if (!code) {
-      const origin = req.headers.get("Origin") || "";
-      return new Response(JSON.stringify({ error: "missing_code" }), {
+      return withCors(req, new Response(JSON.stringify({ error: "missing_code" }), {
         status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-      });
+        headers: { "Content-Type": "application/json" },
+      }));
     }
     const { data: row } = await supabase
       .from("auth_state_management")
       .select("session, expires_at, used_at, metadata")
       .eq("code", code)
       .single();
-    let storeOrigin = "";
-    if (row) {
-      try {
-        storeOrigin = new URL((row.metadata as any).rid).origin;
-      } catch (_) {
-        storeOrigin = "";
-      }
-    }
     if (!row || row.used_at || new Date(row.expires_at) < new Date()) {
-      return new Response(JSON.stringify({ error: "invalid_code" }), {
+      return withCors(req, new Response(JSON.stringify({ error: "invalid_code" }), {
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          ...corsHeaders(storeOrigin),
         },
-      });
+      }));
     }
     await supabase
       .from("auth_state_management")
@@ -222,13 +196,12 @@ Deno.serve(async (req) => {
       expires_at: sess.expires_at,
       provider_token: sess.provider_token,
     };
-    return new Response(JSON.stringify(respBody), {
+    return withCors(req, new Response(JSON.stringify(respBody), {
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders(storeOrigin),
       },
-    });
+    }));
   }
 
-  return new Response("Not found", { status: 404 });
+  return withCors(req, new Response("Not found", { status: 404 }));
 });

@@ -9,7 +9,7 @@ function expectCors(res: Response, origin = "https://smoothr-cms.webflow.io") {
     "GET, POST, OPTIONS",
   );
   expect(res.headers.get("access-control-allow-headers")).toBe(
-    "authorization, x-client-info, apikey, content-type, x-store-id, user-agent",
+    "Content-Type, Authorization, X-Client-Info",
   );
 }
 
