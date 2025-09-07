@@ -288,10 +288,10 @@ export async function signInWithGoogle() {
   }
 
   async function onMsg(event) {
-    log('Message event from', event.origin, event.data);
     if (!BROKER_ORIGINS.has(event.origin)) return;
     const data = event.data || {};
     if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) return;
+    log('Message event from', event.origin, data);
     if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
     if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
     try {
