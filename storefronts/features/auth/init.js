@@ -273,26 +273,21 @@ export async function signInWithGoogle() {
   let timeoutHandle;
   let checkPopup = null; // no .closed polling — COOP blocks cross-context reads
 
-  function cleanup(isCancel = false) {
+  function cleanup(isCancel = false, isSuccess = false) {
     toggleSpinner(false);
     w.removeEventListener('message', onMsg);
     if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
     if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
-    try { popupRef?.close?.(); } catch {}
+    // Only close the popup on explicit cancel or success; never on invalid/no-op messages
+    if (isCancel || isSuccess) { try { popupRef?.close?.(); } catch {} }
     if (isCancel) emitAuth?.('smoothr:auth:close', { reason: 'cancel' });
   }
 
   async function onMsg(event) {
     log('Message event from', event.origin, event.data);
-    if (!BROKER_ORIGINS.has(event.origin)) {
-      log('Invalid origin:', event.origin);
-      return;
-    }
+    if (!BROKER_ORIGINS.has(event.origin)) return;
     const data = event.data || {};
-    if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) {
-      log('Invalid postMessage type or no code:', data.type, data.otc);
-      return;
-    }
+    if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) return;
     if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
     if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
     try {
@@ -308,14 +303,11 @@ export async function signInWithGoogle() {
       const client = await resolveSupabase();
       await client?.auth.setSession({ access_token, refresh_token });
       log('session set');
-      try { popupRef?.close?.(); log('popup closed'); } catch (_) {}
       await sessionSyncAndEmit(access_token);
+      cleanup(false, true);
     } catch (e) {
       log('Exchange error:', e.message);
       emitAuth?.('smoothr:auth:error', { reason: 'failed' });
-      try { popupRef?.close?.(); } catch (_) {}
-    } finally {
-      cleanup();
     }
   }
 
@@ -324,51 +316,48 @@ export async function signInWithGoogle() {
   timeoutHandle = setTimeout(() => {
     log('Auth flow timed out');
     emitAuth?.('smoothr:auth:close', { reason: 'timeout' });
-    cleanup();
+    cleanup(false, true);
   }, 120000);
 
-  let providerUrl = '';
+  let json;
   try {
     log('Starting fetch for authorize API:', authorizeApi);
     const r = await fetch(authorizeApi, { headers: { accept: 'application/json' } });
     log('Authorize response status:', r.status, 'ok:', r.ok);
-    if (r.ok) {
-      const j = await r.json();
-      providerUrl = j?.url || '';
-      log('Authorize response JSON:', JSON.stringify(j));
-    } else {
-      log('Authorize fetch non-ok:', r.status);
-      cleanup(true);
+    if (!r.ok) {
       emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
+      cleanup(true);
       return;
     }
+    json = await r.json();
+    log('Authorize response JSON:', JSON.stringify(json));
   } catch (e) {
     log('Authorize fetch error:', e.message);
-    cleanup(true);
     emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
+    cleanup(true);
     return;
   }
 
+  const providerUrl = json?.url || '';
   if (!providerUrl) {
+    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
     cleanup(true);
-  emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
     return;
   }
-
-  if (!popupRef) {
-    cleanup();
+  const isFramed = (() => { try { return globalThis.top !== globalThis.self; } catch { return true; } })();
+  if (!popupRef || isFramed) {
+    // popup blocked or page framed → redirect top-level
+    cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
-
   try {
-    log('Setting popup location:', providerUrl);
     popupRef.location.href = providerUrl;
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  } catch (e) {
-    log('Popup navigation error:', e.message);
-    cleanup(true);
+  } catch {
+    // fallback if navigation fails
+    cleanup(false);
     w.location.replace(providerUrl);
+    return;
   }
 }
 
