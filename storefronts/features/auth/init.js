@@ -257,14 +257,15 @@ export async function signInWithGoogle() {
 
   toggleSpinner(true);
   let timeoutHandle;
+  let checkPopup;
 
-  function cleanup(close) {
+  function cleanup(isCancel = false) {
     toggleSpinner(false);
-    if (timeoutHandle) clearTimeout(timeoutHandle);
-    if (close) {
-      try { popupRef?.close?.(); } catch {}
-    }
     w.removeEventListener('message', onMsg);
+    if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
+    if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
+    try { popupRef?.close?.(); } catch {}
+    if (isCancel) emitAuth?.('smoothr:auth:close', { reason: 'cancel' });
   }
 
   async function onMsg(event) {
@@ -278,6 +279,8 @@ export async function signInWithGoogle() {
       log('Invalid postMessage type or no code:', data.type, data.otc);
       return;
     }
+    if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
+    if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
     try {
       log('Fetching exchange API');
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`, {
@@ -350,13 +353,18 @@ export async function signInWithGoogle() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     if (!popupRef.closed) {
       log('Starting popup poll');
-      const checkPopup = setInterval(() => {
-        log('Checking popup state, closed:', popupRef.closed);
-        if (popupRef.closed) {
-          log('Popup closed by user, treating as cancel - no main page redirect');
-          clearInterval(checkPopup);
-          cleanup(true);
-          w.alert?.('Login cancelled.');
+      checkPopup = setInterval(() => {
+        try {
+          log('Checking popup state, closed:', popupRef.closed);
+          if (popupRef && popupRef.closed === true) {
+            log('Popup closed by user, treating as cancel - no main page redirect');
+            cleanup(true);
+            w.alert?.('Login cancelled.');
+          }
+        } catch (err) {
+          // COOP can block access to .closed across browsing contexts.
+          // Do NOT treat this as cancelled; just ignore and keep waiting
+          // for the SUPABASE_AUTH_COMPLETE message or timeout.
         }
       }, 1000);
     } else {
