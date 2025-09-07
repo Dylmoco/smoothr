@@ -13,6 +13,7 @@ const EXCHANGE = 'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-pr
 
 describe('signInWithGoogle popup', () => {
   beforeEach(async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     vi.resetModules();
     realWindow = global.window;
     messageListener = undefined;
