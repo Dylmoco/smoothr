@@ -266,23 +266,20 @@ export async function signInWithGoogle() {
   let popup = null;
   if (!isFramed) {
     popup = w.open('', 'smoothr_oauth', popupFeatures);
-    w.__popup = popup;
+    w.__popup = popup || undefined;
   }
 
   await ensureConfigLoaded();
   addPreconnect();
 
   const storeId = getStoreId();
-  const redirectTo = IS_VITEST
-    ? 'https://store.example'
-    : (w.location?.href?.split('#')[0] || '');
+  const redirectTo = `${w.location.origin}/auth/callback`;
 
-  const qs = new URLSearchParams([
-    ['provider', 'google'],
-    ['store_id', storeId],
-    ['redirect_to', redirectTo]
-  ]);
-  const authorizeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?${qs.toString()}`;
+  const authorizeUrl =
+    `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize` +
+    `?provider=google` +
+    `&store_id=${encodeURIComponent(storeId)}` +
+    `&redirect_to=${encodeURIComponent(redirectTo)}`;
 
   log('Authorize URL:', authorizeUrl);
 
