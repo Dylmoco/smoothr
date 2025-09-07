@@ -6,6 +6,7 @@ const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/auth';
 
 describe('signInWithGoogle', () => {
   beforeEach(async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     vi.resetModules();
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://auth.smoothr.io');
