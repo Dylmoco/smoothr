@@ -25,7 +25,7 @@ import {
 const { debug: cfgDebug } = getConfig();
 const debug =
   cfgDebug || /smoothr-debug=1/.test(globalThis.location?.search || '');
-const log = (...args) => debug && console.log('[Smoothr][oauth]', ...args);
+const log = (...args) => debug && console.debug('[Smoothr][oauth]', ...args);
 
 function emitAuth(name, detail = {}) {
   const g = globalThis;
@@ -256,9 +256,11 @@ export async function signInWithGoogle() {
   }
 
   toggleSpinner(true);
+  let timeoutHandle;
 
   function cleanup(close) {
     toggleSpinner(false);
+    if (timeoutHandle) clearTimeout(timeoutHandle);
     if (close) {
       try { popupRef?.close?.(); } catch {}
     }
@@ -281,7 +283,7 @@ export async function signInWithGoogle() {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ otc: data.otc })
+        body: JSON.stringify({ otc: data.otc, store_id: storeId })
       });
       const json = await resp.json();
       log('Exchange ok:', json);
@@ -293,6 +295,7 @@ export async function signInWithGoogle() {
       await sessionSyncAndEmit(access_token);
     } catch (e) {
       log('Exchange error:', e.message);
+      w.alert?.('Login failed, please try again');
       try { popupRef?.close?.(); } catch (_) {}
     } finally {
       cleanup();
@@ -300,6 +303,12 @@ export async function signInWithGoogle() {
   }
 
   w.addEventListener('message', onMsg);
+
+  timeoutHandle = setTimeout(() => {
+    log('Auth flow timed out');
+    w.alert?.('Authentication timed out, please try again');
+    cleanup(true);
+  }, 120000);
 
   let providerUrl = '';
   try {
@@ -310,13 +319,22 @@ export async function signInWithGoogle() {
       const j = await r.json();
       providerUrl = j?.url || '';
       log('Authorize response JSON:', JSON.stringify(j));
+    } else {
+      log('Authorize fetch non-ok:', r.status);
+      cleanup(true);
+      w.alert?.('Failed to start login, please try again');
+      return;
     }
   } catch (e) {
     log('Authorize fetch error:', e.message);
+    cleanup(true);
+    w.alert?.('Failed to start login, please try again');
+    return;
   }
 
   if (!providerUrl) {
     cleanup(true);
+    w.alert?.('Failed to start login, please try again');
     return;
   }
 

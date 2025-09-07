@@ -127,7 +127,7 @@ describe('signInWithGoogle popup', () => {
     expect(fetch).toHaveBeenCalledWith(EXCHANGE, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ otc: 'one' })
+      body: JSON.stringify({ otc: 'one', store_id: 'store_test' })
     });
     expect(client.auth.setSession).toHaveBeenCalledWith({ access_token: 'a', refresh_token: 'r' });
     expect(popup.close).toHaveBeenCalled();
