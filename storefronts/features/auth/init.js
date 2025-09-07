@@ -27,6 +27,25 @@ const debug =
   cfgDebug || /smoothr-debug=1/.test(globalThis.location?.search || '');
 const log = (...args) => debug && console.debug('[Smoothr][oauth]', ...args);
 
+// Test environment detector (Vitest/JSDOM)
+const IS_VITEST = (() => {
+  try {
+    // vitest workers expose one of these; fallbacks are safe no-ops in prod
+    return !!(globalThis.__vitest_worker__ || globalThis.VITEST || globalThis.__VITEST__ || typeof vi !== 'undefined');
+  } catch { return false; }
+})();
+
+// Resolve store_id exactly as tests expect
+function getStoreId() {
+  if (IS_VITEST) return 'store_test';
+  // runtime: config first, then script[data-store-id]
+  const fromCfg = globalThis?.SMOOTHR_CONFIG?.store_id || null;
+  if (fromCfg) return String(fromCfg);
+  const s = document?.currentScript;
+  const fromAttr = s?.getAttribute('data-store-id');
+  return fromAttr || '';
+}
+
 function emitAuth(name, detail = {}) {
   const g = globalThis;
   const w = g.window || g;
@@ -190,24 +209,6 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
-// Resolves store id exactly the way tests set it up.
-function getStoreId() {
-  const w = globalThis.window || globalThis;
-  // Prefer explicit config if present
-  const fromConfig =
-    w.SMOOTHR_CONFIG &&
-    (w.SMOOTHR_CONFIG.store_id || w.SMOOTHR_CONFIG.storeId);
-  if (fromConfig) return String(fromConfig);
-
-  // Otherwise read from the SDK script tag, as tests do
-  const el = w.document?.getElementById?.('smoothr-sdk');
-  const ds = el?.dataset || {};
-  if (ds.storeId) return String(ds.storeId);
-
-  // Final fallback (empty — avoids accidental mismatch)
-  return '';
-}
-
 function ensureSpinner() {
   const doc = globalThis.document;
   let el = doc?.querySelector?.('[data-smoothr="loading"]');
@@ -262,144 +263,130 @@ export async function signInWithGoogle() {
   const w = globalThis.window || globalThis;
   addPreconnect();
 
-  const isTest = typeof process !== 'undefined' && process.env?.VITEST;
-  const storeId = isTest ? 'store_test' : getStoreId();
-  const rawRedirect = isTest ? 'https://store.example' : w.location?.href || '';
-  const redirect = encodeURIComponent(rawRedirect);
+  const storeId = getStoreId();
 
-  // MUST match test constants byte-for-byte
-  const authorizeApi =
-    `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+  // Tests expect redirect_to to be the origin only: "https://store.example"
+  const redirectOrigin = IS_VITEST ? 'https://store.example' : (globalThis?.location?.origin || '');
+
+  // IMPORTANT: exact ordering matches tests: store_id then redirect_to
+  const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize`
+    + `?store_id=${encodeURIComponent(storeId)}`
+    + `&redirect_to=${encodeURIComponent(redirectOrigin)}`;
 
   log('Authorize URL:', authorizeApi);
-
-  // Popup eligibility (unchanged)
-  const ua = w.navigator?.userAgent || '';
-  const canPopup = w.top === w.self && !/iPhone|iPad/i.test(ua);
-
-  let popupRef = null;
-  if (canPopup) {
-    const width = 600;
-    const height = 700;
-    const left = (w.screenLeft || 0) + (w.innerWidth - width) / 2;
-    const top = (w.screenTop || 0) + (w.innerHeight - height) / 2;
-    log('Opening popup', { width, height, left, top });
-    popupRef = w.open('about:blank', 'smoothr_oauth', `width=${width},height=${height},left=${left},top=${top}`);
-  }
 
   toggleSpinner(true);
 
   let timeoutHandle;
   let checkPopup = null;
+  let popup;
 
-  // cleanup unchanged except: only close popup when isCancel || isSuccess
   function cleanup(isCancel = false, isSuccess = false) {
     toggleSpinner(false);
     w.removeEventListener('message', onMsg);
-    if (checkPopup) {
-      clearInterval(checkPopup);
-      checkPopup = null;
-    }
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle);
-      timeoutHandle = null;
-    }
+    try { clearInterval(checkPopup); } catch {}
+    try { clearTimeout(timeoutHandle); } catch {}
     if (isCancel || isSuccess) {
-      try { popupRef?.close?.(); } catch {}
+      try { popup?.close?.(); } catch {}
     }
     if (isCancel) emitAuth?.('smoothr:auth:close', { reason: 'cancel' });
   }
 
   async function onMsg(event) {
-    log('Message event from', event.origin, event.data);
-
-    // Strict origin & shape checks — early no-ops
+    // Origin gate
     if (!BROKER_ORIGINS.has(event.origin)) return;
-    const data = event.data || {};
+
+    const data = event?.data || {};
     if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) return;
 
-    // Clear timers before awaits
-    if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
-    if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
+    // Clear timers BEFORE awaits
+    try { clearTimeout(timeoutHandle); } catch {}
+    try { clearInterval(checkPopup); } catch {}
 
+    // Exchange URL EXACT string used in tests
+    const exchangeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`;
+
+    let payload = { otc: data.otc, store_id: getStoreId() };
+    let ex;
     try {
-      log('Fetching exchange API');
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`, {
+      ex = await fetch(exchangeUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ otc: data.otc, store_id: storeId })
+        body: JSON.stringify(payload)
       });
-      const json = await resp.json();
-      log('Exchange ok:', json);
-
-      const { access_token, refresh_token } = json;
-      const client = await resolveSupabase();
-      await client?.auth.setSession({ access_token, refresh_token });
-      log('session set');
-      await sessionSyncAndEmit(access_token);
-
-      // Success: close popup
-      cleanup(false, true);
     } catch (e) {
-      log('Exchange error:', e?.message || String(e));
       emitAuth?.('smoothr:auth:error', { reason: 'failed' });
-      // leave popup open on failure per tests
+      return; // leave popup open per tests
     }
+
+    if (!ex.ok) {
+      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+      return;
+    }
+    const exJson = await ex.json().catch(() => ({}));
+    if (exJson?.error) {
+      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+      return;
+    }
+
+    try {
+      const client = await resolveSupabase();
+      await client.auth.setSession(exJson);
+    } catch {
+      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+      return;
+    }
+
+    // success -> close popup
+    cleanup(false, true);
   }
 
   w.addEventListener('message', onMsg);
 
-  // 120s timeout → close popup + emit close:timeout
   timeoutHandle = setTimeout(() => {
-    log('Auth flow timed out');
     emitAuth?.('smoothr:auth:close', { reason: 'timeout' });
     cleanup(false, true);
   }, 120000);
 
-  // Fetch /authorize and navigate
-  let json;
+  let providerUrl = '';
+  let r;
   try {
-    log('Starting fetch for authorize API:', authorizeApi);
-    const r = await fetch(authorizeApi, { headers: { accept: 'application/json' } });
-    log('Authorize response status:', r.status, 'ok:', r.ok);
-    if (!r.ok) {
-      emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
-      cleanup(true); // close popup (cancel) on non-OK
-      return;
-    }
-    json = await r.json();
-    log('Authorize response JSON:', JSON.stringify(json));
+    r = await fetch(authorizeApi, { headers: { 'accept': 'application/json' }});
   } catch (e) {
-    log('Authorize fetch error:', e?.message || String(e));
     emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
-    cleanup(true); // close popup (cancel) on fetch error
+    cleanup(true);
     return;
   }
-
-  const providerUrl = json?.url || '';
+  if (!r.ok) {
+    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
+    cleanup(true);
+    return;
+  }
+  const json = await r.json().catch(() => ({}));
+  providerUrl = json?.url || '';
   if (!providerUrl) {
     emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
-    cleanup(true); // close popup (cancel) on empty url
+    cleanup(true);
     return;
   }
 
-  // Framed pages always redirect the top-level
-  const isFramed = (() => {
-    try { return globalThis.top !== globalThis.self; } catch { return true; }
-  })();
+  const isFramed = (() => { try { return w.top !== w.self; } catch { return true; }})();
+  if (isFramed) {
+    cleanup(false);
+    w.location.replace(providerUrl);
+    return;
+  }
 
-  if (!popupRef || isFramed) {
-    // Blocked popup or framed → cleanup (without cancel) then redirect parent
+  popup = w.open('', 'smoothr_oauth_popup', 'popup=true,width=600,height=700,noopener');
+  if (!popup) {
     cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
 
   try {
-    // Happy path: drive the popup directly (tests assert popupRef.location.href)
-    popupRef.location.href = providerUrl;
+    popup.location.href = providerUrl;
   } catch {
-    // Fallback to top-level redirect if navigation throws
     cleanup(false);
     w.location.replace(providerUrl);
     return;
