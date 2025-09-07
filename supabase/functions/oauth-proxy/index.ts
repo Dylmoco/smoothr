@@ -77,7 +77,7 @@ function randId(n = 24) {
 function allowCors(req: Request, resp: Response): Response {
   const origin = req.headers.get("origin");
   if (!origin) return resp;
-  
+
   const headers = new Headers(resp.headers);
   headers.set("Access-Control-Allow-Origin", origin);
   headers.set(
@@ -90,13 +90,13 @@ function allowCors(req: Request, resp: Response): Response {
   );
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Vary", "Origin");
-  
+
   // Add COOP/COEP headers to make window.close and postMessage work
   if (resp.headers.get("Content-Type")?.includes("text/html")) {
     headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
     headers.set("Cross-Origin-Embedder-Policy", "unsafe-none");
   }
-  
+
   return new Response(resp.body, {
     status: resp.status,
     statusText: resp.statusText,
@@ -289,64 +289,149 @@ async function handleCallbackGet(req: Request): Promise<Response> {
     /* ignore - fall back to '*' */
   }
 
-  const html = `<!doctype html><html><meta charset="utf-8" />
-<title>Authenticating…</title>
-<script>
-(async () => {
-  function b64url(bytes) {
-    return btoa(String.fromCharCode(...bytes))
-      .replace(/\\+/g,'-').replace(/\\/g,'_').replace(/=+$/,'');
-  }
-  try {
-    const url = new URL(location.href);
-    const hash = new URLSearchParams(url.hash.slice(1));
-    const state = url.searchParams.get('state') || '';
-    const access_token = hash.get('access_token');
-    const refresh_token = hash.get('refresh_token');
-    const expires_in = hash.get('expires_in');
+  const html = `<!doctype html><html><head>
+  <meta charset="utf-8" />
+  <title>Authenticating…</title>
+  <script>
+  (async () => {
+    function b64url(bytes) {
+      return btoa(String.fromCharCode(...bytes))
+        .replace(/\\+/g, '-').replace(/\\/g, '_').replace(/=+$/g, '');
+    }
 
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    const otc = b64url(bytes);
+    try {
+      const url = new URL(location.href);
+      const hash = new URLSearchParams(url.hash.slice(1));
+      const state = url.searchParams.get('state') || '';
+      const access_token = hash.get('access_token');
+      const refresh_token = hash.get('refresh_token');
+      const expires_in = hash.get('expires_in');
 
-    await fetch('/functions/v1/oauth-proxy/callback/store', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ state, otc, access_token, refresh_token, expires_in })
-    });
+      console.log("Authentication callback received, preparing to message parent window");
 
-    window.opener?.postMessage({ type: 'SUPABASE_AUTH_COMPLETE', otc }, ${JSON.stringify(
-      openerOrigin,
-    )});
-    
-    // Add a delay to ensure message is delivered before closing
-    setTimeout(() => {
-      window.close();
-    }, 300);
-  } catch (e) {
-    console.error('callback error:', e);
-    document.getElementById('error').textContent = e.message;
-  }
-})();
-</script>
-<body style="background:#000;color:#fff;font-family:system-ui;display:grid;place-items:center;height:100vh;">
-  <div>
-    <p>Completing sign-in… you can close this window.</p>
-    <p id="error" style="color:red;"></p>
-  </div>
-</body></html>`;
+      // Generate random bytes for one-time code
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      const otc = b64url(bytes);
+
+      // Post data back to parent window first
+      try {
+        if (window.opener) {
+          console.log("Found opener window, attempting to post message");
+          // Try sending message to opener with wildcard origin first for compatibility
+          window.opener.postMessage({ 
+            type: 'SUPABASE_AUTH_COMPLETE', 
+            otc,
+            access_token,
+            state
+          }, '*');
+
+          // Also try sending with specific origin if available from state
+          try {
+            const stateData = JSON.parse(atob(state.split('.')[0]));
+            if (stateData?.redirect_to) {
+              const targetOrigin = new URL(stateData.redirect_to).origin;
+              window.opener.postMessage({ 
+                type: 'SUPABASE_AUTH_COMPLETE', 
+                otc,
+                access_token,
+                state
+              }, targetOrigin);
+            }
+          } catch (e) {
+            console.warn("Failed to parse state or send targeted message:", e);
+          }
+        } else {
+          console.warn("No opener window found");
+        }
+      } catch (e) {
+        console.error("Error posting message to opener:", e);
+        document.getElementById('error').textContent = 
+          "Error communicating with parent window: " + e.message;
+      }
+
+      // Store the auth data
+      try {
+        await fetch('/functions/v1/oauth-proxy/callback/store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            state, 
+            otc, 
+            access_token, 
+            refresh_token, 
+            expires_in 
+          })
+        });
+      } catch (storeError) {
+        console.error("Failed to store auth data:", storeError);
+      }
+
+      // Add a delay before closing to ensure message is delivered
+      document.getElementById('status').textContent = "Authentication complete. This window will close automatically...";
+
+      // Use a combination of approaches to attempt closing
+      setTimeout(() => {
+        try {
+          // First try normal close
+          window.close();
+
+          // If we're still here after 100ms, try alternative approaches
+          setTimeout(() => {
+            if (!window.closed) {
+              // Try self-close method
+              self.close();
+
+              // Finally, if all else fails, instruct user to close manually
+              setTimeout(() => {
+                if (!window.closed) {
+                  document.getElementById('status').textContent = 
+                    "Authentication complete. Please close this window manually.";
+                  document.getElementById('closeButton').style.display = "block";
+                }
+              }, 300);
+            }
+          }, 100);
+        } catch (closeErr) {
+          console.error("Error closing window:", closeErr);
+          document.getElementById('status').textContent = 
+            "Authentication complete. Please close this window manually.";
+          document.getElementById('closeButton').style.display = "block";
+        }
+      }, 800);
+
+    } catch (e) {
+      console.error('Callback error:', e);
+      document.getElementById('error').textContent = e.message || "Unknown error occurred";
+      document.getElementById('closeButton').style.display = "block";
+    }
+  })();
+  </script>
+  </head>
+  <body style="background:#111;color:#fff;font-family:system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;text-align:center;">
+    <div>
+      <h2 style="margin-top:0;">Authentication</h2>
+      <p id="status">Completing sign-in...</p>
+      <p id="error" style="color:#ff6b6b;"></p>
+      <button id="closeButton" style="display:none;margin-top:20px;padding:10px 16px;background:#3d5afe;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="window.close()">Close Window</button>
+    </div>
+  </body></html>`;
 
   return new Response(html, {
     status: 200,
     headers: {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
-      "Cross-Origin-Embedder-Policy": "unsafe-none"
+      "Cross-Origin-Embedder-Policy": "unsafe-none",
+      "Access-Control-Allow-Origin": openerOrigin,
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+      "Vary": "Origin",
     },
   });
 }
-
 /* ---------------------- Callback Store (POST) ---------------------- */
 async function handleCallbackStore(req: Request): Promise<Response> {
   const body = await req.json().catch(() => ({}));
@@ -427,7 +512,10 @@ async function handleExchange(req: Request): Promise<Response> {
 
   return new Response(JSON.stringify(data.data), {
     status: 200,
-    headers: { "content-type": "application/json", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
   });
 }
 
@@ -441,13 +529,13 @@ Deno.serve(async (req: Request) => {
 
   let res: Response;
   if (path === "/authorize" || path === "/") res = await handleAuthorize(req);
-  else if (path === "/callback" && req.method === "GET")
+  else if (path === "/callback" && req.method === "GET") {
     res = await handleCallbackGet(req);
-  else if (path === "/callback/store" && req.method === "POST")
+  } else if (path === "/callback/store" && req.method === "POST") {
     res = await handleCallbackStore(req);
-  else if (path === "/exchange" && req.method === "POST")
+  } else if (path === "/exchange" && req.method === "POST") {
     res = await handleExchange(req);
-  else {
+  } else {
     res = new Response(JSON.stringify({ error: "Not found" }), {
       status: 404,
       headers: {
