@@ -103,8 +103,15 @@ These tests are executed with `vitest` and rely on the `OPENEXCHANGERATES_TOKEN`
 
 ## Database migrations
 
-Run Supabase migrations to keep your local database in sync. To add the
-`cart_meta_hash` column to the `orders` table execute:
+Run Supabase migrations to keep your local database in sync. Execute all
+migrations as the `supabase_admin` role using the Supabase CLI or SQL Editor.
+For example:
+
+```bash
+supabase db push --role supabase_admin
+```
+
+To add the `cart_meta_hash` column to the `orders` table execute:
 
 ```sql
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS cart_meta_hash text;
