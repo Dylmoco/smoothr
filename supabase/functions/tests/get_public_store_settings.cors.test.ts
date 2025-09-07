@@ -3,13 +3,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 let handler: (req: Request) => Promise<Response>;
 let createClientMock: any;
 
+vi.mock("../_shared/cors.ts", async () => {
+  const { allowCors, handleCorsPreflightRequest } = await import("../utils/cors.ts");
+  return {
+    preflight: (origin: string) =>
+      handleCorsPreflightRequest(
+        new Request("http://localhost", {
+          method: "OPTIONS",
+          headers: { Origin: origin },
+        }),
+      )!,
+    withCors: (resp: Response, origin: string) =>
+      allowCors(
+        new Request("http://localhost", { headers: { Origin: origin } }),
+        resp,
+      ),
+  };
+});
+
 function expectCors(
   res: Response,
   origin = "https://smoothr-cms.webflow.io",
 ) {
+  console.debug("CORS check", res.status, origin);
   expect(res.headers.get("access-control-allow-origin")).toBe(origin);
   expect(res.headers.get("access-control-allow-methods")).toBe(
-    "GET, POST, OPTIONS",
+    "GET, POST, PUT, DELETE, OPTIONS",
   );
   expect(res.headers.get("access-control-allow-headers")).toBe(
     "Content-Type, Authorization, X-Client-Info",
