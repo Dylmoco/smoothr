@@ -257,8 +257,12 @@ export async function signInWithGoogle() {
   const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
   log('Authorize URL:', authorizeApi);
 
+  // Detect framing first; framed pages should not attempt window.open
+  const isFramed = (() => {
+    try { return w.top !== w.self; } catch { return true; }
+  })();
   const ua = w.navigator?.userAgent || '';
-  const canPopup = w.top === w.self && !/iPhone|iPad/i.test(ua);
+  const canPopup = !isFramed && !/iPhone|iPad/i.test(ua);
   let popupRef = null;
   if (canPopup) {
     const width = 600;
@@ -344,17 +348,17 @@ export async function signInWithGoogle() {
     cleanup(true);
     return;
   }
-  const isFramed = (() => { try { return globalThis.top !== globalThis.self; } catch { return true; } })();
+  // Fallback to top-level redirect when no popup (blocked) or framed
   if (!popupRef || isFramed) {
-    // popup blocked or page framed → redirect top-level
     cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
+  // Happy path: navigate the popup; do not touch window.location.replace
   try {
     popupRef.location.href = providerUrl;
   } catch {
-    // fallback if navigation fails
+    // If cross-context navigation fails, fallback to top-level redirect once
     cleanup(false);
     w.location.replace(providerUrl);
     return;
