@@ -37,7 +37,7 @@ describe('signInWithGoogle popup', () => {
       SMOOTHR_CONFIG: { store_id: 'store_test' },
       open: vi.fn(() => popup),
       addEventListener: vi.fn((t, fn) => { if (t === 'message') messageListener = fn; }),
-      removeEventListener: vi.fn(),
+      removeEventListener: vi.fn((t) => { if (t === 'message') messageListener = undefined; }),
       screenLeft: 0,
       screenTop: 0,
       innerWidth: 1024,
@@ -75,6 +75,7 @@ describe('signInWithGoogle popup', () => {
   });
 
   it('opens popup and loads provider url', async () => {
+    console.debug('test: opens popup and loads provider url');
     await signInWithGoogle();
     expect(window.open).toHaveBeenCalled();
     expect(window.__popup.location.href).toBe(PROVIDER_URL);
@@ -82,12 +83,14 @@ describe('signInWithGoogle popup', () => {
   });
 
   it('falls back to provider url when popup blocked', async () => {
+    console.debug('test: falls back when popup blocked');
     window.open.mockReturnValueOnce(null);
     await signInWithGoogle();
     expect(window.location.replace).toHaveBeenCalledWith(PROVIDER_URL);
   });
 
   it('handles manual popup closure without redirect', async () => {
+    console.debug('test: manual popup closure');
     vi.useFakeTimers();
     window.alert = vi.fn();
     const promise = signInWithGoogle();
@@ -101,6 +104,7 @@ describe('signInWithGoogle popup', () => {
   });
 
   it('ignores messages from non-broker origins', async () => {
+    console.debug('test: ignore non-broker messages');
     vi.useFakeTimers();
     const promise = signInWithGoogle();
     await vi.advanceTimersByTimeAsync(1000);
@@ -114,7 +118,8 @@ describe('signInWithGoogle popup', () => {
     vi.useRealTimers();
   });
 
-  it('accepts messages from supabase and closes popup after setSession', async () => {
+  it('processes callback messages and closes popup', async () => {
+    console.debug('test: callback message flow');
     vi.useFakeTimers();
     const promise = signInWithGoogle();
     await vi.advanceTimersByTimeAsync(1000);
@@ -124,6 +129,13 @@ describe('signInWithGoogle popup', () => {
       origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
       data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one' }
     });
+    // second postMessage should be ignored after cleanup
+    await messageListener?.({
+      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one' }
+    });
+    // simulate manual close button
+    popup.close();
     expect(fetch).toHaveBeenCalledWith(EXCHANGE, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -138,7 +150,66 @@ describe('signInWithGoogle popup', () => {
     vi.useRealTimers();
   });
 
+  it('alerts on authorize 403', async () => {
+    console.debug('test: authorize 403');
+    window.alert = vi.fn();
+    fetch.mockImplementationOnce(async () => ({ ok: false, status: 403 }));
+    await signInWithGoogle();
+    expect(window.alert).toHaveBeenCalledWith('Failed to start login, please try again');
+  });
+
+  it('alerts on authorize 500', async () => {
+    console.debug('test: authorize 500');
+    window.alert = vi.fn();
+    fetch.mockImplementationOnce(async () => ({ ok: false, status: 500 }));
+    await signInWithGoogle();
+    expect(window.alert).toHaveBeenCalledWith('Failed to start login, please try again');
+  });
+
+  it('ignores messages without SUPABASE_AUTH_COMPLETE', async () => {
+    console.debug('test: missing SUPABASE_AUTH_COMPLETE');
+    vi.useFakeTimers();
+    const promise = signInWithGoogle();
+    await vi.advanceTimersByTimeAsync(1000);
+    await promise;
+    fetch.mockClear();
+    await messageListener?.({
+      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      data: { type: 'WRONG', otc: 'one' }
+    });
+    await messageListener?.({
+      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      data: { type: 'SUPABASE_AUTH_COMPLETE' }
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(client.auth.setSession).not.toHaveBeenCalled();
+    expect(popup.close).not.toHaveBeenCalled();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('alerts when exchange returns missing_params', async () => {
+    console.debug('test: exchange missing_params');
+    vi.useFakeTimers();
+    const promise = signInWithGoogle();
+    await vi.advanceTimersByTimeAsync(1000);
+    await promise;
+    fetch.mockImplementationOnce(async () => {
+      throw new Error('missing_params');
+    });
+    window.alert = vi.fn();
+    await messageListener?.({
+      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two' }
+    });
+    expect(window.alert).toHaveBeenCalledWith('Login failed, please try again');
+    expect(client.auth.setSession).not.toHaveBeenCalled();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
   it('redirects when framed', async () => {
+    console.debug('test: redirects when framed');
     window.top = {};
     window.self = {};
     await signInWithGoogle();
