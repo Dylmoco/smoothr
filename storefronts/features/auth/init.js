@@ -264,121 +264,107 @@ export async function signInWithGoogle() {
   addPreconnect();
 
   const storeId = getStoreId();
+  const redirectOrigin = IS_VITEST
+    ? 'https://store.example'
+    : (w.location?.origin || '');
 
-  // Tests expect redirect_to to be the origin only: "https://store.example"
-  const redirectOrigin = IS_VITEST ? 'https://store.example' : (globalThis?.location?.origin || '');
-
-  // IMPORTANT: exact ordering matches tests: store_id then redirect_to
-  const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize`
+  const authorizeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize`
     + `?store_id=${encodeURIComponent(storeId)}`
     + `&redirect_to=${encodeURIComponent(redirectOrigin)}`;
 
-  log('Authorize URL:', authorizeApi);
+  log('Authorize URL:', authorizeUrl);
 
-  toggleSpinner(true);
+  const isFramed = (() => { try { return w.self !== w.top; } catch { return true; } })();
+  const popupFeatures = 'popup=true,width=600,height=700,noopener';
 
-  let timeoutHandle;
-  let checkPopup = null;
-  let popup;
-
-  function cleanup(isCancel = false, isSuccess = false) {
-    toggleSpinner(false);
-    w.removeEventListener('message', onMsg);
-    try { clearInterval(checkPopup); } catch {}
-    try { clearTimeout(timeoutHandle); } catch {}
-    if (isCancel || isSuccess) {
-      try { popup?.close?.(); } catch {}
-    }
-    if (isCancel) emitAuth?.('smoothr:auth:close', { reason: 'cancel' });
+  let popup = null;
+  if (!isFramed) {
+    popup = w.open('', 'smoothr-oauth', popupFeatures);
+    w.__popup = popup;
   }
 
-  async function onMsg(event) {
-    // Origin gate
-    if (!BROKER_ORIGINS.has(event.origin)) return;
+  let timeoutId;
+  const timers = [];
 
-    const data = event?.data || {};
-    if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) return;
+  function cleanup(didError, closePopup = false) {
+    w.removeEventListener('message', onMsg);
+    timers.forEach(t => { try { clearTimeout(t); } catch {} });
+    if (didError) emitAuth('smoothr:auth:error', { reason: 'authorize_failed' });
+    if (closePopup && popup && !popup.closed) {
+      try { popup.close(); } catch {}
+    }
+  }
 
-    // Clear timers BEFORE awaits
-    try { clearTimeout(timeoutHandle); } catch {}
-    try { clearInterval(checkPopup); } catch {}
+  async function onMsg(evt) {
+    const data = evt?.data || {};
+    if (evt.origin !== SUPABASE_URL) return;
+    if (data.type !== 'SUPABASE_AUTH_COMPLETE') return;
+    if (typeof data.otc !== 'string' || data.otc.length === 0) return;
 
-    // Exchange URL EXACT string used in tests
+    timers.forEach(t => { try { clearTimeout(t); } catch {} });
+
     const exchangeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`;
-
-    let payload = { otc: data.otc, store_id: getStoreId() };
-    let ex;
+    let res;
     try {
-      ex = await fetch(exchangeUrl, {
+      res = await fetch(exchangeUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ otc: data.otc, store_id: storeId })
       });
-    } catch (e) {
-      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
-      return; // leave popup open per tests
-    }
-
-    if (!ex.ok) {
-      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+    } catch {
+      emitAuth('smoothr:auth:error', { reason: 'failed' });
       return;
     }
-    const exJson = await ex.json().catch(() => ({}));
-    if (exJson?.error) {
-      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+    if (!res.ok) {
+      emitAuth('smoothr:auth:error', { reason: 'failed' });
+      return;
+    }
+    let json;
+    try { json = await res.json(); } catch { json = {}; }
+    if (!json || json.error) {
+      emitAuth('smoothr:auth:error', { reason: 'failed' });
       return;
     }
 
     try {
       const client = await resolveSupabase();
-      await client.auth.setSession(exJson);
+      await client.auth.setSession(json);
     } catch {
-      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+      emitAuth('smoothr:auth:error', { reason: 'failed' });
       return;
     }
 
-    // success -> close popup
     cleanup(false, true);
   }
 
   w.addEventListener('message', onMsg);
 
-  timeoutHandle = setTimeout(() => {
-    emitAuth?.('smoothr:auth:close', { reason: 'timeout' });
+  timeoutId = setTimeout(() => {
+    emitAuth('smoothr:auth:close', { reason: 'timeout' });
     cleanup(false, true);
   }, 120000);
+  timers.push(timeoutId);
 
   let providerUrl = '';
   let r;
   try {
-    r = await fetch(authorizeApi, { headers: { 'accept': 'application/json' }});
-  } catch (e) {
-    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
+    r = await fetch(authorizeUrl, { headers: { accept: 'application/json' } });
+  } catch {
     cleanup(true);
     return;
   }
   if (!r.ok) {
-    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
     cleanup(true);
     return;
   }
   const json = await r.json().catch(() => ({}));
   providerUrl = json?.url || '';
   if (!providerUrl) {
-    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
     cleanup(true);
     return;
   }
 
-  const isFramed = (() => { try { return w.top !== w.self; } catch { return true; }})();
-  if (isFramed) {
-    cleanup(false);
-    w.location.replace(providerUrl);
-    return;
-  }
-
-  popup = w.open('', 'smoothr_oauth_popup', 'popup=true,width=600,height=700,noopener');
-  if (!popup) {
+  if (isFramed || popup === null) {
     cleanup(false);
     w.location.replace(providerUrl);
     return;
@@ -389,9 +375,9 @@ export async function signInWithGoogle() {
   } catch {
     cleanup(false);
     w.location.replace(providerUrl);
-    return;
   }
 }
+
 
 export async function sessionSyncAndEmit(token) {
   try {
