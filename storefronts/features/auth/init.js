@@ -217,11 +217,25 @@ function toggleSpinner(on) {
   if (el) el.style.display = on ? '' : 'none';
 }
 
-const SUPABASE_URL = 'https://lpuqrzvokroazwlricgn.supabase.co';
-const BROKER_ORIGINS = new Set([
-  'https://lpuqrzvokroazwlricgn.supabase.co',
+const SUPABASE_URL =
+  (globalThis?.SMOOTHR_CONFIG?.supabase_url) ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  'https://lpuqrzvokroazwlricgn.supabase.co';
+const defaultBrokerOrigins = [
+  new URL(SUPABASE_URL).origin,
   'https://auth.smoothr.io'
-]);
+];
+const extraBrokerOrigin =
+  (document?.currentScript &&
+    typeof document.currentScript.getAttribute === 'function' &&
+    document.currentScript.getAttribute('data-broker-origin')) ||
+  (globalThis?.SMOOTHR_CONFIG?.broker_origin) ||
+  null;
+const BROKER_ORIGINS = new Set(
+  defaultBrokerOrigins.concat(
+    extraBrokerOrigin ? [extraBrokerOrigin] : []
+  )
+);
 function addPreconnect() {
   const head = globalThis.document?.head;
   if (!head) return;
@@ -257,28 +271,24 @@ export async function signInWithGoogle() {
 
   toggleSpinner(true);
   let timeoutHandle;
-  let checkPopup;
+  let checkPopup = null; // no .closed polling — COOP blocks cross-context reads
 
-  function cleanup(isCancel = false) {
+  function cleanup(isCancel = false, isSuccess = false) {
     toggleSpinner(false);
     w.removeEventListener('message', onMsg);
     if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
     if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
-    try { popupRef?.close?.(); } catch {}
+    if (isCancel || isSuccess) {
+      try { popupRef?.close?.(); } catch {}
+    }
     if (isCancel) emitAuth?.('smoothr:auth:close', { reason: 'cancel' });
   }
 
   async function onMsg(event) {
     log('Message event from', event.origin, event.data);
-    if (!BROKER_ORIGINS.has(event.origin)) {
-      log('Invalid origin:', event.origin);
-      return;
-    }
+    if (!BROKER_ORIGINS.has(event.origin)) return;
     const data = event.data || {};
-    if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) {
-      log('Invalid postMessage type or no code:', data.type, data.otc);
-      return;
-    }
+    if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) return;
     if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
     if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
     try {
@@ -294,14 +304,11 @@ export async function signInWithGoogle() {
       const client = await resolveSupabase();
       await client?.auth.setSession({ access_token, refresh_token });
       log('session set');
-      try { popupRef?.close?.(); log('popup closed'); } catch (_) {}
       await sessionSyncAndEmit(access_token);
+      cleanup(false, true);
     } catch (e) {
       log('Exchange error:', e.message);
-      w.alert?.('Login failed, please try again');
-      try { popupRef?.close?.(); } catch (_) {}
-    } finally {
-      cleanup();
+      emitAuth?.('smoothr:auth:error', { reason: 'failed' });
     }
   }
 
@@ -309,8 +316,8 @@ export async function signInWithGoogle() {
 
   timeoutHandle = setTimeout(() => {
     log('Auth flow timed out');
-    w.alert?.('Authentication timed out, please try again');
-    cleanup(true);
+    emitAuth?.('smoothr:auth:close', { reason: 'timeout' });
+    cleanup(false, true);
   }, 120000);
 
   let providerUrl = '';
@@ -324,25 +331,28 @@ export async function signInWithGoogle() {
       log('Authorize response JSON:', JSON.stringify(j));
     } else {
       log('Authorize fetch non-ok:', r.status);
+      emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
       cleanup(true);
-      w.alert?.('Failed to start login, please try again');
       return;
     }
   } catch (e) {
     log('Authorize fetch error:', e.message);
+    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
     cleanup(true);
-    w.alert?.('Failed to start login, please try again');
     return;
   }
 
-  if (!providerUrl) {
+  if (typeof providerUrl !== 'string' || providerUrl.length === 0) {
+    emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
     cleanup(true);
-    w.alert?.('Failed to start login, please try again');
     return;
   }
 
-  if (!popupRef) {
-    cleanup();
+  const isFramed = (() => {
+    try { return globalThis.top !== globalThis.self; } catch { return true; }
+  })();
+  if (!popupRef || isFramed) {
+    cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
@@ -350,32 +360,10 @@ export async function signInWithGoogle() {
   try {
     log('Setting popup location:', providerUrl);
     popupRef.location.href = providerUrl;
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    if (!popupRef.closed) {
-      log('Starting popup poll');
-      checkPopup = setInterval(() => {
-        try {
-          log('Checking popup state, closed:', popupRef.closed);
-          if (popupRef && popupRef.closed === true) {
-            log('Popup closed by user, treating as cancel - no main page redirect');
-            cleanup(true);
-            w.alert?.('Login cancelled.');
-          }
-        } catch (err) {
-          // COOP can block access to .closed across browsing contexts.
-          // Do NOT treat this as cancelled; just ignore and keep waiting
-          // for the SUPABASE_AUTH_COMPLETE message or timeout.
-        }
-      }, 1000);
-    } else {
-      log('Popup closed before polling, treating as cancel - no main page redirect');
-      cleanup(true);
-      w.alert?.('Login cancelled.');
-    }
-  } catch (e) {
-    log('Popup navigation error:', e.message);
-    cleanup(true);
+  } catch {
+    cleanup(false);
     w.location.replace(providerUrl);
+    return;
   }
 }
 
