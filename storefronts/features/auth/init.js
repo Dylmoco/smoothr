@@ -259,29 +259,32 @@ function addPreconnect() {
 }
 
 export async function signInWithGoogle() {
-  await ensureConfigLoaded();
   const w = globalThis.window || globalThis;
-  addPreconnect();
-
-  const storeId = getStoreId();
-  const redirectOrigin = IS_VITEST
-    ? 'https://store.example'
-    : (w.location?.origin || '');
-
-  const authorizeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize`
-    + `?store_id=${encodeURIComponent(storeId)}`
-    + `&redirect_to=${encodeURIComponent(redirectOrigin)}`;
-
-  log('Authorize URL:', authorizeUrl);
 
   const isFramed = (() => { try { return w.self !== w.top; } catch { return true; } })();
   const popupFeatures = 'popup=true,width=600,height=700,noopener';
-
   let popup = null;
   if (!isFramed) {
-    popup = w.open('', 'smoothr-oauth', popupFeatures);
+    popup = w.open('', 'smoothr_oauth', popupFeatures);
     w.__popup = popup;
   }
+
+  await ensureConfigLoaded();
+  addPreconnect();
+
+  const storeId = getStoreId();
+  const redirectTo = IS_VITEST
+    ? 'https://store.example'
+    : (w.location?.href?.split('#')[0] || '');
+
+  const qs = new URLSearchParams([
+    ['provider', 'google'],
+    ['store_id', storeId],
+    ['redirect_to', redirectTo]
+  ]);
+  const authorizeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?${qs.toString()}`;
+
+  log('Authorize URL:', authorizeUrl);
 
   let timeoutId;
   const timers = [];

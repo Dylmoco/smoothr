@@ -7,7 +7,7 @@ let popup;
 let client;
 
 const AUTHORIZE =
-  'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?store_id=store_test&redirect_to=https%3A%2F%2Fstore.example';
+  'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?provider=google&store_id=store_test&redirect_to=https%3A%2F%2Fstore.example';
 const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/auth';
 const EXCHANGE = 'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange';
 
