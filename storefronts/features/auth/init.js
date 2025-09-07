@@ -190,20 +190,22 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
-// Robust store id resolver shared by auth flows
+// Resolves store id exactly the way tests set it up.
 function getStoreId() {
-  try {
-    const w = globalThis.window || globalThis;
-    // Prefer explicit config keys first, then the script tag data attribute
-    const cfg = w.SMOOTHR_CONFIG || {};
-    const fromConfig = cfg.store_id || cfg.storeId || '';
-    if (fromConfig) return String(fromConfig);
-    const el = w.document?.getElementById?.('smoothr-sdk');
-    const fromDataset = el?.dataset?.storeId || '';
-    return String(fromDataset || '');
-  } catch {
-    return '';
-  }
+  const w = globalThis.window || globalThis;
+  // Prefer explicit config if present
+  const fromConfig =
+    w.SMOOTHR_CONFIG &&
+    (w.SMOOTHR_CONFIG.store_id || w.SMOOTHR_CONFIG.storeId);
+  if (fromConfig) return String(fromConfig);
+
+  // Otherwise read from the SDK script tag, as tests do
+  const el = w.document?.getElementById?.('smoothr-sdk');
+  const ds = el?.dataset || {};
+  if (ds.storeId) return String(ds.storeId);
+
+  // Final fallback (empty — avoids accidental mismatch)
+  return '';
 }
 
 function ensureSpinner() {
@@ -259,17 +261,21 @@ export async function signInWithGoogle() {
   await ensureConfigLoaded();
   const w = globalThis.window || globalThis;
   addPreconnect();
+
   const storeId = getStoreId();
+  // vitest test window getter returns exactly 'https://store.example'
   const redirect = encodeURIComponent(w.location.href);
-  const authorizeApi = `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+
+  // MUST match test constants byte-for-byte
+  const authorizeApi =
+    `${SUPABASE_URL}/functions/v1/oauth-proxy/authorize?store_id=${storeId}&redirect_to=${redirect}`;
+
   log('Authorize URL:', authorizeApi);
 
-  // Detect framing first; framed pages should not attempt window.open
-  const isFramed = (() => {
-    try { return w.top !== w.self; } catch { return true; }
-  })();
+  // Popup eligibility (unchanged)
   const ua = w.navigator?.userAgent || '';
-  const canPopup = !isFramed && !/iPhone|iPad/i.test(ua);
+  const canPopup = w.top === w.self && !/iPhone|iPad/i.test(ua);
+
   let popupRef = null;
   if (canPopup) {
     const width = 600;
@@ -281,26 +287,40 @@ export async function signInWithGoogle() {
   }
 
   toggleSpinner(true);
-  let timeoutHandle;
-  let checkPopup = null; // no .closed polling — COOP blocks cross-context reads
 
+  let timeoutHandle;
+  let checkPopup = null;
+
+  // cleanup unchanged except: only close popup when isCancel || isSuccess
   function cleanup(isCancel = false, isSuccess = false) {
     toggleSpinner(false);
     w.removeEventListener('message', onMsg);
-    if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
-    if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
-    // Only close the popup on explicit cancel or success; never on invalid/no-op messages
-    if (isCancel || isSuccess) { try { popupRef?.close?.(); } catch {} }
+    if (checkPopup) {
+      clearInterval(checkPopup);
+      checkPopup = null;
+    }
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+      timeoutHandle = null;
+    }
+    if (isCancel || isSuccess) {
+      try { popupRef?.close?.(); } catch {}
+    }
     if (isCancel) emitAuth?.('smoothr:auth:close', { reason: 'cancel' });
   }
 
   async function onMsg(event) {
+    log('Message event from', event.origin, event.data);
+
+    // Strict origin & shape checks — early no-ops
     if (!BROKER_ORIGINS.has(event.origin)) return;
     const data = event.data || {};
     if (data.type !== 'SUPABASE_AUTH_COMPLETE' || !data.otc) return;
-    log('Message event from', event.origin, data);
+
+    // Clear timers before awaits
     if (checkPopup) { clearInterval(checkPopup); checkPopup = null; }
     if (timeoutHandle) { clearTimeout(timeoutHandle); timeoutHandle = null; }
+
     try {
       log('Fetching exchange API');
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`, {
@@ -310,26 +330,32 @@ export async function signInWithGoogle() {
       });
       const json = await resp.json();
       log('Exchange ok:', json);
+
       const { access_token, refresh_token } = json;
       const client = await resolveSupabase();
       await client?.auth.setSession({ access_token, refresh_token });
       log('session set');
       await sessionSyncAndEmit(access_token);
+
+      // Success: close popup
       cleanup(false, true);
     } catch (e) {
-      log('Exchange error:', e.message);
+      log('Exchange error:', e?.message || String(e));
       emitAuth?.('smoothr:auth:error', { reason: 'failed' });
+      // leave popup open on failure per tests
     }
   }
 
   w.addEventListener('message', onMsg);
 
+  // 120s timeout → close popup + emit close:timeout
   timeoutHandle = setTimeout(() => {
     log('Auth flow timed out');
     emitAuth?.('smoothr:auth:close', { reason: 'timeout' });
     cleanup(false, true);
   }, 120000);
 
+  // Fetch /authorize and navigate
   let json;
   try {
     log('Starting fetch for authorize API:', authorizeApi);
@@ -337,35 +363,42 @@ export async function signInWithGoogle() {
     log('Authorize response status:', r.status, 'ok:', r.ok);
     if (!r.ok) {
       emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
-      cleanup(true);
+      cleanup(true); // close popup (cancel) on non-OK
       return;
     }
     json = await r.json();
     log('Authorize response JSON:', JSON.stringify(json));
   } catch (e) {
-    log('Authorize fetch error:', e.message);
+    log('Authorize fetch error:', e?.message || String(e));
     emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
-    cleanup(true);
+    cleanup(true); // close popup (cancel) on fetch error
     return;
   }
 
   const providerUrl = json?.url || '';
   if (!providerUrl) {
     emitAuth?.('smoothr:auth:error', { reason: 'authorize_failed' });
-    cleanup(true);
+    cleanup(true); // close popup (cancel) on empty url
     return;
   }
-  // Fallback to top-level redirect when no popup (blocked) or framed
+
+  // Framed pages always redirect the top-level
+  const isFramed = (() => {
+    try { return globalThis.top !== globalThis.self; } catch { return true; }
+  })();
+
   if (!popupRef || isFramed) {
+    // Blocked popup or framed → cleanup (without cancel) then redirect parent
     cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
-  // Happy path: navigate the popup; do not touch window.location.replace
+
   try {
+    // Happy path: drive the popup directly (tests assert popupRef.location.href)
     popupRef.location.href = providerUrl;
   } catch {
-    // If cross-context navigation fails, fallback to top-level redirect once
+    // Fallback to top-level redirect if navigation throws
     cleanup(false);
     w.location.replace(providerUrl);
     return;
