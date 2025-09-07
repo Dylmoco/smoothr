@@ -190,13 +190,20 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
+// Robust store id resolver shared by auth flows
 function getStoreId() {
-  const w = globalThis.window || globalThis;
-  return (
-    w.SMOOTHR_CONFIG?.store_id ||
-    w.document?.getElementById('smoothr-sdk')?.dataset?.storeId ||
-    ''
-  );
+  try {
+    const w = globalThis.window || globalThis;
+    // Prefer explicit config keys first, then the script tag data attribute
+    const cfg = w.SMOOTHR_CONFIG || {};
+    const fromConfig = cfg.store_id || cfg.storeId || '';
+    if (fromConfig) return String(fromConfig);
+    const el = w.document?.getElementById?.('smoothr-sdk');
+    const fromDataset = el?.dataset?.storeId || '';
+    return String(fromDataset || '');
+  } catch {
+    return '';
+  }
 }
 
 function ensureSpinner() {
