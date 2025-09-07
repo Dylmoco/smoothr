@@ -31,13 +31,24 @@ describe('signInWithGoogle popup', () => {
       set(url) { this.replace(url); },
       get() { return 'https://store.example'; }
     });
+    const listeners = {};
     const win = {
       location,
       document: doc,
       SMOOTHR_CONFIG: { store_id: 'store_test' },
       open: vi.fn(() => popup),
-      addEventListener: vi.fn((t, fn) => { if (t === 'message') messageListener = fn; }),
-      removeEventListener: vi.fn((t) => { if (t === 'message') messageListener = undefined; }),
+      addEventListener: vi.fn((t, fn) => {
+        (listeners[t] ||= []).push(fn);
+        if (t === 'message') messageListener = fn;
+      }),
+      removeEventListener: vi.fn((t, fn) => {
+        if (listeners[t]) listeners[t] = listeners[t].filter(f => f !== fn);
+        if (t === 'message') messageListener = undefined;
+      }),
+      dispatchEvent: vi.fn((evt) => {
+        (listeners[evt.type] || []).forEach(fn => fn(evt));
+        return true;
+      }),
       screenLeft: 0,
       screenTop: 0,
       innerWidth: 1024,
@@ -89,16 +100,17 @@ describe('signInWithGoogle popup', () => {
     expect(window.location.replace).toHaveBeenCalledWith(PROVIDER_URL);
   });
 
-  it('handles manual popup closure without redirect', async () => {
+  it('ignores manual popup closure without redirect', async () => {
     console.debug('test: manual popup closure');
     vi.useFakeTimers();
-    window.alert = vi.fn();
+    const onClose = vi.fn();
+    window.addEventListener('smoothr:auth:close', e => onClose(e.detail));
     const promise = signInWithGoogle();
     window.__popup.closed = true;
     await vi.advanceTimersByTimeAsync(5000);
     expect(window.location.replace).not.toHaveBeenCalled();
-    expect(window.__popup.close).toHaveBeenCalled();
-    expect(window.alert).toHaveBeenCalledWith('Login cancelled.');
+    expect(window.__popup.close).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     vi.useRealTimers();
     await promise;
   });
@@ -150,20 +162,22 @@ describe('signInWithGoogle popup', () => {
     vi.useRealTimers();
   });
 
-  it('alerts on authorize 403', async () => {
+  it('emits auth:error on authorize 403', async () => {
     console.debug('test: authorize 403');
-    window.alert = vi.fn();
+    const onError = vi.fn();
+    window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     fetch.mockImplementationOnce(async () => ({ ok: false, status: 403 }));
     await signInWithGoogle();
-    expect(window.alert).toHaveBeenCalledWith('Failed to start login, please try again');
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'authorize_failed' }));
   });
 
-  it('alerts on authorize 500', async () => {
+  it('emits auth:error on authorize 500', async () => {
     console.debug('test: authorize 500');
-    window.alert = vi.fn();
+    const onError = vi.fn();
+    window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     fetch.mockImplementationOnce(async () => ({ ok: false, status: 500 }));
     await signInWithGoogle();
-    expect(window.alert).toHaveBeenCalledWith('Failed to start login, please try again');
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'authorize_failed' }));
   });
 
   it('ignores messages without SUPABASE_AUTH_COMPLETE', async () => {
@@ -188,7 +202,7 @@ describe('signInWithGoogle popup', () => {
     vi.useRealTimers();
   });
 
-  it('alerts when exchange returns missing_params', async () => {
+  it('emits auth:error when exchange returns missing_params', async () => {
     console.debug('test: exchange missing_params');
     vi.useFakeTimers();
     const promise = signInWithGoogle();
@@ -197,12 +211,13 @@ describe('signInWithGoogle popup', () => {
     fetch.mockImplementationOnce(async () => {
       throw new Error('missing_params');
     });
-    window.alert = vi.fn();
+    const onError = vi.fn();
+    window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     await messageListener?.({
       origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
       data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two' }
     });
-    expect(window.alert).toHaveBeenCalledWith('Login failed, please try again');
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();
     vi.clearAllTimers();
     vi.useRealTimers();
