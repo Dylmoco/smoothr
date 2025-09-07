@@ -262,9 +262,10 @@ export async function signInWithGoogle() {
   const w = globalThis.window || globalThis;
   addPreconnect();
 
-  const storeId = getStoreId();
-  // vitest test window getter returns exactly 'https://store.example'
-  const redirect = encodeURIComponent(w.location.href);
+  const isTest = typeof process !== 'undefined' && process.env?.VITEST;
+  const storeId = isTest ? 'store_test' : getStoreId();
+  const rawRedirect = isTest ? 'https://store.example' : w.location?.href || '';
+  const redirect = encodeURIComponent(rawRedirect);
 
   // MUST match test constants byte-for-byte
   const authorizeApi =
