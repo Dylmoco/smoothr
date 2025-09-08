@@ -50,6 +50,7 @@
       const otc = b64url(rand);
 
       // Notify opener once using targeted origin only
+      // Post a single, targeted message to the opener
       try {
         if (window.opener && redirect_to) {
           const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state };
