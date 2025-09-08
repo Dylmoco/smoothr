@@ -321,8 +321,15 @@ export async function signInWithGoogle() {
   async function onMsg(evt) {
     const data = evt?.data || {};
     if (evt.origin !== SDK_ORIGIN) return;
-    if (data.type !== 'SUPABASE_AUTH_COMPLETE') return;
-    if (typeof data.otc !== 'string' || data.otc.length === 0) return;
+    if (data.type !== 'SUPABASE_STORE_RESULT') return;
+
+    let parsed = {};
+    try { parsed = JSON.parse(data.body || '{}'); } catch {}
+    const { otc, state } = parsed;
+    if (!data.ok || typeof otc !== 'string' || !state) {
+      emitAuth('smoothr:auth:error', { reason: 'failed' });
+      return;
+    }
 
     timers.forEach(t => { try { clearTimeout(t); } catch {} });
 
@@ -335,7 +342,7 @@ export async function signInWithGoogle() {
         res = await fetch(exchangeUrl, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ otc: data.otc, state: data.state })
+          body: JSON.stringify({ otc, state })
         });
       } catch {
         emitAuth('smoothr:auth:error', { reason: 'failed' });
@@ -360,7 +367,7 @@ export async function signInWithGoogle() {
         return;
       }
 
-      if ((res.status === 202 || res.status === 409) && json && json.retry) {
+      if (res.status === 202 && json && json.retry) {
         attempt++;
         await new Promise(r => setTimeout(r, Math.min(150 * 2 ** attempt, 600)));
         continue;
