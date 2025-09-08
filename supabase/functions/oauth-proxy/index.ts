@@ -285,6 +285,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     decoded = await decodeState(stateRaw);
   } catch (e: any) {
     const err = e?.message === "stale_state" ? "stale_state" : "invalid_state";
+    console.log(JSON.stringify({ event: "store_reject", otc, reason: err }));
     return new Response(JSON.stringify({ error: err }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -292,6 +293,38 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   }
 
   const admin = adminClient();
+
+  console.log(
+    JSON.stringify({
+      event: "store_start",
+      otc,
+      state_hash: decoded.hash,
+      store_id: decoded.payload.store_id,
+    }),
+  );
+
+  const { data: existing } = await admin
+    .from("oauth_one_time_codes")
+    .select("data, store_id")
+    .eq("code", otc)
+    .single();
+
+  if (existing) {
+    const prev = existing.data as any;
+    if (existing.store_id === decoded.payload.store_id && prev?.state_hash === decoded.hash) {
+      console.log(JSON.stringify({ event: "store_idempotent", otc, state_hash: decoded.hash }));
+      return new Response(JSON.stringify({ ok: true, idempotent: true }), {
+        status: 200,
+        headers: { "content-type": "application/json", "cache-control": "no-store" },
+      });
+    }
+    console.log(JSON.stringify({ event: "store_reject", otc, reason: "otc_conflict" }));
+    return new Response(JSON.stringify({ error: "otc_conflict" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
   const ttl = 600; // 10 minutes
   const expires_at = new Date(Date.now() + ttl * 1000).toISOString();
   const data = {
@@ -301,7 +334,8 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     exchange_attempts: 0,
     session_cache: null,
   } as any;
-  const { error } = await admin.from("oauth_one_time_codes").upsert({
+
+  const { error } = await admin.from("oauth_one_time_codes").insert({
     code: otc,
     store_id: decoded.payload.store_id,
     data,
@@ -317,11 +351,10 @@ async function handleCallbackStore(req: Request): Promise<Response> {
 
   console.log(
     JSON.stringify({
-      event: "store_received",
+      event: "store_saved",
       otc,
       state_hash: decoded.hash,
       store_id: decoded.payload.store_id,
-      ts: new Date().toISOString(),
     }),
   );
 
@@ -368,8 +401,8 @@ async function handleExchange(req: Request): Promise<Response> {
         store_id: decoded.payload.store_id,
       }),
     );
-    return new Response(JSON.stringify({ error: "invalid_or_used_otc" }), {
-      status: 400,
+    return new Response(JSON.stringify({ retry: true }), {
+      status: 202,
       headers: { "content-type": "application/json" },
     });
   }
@@ -437,7 +470,7 @@ async function handleExchange(req: Request): Promise<Response> {
     }
     console.log(
       JSON.stringify({
-        event: "exchange_race_retry",
+        event: "exchange_retry",
         otc,
         state_hash: decoded.hash,
         store_id: decoded.payload.store_id,
@@ -445,7 +478,7 @@ async function handleExchange(req: Request): Promise<Response> {
       }),
     );
     return new Response(JSON.stringify({ retry: true }), {
-      status: 409,
+      status: 202,
       headers: { "content-type": "application/json" },
     });
   }
@@ -502,7 +535,7 @@ async function handleExchange(req: Request): Promise<Response> {
     }
     console.log(
       JSON.stringify({
-        event: "exchange_race_retry",
+        event: "exchange_retry",
         otc,
         state_hash: decoded.hash,
         store_id: decoded.payload.store_id,
@@ -510,7 +543,7 @@ async function handleExchange(req: Request): Promise<Response> {
       }),
     );
     return new Response(JSON.stringify({ retry: true }), {
-      status: 409,
+      status: 202,
       headers: { "content-type": "application/json" },
     });
   }

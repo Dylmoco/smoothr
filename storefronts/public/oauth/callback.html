@@ -49,30 +49,49 @@
       crypto.getRandomValues(rand);
       const otc = b64url(rand);
 
-      // Notify opener once using targeted origin only
-      // Post a single, targeted message to the opener
+      let targetOrigin = '*';
+      try { targetOrigin = new URL(redirect_to).origin; } catch {}
+
+      // Notify opener immediately with otc + code
       try {
         if (window.opener && redirect_to) {
-          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state };
-          const targetOrigin = new URL(redirect_to).origin;
+          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state, code };
           window.opener.postMessage(msg, targetOrigin);
         }
       } catch (e) {
         document.getElementById('error').textContent = 'Unable to message parent: ' + e.message;
       }
 
-      // Persist auth code server-side via Supabase Edge function
-      try {
-        if (supabase_base) {
-          await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ state, otc, code })
-          });
+      // Persist auth code server-side via Supabase Edge function with retries
+      let storeOk = false, storeStatus = 0;
+      if (supabase_base) {
+        console.info('store_start');
+        const body = JSON.stringify({ state, otc, code });
+        const delays = [150, 300, 600];
+        for (let i = 0; i < 3 && !storeOk; i++) {
+          try {
+            const resp = await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body
+            });
+            storeStatus = resp.status;
+            storeOk = resp.ok;
+            if (storeOk) console.info('store_ok');
+            else if (i < 2) await new Promise(r => setTimeout(r, delays[i]));
+          } catch (e) {
+            if (i < 2) await new Promise(r => setTimeout(r, delays[i]));
+          }
         }
-      } catch (_) {
-        // Best-effort; parent will still exchange via otc
+        if (!storeOk) console.warn('store_fail');
       }
+
+      // Send store result
+      try {
+        if (window.opener && redirect_to) {
+          window.opener.postMessage({ type: 'SUPABASE_STORE_RESULT', status: storeStatus, ok: storeOk }, targetOrigin);
+        }
+      } catch {}
 
       // Close soon (retry a couple times if needed)
       document.getElementById('status').textContent = 'Authentication complete. This window will close automatically…';
@@ -85,7 +104,7 @@
           document.getElementById('closeButton').style.display = 'inline-block';
         }
       };
-      setTimeout(tryClose, 400);
+      setTimeout(tryClose, storeOk ? 400 : 0);
     } catch (e) {
       document.getElementById('error').textContent = e.message || 'Unknown error';
       document.getElementById('closeButton').style.display = 'inline-block';
