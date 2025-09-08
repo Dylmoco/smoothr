@@ -296,25 +296,37 @@ async function handleCallbackStore(req: Request): Promise<Response> {
 
   const store_id = decoded.payload.store_id;
   const state_hash = decoded.hash;
-
   console.info(
     JSON.stringify({ event: "store_received", code, otc, store_id, state_hash }),
   );
 
-  const admin = adminClient();
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+  const SUPABASE_SERVICE_ROLE_KEY =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  console.info(
+    JSON.stringify({
+      event: "store_env",
+      SUPABASE_URL: SUPABASE_URL.length,
+      SUPABASE_SERVICE_ROLE_KEY: SUPABASE_SERVICE_ROLE_KEY.length,
+    }),
+  );
+  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
   const { data: existing, error: readErr } = await admin
     .from("oauth_one_time_codes")
     .select("store_id, data, used_at")
     .eq("code", code)
     .single();
 
-  if (readErr && readErr.code !== "PGRST116") {
-    // unexpected read error
-    console.info(JSON.stringify({ event: "store_rejected", reason: "read_failed", store_id }));
-    return new Response(JSON.stringify({ error: "read_failed" }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+  if (readErr) {
+    console.info(
+      JSON.stringify({
+        event: "store_read_error",
+        code: readErr.code,
+        message: readErr.message,
+        hint: readErr.hint,
+      }),
+    );
   }
 
   if (existing) {
@@ -350,19 +362,50 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   }
 
   const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-  const insert = await admin.from("oauth_one_time_codes").insert({
-    code,
-    store_id,
-    data: { otc, state_hash },
-    expires_at,
-    used_at: null,
-  });
+  const insert = await admin
+    .from("oauth_one_time_codes")
+    .insert({
+      code,
+      store_id,
+      data: { otc, state_hash },
+      expires_at,
+      used_at: null,
+    }, { onConflict: "code" });
   if (insert.error) {
-    console.info(JSON.stringify({ event: "store_rejected", reason: "persist_failed", store_id }));
-    return new Response(
-      JSON.stringify({ error: "persist_failed", details: insert.error.message }),
-      { status: 500, headers: { "content-type": "application/json" } },
+    console.info(
+      JSON.stringify({
+        event: "store_insert_error",
+        code: insert.error.code,
+        message: insert.error.message,
+        hint: insert.error.hint,
+      }),
     );
+    if (insert.error.code === "23505") {
+      const { error: upErr } = await admin
+        .from("oauth_one_time_codes")
+        .update({ data: { otc, state_hash } })
+        .eq("code", code)
+        .is("data->>otc", null);
+      if (upErr) {
+        console.info(
+          JSON.stringify({
+            event: "store_insert_error",
+            code: upErr.code,
+            message: upErr.message,
+            hint: upErr.hint,
+          }),
+        );
+        return new Response(JSON.stringify({ error: "persist_failed" }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    } else {
+      return new Response(JSON.stringify({ error: "persist_failed" }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
+    }
   }
 
   console.info(JSON.stringify({ event: "store_saved", code, otc, store_id, state_hash }));
