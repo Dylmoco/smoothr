@@ -313,7 +313,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const { data: existing, error: readErr } = await admin
-    .from("oauth_one_time_codes")
+    .from("oauth_otc")
     .select("store_id, data, used_at")
     .eq("code", code)
     .single();
@@ -348,7 +348,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     if (!data.otc) data.otc = otc;
     data.state_hash = state_hash;
     await admin
-      .from("oauth_one_time_codes")
+      .from("oauth_otc")
       .update({ data })
       .eq("code", code);
     console.info(JSON.stringify({ event: "store_saved", code, otc, store_id, state_hash }));
@@ -363,7 +363,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
 
   const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
   const insert = await admin
-    .from("oauth_one_time_codes")
+    .from("oauth_otc")
     .insert({
       code,
       store_id,
@@ -382,7 +382,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     );
     if (insert.error.code === "23505") {
       const { error: upErr } = await admin
-        .from("oauth_one_time_codes")
+        .from("oauth_otc")
         .update({ data: { otc, state_hash } })
         .eq("code", code)
         .is("data->>otc", null);
@@ -444,10 +444,12 @@ async function handleExchange(req: Request): Promise<Response> {
   const store_id = decoded.payload.store_id;
   const state_hash = decoded.hash;
 
+  const nowIso = new Date().toISOString();
   const { data: row, error } = await admin
-    .from("oauth_one_time_codes")
+    .from("oauth_otc")
     .select("code, store_id, data, used_at, expires_at")
     .eq("data->>otc", otc)
+    .or(`used_at.is.null,expires_at.gt.${nowIso}`)
     .single();
 
   if (error || !row || row.store_id !== store_id || (!row.used_at && new Date(row.expires_at) < new Date())) {
@@ -535,7 +537,7 @@ async function handleExchange(req: Request): Promise<Response> {
   };
 
   const update = await admin
-    .from("oauth_one_time_codes")
+    .from("oauth_otc")
     .update({
       used_at: new Date().toISOString(),
       data: { ...stored, session_cache, state_hash },
