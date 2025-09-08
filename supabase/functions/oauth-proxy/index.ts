@@ -75,33 +75,37 @@ function randId(n = 24) {
 
 /* ---------------------- CORS helpers with COOP/COEP ---------------------- */
 function allowCors(req: Request, resp: Response): Response {
+  // Clone the response to avoid losing body lock & preserve all headers
+  const cloned = new Response(resp.body, resp);
+  const headers = cloned.headers;
+
   const origin = req.headers.get("origin");
-  if (!origin) return resp;
-
-  const headers = new Headers(resp.headers);
-  headers.set("Access-Control-Allow-Origin", origin);
-  headers.set(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS",
-  );
-  headers.set(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Client-Info",
-  );
-  headers.set("Access-Control-Allow-Credentials", "true");
-  headers.set("Vary", "Origin");
-
-  // Add COOP/COEP headers to make window.close and postMessage work
-  if (resp.headers.get("Content-Type")?.includes("text/html")) {
-    headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-    headers.set("Cross-Origin-Embedder-Policy", "unsafe-none");
+  if (origin) {
+    headers.set("Access-Control-Allow-Origin", origin);
+    headers.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS",
+    );
+    headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Client-Info",
+    );
+    headers.set("Access-Control-Allow-Credentials", "true");
+    headers.set("Vary", "Origin");
   }
 
-  return new Response(resp.body, {
-    status: resp.status,
-    statusText: resp.statusText,
-    headers,
-  });
+  // If this is our HTML callback, add isolation headers but DO NOT replace content-type/CSP
+  const ct = headers.get("content-type") || headers.get("Content-Type") || "";
+  if (ct.toLowerCase().includes("text/html")) {
+    // Only set if not already present; never overwrite app-defined values
+    if (!headers.has("cross-origin-opener-policy"))
+      headers.set("cross-origin-opener-policy", "same-origin-allow-popups");
+    if (!headers.has("cross-origin-embedder-policy"))
+      headers.set("cross-origin-embedder-policy", "unsafe-none");
+  }
+
+  // Return the cloned response with updated headers so we don't lose CSP or content-type
+  return cloned;
 }
 
 function handleCorsPreflightRequest(req: Request) {
