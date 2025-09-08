@@ -122,18 +122,6 @@ function handleCorsPreflightRequest(req: Request) {
 }
 
 /* ---------------------- Supabase clients ---------------------- */
-// Browser-facing client (anon key) for signInWithOAuth (skip redirect -> get provider URL)
-const supabaseClient = (req: Request) =>
-  createClient(
-    Deno.env.get("SUPABASE_URL") || "",
-    Deno.env.get("SUPABASE_ANON_KEY") || "",
-    {
-      global: {
-        headers: { Authorization: req.headers.get("Authorization") || "" },
-      },
-    },
-  );
-
 // Admin client (service role) to call SECURITY DEFINER RPCs & tables
 const adminClient = () =>
   createClient(
@@ -239,35 +227,26 @@ async function handleAuthorize(req: Request): Promise<Response> {
   };
   const state = await signState(payload);
 
-  // Get provider URL (no browser redirect)
-  const supabase = supabaseClient(req);
-  const { data: authData, error: authError } = await supabase.auth
-    .signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://sdk.smoothr.io/oauth/callback",
-        skipBrowserRedirect: true,
-        queryParams: { access_type: "offline", prompt: "consent" },
-        state,
-      },
-    });
-
-  if (authError) {
-    console.error("OAuth error:", authError);
-    return new Response(JSON.stringify({ error: authError.message }), {
+  const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
+  if (!GOOGLE_CLIENT_ID) {
+    return new Response(JSON.stringify({ error: "Missing GOOGLE_CLIENT_ID" }), {
       status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
     });
   }
 
-  return new Response(JSON.stringify({ url: authData?.url }), {
+  const base = "https://accounts.google.com/o/oauth2/v2/auth";
+  const redirect_uri = "https://sdk.smoothr.io/oauth/callback";
+  const scope = "openid email profile";
+  const ordered =
+    `response_type=token&client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${encodeURIComponent(state)}`;
+  const providerUrl = `${base}?${ordered}`;
+
+  return new Response(JSON.stringify({ url: providerUrl }), {
     status: 200,
     headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
+      "content-type": "application/json",
+      "cache-control": "no-store",
     },
   });
 }

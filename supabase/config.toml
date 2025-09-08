@@ -19,3 +19,4 @@ entrypoint = "./functions/get_public_store_settings/index.ts"
 # oauth-proxy: Public endpoint for OAuth authorize, JWT disabled.
 [functions.oauth-proxy]
 verify_jwt = false
+# Requires GOOGLE_CLIENT_ID secret for manual Google OAuth
