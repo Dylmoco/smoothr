@@ -74,7 +74,7 @@ async function decodeState(
   const { ok, payload } = await verifyState(token);
   if (!ok) throw new Error("invalid_state");
   if (typeof payload.iat !== "number" || nowSec() - payload.iat > maxAgeSec) {
-    throw new Error("state_expired");
+    throw new Error("stale_state");
   }
   return { payload, hash: await hashState(token) };
 }
@@ -283,8 +283,9 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   let decoded: { payload: StatePayload; hash: string };
   try {
     decoded = await decodeState(stateRaw);
-  } catch {
-    return new Response(JSON.stringify({ error: "invalid_state" }), {
+  } catch (e: any) {
+    const err = e?.message === "stale_state" ? "stale_state" : "invalid_state";
+    return new Response(JSON.stringify({ error: err }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
@@ -295,9 +296,10 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   const expires_at = new Date(Date.now() + ttl * 1000).toISOString();
   const data = {
     state_hash: decoded.hash,
-    google_code: code,
+    code,
     status: "stored",
     exchange_attempts: 0,
+    session_cache: null,
   } as any;
   const { error } = await admin.from("oauth_one_time_codes").upsert({
     code: otc,
@@ -319,7 +321,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
       otc,
       state_hash: decoded.hash,
       store_id: decoded.payload.store_id,
-      created_at: new Date().toISOString(),
+      ts: new Date().toISOString(),
     }),
   );
 
@@ -342,8 +344,9 @@ async function handleExchange(req: Request): Promise<Response> {
   let decoded: { payload: StatePayload; hash: string };
   try {
     decoded = await decodeState(stateRaw);
-  } catch {
-    return new Response(JSON.stringify({ error: "invalid_state" }), {
+  } catch (e: any) {
+    const err = e?.message === "stale_state" ? "stale_state" : "invalid_state";
+    return new Response(JSON.stringify({ error: err }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
@@ -352,46 +355,176 @@ async function handleExchange(req: Request): Promise<Response> {
   const admin = adminClient();
   const { data, error } = await admin
     .from("oauth_one_time_codes")
-    .select("data, used_at, expires_at")
+    .select("data, expires_at")
     .eq("code", otc)
     .eq("store_id", decoded.payload.store_id)
     .single();
 
   if (error || !data || new Date(data.expires_at) < new Date()) {
-    console.log(JSON.stringify({ event: "exchange_not_found", otc }));
+    console.log(
+      JSON.stringify({
+        event: "exchange_not_found",
+        otc,
+        store_id: decoded.payload.store_id,
+      }),
+    );
     return new Response(JSON.stringify({ error: "invalid_or_used_otc" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
 
-  const stored = data.data as {
+  let stored = data.data as {
     state_hash: string;
-    google_code: string;
-    session?: any;
+    code: string;
+    status: string;
     exchange_attempts?: number;
-    status?: string;
+    session_cache?: { session: any; user: any } | null;
   };
 
   if (!stored || stored.state_hash !== decoded.hash) {
+    console.log(
+      JSON.stringify({
+        event: "state_mismatch",
+        otc,
+        state_hash: decoded.hash,
+        store_id: decoded.payload.store_id,
+      }),
+    );
     return new Response(JSON.stringify({ error: "state_mismatch" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
 
-  if (data.used_at && stored.session) {
+  if (stored.status === "complete" && stored.session_cache) {
     console.log(
-      JSON.stringify({ event: "exchange_cached", otc, state_hash: decoded.hash }),
+      JSON.stringify({
+        event: "exchange_cached",
+        otc,
+        state_hash: decoded.hash,
+        store_id: decoded.payload.store_id,
+        attempts: stored.exchange_attempts || 0,
+      }),
     );
-    return new Response(JSON.stringify({ session: stored.session }), {
+    return new Response(JSON.stringify(stored.session_cache), {
       status: 200,
-      headers: { "content-type": "application/json", "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
     });
   }
 
+  if (stored.status === "exchanging") {
+    if (stored.session_cache) {
+      console.log(
+        JSON.stringify({
+          event: "exchange_cached",
+          otc,
+          state_hash: decoded.hash,
+          store_id: decoded.payload.store_id,
+          attempts: stored.exchange_attempts || 0,
+        }),
+      );
+      return new Response(JSON.stringify(stored.session_cache), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "cache-control": "no-store",
+        },
+      });
+    }
+    console.log(
+      JSON.stringify({
+        event: "exchange_race_retry",
+        otc,
+        state_hash: decoded.hash,
+        store_id: decoded.payload.store_id,
+        attempts: stored.exchange_attempts || 0,
+      }),
+    );
+    return new Response(JSON.stringify({ retry: true }), {
+      status: 409,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  // status == 'stored'
+  const { data: updatedRow, error: startErr } = await admin
+    .from("oauth_one_time_codes")
+    .update({
+      data: {
+        ...stored,
+        status: "exchanging",
+        exchange_attempts: (stored.exchange_attempts || 0) + 1,
+      },
+    })
+    .eq("code", otc)
+    .eq("store_id", decoded.payload.store_id)
+    .eq("data->>status", "stored")
+    .select("data")
+    .single();
+
+  if (startErr) {
+    return new Response(JSON.stringify({ error: "otc_update_failed" }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  if (!updatedRow) {
+    // another process may have taken it, re-read
+    const { data: curr } = await admin
+      .from("oauth_one_time_codes")
+      .select("data")
+      .eq("code", otc)
+      .eq("store_id", decoded.payload.store_id)
+      .single();
+    stored = curr?.data as any;
+    if (stored?.status === "complete" && stored.session_cache) {
+      console.log(
+        JSON.stringify({
+          event: "exchange_cached",
+          otc,
+          state_hash: decoded.hash,
+          store_id: decoded.payload.store_id,
+          attempts: stored.exchange_attempts || 0,
+        }),
+      );
+      return new Response(JSON.stringify(stored.session_cache), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "cache-control": "no-store",
+        },
+      });
+    }
+    console.log(
+      JSON.stringify({
+        event: "exchange_race_retry",
+        otc,
+        state_hash: decoded.hash,
+        store_id: decoded.payload.store_id,
+        attempts: stored?.exchange_attempts || 0,
+      }),
+    );
+    return new Response(JSON.stringify({ retry: true }), {
+      status: 409,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  stored = (updatedRow as any).data;
+
   console.log(
-    JSON.stringify({ event: "exchange_start", otc, state_hash: decoded.hash }),
+    JSON.stringify({
+      event: "exchange_started",
+      otc,
+      state_hash: decoded.hash,
+      store_id: decoded.payload.store_id,
+      attempts: stored.exchange_attempts || 0,
+    }),
   );
 
   const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") || "";
@@ -399,7 +532,7 @@ async function handleExchange(req: Request): Promise<Response> {
   const redirect_uri = "https://sdk.smoothr.io/oauth/callback";
 
   const params = new URLSearchParams();
-  params.set("code", stored.google_code);
+  params.set("code", stored.code);
   params.set("client_id", GOOGLE_CLIENT_ID);
   params.set("client_secret", GOOGLE_CLIENT_SECRET);
   params.set("redirect_uri", redirect_uri);
@@ -441,31 +574,40 @@ async function handleExchange(req: Request): Promise<Response> {
     );
   }
 
-  const session = {
-    access_token: sess.session.access_token,
-    refresh_token: sess.session.refresh_token,
-    expires_in: sess.session.expires_in,
-    token_type: "bearer",
+  const session_cache = {
+    session: {
+      access_token: sess.session.access_token,
+      refresh_token: sess.session.refresh_token,
+      expires_in: sess.session.expires_in,
+      token_type: "bearer",
+    },
     user: sess.session.user,
-  } as any;
+  };
 
-  const updated = await admin
+  const { error: finishErr } = await admin
     .from("oauth_one_time_codes")
     .update({
-      data: { ...stored, session, status: "complete", exchange_attempts: (stored.exchange_attempts || 0) + 1 },
+      data: { ...stored, status: "complete", session_cache },
       used_at: new Date().toISOString(),
     })
     .eq("code", otc)
-    .eq("store_id", decoded.payload.store_id)
-    .is("used_at", null);
+    .eq("store_id", decoded.payload.store_id);
 
-  if (updated.error) {
+  if (finishErr) {
     console.log(JSON.stringify({ event: "exchange_update_failed", otc }));
   }
 
-  console.log(JSON.stringify({ event: "exchange_success", otc }));
+  console.log(
+    JSON.stringify({
+      event: "exchange_success",
+      otc,
+      state_hash: decoded.hash,
+      store_id: decoded.payload.store_id,
+      attempts: stored.exchange_attempts || 0,
+    }),
+  );
 
-  return new Response(JSON.stringify({ session }), {
+  return new Response(JSON.stringify(session_cache), {
     status: 200,
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });

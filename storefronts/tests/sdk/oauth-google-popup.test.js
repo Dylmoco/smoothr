@@ -178,6 +178,57 @@ describe('signInWithGoogle popup', () => {
     vi.useRealTimers();
   });
 
+  it('emits auth:error on stale state', async () => {
+    console.debug('test: stale state');
+    vi.useFakeTimers();
+    const promise = signInWithGoogle();
+    await vi.advanceTimersByTimeAsync(1000);
+    await promise;
+    fetch.mockImplementationOnce(async () => ({ ok: false, status: 400, json: async () => ({ error: 'stale_state' }) }));
+    const onError = vi.fn();
+    window.addEventListener('smoothr:auth:error', e => onError(e.detail));
+    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'stale', state: 'abc' } });
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
+    expect(client.auth.setSession).not.toHaveBeenCalled();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('retries exchange after 409 race', async () => {
+    console.debug('test: race retry');
+    vi.useFakeTimers();
+    const promise = signInWithGoogle();
+    await vi.advanceTimersByTimeAsync(1000);
+    await promise;
+    fetch.mockClear();
+    let call = 0;
+    fetch.mockImplementation(async (url, opts) => {
+      if (url === AUTHORIZE) {
+        return { ok: true, json: async () => ({ url: PROVIDER_URL }) };
+      }
+      if (url === EXCHANGE && opts?.method === 'POST') {
+        call++;
+        if (call === 1) {
+          return { ok: true, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
+        }
+        if (call === 2) {
+          return { ok: false, status: 409, json: async () => ({ retry: true }) };
+        }
+        return { ok: true, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'race', state: 'abc' } };
+    const ml = messageListener;
+    await Promise.all([ml?.(msg), ml?.(msg)]);
+    expect(client.auth.setSession).toHaveBeenCalledTimes(1);
+    await ml?.(msg); // retry after 409
+    expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(3);
+    expect(client.auth.setSession).toHaveBeenCalledTimes(2);
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
   it('emits auth:error on authorize 403', async () => {
     console.debug('test: authorize 403');
     const onError = vi.fn();
