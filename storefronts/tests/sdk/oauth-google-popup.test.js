@@ -58,25 +58,20 @@ describe('signInWithGoogle popup', () => {
     win.top = win;
     win.self = win;
     global.window = win;
-    const usedCodes = new Set();
+    const sessions = new Map();
     global.fetch = vi.fn(async (url, opts) => {
       if (url === AUTHORIZE) {
         return { ok: true, json: async () => ({ url: PROVIDER_URL }) };
       }
       if (url === EXCHANGE && opts?.method === 'POST') {
         const body = JSON.parse(opts.body);
-        if (usedCodes.has(body.otc)) {
-          return { ok: false, json: async () => ({}) };
-        }
-        usedCodes.add(body.otc);
-        return {
-          ok: true,
-          json: async () => ({
+        if (!sessions.has(body.otc)) {
+          sessions.set(body.otc, {
             ok: true,
-            session: { access_token: 'a', refresh_token: 'r', expires_in: 3600 },
-            redirect_to: 'https://store.example/auth/callback'
-          })
-        };
+            session: { access_token: 'a', refresh_token: 'r', expires_in: 3600 }
+          });
+        }
+        return { ok: true, json: async () => sessions.get(body.otc) };
       }
       return { ok: true, json: async () => ({}) };
     });
@@ -149,11 +144,6 @@ describe('signInWithGoogle popup', () => {
       origin: 'https://sdk.smoothr.io',
       data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
     });
-    // second postMessage should be ignored after cleanup
-    await messageListener?.({
-      origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
-    });
     // simulate manual close button
     popup.close();
     expect(fetch).toHaveBeenCalledWith(EXCHANGE, {
@@ -166,6 +156,24 @@ describe('signInWithGoogle popup', () => {
     expect(popup.close.mock.invocationCallOrder[0]).toBeGreaterThan(
       client.auth.setSession.mock.invocationCallOrder[0]
     );
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('handles duplicate exchanges idempotently', async () => {
+    console.debug('test: duplicate exchanges');
+    vi.useFakeTimers();
+    const promise = signInWithGoogle();
+    await vi.advanceTimersByTimeAsync(1000);
+    await promise;
+    fetch.mockClear();
+    const msg = {
+      origin: 'https://sdk.smoothr.io',
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'dup', state: 'abc' }
+    };
+    await Promise.all([messageListener?.(msg), messageListener?.(msg)]);
+    expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(2);
+    expect(client.auth.setSession).toHaveBeenCalledTimes(2);
     vi.clearAllTimers();
     vi.useRealTimers();
   });

@@ -10,7 +10,6 @@ describe('signInWithGoogle', () => {
     vi.resetModules();
     globalThis.ensureConfigLoaded = vi.fn().mockResolvedValue();
     globalThis.getCachedBrokerBase = vi.fn().mockReturnValue('https://auth.smoothr.io');
-    const usedCodes = new Set();
     global.fetch = vi.fn(async (url) => {
       if (url.startsWith('https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize')) {
         return { ok: true, json: async () => ({ url: PROVIDER_URL }) };

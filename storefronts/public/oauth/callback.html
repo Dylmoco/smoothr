@@ -49,17 +49,12 @@
       crypto.getRandomValues(rand);
       const otc = b64url(rand);
 
-      // Notify opener ASAP (wildcard and targeted origin)
+      // Notify opener once using targeted origin only
       try {
-        if (window.opener) {
+        if (window.opener && redirect_to) {
           const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state };
-          // Wildcard for broad compatibility
-          window.opener.postMessage(msg, '*');
-          // Targeted origin if we have it
-          if (redirect_to) {
-            const targetOrigin = new URL(redirect_to).origin;
-            window.opener.postMessage(msg, targetOrigin);
-          }
+          const targetOrigin = new URL(redirect_to).origin;
+          window.opener.postMessage(msg, targetOrigin);
         }
       } catch (e) {
         document.getElementById('error').textContent = 'Unable to message parent: ' + e.message;
