@@ -8,7 +8,7 @@ let client;
 
 const AUTHORIZE =
   'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?provider=google&store_id=store_test&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback';
-const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/auth';
+const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=abc&redirect_uri=https%3A%2F%2Fsdk.smoothr.io%2Foauth%2Fcallback&scope=openid%20email%20profile&access_type=offline&prompt=consent&state=xyz';
 const EXCHANGE = 'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange';
 
 describe('signInWithGoogle popup', () => {
@@ -69,7 +69,14 @@ describe('signInWithGoogle popup', () => {
           return { ok: false, json: async () => ({}) };
         }
         usedCodes.add(body.otc);
-        return { ok: true, json: async () => ({ access_token: 'a', refresh_token: 'r' }) };
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            session: { access_token: 'a', refresh_token: 'r', expires_in: 3600 },
+            redirect_to: 'https://store.example/auth/callback'
+          })
+        };
       }
       return { ok: true, json: async () => ({}) };
     });
@@ -123,7 +130,7 @@ describe('signInWithGoogle popup', () => {
     await vi.advanceTimersByTimeAsync(1000);
     await promise;
     fetch.mockClear();
-    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc' } });
+    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc', state: 's' } });
     expect(fetch).not.toHaveBeenCalled();
     expect(client.auth.setSession).not.toHaveBeenCalled();
     expect(popup.close).not.toHaveBeenCalled();
@@ -140,19 +147,19 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
     });
     // second postMessage should be ignored after cleanup
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
     });
     // simulate manual close button
     popup.close();
     expect(fetch).toHaveBeenCalledWith(EXCHANGE, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ otc: 'one', store_id: 'store_test' })
+      body: JSON.stringify({ otc: 'one', state: 'abc' })
     });
     expect(client.auth.setSession).toHaveBeenCalledWith({ access_token: 'a', refresh_token: 'r' });
     expect(popup.close).toHaveBeenCalled();
@@ -216,7 +223,7 @@ describe('signInWithGoogle popup', () => {
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two', state: 'def' }
     });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();

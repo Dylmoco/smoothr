@@ -239,7 +239,7 @@ async function handleAuthorize(req: Request): Promise<Response> {
   const redirect_uri = "https://sdk.smoothr.io/oauth/callback";
   const scope = "openid email profile";
   const ordered =
-    `response_type=token&client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${encodeURIComponent(state)}`;
+    `response_type=code&client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${encodeURIComponent(state)}`;
   const providerUrl = `${base}?${ordered}`;
 
   return new Response(JSON.stringify({ url: providerUrl }), {
@@ -254,13 +254,7 @@ async function handleAuthorize(req: Request): Promise<Response> {
 /* ---------------------- Callback Store (POST) ---------------------- */
 async function handleCallbackStore(req: Request): Promise<Response> {
   const body = await req.json().catch(() => ({}));
-  const {
-    state: stateRaw,
-    otc,
-    access_token,
-    refresh_token,
-    expires_in,
-  } = body || {};
+  const { state: stateRaw, otc, code } = body || {};
 
   let state: StatePayload;
   try {
@@ -274,20 +268,20 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     });
   }
 
-  if (!otc || !access_token || !refresh_token) {
-    return new Response(JSON.stringify({ error: "missing_tokens_or_otc" }), {
+  if (!otc || !code) {
+    return new Response(JSON.stringify({ error: "missing_code_or_otc" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
 
   const admin = adminClient();
-  const ttl = Number(expires_in) || 3600;
+  const ttl = 600; // 10 minutes
   const expires_at = new Date(Date.now() + ttl * 1000).toISOString();
   const { error } = await admin.from("oauth_one_time_codes").insert({
     code: otc,
     store_id: state.store_id,
-    data: { access_token, refresh_token, expires_in: ttl } as any,
+    data: { state: stateRaw, code, iat: nowSec() } as any,
     expires_at,
   });
 
@@ -303,8 +297,8 @@ async function handleCallbackStore(req: Request): Promise<Response> {
 
 /* ---------------------- Exchange (redeem OTC) ---------------------- */
 async function handleExchange(req: Request): Promise<Response> {
-  const { otc, store_id } = await req.json().catch(() => ({}));
-  if (!otc || !store_id) {
+  const { otc, state: stateRaw } = await req.json().catch(() => ({}));
+  if (!otc || !stateRaw) {
     return new Response(JSON.stringify({ error: "missing_params" }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -316,10 +310,9 @@ async function handleExchange(req: Request): Promise<Response> {
     .from("oauth_one_time_codes")
     .delete()
     .eq("code", otc)
-    .eq("store_id", store_id)
     .gt("expires_at", new Date().toISOString())
     .is("used_at", null)
-    .select("data")
+    .select("data, store_id")
     .single();
 
   if (error || !data) {
@@ -329,13 +322,83 @@ async function handleExchange(req: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify(data.data), {
-    status: 200,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store",
-    },
+  const stored = data.data as { state: string; code: string; iat: number };
+  if (!stored || stored.state !== stateRaw) {
+    return new Response(JSON.stringify({ error: "invalid_state" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const { ok, payload } = await verifyState(stateRaw);
+  if (!ok || payload.store_id !== data.store_id) {
+    return new Response(JSON.stringify({ error: "invalid_state" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") || "";
+  const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET") || "";
+  const redirect_uri = "https://sdk.smoothr.io/oauth/callback";
+
+  const params = new URLSearchParams();
+  params.set("code", stored.code);
+  params.set("client_id", GOOGLE_CLIENT_ID);
+  params.set("client_secret", GOOGLE_CLIENT_SECRET);
+  params.set("redirect_uri", redirect_uri);
+  params.set("grant_type", "authorization_code");
+
+  let tokenJson: any;
+  try {
+    const resp = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    tokenJson = await resp.json();
+    if (!resp.ok) throw new Error(tokenJson.error || "token_exchange_failed");
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "token_exchange_failed", details: `${e}` }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const supabase = createClient(supabaseUrl, anonKey);
+  const { data: sess, error: se } = await supabase.auth.signInWithIdToken({
+    provider: "google",
+    token: tokenJson.id_token,
+    access_token: tokenJson.access_token,
   });
+  if (se || !sess?.session) {
+    return new Response(
+      JSON.stringify({ error: "supabase_session_error", details: se?.message }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
+  }
+
+  const session = sess.session;
+  return new Response(
+    JSON.stringify({
+      ok: true,
+      session: {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        expires_in: session.expires_in,
+      },
+      redirect_to: payload.redirect_to,
+    }),
+    {
+      status: 200,
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
+    },
+  );
 }
 
 /* ---------------------- Main router ---------------------- */

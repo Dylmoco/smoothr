@@ -29,12 +29,10 @@
       btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 
     try {
-      // Parse hash params from Google redirect
-      const hash = new URLSearchParams(location.hash.slice(1));
-      const state = hash.get('state') || '';
-      const access_token   = hash.get('access_token');
-      const refresh_token  = hash.get('refresh_token');
-      const expires_in     = hash.get('expires_in');
+      // Parse query params from Google redirect
+      const qp = new URLSearchParams(location.search);
+      const state = qp.get('state') || '';
+      const code = qp.get('code');
 
       // Extract redirect_to & supabase_base from signed state payload (first segment, base64url JSON)
       let redirect_to = '', supabase_base = '';
@@ -54,7 +52,7 @@
       // Notify opener ASAP (wildcard and targeted origin)
       try {
         if (window.opener) {
-          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, access_token, state };
+          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state };
           // Wildcard for broad compatibility
           window.opener.postMessage(msg, '*');
           // Targeted origin if we have it
@@ -67,13 +65,13 @@
         document.getElementById('error').textContent = 'Unable to message parent: ' + e.message;
       }
 
-      // Persist token bundle server-side via Supabase Edge function
+      // Persist auth code server-side via Supabase Edge function
       try {
         if (supabase_base) {
           await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ state, otc, access_token, refresh_token, expires_in })
+            body: JSON.stringify({ state, otc, code })
           });
         }
       } catch (_) {
