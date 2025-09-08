@@ -12,7 +12,19 @@
   Cache-Control: no-store
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://lpuqrzvokroazwlricgn.supabase.co; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'
   X-Frame-Options: DENY
-  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  # IMPORTANT: keep opener linkage so postMessage works across origins
+  Cross-Origin-Opener-Policy: unsafe-none
   Cross-Origin-Embedder-Policy: unsafe-none
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/oauth/callback.html
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://lpuqrzvokroazwlricgn.supabase.co; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  # IMPORTANT: keep opener linkage so postMessage works across origins
+  Cross-Origin-Opener-Policy: unsafe-none
+  Cross-Origin-Embedder-Policy: unsafe-none
+  Referrer-Policy: strict-origin-when-cross-origin
 
 # (Optional hardening: if you move inline JS to an external file, you can drop 'unsafe-inline' from script-src.)
