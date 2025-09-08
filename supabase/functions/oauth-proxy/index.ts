@@ -71,12 +71,13 @@ async function decodeState(
   token: string,
   maxAgeSec = 600,
 ): Promise<{ payload: StatePayload; hash: string }> {
+  const [payloadB64] = token.split(".");
   const { ok, payload } = await verifyState(token);
   if (!ok) throw new Error("invalid_state");
   if (typeof payload.iat !== "number" || nowSec() - payload.iat > maxAgeSec) {
     throw new Error("stale_state");
   }
-  return { payload, hash: await hashState(token) };
+  return { payload, hash: await hashState(payloadB64) };
 }
 
 /* ------------------------------------------------------------------ *\
@@ -285,7 +286,6 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     decoded = await decodeState(stateRaw);
   } catch (e: any) {
     const err = e?.message === "stale_state" ? "stale_state" : "invalid_state";
-    console.log(JSON.stringify({ event: "store_reject", otc, reason: err }));
     return new Response(JSON.stringify({ error: err }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -296,7 +296,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
 
   console.log(
     JSON.stringify({
-      event: "store_start",
+      event: "store_received",
       otc,
       state_hash: decoded.hash,
       store_id: decoded.payload.store_id,
@@ -312,13 +312,19 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   if (existing) {
     const prev = existing.data as any;
     if (existing.store_id === decoded.payload.store_id && prev?.state_hash === decoded.hash) {
-      console.log(JSON.stringify({ event: "store_idempotent", otc, state_hash: decoded.hash }));
+      console.log(
+        JSON.stringify({
+          event: "store_saved",
+          otc,
+          state_hash: decoded.hash,
+          store_id: decoded.payload.store_id,
+        }),
+      );
       return new Response(JSON.stringify({ ok: true, idempotent: true }), {
         status: 200,
         headers: { "content-type": "application/json", "cache-control": "no-store" },
       });
     }
-    console.log(JSON.stringify({ event: "store_reject", otc, reason: "otc_conflict" }));
     return new Response(JSON.stringify({ error: "otc_conflict" }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -433,7 +439,7 @@ async function handleExchange(req: Request): Promise<Response> {
   if (stored.status === "complete" && stored.session_cache) {
     console.log(
       JSON.stringify({
-        event: "exchange_cached",
+        event: "exchange_cached_return",
         otc,
         state_hash: decoded.hash,
         store_id: decoded.payload.store_id,
@@ -453,7 +459,7 @@ async function handleExchange(req: Request): Promise<Response> {
     if (stored.session_cache) {
       console.log(
         JSON.stringify({
-          event: "exchange_cached",
+          event: "exchange_cached_return",
           otc,
           state_hash: decoded.hash,
           store_id: decoded.payload.store_id,
@@ -470,7 +476,7 @@ async function handleExchange(req: Request): Promise<Response> {
     }
     console.log(
       JSON.stringify({
-        event: "exchange_retry",
+        event: "exchange_inflight",
         otc,
         state_hash: decoded.hash,
         store_id: decoded.payload.store_id,
@@ -518,7 +524,7 @@ async function handleExchange(req: Request): Promise<Response> {
     if (stored?.status === "complete" && stored.session_cache) {
       console.log(
         JSON.stringify({
-          event: "exchange_cached",
+          event: "exchange_cached_return",
           otc,
           state_hash: decoded.hash,
           store_id: decoded.payload.store_id,
@@ -535,7 +541,7 @@ async function handleExchange(req: Request): Promise<Response> {
     }
     console.log(
       JSON.stringify({
-        event: "exchange_retry",
+        event: "exchange_inflight",
         otc,
         state_hash: decoded.hash,
         store_id: decoded.payload.store_id,
