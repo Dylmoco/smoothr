@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Authentication</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { background:#111; color:#fff; font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+           display:flex; align-items:center; justify-content:center; height:100vh; margin:0; padding:24px; text-align:center; }
+    .box { max-width:560px }
+    h2 { margin:0 0 8px 0; font-weight:600; }
+    p  { margin:8px 0; opacity:.9 }
+    #error { color:#ff6b6b }
+    #closeButton { display:none; margin-top:16px; padding:10px 16px; background:#3d5afe; color:#fff; border:0; border-radius:6px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Authentication</h2>
+    <p id="status">Completing sign-in…</p>
+    <p id="error"></p>
+    <button id="closeButton" onclick="window.close()">Close Window</button>
+  </div>
+
+  <script>
+  (async () => {
+    // Helper: base64url encode from Uint8Array
+    const b64url = (bytes) =>
+      btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+
+    try {
+      // Parse hash params from Google redirect
+      const hash = new URLSearchParams(location.hash.slice(1));
+      const state = hash.get('state') || '';
+      const access_token   = hash.get('access_token');
+      const refresh_token  = hash.get('refresh_token');
+      const expires_in     = hash.get('expires_in');
+
+      // Extract redirect_to & supabase_base from signed state payload (first segment, base64url JSON)
+      let redirect_to = '', supabase_base = '';
+      try {
+        const payloadB64 = state.split('.')[0] || '';
+        const json = atob(payloadB64.replace(/-/g,'+').replace(/_/g,'/'));
+        const payload = JSON.parse(json);
+        redirect_to = payload?.redirect_to || '';
+        supabase_base = payload?.supabase_base || '';
+      } catch (_) {}
+
+      // Make a one-time code (otc)
+      const rand = new Uint8Array(32);
+      crypto.getRandomValues(rand);
+      const otc = b64url(rand);
+
+      // Notify opener ASAP (wildcard and targeted origin)
+      try {
+        if (window.opener) {
+          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, access_token, state };
+          // Wildcard for broad compatibility
+          window.opener.postMessage(msg, '*');
+          // Targeted origin if we have it
+          if (redirect_to) {
+            const targetOrigin = new URL(redirect_to).origin;
+            window.opener.postMessage(msg, targetOrigin);
+          }
+        }
+      } catch (e) {
+        document.getElementById('error').textContent = 'Unable to message parent: ' + e.message;
+      }
+
+      // Persist token bundle server-side via Supabase Edge function
+      try {
+        if (supabase_base) {
+          await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ state, otc, access_token, refresh_token, expires_in })
+          });
+        }
+      } catch (_) {
+        // Best-effort; parent will still exchange via otc
+      }
+
+      // Close soon (retry a couple times if needed)
+      document.getElementById('status').textContent = 'Authentication complete. This window will close automatically…';
+      let attempts = 0;
+      const tryClose = () => {
+        attempts++;
+        window.close();
+        if (!window.closed && attempts < 3) setTimeout(tryClose, 400);
+        if (!window.closed && attempts >= 3) {
+          document.getElementById('closeButton').style.display = 'inline-block';
+        }
+      };
+      setTimeout(tryClose, 400);
+    } catch (e) {
+      document.getElementById('error').textContent = e.message || 'Unknown error';
+      document.getElementById('closeButton').style.display = 'inline-block';
+    }
+  })();
+  </script>
+</body>
+</html>
