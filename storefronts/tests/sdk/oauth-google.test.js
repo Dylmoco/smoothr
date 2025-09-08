@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let signInWithGoogle;
 
-const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/auth';
+const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=abc&redirect_uri=https%3A%2F%2Fsdk.smoothr.io%2Foauth%2Fcallback&scope=openid%20email%20profile&access_type=offline&prompt=consent&state=xyz';
 
 describe('signInWithGoogle', () => {
   beforeEach(async () => {

@@ -332,7 +332,7 @@ export async function signInWithGoogle() {
       res = await fetch(exchangeUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ otc: data.otc, store_id: storeId })
+        body: JSON.stringify({ otc: data.otc, state: data.state })
       });
     } catch {
       emitAuth('smoothr:auth:error', { reason: 'failed' });
@@ -344,14 +344,17 @@ export async function signInWithGoogle() {
     }
     let json;
     try { json = await res.json(); } catch { json = {}; }
-    if (!json || json.error) {
+    if (!json || json.error || !json.session) {
       emitAuth('smoothr:auth:error', { reason: 'failed' });
       return;
     }
 
     try {
       const client = await resolveSupabase();
-      await client.auth.setSession(json);
+      await client.auth.setSession({
+        access_token: json.session.access_token,
+        refresh_token: json.session.refresh_token
+      });
     } catch {
       emitAuth('smoothr:auth:error', { reason: 'failed' });
       return;
