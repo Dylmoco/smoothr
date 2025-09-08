@@ -327,40 +327,50 @@ export async function signInWithGoogle() {
     timers.forEach(t => { try { clearTimeout(t); } catch {} });
 
     const exchangeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`;
-    let res;
-    try {
-      res = await fetch(exchangeUrl, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ otc: data.otc, state: data.state })
-      });
-    } catch {
-      emitAuth('smoothr:auth:error', { reason: 'failed' });
-      return;
-    }
-    if (!res.ok) {
-      emitAuth('smoothr:auth:error', { reason: 'failed' });
-      return;
-    }
-    let json;
-    try { json = await res.json(); } catch { json = {}; }
-    if (!json || json.error || !json.session) {
+    let attempt = 0;
+
+    while (attempt < 5) {
+      let res;
+      try {
+        res = await fetch(exchangeUrl, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ otc: data.otc, state: data.state })
+        });
+      } catch {
+        emitAuth('smoothr:auth:error', { reason: 'failed' });
+        return;
+      }
+
+      let json;
+      try { json = await res.json(); } catch { json = {}; }
+
+      if (res.ok && json.session) {
+        try {
+          const client = await resolveSupabase();
+          await client.auth.setSession({
+            access_token: json.session.access_token,
+            refresh_token: json.session.refresh_token
+          });
+        } catch {
+          emitAuth('smoothr:auth:error', { reason: 'failed' });
+          return;
+        }
+        cleanup(false, true);
+        return;
+      }
+
+      if (res.status === 202 && json && json.retry) {
+        attempt++;
+        await new Promise(r => setTimeout(r, Math.min(150 * 2 ** attempt, 600)));
+        continue;
+      }
+
       emitAuth('smoothr:auth:error', { reason: 'failed' });
       return;
     }
 
-    try {
-      const client = await resolveSupabase();
-      await client.auth.setSession({
-        access_token: json.session.access_token,
-        refresh_token: json.session.refresh_token
-      });
-    } catch {
-      emitAuth('smoothr:auth:error', { reason: 'failed' });
-      return;
-    }
-
-    cleanup(false, true);
+    emitAuth('smoothr:auth:error', { reason: 'failed' });
   }
 
   w.addEventListener('message', onMsg);

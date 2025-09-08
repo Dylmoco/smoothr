@@ -125,7 +125,7 @@ describe('signInWithGoogle popup', () => {
     await vi.advanceTimersByTimeAsync(1000);
     await promise;
     fetch.mockClear();
-    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc', state: 's' } });
+    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc', state: 's', code: 'cx' } });
     expect(fetch).not.toHaveBeenCalled();
     expect(client.auth.setSession).not.toHaveBeenCalled();
     expect(popup.close).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc', code: 'c1' }
     });
     // simulate manual close button
     popup.close();
@@ -169,7 +169,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     const msg = {
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'dup', state: 'abc' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'dup', state: 'abc', code: 'c2' }
     };
     await Promise.all([messageListener?.(msg), messageListener?.(msg)]);
     expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(2);
@@ -187,7 +187,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockImplementationOnce(async () => ({ ok: false, status: 400, json: async () => ({ error: 'stale_state' }) }));
     const onError = vi.fn();
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
-    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'stale', state: 'abc' } });
+    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'stale', state: 'abc', code: 'c3' } });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();
     vi.clearAllTimers();
@@ -209,22 +209,18 @@ describe('signInWithGoogle popup', () => {
       if (url === EXCHANGE && opts?.method === 'POST') {
         call++;
         if (call === 1) {
-          return { ok: true, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
+          return { ok: true, status: 202, json: async () => ({ retry: true }) };
         }
-        if (call === 2) {
-          return { ok: false, status: 409, json: async () => ({ retry: true }) };
-        }
-        return { ok: true, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
+        return { ok: true, status: 200, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
       }
       return { ok: true, json: async () => ({}) };
     });
-    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'race', state: 'abc' } };
-    const ml = messageListener;
-    await Promise.all([ml?.(msg), ml?.(msg)]);
+    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'race', state: 'abc', code: 'c4' } };
+    const p = messageListener?.(msg);
+    await vi.advanceTimersByTimeAsync(500);
+    await p;
+    expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(2);
     expect(client.auth.setSession).toHaveBeenCalledTimes(1);
-    await ml?.(msg); // retry after 409
-    expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(3);
-    expect(client.auth.setSession).toHaveBeenCalledTimes(2);
     vi.clearAllTimers();
     vi.useRealTimers();
   });
@@ -282,7 +278,7 @@ describe('signInWithGoogle popup', () => {
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two', state: 'def' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two', state: 'def', code: 'c5' }
     });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();
