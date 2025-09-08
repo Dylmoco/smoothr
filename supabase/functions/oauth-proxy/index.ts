@@ -75,37 +75,30 @@ function randId(n = 24) {
 
 /* ---------------------- CORS helpers with COOP/COEP ---------------------- */
 function allowCors(req: Request, resp: Response): Response {
-  // Clone the response to avoid losing body lock & preserve all headers
-  const cloned = new Response(resp.body, resp);
-  const headers = cloned.headers;
-
   const origin = req.headers.get("origin");
-  if (origin) {
-    headers.set("Access-Control-Allow-Origin", origin);
-    headers.set(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, OPTIONS",
-    );
-    headers.set(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Client-Info",
-    );
-    headers.set("Access-Control-Allow-Credentials", "true");
-    headers.set("Vary", "Origin");
-  }
+  if (!origin) return resp;
 
-  // If this is our HTML callback, add isolation headers but DO NOT replace content-type/CSP
-  const ct = headers.get("content-type") || headers.get("Content-Type") || "";
-  if (ct.toLowerCase().includes("text/html")) {
-    // Only set if not already present; never overwrite app-defined values
-    if (!headers.has("cross-origin-opener-policy"))
-      headers.set("cross-origin-opener-policy", "same-origin-allow-popups");
-    if (!headers.has("cross-origin-embedder-policy"))
-      headers.set("cross-origin-embedder-policy", "unsafe-none");
-  }
+  // clone while preserving everything
+  const out = new Response(resp.body, resp);
+  const h = out.headers;
 
-  // Return the cloned response with updated headers so we don't lose CSP or content-type
-  return cloned;
+  // append/override only the CORS bits
+  h.set("access-control-allow-origin", origin);
+  h.set("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
+  h.set(
+    "access-control-allow-headers",
+    "Content-Type, Authorization, X-Client-Info",
+  );
+  h.set("access-control-allow-credentials", "true");
+  h.append("vary", "Origin");
+
+  // if HTML, add isolation headers only (do NOT touch content-type or CSP)
+  const ct = h.get("content-type") || "";
+  if (ct.includes("text/html")) {
+    h.set("cross-origin-opener-policy", "same-origin-allow-popups");
+    h.set("cross-origin-embedder-policy", "unsafe-none");
+  }
+  return out;
 }
 
 function handleCorsPreflightRequest(req: Request) {
@@ -441,6 +434,7 @@ async function handleCallbackGet(req: Request): Promise<Response> {
     "access-control-allow-credentials": "true",
     "vary": "Origin",
   });
+  console.log('CB-HEADERS', Array.from(headers.entries()));
   return new Response(html, { status: 200, headers });
 }
 /* ---------------------- Callback Store (POST) ---------------------- */
