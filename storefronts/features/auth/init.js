@@ -259,6 +259,59 @@ function addPreconnect() {
   });
 }
 
+let _oauthListener;
+function initOauthListener() {
+  const w = globalThis.window || globalThis;
+  if (_oauthListener && w.__smoothrOauthListener === _oauthListener) return;
+  if (w.__smoothrOauthListener) {
+    try { w.removeEventListener('message', w.__smoothrOauthListener); } catch {}
+  }
+  _oauthListener = async (evt) => {
+    const data = evt?.data || {};
+    if (evt.origin !== SDK_ORIGIN) return;
+    try { if (data.type === 'SUPABASE_STORE_RESULT') log('store_result', data.status, data.body); } catch {}
+    if (data.type !== 'SUPABASE_AUTH_COMPLETE') return;
+    const { otc, state } = data;
+    if (typeof otc !== 'string' || !state) return;
+    const exchangeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      let res;
+      try {
+        res = await fetch(exchangeUrl, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ otc, state })
+        });
+      } catch { break; }
+      let json = {};
+      try { json = await res.json(); } catch {}
+      const code = String(json?.error || json?.message || json?.code || '').toLowerCase();
+      if (res.ok && json.session) {
+        try {
+          const client = await resolveSupabase();
+          await client?.auth?.setSession?.({
+            access_token: json.session.access_token,
+            refresh_token: json.session.refresh_token
+          });
+        } catch {}
+        try { w.__popup?.close?.(); } catch {}
+        return;
+      }
+      if (
+        res.status === 202 ||
+        res.status === 409 ||
+        (res.status === 400 && code.includes('invalid_or_used_otc'))
+      ) {
+        await new Promise(r => setTimeout(r, 200 * 2 ** attempt));
+        continue;
+      }
+      break;
+    }
+  };
+  w.__smoothrOauthListener = _oauthListener;
+  w.addEventListener('message', _oauthListener);
+}
+
 export async function signInWithGoogle() {
   const w = globalThis.window || globalThis;
 
@@ -305,123 +358,34 @@ export async function signInWithGoogle() {
     `&redirect_to=${encodeURIComponent(redirectTo)}`;
 
   log('Authorize URL:', authorizeUrl);
-
-  let timeoutId;
-  const timers = [];
-
-  function cleanup(didError, closePopup = false) {
-    w.removeEventListener('message', onMsg);
-    timers.forEach(t => { try { clearTimeout(t); } catch {} });
-    if (didError) emitAuth('smoothr:auth:error', { reason: 'authorize_failed' });
-    if (closePopup && popup && !popup.closed) {
-      try { popup.close(); } catch {}
-    }
-  }
-
-  async function onMsg(evt) {
-    const data = evt?.data || {};
-    if (evt.origin !== SDK_ORIGIN) return;
-    if (data.type !== 'SUPABASE_STORE_RESULT') return;
-
-    let parsed = {};
-    try { parsed = JSON.parse(data.body || '{}'); } catch {}
-    const { otc, state } = parsed;
-    if (!data.ok || typeof otc !== 'string' || !state) {
-      emitAuth('smoothr:auth:error', { reason: 'failed' });
-      return;
-    }
-
-    timers.forEach(t => { try { clearTimeout(t); } catch {} });
-
-    const exchangeUrl = `${SUPABASE_URL}/functions/v1/oauth-proxy/exchange`;
-    let attempt = 0;
-
-    while (attempt < 5) {
-      let res;
-      try {
-        res = await fetch(exchangeUrl, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ otc, state })
-        });
-      } catch {
-        emitAuth('smoothr:auth:error', { reason: 'failed' });
-        return;
-      }
-
-      let json;
-      try { json = await res.json(); } catch { json = {}; }
-
-      if (res.ok && json.session) {
-        try {
-          const client = await resolveSupabase();
-          await client.auth.setSession({
-            access_token: json.session.access_token,
-            refresh_token: json.session.refresh_token
-          });
-        } catch {
-          emitAuth('smoothr:auth:error', { reason: 'failed' });
-          return;
-        }
-        cleanup(false, true);
-        return;
-      }
-
-      if (res.status === 202 && json && json.retry) {
-        attempt++;
-        await new Promise(r => setTimeout(r, Math.min(150 * 2 ** attempt, 600)));
-        continue;
-      }
-
-      emitAuth('smoothr:auth:error', { reason: 'failed' });
-      return;
-    }
-
-    emitAuth('smoothr:auth:error', { reason: 'failed' });
-  }
-
-  w.addEventListener('message', onMsg);
-
-  timeoutId = setTimeout(() => {
-    emitAuth('smoothr:auth:close', { reason: 'timeout' });
-    cleanup(false, true);
-  }, 120000);
-  timers.push(timeoutId);
-
   let providerUrl = '';
   let r;
   try {
     r = await fetch(authorizeUrl, { headers: { accept: 'application/json' } });
   } catch {
-    cleanup(true);
+    emitAuth('smoothr:auth:error', { reason: 'authorize_failed' });
     return;
   }
   if (!r.ok) {
-    cleanup(true);
+    emitAuth('smoothr:auth:error', { reason: 'authorize_failed' });
     return;
   }
   const json = await r.json().catch(() => ({}));
   providerUrl = json?.url || '';
   if (!providerUrl) {
-    cleanup(true);
+    emitAuth('smoothr:auth:error', { reason: 'authorize_failed' });
     return;
   }
 
-  // If framed OR popup blocked, navigate the parent window instead
   if (isFramed || popup === null) {
-    cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
 
-  // Otherwise, drive the popup to the provider URL
   try {
     popup.location.href = providerUrl;
   } catch {
-    // If we somehow lose scripting access, fallback to parent redirect
-    cleanup(false);
     w.location.replace(providerUrl);
-    return;
   }
 }
 
@@ -747,6 +711,7 @@ let _prRedirect = '';
 export async function init(options = {}) {
   bindAccountAccessTriggersEarly();
   stripRecoveryHashIfNotOnReset();
+  initOauthListener();
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
