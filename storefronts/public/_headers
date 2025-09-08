@@ -6,8 +6,8 @@
 #       If you have a staging SDK domain, add a second block for that host too.
 
 # Rules apply to this exact path (adjust if your build emits to a different path)
-# Deployed URL will be: https://sdk.smoothr.dev/oauth/callback.html
-/oauth/callback.html
+# Deployed URL will be: https://sdk.smoothr.dev/oauth/callback
+/oauth/callback
   Content-Type: text/html; charset=utf-8
   Cache-Control: no-store
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://lpuqrzvokroazwlricgn.supabase.co; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'

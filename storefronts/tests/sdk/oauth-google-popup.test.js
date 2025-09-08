@@ -139,12 +139,12 @@ describe('signInWithGoogle popup', () => {
     await promise;
     fetch.mockClear();
     await messageListener?.({
-      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      origin: 'https://sdk.smoothr.io',
       data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one' }
     });
     // second postMessage should be ignored after cleanup
     await messageListener?.({
-      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      origin: 'https://sdk.smoothr.io',
       data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one' }
     });
     // simulate manual close button
@@ -189,11 +189,11 @@ describe('signInWithGoogle popup', () => {
     await promise;
     fetch.mockClear();
     await messageListener?.({
-      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      origin: 'https://sdk.smoothr.io',
       data: { type: 'WRONG', otc: 'one' }
     });
     await messageListener?.({
-      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      origin: 'https://sdk.smoothr.io',
       data: { type: 'SUPABASE_AUTH_COMPLETE' }
     });
     expect(fetch).not.toHaveBeenCalled();
@@ -215,7 +215,7 @@ describe('signInWithGoogle popup', () => {
     const onError = vi.fn();
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     await messageListener?.({
-      origin: 'https://lpuqrzvokroazwlricgn.supabase.co',
+      origin: 'https://sdk.smoothr.io',
       data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two' }
     });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));

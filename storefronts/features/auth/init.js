@@ -231,6 +231,7 @@ const SUPABASE_URL =
   (globalThis?.SMOOTHR_CONFIG?.supabase_url) ||
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   'https://lpuqrzvokroazwlricgn.supabase.co';
+const SDK_ORIGIN = 'https://sdk.smoothr.io';
 const defaultBrokerOrigins = [
   new URL(SUPABASE_URL).origin,
   'https://auth.smoothr.io'
@@ -249,7 +250,7 @@ const BROKER_ORIGINS = new Set(
 function addPreconnect() {
   const head = globalThis.document?.head;
   if (!head) return;
-  ['https://accounts.google.com', SUPABASE_URL].forEach((href) => {
+  ['https://accounts.google.com', SUPABASE_URL, SDK_ORIGIN].forEach((href) => {
     if (head.querySelector(`link[rel="preconnect"][href="${href}"]`)) return;
     const link = document.createElement('link');
     link.rel = 'preconnect';
@@ -319,7 +320,7 @@ export async function signInWithGoogle() {
 
   async function onMsg(evt) {
     const data = evt?.data || {};
-    if (evt.origin !== SUPABASE_URL) return;
+    if (evt.origin !== SDK_ORIGIN) return;
     if (data.type !== 'SUPABASE_AUTH_COMPLETE') return;
     if (typeof data.otc !== 'string' || data.otc.length === 0) return;
 
