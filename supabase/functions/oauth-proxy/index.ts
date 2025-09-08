@@ -422,8 +422,22 @@ async function handleCallbackGet(req: Request): Promise<Response> {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
+      // Explicit CSP to allow our inline script and basic styling; block everything else.
+      // Note: we intentionally omit any 'sandbox' directive so scripts can run.
+      "Content-Security-Policy":
+        "default-src 'none'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'unsafe-inline'; " +
+        "connect-src 'self'; " +
+        "img-src 'self' data:; " +
+        "base-uri 'none'; " +
+        "frame-ancestors 'none';",
+      // Redundant defense in depth for anti-framing
+      "X-Frame-Options": "DENY",
+      // Keep COOP/COEP for isolation while allowing popups
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
       "Cross-Origin-Embedder-Policy": "unsafe-none",
+      // Preserve CORS behavior for same-origin callback AJAX
       "Access-Control-Allow-Origin": openerOrigin,
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
