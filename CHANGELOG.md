@@ -15,4 +15,6 @@ All notable changes to this project will be documented in this file.
 - Added client-side formatting for Webflow card number, expiry and CVC inputs.
 - Added `shared/init` to register a global `generateOrderNumber` hook used by the
   checkout API route...
+- Made OAuth one-time code exchange idempotent, added state freshness checks, and
+  ensured callback page posts a single targeted message.
 

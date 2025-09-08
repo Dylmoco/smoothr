@@ -62,6 +62,23 @@ async function verifyState(
   }
 }
 
+async function hashState(raw: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", enc.encode(raw));
+  return base64url(new Uint8Array(digest));
+}
+
+async function decodeState(
+  token: string,
+  maxAgeSec = 600,
+): Promise<{ payload: StatePayload; hash: string }> {
+  const { ok, payload } = await verifyState(token);
+  if (!ok) throw new Error("invalid_state");
+  if (typeof payload.iat !== "number" || nowSec() - payload.iat > maxAgeSec) {
+    throw new Error("state_expired");
+  }
+  return { payload, hash: await hashState(token) };
+}
+
 /* ------------------------------------------------------------------ *\
  * Utilities
  * ------------------------------------------------------------------ */
@@ -256,20 +273,18 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   const body = await req.json().catch(() => ({}));
   const { state: stateRaw, otc, code } = body || {};
 
-  let state: StatePayload;
-  try {
-    const { ok, payload } = await verifyState(stateRaw);
-    if (!ok) throw new Error("invalid state");
-    state = payload as StatePayload;
-  } catch {
-    return new Response(JSON.stringify({ error: "invalid_state" }), {
+  if (!stateRaw || !otc || !code) {
+    return new Response(JSON.stringify({ error: "missing_code_or_otc" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
 
-  if (!otc || !code) {
-    return new Response(JSON.stringify({ error: "missing_code_or_otc" }), {
+  let decoded: { payload: StatePayload; hash: string };
+  try {
+    decoded = await decodeState(stateRaw);
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid_state" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
@@ -278,10 +293,16 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   const admin = adminClient();
   const ttl = 600; // 10 minutes
   const expires_at = new Date(Date.now() + ttl * 1000).toISOString();
-  const { error } = await admin.from("oauth_one_time_codes").insert({
+  const data = {
+    state_hash: decoded.hash,
+    google_code: code,
+    status: "stored",
+    exchange_attempts: 0,
+  } as any;
+  const { error } = await admin.from("oauth_one_time_codes").upsert({
     code: otc,
-    store_id: state.store_id,
-    data: { state: stateRaw, code, iat: nowSec() } as any,
+    store_id: decoded.payload.store_id,
+    data,
     expires_at,
   });
 
@@ -292,7 +313,20 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     );
   }
 
-  return new Response(null, { status: 204 });
+  console.log(
+    JSON.stringify({
+      event: "store_received",
+      otc,
+      state_hash: decoded.hash,
+      store_id: decoded.payload.store_id,
+      created_at: new Date().toISOString(),
+    }),
+  );
+
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { "content-type": "application/json", "cache-control": "no-store" },
+  });
 }
 
 /* ---------------------- Exchange (redeem OTC) ---------------------- */
@@ -305,45 +339,67 @@ async function handleExchange(req: Request): Promise<Response> {
     });
   }
 
+  let decoded: { payload: StatePayload; hash: string };
+  try {
+    decoded = await decodeState(stateRaw);
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid_state" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
   const admin = adminClient();
   const { data, error } = await admin
     .from("oauth_one_time_codes")
-    .delete()
+    .select("data, used_at, expires_at")
     .eq("code", otc)
-    .gt("expires_at", new Date().toISOString())
-    .is("used_at", null)
-    .select("data, store_id")
+    .eq("store_id", decoded.payload.store_id)
     .single();
 
-  if (error || !data) {
+  if (error || !data || new Date(data.expires_at) < new Date()) {
+    console.log(JSON.stringify({ event: "exchange_not_found", otc }));
     return new Response(JSON.stringify({ error: "invalid_or_used_otc" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
 
-  const stored = data.data as { state: string; code: string; iat: number };
-  if (!stored || stored.state !== stateRaw) {
-    return new Response(JSON.stringify({ error: "invalid_state" }), {
+  const stored = data.data as {
+    state_hash: string;
+    google_code: string;
+    session?: any;
+    exchange_attempts?: number;
+    status?: string;
+  };
+
+  if (!stored || stored.state_hash !== decoded.hash) {
+    return new Response(JSON.stringify({ error: "state_mismatch" }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
 
-  const { ok, payload } = await verifyState(stateRaw);
-  if (!ok || payload.store_id !== data.store_id) {
-    return new Response(JSON.stringify({ error: "invalid_state" }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
+  if (data.used_at && stored.session) {
+    console.log(
+      JSON.stringify({ event: "exchange_cached", otc, state_hash: decoded.hash }),
+    );
+    return new Response(JSON.stringify({ session: stored.session }), {
+      status: 200,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
     });
   }
+
+  console.log(
+    JSON.stringify({ event: "exchange_start", otc, state_hash: decoded.hash }),
+  );
 
   const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") || "";
   const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET") || "";
   const redirect_uri = "https://sdk.smoothr.io/oauth/callback";
 
   const params = new URLSearchParams();
-  params.set("code", stored.code);
+  params.set("code", stored.google_code);
   params.set("client_id", GOOGLE_CLIENT_ID);
   params.set("client_secret", GOOGLE_CLIENT_SECRET);
   params.set("redirect_uri", redirect_uri);
@@ -357,12 +413,16 @@ async function handleExchange(req: Request): Promise<Response> {
       body: params.toString(),
     });
     tokenJson = await resp.json();
-    if (!resp.ok) throw new Error(tokenJson.error || "token_exchange_failed");
+    if (!resp.ok) {
+      console.log(JSON.stringify({ event: "exchange_google_failed", otc }));
+      throw new Error(tokenJson.error || "token_exchange_failed");
+    }
+    console.log(JSON.stringify({ event: "exchange_google_redeemed", otc }));
   } catch (e) {
-    return new Response(JSON.stringify({ error: "token_exchange_failed", details: `${e}` }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "google_redeem_failed", details: `${e}` }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -374,31 +434,41 @@ async function handleExchange(req: Request): Promise<Response> {
     access_token: tokenJson.access_token,
   });
   if (se || !sess?.session) {
+    console.log(JSON.stringify({ event: "exchange_supabase_failed", otc }));
     return new Response(
-      JSON.stringify({ error: "supabase_session_error", details: se?.message }),
+      JSON.stringify({ error: "supabase_session_failed", details: se?.message }),
       { status: 500, headers: { "content-type": "application/json" } },
     );
   }
 
-  const session = sess.session;
-  return new Response(
-    JSON.stringify({
-      ok: true,
-      session: {
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-        expires_in: session.expires_in,
-      },
-      redirect_to: payload.redirect_to,
-    }),
-    {
-      status: 200,
-      headers: {
-        "content-type": "application/json",
-        "cache-control": "no-store",
-      },
-    },
-  );
+  const session = {
+    access_token: sess.session.access_token,
+    refresh_token: sess.session.refresh_token,
+    expires_in: sess.session.expires_in,
+    token_type: "bearer",
+    user: sess.session.user,
+  } as any;
+
+  const updated = await admin
+    .from("oauth_one_time_codes")
+    .update({
+      data: { ...stored, session, status: "complete", exchange_attempts: (stored.exchange_attempts || 0) + 1 },
+      used_at: new Date().toISOString(),
+    })
+    .eq("code", otc)
+    .eq("store_id", decoded.payload.store_id)
+    .is("used_at", null);
+
+  if (updated.error) {
+    console.log(JSON.stringify({ event: "exchange_update_failed", otc }));
+  }
+
+  console.log(JSON.stringify({ event: "exchange_success", otc }));
+
+  return new Response(JSON.stringify({ session }), {
+    status: 200,
+    headers: { "content-type": "application/json", "cache-control": "no-store" },
+  });
 }
 
 /* ---------------------- Main router ---------------------- */
