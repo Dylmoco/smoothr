@@ -261,11 +261,33 @@ function addPreconnect() {
 export async function signInWithGoogle() {
   const w = globalThis.window || globalThis;
 
-  const isFramed = (() => { try { return w.self !== w.top; } catch { return true; } })();
-  const popupFeatures = 'popup=true,width=600,height=700,noopener';
+  // Detect if we're inside an iframe (treat cross-origin error as framed)
+  const isFramed = (() => {
+    try {
+      return w.self !== w.top;
+    } catch {
+      return true;
+    }
+  })();
+
+  // Centered popup features (no `noopener` so we can assign popup.location)
+  const popupWidth = 600;
+  const popupHeight = 700;
+  const left = Math.max(
+    0,
+    (w.screenX || w.screenLeft || 0) + ((w.outerWidth || 0) - popupWidth) / 2
+  );
+  const top = Math.max(
+    0,
+    (w.screenY || w.screenTop || 0) + ((w.outerHeight || 0) - popupHeight) / 2
+  );
+  const popupFeatures = `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable,scrollbars`;
+
   let popup = null;
+  // Open popup immediately on user gesture, unless framed
   if (!isFramed) {
     popup = w.open('', 'smoothr_oauth', popupFeatures);
+    // Expose for tests / debugging
     w.__popup = popup || undefined;
   }
 
@@ -364,17 +386,21 @@ export async function signInWithGoogle() {
     return;
   }
 
+  // If framed OR popup blocked, navigate the parent window instead
   if (isFramed || popup === null) {
     cleanup(false);
     w.location.replace(providerUrl);
     return;
   }
 
+  // Otherwise, drive the popup to the provider URL
   try {
     popup.location.href = providerUrl;
   } catch {
+    // If we somehow lose scripting access, fallback to parent redirect
     cleanup(false);
     w.location.replace(providerUrl);
+    return;
   }
 }
 
