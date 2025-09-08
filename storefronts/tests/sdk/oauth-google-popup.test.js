@@ -29,15 +29,17 @@ describe('oauth callback', () => {
         w.crypto = { getRandomValues: arr => arr.fill(1) };
         postMessage = vi.fn();
         w.opener = { postMessage };
-        w.fetch = vi.fn(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ otc: 'otc1', state }) }));
+        w.fetch = vi.fn(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ ok: true }) }));
       }
     });
     await new Promise(r => setTimeout(r, 0));
     expect(postMessage).toHaveBeenCalledTimes(1);
     expect(postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'otc1', state }) }),
+      expect.objectContaining({ type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: expect.any(String) }),
       'https://store.example'
     );
+    const body = JSON.parse(postMessage.mock.calls[0][0].body);
+    expect(body).toEqual({ otc: expect.any(String), state });
   });
 });
 

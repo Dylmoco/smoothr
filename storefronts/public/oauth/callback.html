@@ -80,7 +80,7 @@
             type: 'SUPABASE_STORE_RESULT',
             status: res?.status || 0,
             ok: !!res?.ok,
-            body: await res?.text().catch(() => '')
+            body: JSON.stringify({ otc, state })
           };
           window.opener.postMessage(msg, targetOrigin);
         }
