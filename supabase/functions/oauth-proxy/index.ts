@@ -1,4 +1,4 @@
-// oauth-proxy/index.ts - main file with updated callback handler
+// oauth-proxy/index.ts
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
 
 const enc = new TextEncoder();
@@ -145,6 +145,7 @@ const adminClient = () =>
 interface StatePayload {
   store_id: string;
   redirect_to: string;
+  supabase_base: string;
   nonce: string;
   iat: number;
 }
@@ -231,7 +232,8 @@ async function handleAuthorize(req: Request): Promise<Response> {
 
   const payload: StatePayload = {
     store_id: storeId!,
-    redirect_to: redirectTo!,
+    redirect_to: `${origin}/auth/callback`,
+    supabase_base: "https://lpuqrzvokroazwlricgn.supabase.co",
     nonce: randId(12),
     iat: nowSec(),
   };
@@ -243,9 +245,7 @@ async function handleAuthorize(req: Request): Promise<Response> {
     .signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${
-          Deno.env.get("SUPABASE_URL")
-        }/functions/v1/oauth-proxy/callback`,
+        redirectTo: "https://sdk.smoothr.io/oauth/callback",
         skipBrowserRedirect: true,
         queryParams: { access_type: "offline", prompt: "consent" },
         state,
@@ -272,171 +272,6 @@ async function handleAuthorize(req: Request): Promise<Response> {
   });
 }
 
-/* ---------------------- Callback (HTML) ---------------------- */
-async function handleCallbackGet(req: Request): Promise<Response> {
-  const url = new URL(req.url);
-  const stateRaw = url.searchParams.get("state") || "";
-  let openerOrigin = "*";
-  try {
-    const { ok, payload } = await verifyState(stateRaw);
-    if (ok && payload?.redirect_to) {
-      openerOrigin = new URL(payload.redirect_to).origin;
-    }
-  } catch {
-    /* ignore - fall back to '*' */
-  }
-
-  const html = `<!doctype html><html><head>
-  <meta charset="utf-8" />
-  <title>Authenticating…</title>
-  <script>
-  (async () => {
-    function b64url(bytes) {
-      return btoa(String.fromCharCode(...bytes))
-        .replace(/\\+/g, '-').replace(/\\/g, '_').replace(/=+$/g, '');
-    }
-
-    try {
-      const url = new URL(location.href);
-      const hash = new URLSearchParams(url.hash.slice(1));
-      const state = url.searchParams.get('state') || '';
-      const access_token = hash.get('access_token');
-      const refresh_token = hash.get('refresh_token');
-      const expires_in = hash.get('expires_in');
-
-      console.log("Authentication callback received, preparing to message parent window");
-
-      // Generate random bytes for one-time code
-      const bytes = new Uint8Array(32);
-      crypto.getRandomValues(bytes);
-      const otc = b64url(bytes);
-
-      // Post data back to parent window first
-      try {
-        if (window.opener) {
-          console.log("Found opener window, attempting to post message");
-          // Try sending message to opener with wildcard origin first for compatibility
-          window.opener.postMessage({ 
-            type: 'SUPABASE_AUTH_COMPLETE', 
-            otc,
-            access_token,
-            state
-          }, '*');
-
-          // Also try sending with specific origin if available from state
-          try {
-            const stateData = JSON.parse(atob(state.split('.')[0]));
-            if (stateData?.redirect_to) {
-              const targetOrigin = new URL(stateData.redirect_to).origin;
-              window.opener.postMessage({ 
-                type: 'SUPABASE_AUTH_COMPLETE', 
-                otc,
-                access_token,
-                state
-              }, targetOrigin);
-            }
-          } catch (e) {
-            console.warn("Failed to parse state or send targeted message:", e);
-          }
-        } else {
-          console.warn("No opener window found");
-        }
-      } catch (e) {
-        console.error("Error posting message to opener:", e);
-        document.getElementById('error').textContent = 
-          "Error communicating with parent window: " + e.message;
-      }
-
-      // Store the auth data
-      try {
-        await fetch('/functions/v1/oauth-proxy/callback/store', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            state, 
-            otc, 
-            access_token, 
-            refresh_token, 
-            expires_in 
-          })
-        });
-      } catch (storeError) {
-        console.error("Failed to store auth data:", storeError);
-      }
-
-      // Add a delay before closing to ensure message is delivered
-      document.getElementById('status').textContent = "Authentication complete. This window will close automatically...";
-
-      // Use a combination of approaches to attempt closing
-      setTimeout(() => {
-        try {
-          // First try normal close
-          window.close();
-
-          // If we're still here after 100ms, try alternative approaches
-          setTimeout(() => {
-            if (!window.closed) {
-              // Try self-close method
-              self.close();
-
-              // Finally, if all else fails, instruct user to close manually
-              setTimeout(() => {
-                if (!window.closed) {
-                  document.getElementById('status').textContent = 
-                    "Authentication complete. Please close this window manually.";
-                  document.getElementById('closeButton').style.display = "block";
-                }
-              }, 300);
-            }
-          }, 100);
-        } catch (closeErr) {
-          console.error("Error closing window:", closeErr);
-          document.getElementById('status').textContent = 
-            "Authentication complete. Please close this window manually.";
-          document.getElementById('closeButton').style.display = "block";
-        }
-      }, 800);
-
-    } catch (e) {
-      console.error('Callback error:', e);
-      document.getElementById('error').textContent = e.message || "Unknown error occurred";
-      document.getElementById('closeButton').style.display = "block";
-    }
-  })();
-  </script>
-  </head>
-  <body style="background:#111;color:#fff;font-family:system-ui;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;text-align:center;">
-    <div>
-      <h2 style="margin-top:0;">Authentication</h2>
-      <p id="status">Completing sign-in...</p>
-      <p id="error" style="color:#ff6b6b;"></p>
-      <button id="closeButton" style="display:none;margin-top:20px;padding:10px 16px;background:#3d5afe;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="window.close()">Close Window</button>
-    </div>
-  </body></html>`;
-
-  const headers = new Headers({
-    "content-type": "text/html; charset=utf-8",
-    "cache-control": "no-store",
-    "content-security-policy":
-      "default-src 'none'; " +
-      "script-src 'self' 'unsafe-inline'; " +
-      "style-src 'unsafe-inline'; " +
-      "connect-src 'self'; " +
-      "img-src 'self' data:; " +
-      "base-uri 'none'; " +
-      "frame-ancestors 'none';",
-    "x-frame-options": "DENY",
-    "cross-origin-opener-policy": "same-origin-allow-popups",
-    "cross-origin-embedder-policy": "unsafe-none",
-    "access-control-allow-origin": openerOrigin,
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "Content-Type, Authorization",
-    "access-control-allow-credentials": "true",
-    "vary": "Origin",
-  });
-  console.log('CB-HEADERS', Array.from(headers.entries()));
-  return new Response(html, { status: 200, headers });
-}
 /* ---------------------- Callback Store (POST) ---------------------- */
 async function handleCallbackStore(req: Request): Promise<Response> {
   const body = await req.json().catch(() => ({}));
@@ -534,9 +369,7 @@ Deno.serve(async (req: Request) => {
 
   let res: Response;
   if (path === "/authorize" || path === "/") res = await handleAuthorize(req);
-  else if (path === "/callback" && req.method === "GET") {
-    res = await handleCallbackGet(req);
-  } else if (path === "/callback/store" && req.method === "POST") {
+  else if (path === "/callback/store" && req.method === "POST") {
     res = await handleCallbackStore(req);
   } else if (path === "/exchange" && req.method === "POST") {
     res = await handleExchange(req);
