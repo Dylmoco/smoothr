@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { JSDOM } from 'jsdom';
+import fs from 'fs';
+import path from 'path';
 
 let signInWithGoogle;
 let realWindow;
@@ -10,6 +13,33 @@ const AUTHORIZE =
   'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/authorize?provider=google&store_id=store_test&redirect_to=https%3A%2F%2Fstore.example%2Fauth%2Fcallback';
 const PROVIDER_URL = 'https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=abc&redirect_uri=https%3A%2F%2Fsdk.smoothr.io%2Foauth%2Fcallback&scope=openid%20email%20profile&access_type=offline&prompt=consent&state=xyz';
 const EXCHANGE = 'https://lpuqrzvokroazwlricgn.supabase.co/functions/v1/oauth-proxy/exchange';
+
+describe('oauth callback', () => {
+  it('posts SUPABASE_STORE_RESULT targeted message', async () => {
+    const file = path.resolve(path.dirname(decodeURIComponent(new URL(import.meta.url).pathname)), '../../public/oauth/callback.html');
+    const html = fs.readFileSync(file, 'utf8');
+    const payload = { redirect_to: 'https://store.example/after', supabase_base: 'https://auth.smoothr.io' };
+    const statePayload = Buffer.from(JSON.stringify(payload)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    const state = `${statePayload}.sig`;
+    let postMessage;
+    const dom = new JSDOM(html, {
+      url: `https://sdk.smoothr.io/oauth/callback?code=abc&state=${state}`,
+      runScripts: 'dangerously',
+      beforeParse(w) {
+        w.crypto = { getRandomValues: arr => arr.fill(1) };
+        postMessage = vi.fn();
+        w.opener = { postMessage };
+        w.fetch = vi.fn(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ otc: 'otc1', state }) }));
+      }
+    });
+    await new Promise(r => setTimeout(r, 0));
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'otc1', state }) }),
+      'https://store.example'
+    );
+  });
+});
 
 describe('signInWithGoogle popup', () => {
   beforeEach(async () => {
@@ -125,7 +155,7 @@ describe('signInWithGoogle popup', () => {
     await vi.advanceTimersByTimeAsync(1000);
     await promise;
     fetch.mockClear();
-    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc', state: 's' } });
+    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'abc', state: 's' }) } });
     expect(fetch).not.toHaveBeenCalled();
     expect(client.auth.setSession).not.toHaveBeenCalled();
     expect(popup.close).not.toHaveBeenCalled();
@@ -142,7 +172,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
+      data: { type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'one', state: 'abc' }) }
     });
     // simulate manual close button
     popup.close();
@@ -169,7 +199,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     const msg = {
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'dup', state: 'abc' }
+      data: { type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'dup', state: 'abc' }) }
     };
     await Promise.all([messageListener?.(msg), messageListener?.(msg)]);
     expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(2);
@@ -187,7 +217,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockImplementationOnce(async () => ({ ok: false, status: 400, json: async () => ({ error: 'stale_state' }) }));
     const onError = vi.fn();
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
-    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'stale', state: 'abc' } });
+    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'stale', state: 'abc' }) } });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();
     vi.clearAllTimers();
@@ -209,13 +239,13 @@ describe('signInWithGoogle popup', () => {
       if (url === EXCHANGE && opts?.method === 'POST') {
         call++;
         if (call === 1) {
-          return { ok: false, status: 409, json: async () => ({ retry: true }) };
+          return { ok: false, status: 202, json: async () => ({ retry: true, reason: 'not_found' }) };
         }
         return { ok: true, status: 200, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
       }
       return { ok: true, json: async () => ({}) };
     });
-    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'race', state: 'abc' } };
+    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'race', state: 'abc' }) } };
     const p = messageListener?.(msg);
     await vi.advanceTimersByTimeAsync(500);
     await p;
@@ -243,8 +273,8 @@ describe('signInWithGoogle popup', () => {
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'authorize_failed' }));
   });
 
-  it('ignores messages without SUPABASE_AUTH_COMPLETE', async () => {
-    console.debug('test: missing SUPABASE_AUTH_COMPLETE');
+  it('ignores messages without SUPABASE_STORE_RESULT', async () => {
+    console.debug('test: missing SUPABASE_STORE_RESULT');
     vi.useFakeTimers();
     const promise = signInWithGoogle();
     await vi.advanceTimersByTimeAsync(1000);
@@ -256,7 +286,7 @@ describe('signInWithGoogle popup', () => {
     });
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE' }
+      data: { type: 'SUPABASE_STORE_RESULT' }
     });
     expect(fetch).not.toHaveBeenCalled();
     expect(client.auth.setSession).not.toHaveBeenCalled();
@@ -278,7 +308,7 @@ describe('signInWithGoogle popup', () => {
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two', state: 'def' }
+      data: { type: 'SUPABASE_STORE_RESULT', status: 200, ok: true, body: JSON.stringify({ otc: 'two', state: 'def' }) }
     });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();

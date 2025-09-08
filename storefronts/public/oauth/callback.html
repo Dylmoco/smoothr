@@ -49,38 +49,39 @@
       crypto.getRandomValues(rand);
       const otc = b64url(rand);
 
-      let targetOrigin = '*';
+      let targetOrigin = '';
       try { targetOrigin = new URL(redirect_to).origin; } catch {}
 
       // Persist auth code server-side via Supabase Edge function with retries (store-first)
-      let storeOk = false;
+      let res = null;
       if (supabase_base) {
         const body = JSON.stringify({ state, otc, code });
-        for (let i = 0; i < 3 && !storeOk; i++) {
+        for (let i = 0; i < 3 && !res; i++) {
           try {
-            const resp = await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
+            res = await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
               body
             });
-            storeOk = resp.ok;
-            if (!storeOk && i < 2) await new Promise(r => setTimeout(r, 250));
+            if (!res.ok && i < 2) {
+              res = null;
+              await new Promise(r => setTimeout(r, 250));
+            }
           } catch {
+            res = null;
             if (i < 2) await new Promise(r => setTimeout(r, 250));
           }
         }
       }
 
-      if (!storeOk) {
-        document.getElementById('error').textContent = 'Unable to complete authentication.';
-        document.getElementById('closeButton').style.display = 'inline-block';
-        return;
-      }
-
-      // Notify opener once that it is safe to exchange
       try {
         if (window.opener && redirect_to) {
-          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state };
+          const msg = {
+            type: 'SUPABASE_STORE_RESULT',
+            status: res?.status || 0,
+            ok: !!res?.ok,
+            body: await res?.text().catch(() => '')
+          };
           window.opener.postMessage(msg, targetOrigin);
         }
       } catch (e) {
@@ -98,7 +99,7 @@
           document.getElementById('closeButton').style.display = 'inline-block';
         }
       };
-      setTimeout(tryClose, 650);
+      setTimeout(tryClose, 800);
     } catch (e) {
       document.getElementById('error').textContent = e.message || 'Unknown error';
       document.getElementById('closeButton').style.display = 'inline-block';

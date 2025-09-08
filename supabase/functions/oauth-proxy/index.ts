@@ -275,6 +275,9 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   const { state: stateRaw, otc, code } = body || {};
 
   if (!stateRaw || !otc || !code) {
+    console.info(
+      JSON.stringify({ event: "store_rejected", reason: "missing_code_or_otc" }),
+    );
     return new Response(JSON.stringify({ error: "missing_code_or_otc" }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -286,6 +289,9 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     decoded = await decodeState(stateRaw);
   } catch (e: any) {
     const err = e?.message === "stale_state" ? "stale_state" : "invalid_state";
+    console.info(
+      JSON.stringify({ event: "store_rejected", reason: err, store_id: undefined }),
+    );
     return new Response(JSON.stringify({ error: err }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -294,7 +300,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
 
   const admin = adminClient();
 
-  console.log(
+  console.info(
     JSON.stringify({
       event: "store_received",
       otc,
@@ -312,7 +318,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   if (existing) {
     const prev = existing.data as any;
     if (existing.store_id === decoded.payload.store_id && prev?.state_hash === decoded.hash) {
-      console.log(
+      console.info(
         JSON.stringify({
           event: "store_saved",
           otc,
@@ -320,11 +326,17 @@ async function handleCallbackStore(req: Request): Promise<Response> {
           store_id: decoded.payload.store_id,
         }),
       );
-      return new Response(JSON.stringify({ ok: true, idempotent: true }), {
-        status: 200,
-        headers: { "content-type": "application/json", "cache-control": "no-store" },
-      });
+      return new Response(
+        JSON.stringify({ otc, state: stateRaw, idempotent: true }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json", "cache-control": "no-store" },
+        },
+      );
     }
+    console.info(
+      JSON.stringify({ event: "store_rejected", reason: "otc_conflict", store_id: decoded.payload.store_id }),
+    );
     return new Response(JSON.stringify({ error: "otc_conflict" }), {
       status: 400,
       headers: { "content-type": "application/json" },
@@ -339,6 +351,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     status: "stored",
     exchange_attempts: 0,
     session_cache: null,
+    created_at: new Date().toISOString(),
   } as any;
 
   const { error } = await admin.from("oauth_one_time_codes").insert({
@@ -349,13 +362,16 @@ async function handleCallbackStore(req: Request): Promise<Response> {
   });
 
   if (error) {
+    console.info(
+      JSON.stringify({ event: "store_rejected", reason: "otc_persist_failed", store_id: decoded.payload.store_id }),
+    );
     return new Response(
       JSON.stringify({ error: "otc_persist_failed", details: error.message }),
       { status: 500, headers: { "content-type": "application/json" } },
     );
   }
 
-  console.log(
+  console.info(
     JSON.stringify({
       event: "store_saved",
       otc,
@@ -364,7 +380,7 @@ async function handleCallbackStore(req: Request): Promise<Response> {
     }),
   );
 
-  return new Response(JSON.stringify({ ok: true }), {
+  return new Response(JSON.stringify({ otc, state: stateRaw }), {
     status: 200,
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
@@ -400,14 +416,14 @@ async function handleExchange(req: Request): Promise<Response> {
     .single();
 
   if (error || !data || new Date(data.expires_at) < new Date()) {
-    console.log(
+    console.info(
       JSON.stringify({
         event: "exchange_not_found",
         otc,
         store_id: decoded.payload.store_id,
       }),
     );
-    return new Response(JSON.stringify({ retry: true }), {
+    return new Response(JSON.stringify({ retry: true, reason: "not_found" }), {
       status: 202,
       headers: { "content-type": "application/json" },
     });
@@ -474,7 +490,7 @@ async function handleExchange(req: Request): Promise<Response> {
         },
       });
     }
-    console.log(
+    console.info(
       JSON.stringify({
         event: "exchange_inflight",
         otc,
@@ -483,7 +499,7 @@ async function handleExchange(req: Request): Promise<Response> {
         attempts: stored.exchange_attempts || 0,
       }),
     );
-    return new Response(JSON.stringify({ retry: true }), {
+    return new Response(JSON.stringify({ retry: true, reason: "inflight" }), {
       status: 202,
       headers: { "content-type": "application/json" },
     });
@@ -539,7 +555,7 @@ async function handleExchange(req: Request): Promise<Response> {
         },
       });
     }
-    console.log(
+    console.info(
       JSON.stringify({
         event: "exchange_inflight",
         otc,
@@ -548,7 +564,7 @@ async function handleExchange(req: Request): Promise<Response> {
         attempts: stored?.exchange_attempts || 0,
       }),
     );
-    return new Response(JSON.stringify({ retry: true }), {
+    return new Response(JSON.stringify({ retry: true, reason: "inflight" }), {
       status: 202,
       headers: { "content-type": "application/json" },
     });
@@ -556,7 +572,7 @@ async function handleExchange(req: Request): Promise<Response> {
 
   stored = (updatedRow as any).data;
 
-  console.log(
+  console.info(
     JSON.stringify({
       event: "exchange_started",
       otc,
@@ -586,10 +602,10 @@ async function handleExchange(req: Request): Promise<Response> {
     });
     tokenJson = await resp.json();
     if (!resp.ok) {
-      console.log(JSON.stringify({ event: "exchange_google_failed", otc }));
+      console.info(JSON.stringify({ event: "exchange_google_failed", otc }));
       throw new Error(tokenJson.error || "token_exchange_failed");
     }
-    console.log(JSON.stringify({ event: "exchange_google_redeemed", otc }));
+    console.info(JSON.stringify({ event: "exchange_google_redeemed", otc }));
   } catch (e) {
     return new Response(
       JSON.stringify({ error: "google_redeem_failed", details: `${e}` }),
@@ -606,7 +622,7 @@ async function handleExchange(req: Request): Promise<Response> {
     access_token: tokenJson.access_token,
   });
   if (se || !sess?.session) {
-    console.log(JSON.stringify({ event: "exchange_supabase_failed", otc }));
+    console.info(JSON.stringify({ event: "exchange_supabase_failed", otc }));
     return new Response(
       JSON.stringify({ error: "supabase_session_failed", details: se?.message }),
       { status: 500, headers: { "content-type": "application/json" } },
@@ -633,16 +649,15 @@ async function handleExchange(req: Request): Promise<Response> {
     .eq("store_id", decoded.payload.store_id);
 
   if (finishErr) {
-    console.log(JSON.stringify({ event: "exchange_update_failed", otc }));
+    console.info(JSON.stringify({ event: "exchange_update_failed", otc }));
   }
 
-  console.log(
+  console.info(
     JSON.stringify({
       event: "exchange_success",
       otc,
-      state_hash: decoded.hash,
+      user_id: sess.session.user.id,
       store_id: decoded.payload.store_id,
-      attempts: stored.exchange_attempts || 0,
     }),
   );
 
