@@ -21,4 +21,4 @@ Notes:
 - **SDK/browser** helpers live in `client/` with top-level shims for backward compatibility.
 - `_shared/` helpers re-export from `shared/` when available to avoid duplication.
 - `seeds/` and `types/` are intentionally empty aside from `.gitkeep`.
-- **Edge functions** must not import monorepo server code; see guard scripts.
+- **Edge functions** must not import monorepo server code; see guard scripts..
