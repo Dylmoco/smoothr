@@ -52,22 +52,10 @@
       let targetOrigin = '*';
       try { targetOrigin = new URL(redirect_to).origin; } catch {}
 
-      // Notify opener immediately with otc + code
-      try {
-        if (window.opener && redirect_to) {
-          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state, code };
-          window.opener.postMessage(msg, targetOrigin);
-        }
-      } catch (e) {
-        document.getElementById('error').textContent = 'Unable to message parent: ' + e.message;
-      }
-
-      // Persist auth code server-side via Supabase Edge function with retries
-      let storeOk = false, storeStatus = 0;
+      // Persist auth code server-side via Supabase Edge function with retries (store-first)
+      let storeOk = false;
       if (supabase_base) {
-        console.info('store_start');
         const body = JSON.stringify({ state, otc, code });
-        const delays = [150, 300, 600];
         for (let i = 0; i < 3 && !storeOk; i++) {
           try {
             const resp = await fetch(`${supabase_base}/functions/v1/oauth-proxy/callback/store`, {
@@ -75,23 +63,29 @@
               headers: { 'content-type': 'application/json' },
               body
             });
-            storeStatus = resp.status;
             storeOk = resp.ok;
-            if (storeOk) console.info('store_ok');
-            else if (i < 2) await new Promise(r => setTimeout(r, delays[i]));
-          } catch (e) {
-            if (i < 2) await new Promise(r => setTimeout(r, delays[i]));
+            if (!storeOk && i < 2) await new Promise(r => setTimeout(r, 250));
+          } catch {
+            if (i < 2) await new Promise(r => setTimeout(r, 250));
           }
         }
-        if (!storeOk) console.warn('store_fail');
       }
 
-      // Send store result
+      if (!storeOk) {
+        document.getElementById('error').textContent = 'Unable to complete authentication.';
+        document.getElementById('closeButton').style.display = 'inline-block';
+        return;
+      }
+
+      // Notify opener once that it is safe to exchange
       try {
         if (window.opener && redirect_to) {
-          window.opener.postMessage({ type: 'SUPABASE_STORE_RESULT', status: storeStatus, ok: storeOk }, targetOrigin);
+          const msg = { type: 'SUPABASE_AUTH_COMPLETE', otc, state };
+          window.opener.postMessage(msg, targetOrigin);
         }
-      } catch {}
+      } catch (e) {
+        document.getElementById('error').textContent = 'Unable to message parent: ' + e.message;
+      }
 
       // Close soon (retry a couple times if needed)
       document.getElementById('status').textContent = 'Authentication complete. This window will close automatically…';
@@ -99,12 +93,12 @@
       const tryClose = () => {
         attempts++;
         window.close();
-        if (!window.closed && attempts < 3) setTimeout(tryClose, 400);
+        if (!window.closed && attempts < 3) setTimeout(tryClose, 200);
         if (!window.closed && attempts >= 3) {
           document.getElementById('closeButton').style.display = 'inline-block';
         }
       };
-      setTimeout(tryClose, storeOk ? 400 : 0);
+      setTimeout(tryClose, 650);
     } catch (e) {
       document.getElementById('error').textContent = e.message || 'Unknown error';
       document.getElementById('closeButton').style.display = 'inline-block';

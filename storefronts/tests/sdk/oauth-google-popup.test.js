@@ -61,7 +61,7 @@ describe('signInWithGoogle popup', () => {
     const sessions = new Map();
     global.fetch = vi.fn(async (url, opts) => {
       if (url === AUTHORIZE) {
-        return { ok: true, json: async () => ({ url: PROVIDER_URL }) };
+        return { ok: true, status: 200, json: async () => ({ url: PROVIDER_URL }) };
       }
       if (url === EXCHANGE && opts?.method === 'POST') {
         const body = JSON.parse(opts.body);
@@ -71,7 +71,7 @@ describe('signInWithGoogle popup', () => {
             session: { access_token: 'a', refresh_token: 'r', expires_in: 3600 }
           });
         }
-        return { ok: true, json: async () => sessions.get(body.otc) };
+        return { ok: true, status: 200, json: async () => sessions.get(body.otc) };
       }
       return { ok: true, json: async () => ({}) };
     });
@@ -125,7 +125,7 @@ describe('signInWithGoogle popup', () => {
     await vi.advanceTimersByTimeAsync(1000);
     await promise;
     fetch.mockClear();
-    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc', state: 's', code: 'cx' } });
+    await messageListener?.({ origin: 'https://evil.example', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'abc', state: 's' } });
     expect(fetch).not.toHaveBeenCalled();
     expect(client.auth.setSession).not.toHaveBeenCalled();
     expect(popup.close).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc', code: 'c1' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'one', state: 'abc' }
     });
     // simulate manual close button
     popup.close();
@@ -169,7 +169,7 @@ describe('signInWithGoogle popup', () => {
     fetch.mockClear();
     const msg = {
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'dup', state: 'abc', code: 'c2' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'dup', state: 'abc' }
     };
     await Promise.all([messageListener?.(msg), messageListener?.(msg)]);
     expect(fetch.mock.calls.filter(c => c[0] === EXCHANGE).length).toBe(2);
@@ -187,14 +187,14 @@ describe('signInWithGoogle popup', () => {
     fetch.mockImplementationOnce(async () => ({ ok: false, status: 400, json: async () => ({ error: 'stale_state' }) }));
     const onError = vi.fn();
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
-    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'stale', state: 'abc', code: 'c3' } });
+    await messageListener?.({ origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'stale', state: 'abc' } });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();
     vi.clearAllTimers();
     vi.useRealTimers();
   });
 
-  it('retries exchange after 409 race', async () => {
+  it('retries exchange after retry response', async () => {
     console.debug('test: race retry');
     vi.useFakeTimers();
     const promise = signInWithGoogle();
@@ -209,13 +209,13 @@ describe('signInWithGoogle popup', () => {
       if (url === EXCHANGE && opts?.method === 'POST') {
         call++;
         if (call === 1) {
-          return { ok: true, status: 202, json: async () => ({ retry: true }) };
+          return { ok: false, status: 409, json: async () => ({ retry: true }) };
         }
         return { ok: true, status: 200, json: async () => ({ session: { access_token: 'a', refresh_token: 'r' } }) };
       }
       return { ok: true, json: async () => ({}) };
     });
-    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'race', state: 'abc', code: 'c4' } };
+    const msg = { origin: 'https://sdk.smoothr.io', data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'race', state: 'abc' } };
     const p = messageListener?.(msg);
     await vi.advanceTimersByTimeAsync(500);
     await p;
@@ -278,7 +278,7 @@ describe('signInWithGoogle popup', () => {
     window.addEventListener('smoothr:auth:error', e => onError(e.detail));
     await messageListener?.({
       origin: 'https://sdk.smoothr.io',
-      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two', state: 'def', code: 'c5' }
+      data: { type: 'SUPABASE_AUTH_COMPLETE', otc: 'two', state: 'def' }
     });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ reason: 'failed' }));
     expect(client.auth.setSession).not.toHaveBeenCalled();

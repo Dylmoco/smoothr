@@ -360,7 +360,7 @@ export async function signInWithGoogle() {
         return;
       }
 
-      if (res.status === 202 && json && json.retry) {
+      if ((res.status === 202 || res.status === 409) && json && json.retry) {
         attempt++;
         await new Promise(r => setTimeout(r, Math.min(150 * 2 ** attempt, 600)));
         continue;
