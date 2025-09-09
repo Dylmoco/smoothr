@@ -37,3 +37,14 @@ export async function getAllowOrigin(
   }
 }
 
+export function buildCorsHeaders(origin?: string) {
+  return {
+    // Wildcard is fine since we don't use cookies/credentials; we auth via Bearer.
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, content-type',
+    // No credentials header on purpose. Keep this strictly token-based.
+    Vary: 'Origin',
+  } as const;
+}
+
