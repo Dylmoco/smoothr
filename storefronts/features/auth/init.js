@@ -11,6 +11,7 @@ import {
   ATTR_REQUEST_RESET,
   ATTR_SUBMIT_RESET,
   ATTR_CONFIRM_PASSWORD,
+  ATTR_RESET_WRAPPER,
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
@@ -94,6 +95,30 @@ function clearAuthError(container) {
     const el = C?.querySelector?.('[data-smoothr="error"]');
     if (el) el.textContent = '';
   } catch {}
+}
+
+function queryFirst(root, sel) {
+  if (!root) return null;
+  if (Array.isArray(sel)) {
+    for (const s of sel) {
+      const el = root.querySelector(s);
+      if (el) return el;
+    }
+    return null;
+  }
+  return root.querySelector(sel);
+}
+
+function queryAll(root, sel) {
+  if (!root) return [];
+  if (Array.isArray(sel)) {
+    return sel.flatMap(s => Array.from(root.querySelectorAll(s)));
+  }
+  return Array.from(root.querySelectorAll(sel));
+}
+
+function joinSelectors(sel) {
+  return Array.isArray(sel) ? sel.join(', ') : sel;
 }
 
 function mapResetError(err) {
@@ -480,6 +505,105 @@ async function sessionSyncStayOnPage({ store_id, access_token }) {
   });
 }
 
+async function handleRequestPasswordReset(e) {
+  try { e?.preventDefault?.(); } catch {}
+  const trigger = e?.target?.closest?.('[data-smoothr]') || null;
+  const container = resolveAuthContainer(trigger);
+  if (!container) {
+    emitAuthError('NO_CONTAINER');
+    return;
+  }
+  const email = queryFirst(container, ATTR_EMAIL)?.value || '';
+  const successEl = container?.querySelector('[data-smoothr-success]');
+  const errorEl = container?.querySelector('[data-smoothr-error]');
+  try {
+    await requestPasswordReset(email);
+    if (successEl) {
+      successEl.textContent = 'Check your email for a reset link.';
+      successEl.removeAttribute?.('hidden');
+      successEl.style && (successEl.style.display = '');
+    }
+    if (errorEl) errorEl.textContent = '';
+    emitAuth('smoothr:auth:close', { reason: 'reset-requested' });
+  } catch (err) {
+    if (errorEl) {
+      errorEl.textContent = err?.message || String(err);
+      errorEl.removeAttribute?.('hidden');
+      errorEl.style && (errorEl.style.display = '');
+    }
+    emitAuth('smoothr:auth:error', { code: err?.code || 'RESET_REQUEST_FAILED', message: err?.message || String(err) });
+  }
+}
+
+async function handleSubmitResetPassword(e) {
+  try { e?.preventDefault?.(); } catch {}
+  const trigger = e?.target?.closest?.('[data-smoothr]') || null;
+  const container = resolveAuthContainer(trigger);
+  if (!container) { emitAuthError('NO_CONTAINER'); return; }
+  clearAuthError(container);
+  const { password, confirm } = extractCredsFrom(container);
+  try {
+    validatePasswordsOrThrow(password, confirm);
+  } catch (err) {
+    const msg = err?.message === 'password_mismatch'
+      ? 'Passwords do not match.'
+      : 'Please choose a stronger password.';
+    renderAuthError(container, msg);
+    emitAuth('smoothr:auth:error', { code: err?.message || 'password_error', message: msg, stage: 'reset-confirm' });
+    return;
+  }
+
+  const hash = (globalThis.location?.hash || '').slice(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token') || '';
+  if (!accessToken) {
+    const msg = 'Recovery link is missing or expired.';
+    renderAuthError(container, msg);
+    emitAuth('smoothr:auth:error', { code: 'missing_recovery_token', message: msg, stage: 'reset-confirm' });
+    return;
+  }
+
+  const c = await resolveSupabase();
+  if (!c?.auth) return;
+  const w = globalThis.window || globalThis;
+  if (isOnResetRoute()) markResetLoading(true);
+  try {
+    const { data: userRes, error: userErr } = await c.auth.getUser(accessToken);
+    if (userErr || !userRes?.user) {
+      const msg = 'Invalid or expired recovery token.';
+      renderAuthError(container, msg);
+      emitAuth('smoothr:auth:error', { code: 'invalid_recovery_token', message: msg, raw: userErr, stage: 'reset-confirm' });
+      return;
+    }
+    const { error: updateErr } = await c.auth.updateUser({ password });
+    if (updateErr) {
+      const msg = 'Unable to update password. Please try again.';
+      renderAuthError(container, msg);
+      emitAuth('smoothr:auth:error', { message: msg, raw: updateErr, stage: 'reset-confirm' });
+      return;
+    }
+    w.Smoothr = w.Smoothr || { auth: { user: { value: null } } };
+    w.Smoothr.auth.user.value = userRes.user;
+    if (isOnResetRoute()) stripHash();
+    const storeId = getStoreId();
+    const resp = await sessionSyncStayOnPage({ store_id: storeId, access_token: accessToken });
+    const json = await resp.json?.().catch(() => ({}));
+    if (resp.ok && json?.ok) {
+      const url = json.redirect_url || json.sign_in_redirect_url || await lookupRedirectUrl('login');
+      if (url) {
+        try { globalThis.location?.assign?.(url); } catch {}
+      } else {
+        emitAuth('smoothr:auth:signedin', { userId: userRes.user.id });
+        emitAuth('smoothr:auth:close', { reason: 'signedin' });
+      }
+      return;
+    }
+    emitAuth('smoothr:auth:error', { code: resp.status || 'SESSION_SYNC_FAILED' });
+  } finally {
+    if (isOnResetRoute()) markResetLoading(false);
+  }
+}
+
 // Minimal CustomEvent polyfill for environments lacking it.
 if (typeof globalThis.CustomEvent !== 'function') {
   const CustomEventPoly = function CustomEvent(type, params = {}) {
@@ -551,10 +675,9 @@ export function resolveAuthContainer(el) {
 }
 
 function extractCredsFrom(container) {
-  const email = container?.querySelector(ATTR_EMAIL)?.value?.trim() || '';
-  const password = container?.querySelector(ATTR_PASSWORD)?.value || '';
-  const confirm =
-    container?.querySelector(ATTR_CONFIRM_PASSWORD)?.value || '';
+  const email = queryFirst(container, ATTR_EMAIL)?.value?.trim() || '';
+  const password = queryFirst(container, ATTR_PASSWORD)?.value || '';
+  const confirm = queryFirst(container, ATTR_CONFIRM_PASSWORD)?.value || '';
   return { email, password, confirm };
 }
 
@@ -568,27 +691,19 @@ export function bindAuthElements(root = globalThis.document) {
       _bound.add(el);
     }
   };
-  root.querySelectorAll(ATTR_SIGNIN).forEach(el => attach(el, clickHandler));
-  root.querySelectorAll(ATTR_SUBMIT_RESET).forEach(el => attach(el, clickHandler));
-  root
-    .querySelectorAll(`${ATTR_SIGNUP}, [data-smoothr="login-google"], [data-smoothr="login-apple"], ${ATTR_REQUEST_RESET}`)
-    .forEach(el => {
-      const action = el.getAttribute('data-smoothr');
-      const handler =
-        action === 'login-google' ? googleClickHandler :
-        action === 'login-apple' ? appleClickHandler :
-        clickHandler;
-      attach(el, handler);
-    });
-  root
-    .querySelectorAll('[data-smoothr="sign-out"], [data-smoothr="logout"]')
-    .forEach(el => {
-      const value = el.getAttribute?.('data-smoothr') ?? el.dataset?.smoothr ?? '';
-      const selector = `[data-smoothr="${value}"]`;
-      attach(el, signOutHandler);
-      log('bound sign-out handler to', selector);
-    });
-  root.querySelectorAll('[data-smoothr="auth-pop-up"]').forEach(el => {
+  queryAll(root, ATTR_SIGNIN).forEach(el => attach(el, clickHandler));
+  queryAll(root, ATTR_SUBMIT_RESET).forEach(el => attach(el, handleSubmitResetPassword));
+  queryAll(root, ATTR_REQUEST_RESET).forEach(el => attach(el, handleRequestPasswordReset));
+  queryAll(root, ATTR_SIGNUP).forEach(el => attach(el, clickHandler));
+  queryAll(root, '[data-smoothr="login-google"]').forEach(el => attach(el, googleClickHandler));
+  queryAll(root, '[data-smoothr="login-apple"]').forEach(el => attach(el, appleClickHandler));
+  queryAll(root, ['[data-smoothr="sign-out"]', '[data-smoothr="logout"]']).forEach(el => {
+    const value = el.getAttribute?.('data-smoothr') ?? el.dataset?.smoothr ?? '';
+    const selector = `[data-smoothr="${value}"]`;
+    attach(el, signOutHandler);
+    log('bound sign-out handler to', selector);
+  });
+  queryAll(root, '[data-smoothr="auth-pop-up"]').forEach(el => {
     attach(el, () => {
       const active = el.getAttribute?.('data-smoothr-active') === '1';
       const nowOpen = !active;
@@ -602,6 +717,29 @@ export function bindAuthElements(root = globalThis.document) {
   const doc = root?.ownerDocument || globalThis.document;
   if (doc && !_bound.has(doc)) {
     _bound.add(doc);
+  }
+}
+
+function openAuthPopup(doc) {
+  const pop = queryFirst(doc, '[data-smoothr="auth-pop-up"]');
+  if (!pop) return;
+  try { pop.setAttribute('data-smoothr-active', '1'); } catch {}
+  if (pop.getAttribute?.('data-smoothr-autoclass') === '1') {
+    try { pop.classList.add('is-active'); } catch {}
+  }
+}
+
+function routeReset(doc) {
+  const wrapper = queryFirst(doc, ATTR_RESET_WRAPPER);
+  const hasToken = hasRecoveryHash();
+  if (wrapper) {
+    openAuthPopup(doc);
+    emitAuth('smoothr:auth:open', { reason: 'reset' });
+    if (!hasToken) {
+      const container = resolveAuthContainer(wrapper);
+      renderAuthError(container, 'Recovery link is missing or expired.');
+      emitAuthError('missing_recovery_token');
+    }
   }
 }
 
@@ -683,13 +821,20 @@ export async function requestPasswordReset(email) {
   await ensureConfigLoaded();
   const w = globalThis.window || globalThis;
   const storeId = getStoreId();
-  const redirectTo =
-    `https://lpuqrzvokroazwlricgn.supabase.co/reset?store_id=${storeId}&redirect_to=${encodeURIComponent(
-      `${w.location.origin}/reset-password`
-    )}`;
-  const supabase = await resolveSupabase();
-  const { error } = await supabase?.auth.resetPasswordForEmail(email, { redirectTo }) || {};
-  if (error) throw error;
+  const body = {
+    store_id: storeId,
+    email,
+    redirect_to_hint: `${w.location.origin}/reset-password`,
+  };
+  const resp = await fetch(`${getBrokerBaseUrl()}/api/auth/send-reset`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err?.error || 'reset_failed');
+  }
   return true;
 }
 
@@ -885,7 +1030,7 @@ export async function init(options = {}) {
       const el =
         e?.target?.closest?.('[data-smoothr]') ||
         d?.querySelectorAll?.(
-          `${ATTR_SIGNIN}, ${ATTR_SIGNUP}, ${ATTR_REQUEST_RESET}, ${ATTR_SUBMIT_RESET}, [data-smoothr="login-google"], [data-smoothr="login-apple"]`
+          `${joinSelectors(ATTR_SIGNIN)}, ${ATTR_SIGNUP}, [data-smoothr="login-google"], [data-smoothr="login-apple"]`
         )?.[0];
       const container = resolveAuthContainer(el);
       if (!container) {
@@ -944,110 +1089,6 @@ export async function init(options = {}) {
         } catch (err) {
           w.Smoothr.auth.user.value = null;
           emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
-        }
-        return;
-      }
-      if (action === 'password-reset' || action === 'request-password-reset') {
-        const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
-        const successEl = container?.querySelector('[data-smoothr-success]');
-        const errorEl = container?.querySelector('[data-smoothr-error]');
-        try {
-          await requestPasswordReset(email);
-          w.Smoothr.auth.user.value = null;
-          if (successEl) {
-            successEl.textContent = 'Check your email for a reset link.';
-            successEl.removeAttribute?.('hidden');
-            successEl.style && (successEl.style.display = '');
-          }
-          if (errorEl) errorEl.textContent = '';
-          w.alert?.('Check your email for a reset link.');
-        } catch (err) {
-          w.Smoothr.auth.user.value = null;
-          if (errorEl) {
-            errorEl.textContent = err?.message || String(err);
-            errorEl.removeAttribute?.('hidden');
-            errorEl.style && (errorEl.style.display = '');
-          }
-          w.alert?.(err?.message || String(err));
-          emitAuth?.('smoothr:auth:error', { code: err?.status || 'AUTH_FAILED', message: err?.message || 'Authentication failed' });
-        }
-        return;
-      }
-      if (action === 'password-reset-confirm' || action === 'submit-reset-password') {
-        const { password, confirm } = extractCredsFrom(container);
-        clearAuthError(container);
-        try {
-          validatePasswordsOrThrow(password, confirm);
-        } catch (e) {
-          const msg =
-            e?.message === 'password_mismatch'
-              ? 'Passwords do not match.'
-              : e?.message === 'password_too_weak'
-              ? 'Please choose a stronger password.'
-              : 'Invalid password.';
-          renderAuthError(container, msg);
-          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', code: e?.message || 'password_error' });
-          throw e;
-        }
-
-        const hash = (w.location?.hash || '').slice(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token') || '';
-        if (!accessToken) {
-          const msg = 'Recovery link is missing or expired.';
-          renderAuthError(container, msg);
-          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', code: 'missing_recovery_token' });
-          return;
-        }
-
-        if (isOnResetRoute()) markResetLoading?.(true);
-        try {
-          const { data: userRes, error: userErr } = await c.auth.getUser(accessToken);
-          if (userErr || !userRes?.user) {
-            const msg = 'Invalid or expired recovery token.';
-            renderAuthError(container, msg);
-            emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: userErr, code: 'invalid_recovery_token' });
-            return;
-          }
-          const { error: updateErr } = await c.auth.updateUser({ password });
-          if (updateErr) {
-            const msg = 'Unable to update password. Please try again.';
-            renderAuthError(container, msg);
-            emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: updateErr });
-            return;
-          }
-          w.Smoothr.auth.user.value = userRes.user;
-          if (isOnResetRoute()) stripHash();
-
-          const storeId =
-            (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
-            w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
-          if (!storeId) {
-            history.replaceState?.(null, '', w.location?.pathname + w.location?.search);
-            w.location?.assign?.('/');
-            return;
-          }
-
-          const formEl = w.document?.createElement?.('form');
-          if (formEl) {
-            formEl.method = 'POST';
-            formEl.action = `${getBrokerBaseUrl()}/api/auth/session-sync`;
-            const f1 = w.document.createElement('input');
-            f1.type = 'hidden';
-            f1.name = 'store_id';
-            f1.value = storeId;
-            formEl.appendChild(f1);
-            const f2 = w.document.createElement('input');
-            f2.type = 'hidden';
-            f2.name = 'access_token';
-            f2.value = accessToken;
-            formEl.appendChild(f2);
-            w.document.body.appendChild(formEl);
-            history.replaceState?.(null, '', w.location?.pathname + w.location?.search);
-            formEl.submit();
-          }
-        } finally {
-          if (isOnResetRoute()) markResetLoading?.(false);
         }
         return;
       }
@@ -1254,7 +1295,13 @@ export async function init(options = {}) {
       } catch {}
     };
 
-    mutationCallback = () => { try { bindAuthElements(w.document || globalThis.document); } catch {} };
+    mutationCallback = () => {
+      try {
+        const doc = w.document || globalThis.document;
+        bindAuthElements(doc);
+        routeReset(doc);
+      } catch {}
+    };
 
     api.clickHandler = clickHandler;
     api.googleClickHandler = googleClickHandler;

@@ -195,33 +195,29 @@ window.smoothr?.auth?.user?.value !== null
 This property is `undefined` before initialization, so ensure `initAuth()` has
 completed before relying on it.
 
-## Password reset
+## Reset Password
 
-To send password reset emails the SDK provides a `requestPasswordReset` helper
-and binds triggers marked `[data-smoothr="request-password-reset"]` inside a form
-labelled `[data-smoothr="auth-form"]`. The reset link in
-the email must point to a page that calls `initPasswordResetConfirmation()` so
-the user can set a new password. The confirmation page can be wrapped in
-an element marked `[data-smoothr="reset-password"]` to scope reset-specific
-behaviour.
+The SDK supports both pop-up and full-page reset experiences. Triggers marked
+`[data-smoothr="request-password-reset"]` send the recovery email via the
+Smoothr broker. A wrapper labelled `[data-smoothr="reset-password"]` opens the
+reset view when present on the page. Inside that wrapper place a form with the
+new password fields and a `[data-smoothr="submit-reset-password"]` trigger.
 
-Set `NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL` in your `.env` file to
-the URL of that confirmation page:
-
-```bash
-NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
-```
-
-### Request form markup
+### Pop-up markup
 
 ```html
-<form data-smoothr="auth-form">
-  <input type="email" data-smoothr="email" />
-  <div data-smoothr="request-password-reset">Send reset link</div>
-</form>
+<div data-smoothr="auth-pop-up" data-smoothr-autoclass="1">
+  <div data-smoothr="reset-password">
+    <form data-smoothr="auth-form">
+      <input type="password" data-smoothr="password" />
+      <input type="password" data-smoothr="confirm-password" />
+      <div data-smoothr="submit-reset-password">Set new password</div>
+    </form>
+  </div>
+</div>
 ```
 
-### Confirmation page markup
+### Dedicated page fallback
 
 ```html
 <div data-smoothr="reset-password">
@@ -232,16 +228,16 @@ NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
   </form>
 </div>
 <script type="module">
-  import { initAuth, initPasswordResetConfirmation } from './auth/index.js';
+  import { initAuth } from './auth/index.js';
   initAuth();
-  initPasswordResetConfirmation({ redirectTo: '/' });
 </script>
 ```
 
-Submitting the request form validates the email and shows an inline success or
-error message. On the confirmation page the password strength meter updates as
-the user types. The new password must be strong and match the confirmation
-field. After a successful update the page redirects after a short delay.
+Submitting the request form validates the email and shows an inline success
+message. Setting a new password requires a strong value (8+ characters with at
+least one letter and number) that matches the confirmation field. After a
+successful update the SDK performs session bridging and either redirects to the
+configured sign-in URL or emits `smoothr:auth:close`.
 
 ## Migration Notes
 
@@ -257,3 +253,6 @@ new integrations should use the updated forms:
 
 The reset confirmation UI may also be wrapped in
 `data-smoothr="reset-password"` to scope styles and behaviour.
+
+**GSAP hook:** listen for `smoothr:auth:open`, `smoothr:auth:close`, and
+`smoothr:auth:error` on `window` or `document` to drive animations.
