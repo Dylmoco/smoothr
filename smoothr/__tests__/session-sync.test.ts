@@ -33,11 +33,11 @@ async function run(domains: { live_domain: string | null; store_domain: string |
     getSupabaseAnonServer: () => supabaseAnonServer,
   }));
   const { default: handler } = await import('../pages/api/auth/session-sync.ts');
-  const req: any = {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: 'store_id=s1&access_token=token',
-  };
+    const req: any = {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://example.com' },
+      body: 'store_id=s1&access_token=token',
+    };
   const res: any = {
     headers: {} as Record<string, string>,
     setHeader(k: string, v: string) {
@@ -72,5 +72,38 @@ describe('session-sync form redirect', () => {
   it('defaults to / when no domains set', async () => {
     const res = await run({ live_domain: null, store_domain: null });
     expect(res.headers.Location).toBe('/');
+  });
+});
+
+describe('session-sync CORS', () => {
+  it('responds to preflight', async () => {
+    vi.resetModules();
+    const { default: handler } = await import('../pages/api/auth/session-sync.ts');
+    const req: any = { method: 'OPTIONS', headers: {} };
+    const res: any = {
+      headers: {} as Record<string, string>,
+      setHeader(k: string, v: string) {
+        this.headers[k] = v;
+      },
+      status(code: number) {
+        this.statusCode = code;
+        return this;
+      },
+      end() {
+        this.ended = true;
+      },
+    };
+    await handler(req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(res.headers['Access-Control-Allow-Methods']).toBe('POST, OPTIONS');
+    expect(res.headers['Access-Control-Allow-Headers']).toBe('authorization, content-type');
+  });
+
+  it('includes CORS headers on POST', async () => {
+    const res = await run({ live_domain: null, store_domain: null });
+    expect(res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(res.headers['Access-Control-Allow-Methods']).toBe('POST, OPTIONS');
+    expect(res.headers['Access-Control-Allow-Headers']).toBe('authorization, content-type');
   });
 });

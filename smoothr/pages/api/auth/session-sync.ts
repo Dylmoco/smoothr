@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSupabaseAdmin, getSupabaseAnonServer } from '../../../lib/supabaseAdmin';
-import { getAllowOrigin } from '../../../lib/cors';
+import {
+  getSupabaseAdmin,
+  getSupabaseAnonServer,
+} from '../../../lib/supabaseAdmin';
+import { buildCorsHeaders } from '../../../lib/cors';
 
 type Ok = {
   ok: true;
@@ -15,14 +18,25 @@ export default async function handler(
   res: NextApiResponse<Ok | Err>
 ) {
   try {
-    const contentType = (req.headers['content-type'] || '').toLowerCase();
-    const isForm =
-      req.method === 'POST' &&
-      contentType.startsWith('application/x-www-form-urlencoded');
+      const cors = buildCorsHeaders(req.headers.origin);
+      Object.entries(cors).forEach(([k, v]) => res.setHeader(k, v as string));
 
-    const supabaseAdmin = getSupabaseAdmin();
-    const supabaseAnonServer = getSupabaseAnonServer();
-    async function fetchRedirects(store_id: string) {
+      if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+      }
+
+      if (req.method !== 'POST') {
+        res.status(405).json({ ok: false, error: 'method_not_allowed' });
+        return;
+      }
+
+      const contentType = (req.headers['content-type'] || '').toLowerCase();
+      const isForm = contentType.startsWith('application/x-www-form-urlencoded');
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const supabaseAnonServer = getSupabaseAnonServer();
+      async function fetchRedirects(store_id: string) {
       let sign_in_redirect_url: string | null = null;
       let sign_out_redirect_url: string | null = null;
       const tryView = await supabaseAdmin
@@ -102,33 +116,17 @@ export default async function handler(
       return res.status(303).end();
     }
 
-    const origin = req.headers.origin;
-    const body =
-      typeof req.body === 'string' ? JSON.parse(req.body) : (req.body ?? {});
-    const store_id = body?.store_id;
-    const allowOrigin = await getAllowOrigin(origin, store_id);
-    if (!allowOrigin)
-      return res.status(403).json({ ok: false, error: 'Origin not allowed' });
+      const body =
+        typeof req.body === 'string' ? JSON.parse(req.body) : (req.body ?? {});
+      const store_id = body?.store_id;
 
-    res.setHeader('Access-Control-Allow-Origin', allowOrigin);
-    res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      const authz = req.headers.authorization || '';
+      const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
 
-    if (req.method === 'OPTIONS') return res.status(204).end();
-    if (req.method !== 'POST')
-      return res
-        .status(405)
-        .json({ ok: false, error: 'Method Not Allowed' });
-
-    const authz = req.headers.authorization || '';
-    const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
-
-    if (!token)
-      return res.status(401).json({ ok: false, error: 'Missing bearer token' });
-    if (!store_id)
-      return res.status(400).json({ ok: false, error: 'Missing store_id' });
+      if (!token)
+        return res.status(401).json({ ok: false, error: 'Missing bearer token' });
+      if (!store_id)
+        return res.status(400).json({ ok: false, error: 'Missing store_id' });
 
     const { data: userRes, error: userErr } = await supabaseAnonServer.auth.getUser(token);
     if (userErr || !userRes?.user)
