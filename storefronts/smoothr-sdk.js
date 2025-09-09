@@ -27,7 +27,7 @@ export async function ensureConfigLoaded() {
 }
 
 export function getCachedBrokerBase() {
-  return window.SMOOTHR_CONFIG?.__brokerBase || null;
+  return window.SMOOTHR_CONFIG?.__brokerBase;
 }
 
 if (typeof window !== 'undefined') {
@@ -65,12 +65,15 @@ async function initFeatures() {
   };
 
   const promises = [];
-  // Auth is a core module: always initialize (still lazy-loaded)
-  promises.push(
-    import('storefronts/features/auth/init.js')
-      .then(m => (m.default || m.init)?.(ctx))
-      .catch(err => console.warn('[Smoothr SDK] Auth init failed', err))
-  );
+  if (getCachedBrokerBase()) {
+    promises.push(
+      import('storefronts/features/auth/init.js')
+        .then(m => (m.default || m.init)?.(ctx))
+        .catch(err => console.warn('[Smoothr SDK] Auth init failed', err))
+    );
+  } else {
+    console.warn('[Smoothr SDK] Auth init skipped: broker base unresolved');
+  }
   const hasCheckoutTrigger = document.querySelector('[data-smoothr="pay"]');
   if (hasCheckoutTrigger) {
     promises.push(
@@ -147,13 +150,25 @@ if (!scriptEl || !scriptEl.dataset || !scriptEl.dataset.storeId) {
     };
   }
 
-  const earlyBroker = scriptEl?.dataset?.brokerOrigin;
-  if (earlyBroker) {
-    window.SMOOTHR_CONFIG = {
-      ...(window.SMOOTHR_CONFIG || {}),
-      __brokerBase: earlyBroker
-    };
+  let brokerBase;
+  const cfgAttr = scriptEl?.dataset?.configUrl;
+  if (cfgAttr) {
+    try { brokerBase = new URL(cfgAttr).origin; } catch {}
   }
+  if (scriptEl?.dataset?.brokerOrigin) {
+    brokerBase = scriptEl.dataset.brokerOrigin;
+  }
+  if (!brokerBase && scriptEl?.src) {
+    try {
+      const u = new URL(scriptEl.src);
+      if (u.hostname !== 'sdk.smoothr.io') brokerBase = u.origin;
+    } catch {}
+  }
+  window.SMOOTHR_CONFIG = {
+    ...(window.SMOOTHR_CONFIG || {}),
+    __brokerBase: brokerBase
+  };
+
   const scriptOrigin = scriptEl?.src ? new URL(scriptEl.src).origin : location.origin;
   const candidateUrls = [
     scriptEl?.dataset?.configUrl,
@@ -247,23 +262,28 @@ if (!scriptEl || !scriptEl.dataset || !scriptEl.dataset.storeId) {
         });
       }
     } catch {}
-    let brokerBase = null;
-    const cfgAttr = scriptEl?.dataset?.configUrl;
-    if (cfgAttr) {
-      try { brokerBase = new URL(cfgAttr).origin; } catch {}
+    if (typeof window.SMOOTHR_CONFIG.__brokerBase === 'undefined') {
+      let bb;
+      const cfgAttr = scriptEl?.dataset?.configUrl;
+      if (cfgAttr) {
+        try { bb = new URL(cfgAttr).origin; } catch {}
+      }
+      if (scriptEl?.dataset?.brokerOrigin) {
+        bb = scriptEl.dataset.brokerOrigin;
+      }
+      if (!bb && scriptEl?.src) {
+        try {
+          const u = new URL(scriptEl.src);
+          if (u.hostname !== 'sdk.smoothr.io') bb = u.origin;
+        } catch {}
+      }
+      if (typeof bb !== 'undefined') {
+        window.SMOOTHR_CONFIG = {
+          ...(window.SMOOTHR_CONFIG || {}),
+          __brokerBase: bb
+        };
+      }
     }
-    const attrOverride = scriptEl?.dataset?.brokerOrigin || window.SMOOTHR_CONFIG?.broker_origin;
-    if (attrOverride) brokerBase = attrOverride;
-    if (!brokerBase && scriptEl?.src) {
-      try {
-        const u = new URL(scriptEl.src);
-        if (u.hostname !== 'sdk.smoothr.io') brokerBase = u.origin;
-      } catch {}
-    }
-    window.SMOOTHR_CONFIG = {
-      ...(window.SMOOTHR_CONFIG || {}),
-      __brokerBase: brokerBase || ''
-    };
     __configReadyResolve?.(true);
 
     await initFeatures();

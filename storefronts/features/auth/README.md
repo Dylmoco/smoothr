@@ -35,6 +35,26 @@ Webflow or other drop-in platforms simply include the script tag:
 <script type="module" src="https://sdk.smoothr.io/smoothr-sdk.js"></script>
 ```
 
+The SDK resolves which Smoothr broker to talk to in this order:
+
+1. The origin of `data-config-url`
+2. `data-broker-origin` if present
+3. The script `src` origin when it isn't `sdk.smoothr.io`
+4. Otherwise it remains undefined
+
+A minimal embed only requires `data-config-url` and `data-store-id`:
+
+```html
+<script
+  id="smoothr-sdk"
+  type="module"
+  src="https://sdk.smoothr.io/smoothr-sdk.js"
+  data-config-url="https://smoothr.vercel.app/api/config"
+  data-store-id="YOUR_STORE_ID"></script>
+```
+
+`data-broker-origin` is optional and can override the derived host.
+
 No additional JavaScript configuration is required. For advanced use you can
 still call `initAuth()` manually:
 

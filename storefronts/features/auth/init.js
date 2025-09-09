@@ -201,33 +201,10 @@ function postViaHiddenIframe(url, fields = {}) {
   });
 }
 
-function getBrokerBase() {
-  const w = globalThis.window || globalThis;
-  const script = w.document?.getElementById('smoothr-sdk');
-  let base = null;
-  const cfgUrl = script?.dataset?.configUrl;
-  if (cfgUrl) {
-    try { base = new URL(cfgUrl).origin; } catch {}
-  }
-  const attr = script?.dataset?.brokerOrigin || w.SMOOTHR_CONFIG?.broker_origin;
-  if (attr) base = attr;
-  if (!base && script?.src) {
-    try {
-      const o = new URL(script.src).origin;
-      if (o !== 'https://sdk.smoothr.io') base = o;
-    } catch {}
-  }
-  return base || '';
-}
-
-// Compute broker base URL without requiring customer markup changes.
+// Broker base URL pulled from bootstrap cache
 export function getBrokerBaseUrl() {
   const w = globalThis.window || globalThis;
-  const cached = getCachedBrokerBase() || w.SMOOTHR_CONFIG?.__brokerBase;
-  if (cached) return cached;
-  const base = getBrokerBase();
-  w.SMOOTHR_CONFIG = { ...(w.SMOOTHR_CONFIG || {}), __brokerBase: base };
-  return base;
+  return getCachedBrokerBase() || w.SMOOTHR_CONFIG?.__brokerBase || '';
 }
 export function getPasswordResetRedirectUrl() {
   const w = globalThis.window || globalThis;
@@ -265,12 +242,7 @@ const defaultBrokerOrigins = [
   new URL(SUPABASE_URL).origin,
   'https://auth.smoothr.io'
 ];
-const extraBrokerOrigin =
-  (document?.currentScript &&
-    typeof document.currentScript.getAttribute === 'function' &&
-    document.currentScript.getAttribute('data-broker-origin')) ||
-  (globalThis?.SMOOTHR_CONFIG?.broker_origin) ||
-  null;
+const extraBrokerOrigin = getCachedBrokerBase() || null;
 const BROKER_ORIGINS = new Set(
   defaultBrokerOrigins.concat(
     extraBrokerOrigin ? [extraBrokerOrigin] : []
