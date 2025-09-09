@@ -1,6 +1,11 @@
 import { initAdapter as initWebflowAdapter } from 'storefronts/adapters/webflow.js';
 import { loadPublicConfig } from 'storefronts/features/config/sdkConfig.js';
 
+// Normalize any value-ish return into a promise we can safely await
+function asPromise(x) {
+  return x && typeof x.then === 'function' ? x : Promise.resolve(x);
+}
+
 // Ensure legacy global currency helper exists
 if (typeof globalThis.setSelectedCurrency !== 'function') {
   globalThis.setSelectedCurrency = () => {};
@@ -36,8 +41,18 @@ if (!window.smoothr) window.smoothr = Smoothr;
 try {
   const adapter = initWebflowAdapter(Smoothr.config || {});
   Smoothr.adapter = adapter;
-  adapter?.domReady?.().catch(() => {});
-  adapter?.observeDOMChanges?.();
+  (async () => {
+    try {
+      await asPromise(adapter?.domReady?.());
+    } catch (err) {
+      console.warn('[Smoothr SDK] adapter.domReady error', err);
+    }
+    try {
+      await asPromise(adapter?.observeDOMChanges?.());
+    } catch (err) {
+      console.warn('[Smoothr SDK] adapter.observeDOMChanges error', err);
+    }
+  })();
 } catch (e) {
   console.warn('[Smoothr SDK] adapter init failed', e);
 }
@@ -103,31 +118,35 @@ async function initFeatures() {
   await Promise.allSettled(promises);
 }
 
-const scriptEl = document.currentScript || document.getElementById('smoothr-sdk');
-const storeId =
-  scriptEl?.dataset?.storeId || scriptEl?.getAttribute?.('data-store-id') || null;
+const scriptEl =
+  typeof document !== 'undefined'
+    ? document.currentScript || document.getElementById('smoothr-sdk')
+    : null;
 
-const forceAttr =
-  scriptEl?.dataset?.forceFormRedirect ||
-  scriptEl?.getAttribute?.('data-force-form-redirect');
-let forceFormRedirect;
-if (typeof forceAttr === 'string') {
-  const v = forceAttr.toLowerCase();
-  if (v === 'true' || v === '1') forceFormRedirect = true;
-  else if (v === 'false' || v === '0') forceFormRedirect = false;
-}
-if (typeof forceFormRedirect === 'boolean') {
-  window.SMOOTHR_CONFIG = {
-    ...(window.SMOOTHR_CONFIG || {}),
-    forceFormRedirect,
-  };
-}
-
-if (!scriptEl || !storeId) {
+if (!scriptEl || !scriptEl.dataset || !scriptEl.dataset.storeId) {
   console.warn(
-    '[Smoothr SDK] initialization aborted: #smoothr-sdk script element not found or data-store-id missing'
+    '[Smoothr SDK] initialization aborted: #smoothr-sdk not found or data-store-id missing'
   );
 } else {
+  const storeId =
+    scriptEl.dataset.storeId || scriptEl.getAttribute?.('data-store-id') || null;
+
+  const forceAttr =
+    scriptEl.dataset?.forceFormRedirect ||
+    scriptEl.getAttribute?.('data-force-form-redirect');
+  let forceFormRedirect;
+  if (typeof forceAttr === 'string') {
+    const v = forceAttr.toLowerCase();
+    if (v === 'true' || v === '1') forceFormRedirect = true;
+    else if (v === 'false' || v === '0') forceFormRedirect = false;
+  }
+  if (typeof forceFormRedirect === 'boolean') {
+    window.SMOOTHR_CONFIG = {
+      ...(window.SMOOTHR_CONFIG || {}),
+      forceFormRedirect,
+    };
+  }
+
   const earlyBroker = scriptEl?.dataset?.brokerOrigin;
   if (earlyBroker) {
     window.SMOOTHR_CONFIG = {

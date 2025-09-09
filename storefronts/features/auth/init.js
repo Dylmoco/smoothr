@@ -15,6 +15,7 @@ import {
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
+export const MIME_FORM_URLENCODED = 'application/x-www-form-urlencoded';
 const ensureConfigLoaded =
   globalThis.ensureConfigLoaded || (() => Promise.resolve());
 const getCachedBrokerBase =
@@ -179,6 +180,8 @@ function postViaHiddenIframe(url, fields = {}) {
     form.method = 'POST';
     form.action = url;
     form.target = iframe.name;
+    form.enctype = MIME_FORM_URLENCODED;
+    form.acceptCharset = 'utf-8';
     Object.entries(fields).forEach(([k, v]) => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -587,7 +590,8 @@ async function handleSubmitResetPassword(e) {
     if (isOnResetRoute()) stripHash();
     const storeId = getStoreId();
     const resp = await sessionSyncStayOnPage({ store_id: storeId, access_token: accessToken });
-    const json = await resp.json?.().catch(() => ({}));
+    let json = {};
+    try { json = await resp.json?.(); } catch {}
     if (resp.ok && json?.ok) {
       const url = json.redirect_url || json.sign_in_redirect_url || await lookupRedirectUrl('login');
       if (url) {
@@ -1006,7 +1010,8 @@ export async function init(options = {}) {
           store_id: storeId,
           access_token: token,
         });
-        const json = await resp.json?.().catch(() => ({}));
+        let json = {};
+        try { json = await resp.json?.(); } catch {}
         if (resp.ok && json?.ok) {
           emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
           emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
@@ -1321,7 +1326,6 @@ export async function init(options = {}) {
         mo.observe(doc, { childList: true, subtree: true });
       }
       if (doc) {
-        doc.addEventListener('DOMContentLoaded', mutationCallback);
         doc.addEventListener('click', docActionClickFallback, false);
         doc.addEventListener('click', docClickHandler, { capture: true, passive: false });
         if (w.SMOOTHR_DEBUG) {
@@ -1332,7 +1336,11 @@ export async function init(options = {}) {
         try { doc.__smoothrAuthBound = true; } catch {}
       }
     } catch {}
-    try { mutationCallback(); } catch {}
+    onReady(() => {
+      try { mutationCallback(); } catch (e) {
+        console.warn('[smoothr-auth] bind error', e);
+      }
+    });
     log('auth init complete');
 
     return api;
@@ -1411,3 +1419,21 @@ try {
       resetAuth: __test_resetAuth,
     };
   }
+
+function onReady(fn) {
+  const doc = globalThis.document;
+  if (!doc) return;
+  if (doc.readyState === 'loading') {
+    doc.addEventListener('DOMContentLoaded', fn, { once: true });
+  } else {
+    fn();
+  }
+}
+
+onReady(() => {
+  const wrap = document?.querySelector?.('[data-smoothr="auth-pop-up"]');
+  if (!wrap) return;
+  try { bindAuthElements(document); } catch (e) {
+    console.warn('[smoothr-auth] bind error', e);
+  }
+});
