@@ -49,8 +49,8 @@ it('submits login via Enter when form also contains a password-reset link', asyn
   form.innerHTML = `
     <input data-smoothr="email" value="user@example.com" />
     <input data-smoothr="password" value="hunter2" />
-    <div data-smoothr="login"></div>
-    <div data-smoothr="password-reset"></div>
+    <div data-smoothr="sign-in"></div>
+    <div data-smoothr="request-password-reset"></div>
   `;
   document.body.appendChild(form);
 
@@ -78,8 +78,8 @@ it('submits login via Enter when auth-form is a DIV with a reset link present', 
   div.innerHTML = `
     <input data-smoothr="email" value="user@example.com" />
     <input data-smoothr="password" value="hunter2" />
-    <div data-smoothr="login"></div>
-    <div data-smoothr="password-reset"></div>
+    <div data-smoothr="sign-in"></div>
+    <div data-smoothr="request-password-reset"></div>
   `;
   document.body.appendChild(div);
 
@@ -117,7 +117,7 @@ describe("login form", () => {
           return { value: emailValue };
         if (sel === '[data-smoothr="password"]')
           return { value: passwordValue };
-        if (sel === '[data-smoothr="login"]') return loginTrigger;
+        if (sel === '[data-smoothr="sign-in"]' || sel === '[data-smoothr="login"]') return loginTrigger;
         return null;
       }),
     };
@@ -142,7 +142,7 @@ describe("login form", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) => {
-        if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
+        if (sel.includes('[data-smoothr="sign-in"]') || sel.includes('[data-smoothr="login"]')) return [loginTrigger];
         if (sel.includes('[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
@@ -205,7 +205,7 @@ describe('login session-sync', () => {
     document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
     document.addEventListener('smoothr:auth:close', () => order.push('close'));
     document.addEventListener('smoothr:auth:error', () => order.push('error'));
-    document.querySelector('[data-smoothr="login"]').click();
+    document.querySelector('[data-smoothr="sign-in"], [data-smoothr="login"]').click();
     await flushPromises();
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://broker.example/api/auth/session-sync',
@@ -224,7 +224,7 @@ describe('login session-sync', () => {
     document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
     document.addEventListener('smoothr:auth:close', () => order.push('close'));
     document.addEventListener('smoothr:auth:error', () => order.push('error'));
-    document.querySelector('[data-smoothr="login"]').click();
+    document.querySelector('[data-smoothr="sign-in"], [data-smoothr="login"]').click();
     await flushPromises();
     expect(order).toEqual(['error']);
   });

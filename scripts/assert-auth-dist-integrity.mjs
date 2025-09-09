@@ -24,12 +24,12 @@ const checks = [
     msg: 'missing [data-smoothr="sign-up"] marker',
   },
   {
-    ok: content.includes('[data-smoothr="password-reset"]'),
-    msg: 'missing [data-smoothr="password-reset"] marker',
+    ok: content.includes('[data-smoothr="request-password-reset"]') || content.includes('[data-smoothr="password-reset"]'),
+    msg: 'missing [data-smoothr="request-password-reset"] marker',
   },
   {
-    ok: content.includes('[data-smoothr="password-reset-confirm"]'),
-    msg: 'missing [data-smoothr="password-reset-confirm"] marker',
+    ok: content.includes('[data-smoothr="submit-reset-password"]') || content.includes('[data-smoothr="password-reset-confirm"]'),
+    msg: 'missing [data-smoothr="submit-reset-password"] marker',
   },
   { ok: content.includes('keydown'), msg: 'missing keydown handler' },
   { ok: content.includes('Enter'), msg: 'missing Enter key handler' },

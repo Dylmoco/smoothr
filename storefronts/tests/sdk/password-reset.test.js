@@ -90,7 +90,7 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
   // Ensure direct binding is attached
   auth.bindAuthElements(container);
 
-  const trigger = container.querySelector('[data-smoothr="password-reset"]');
+  const trigger = container.querySelector('[data-smoothr="request-password-reset"], [data-smoothr="password-reset"]');
   trigger.click();
   await flushPromises();
 
@@ -206,7 +206,7 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
 
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  const btn = document.querySelector('[data-smoothr="password-reset-confirm"]');
+  const btn = document.querySelector('[data-smoothr="submit-reset-password"], [data-smoothr="password-reset-confirm"]');
   btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
   await new Promise((r) => setTimeout(r, 0));
