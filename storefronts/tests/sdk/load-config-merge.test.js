@@ -20,13 +20,23 @@ beforeEach(() => {
   vi.resetModules();
   vi.stubEnv('NODE_ENV', 'production');
 
-  const maybeSingle = vi.fn(async () => ({
-    data: { api_base: 'https://example.com', foo: 'bar' },
-    error: null,
-  }));
-  const eq = vi.fn(() => ({ maybeSingle }));
-  const select = vi.fn(() => ({ eq }));
-  from = vi.fn(() => ({ select }));
+  from = vi.fn((table) => {
+    const maybeSingle = vi.fn(async () => ({
+      data:
+        table === 'v_public_store'
+          ? {
+              api_base: 'https://example.com',
+              foo: 'bar',
+              sign_in_redirect_url: 'https://example.com/after',
+              sign_out_redirect_url: 'https://example.com/out',
+            }
+          : null,
+      error: null,
+    }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    return { select };
+  });
   supabase = { from };
 
   global.window = {
