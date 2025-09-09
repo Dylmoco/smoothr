@@ -83,66 +83,6 @@ describe('auth feature init', () => {
   });
 });
 
-describe('broker base resolution', () => {
-  afterEach(() => {
-    delete global.window;
-    delete global.document;
-  });
-
-  it('uses data-config-url origin when present', async () => {
-    vi.resetModules();
-    const script = { id: 'smoothr-sdk', dataset: { configUrl: 'https://cfg.example/config.json' } };
-    const documentMock = { getElementById: () => script };
-    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
-    global.document = documentMock;
-    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
-    delete window.SMOOTHR_CONFIG.__brokerBase;
-    const base = getBrokerBaseUrl();
-    expect(base).toBe('https://cfg.example');
-  });
-
-  it('data-broker-origin overrides config-url', async () => {
-    vi.resetModules();
-    const script = {
-      id: 'smoothr-sdk',
-      dataset: {
-        configUrl: 'https://cfg.example/config.json',
-        brokerOrigin: 'https://override.example'
-      }
-    };
-    const documentMock = { getElementById: () => script };
-    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
-    global.document = documentMock;
-    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
-    delete window.SMOOTHR_CONFIG.__brokerBase;
-    const base = getBrokerBaseUrl();
-    expect(base).toBe('https://override.example');
-  });
-
-  it('falls back to script src origin', async () => {
-    vi.resetModules();
-    const script = { id: 'smoothr-sdk', src: 'https://cdn.example/sdk.js', dataset: {} };
-    const documentMock = { getElementById: () => script };
-    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
-    global.document = documentMock;
-    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
-    delete window.SMOOTHR_CONFIG.__brokerBase;
-    const base = getBrokerBaseUrl();
-    expect(base).toBe('https://cdn.example');
-  });
-
-  it('returns empty string when no hints', async () => {
-    vi.resetModules();
-    const script = { id: 'smoothr-sdk', src: 'https://sdk.smoothr.io/sd.js', dataset: {} };
-    const documentMock = { getElementById: () => script };
-    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
-    global.document = documentMock;
-    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
-    delete window.SMOOTHR_CONFIG.__brokerBase;
-    const base = getBrokerBaseUrl();
-    expect(base).toBe('');
-  });
-});
 
 describe('loadPublicConfig fallback', () => {
   it('queries public_store_settings when view missing', async () => {

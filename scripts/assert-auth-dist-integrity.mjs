@@ -57,6 +57,14 @@ const checks = [
     ok: content.includes('method="POST"') || content.includes('.method="POST"'),
     msg: 'missing form POST marker',
   },
+  {
+    ok: content.includes('__brokerBase'),
+    msg: 'missing __brokerBase marker',
+  },
+  {
+    ok: content.includes('getBrokerBaseUrl'),
+    msg: 'missing getBrokerBaseUrl marker',
+  },
 ];
 
 for (const c of checks) {
