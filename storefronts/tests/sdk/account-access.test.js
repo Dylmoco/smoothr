@@ -58,10 +58,13 @@ describe("account access trigger", () => {
         if (evt === "click") clickHandler = cb;
       }),
       querySelectorAll: vi.fn((selector) => {
-        if (selector === '[data-smoothr="login"]') return [];
+        if (selector.includes('[data-smoothr="login"]') || selector.includes('[data-smoothr="sign-in"]')) return [];
         if (
-          selector ===
-          '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]'
+          selector.includes('[data-smoothr="sign-up"]') ||
+          selector.includes('[data-smoothr="login-google"]') ||
+          selector.includes('[data-smoothr="login-apple"]') ||
+          selector.includes('[data-smoothr="password-reset"]') ||
+          selector.includes('[data-smoothr="request-password-reset"]')
         )
           return [];
         if (selector === '[data-smoothr="auth-form"]') return [];

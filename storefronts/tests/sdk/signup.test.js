@@ -54,7 +54,7 @@ it('routes dynamic sign-up DIV click via capture fallback when auth-form is DIV'
   div.innerHTML = `
     <input data-smoothr="email" value="new@example.com" />
     <input data-smoothr="password" value="LongerPass9" />
-    <input data-smoothr="password-confirm" value="LongerPass9" />
+    <input data-smoothr="confirm-password" value="LongerPass9" />
   `;
   document.body.appendChild(div);
   const signup = document.createElement('div');
@@ -82,7 +82,7 @@ it('does not double-handle sign-up clicks (direct binding vs capture fallback)',
   container.innerHTML = `
     <input data-smoothr="email" value="unique@example.com" />
     <input data-smoothr="password" value="Password123" />
-    <input data-smoothr="password-confirm" value="Password123" />
+    <input data-smoothr="confirm-password" value="Password123" />
     <div data-smoothr="sign-up"></div>
   `;
   document.body.appendChild(container);
@@ -125,7 +125,7 @@ describe("signup flow", () => {
         if (selector === '[data-smoothr="email"]') return { value: emailValue };
         if (selector === '[data-smoothr="password"]')
           return { value: passwordValue };
-        if (selector === '[data-smoothr="password-confirm"]')
+        if (selector === '[data-smoothr="confirm-password"]' || selector === '[data-smoothr="password-confirm"]')
           return { value: confirmValue };
         if (selector === '[data-smoothr="sign-up"]') return btn;
         return null;
@@ -232,7 +232,7 @@ describe('session-sync', () => {
     setupSupabaseMock();
     signUpMock.mockResolvedValue({ data: { user: { id: 'u' } }, error: null });
     getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
-    const dom = new JSDOM('<!doctype html><html><body><div data-smoothr="auth-form"><input data-smoothr="email" value="a@b.com" /><input data-smoothr="password" value="Password1" /><input data-smoothr="password-confirm" value="Password1" /><button data-smoothr="sign-up"></button></div></body></html>', { url: 'https://example.com' });
+    const dom = new JSDOM('<!doctype html><html><body><div data-smoothr="auth-form"><input data-smoothr="email" value="a@b.com" /><input data-smoothr="password" value="Password1" /><input data-smoothr="confirm-password" value="Password1" /><button data-smoothr="sign-up"></button></div></body></html>', { url: 'https://example.com' });
     global.window = dom.window;
     global.document = dom.window.document;
     global.CustomEvent = dom.window.CustomEvent;

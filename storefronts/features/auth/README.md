@@ -50,12 +50,12 @@ Markup example:
 <form data-smoothr="auth-form">
   <input type="email" data-smoothr="email" />
   <input type="password" data-smoothr="password" />
-  <div data-smoothr="login">Sign In</div>
+  <div data-smoothr="sign-in">Sign In</div>
 </form>
 <form data-smoothr="auth-form">
   <input type="email" data-smoothr="email" />
   <input type="password" data-smoothr="password" />
-  <input type="password" data-smoothr="password-confirm" />
+  <input type="password" data-smoothr="confirm-password" />
   <div data-smoothr-password-strength></div>
   <div data-smoothr-error hidden></div>
   <div data-smoothr-success hidden></div>
@@ -71,7 +71,7 @@ temporarily replaced with `Loading...`. Style this state using the
 `data-original-text` attribute applied during the request:
 
 ```html
-<div data-smoothr="login">Sign In</div>
+<div data-smoothr="sign-in">Sign In</div>
 <style>
   [data-smoothr][data-original-text] {
     opacity: 0.5;
@@ -94,10 +94,10 @@ required inputs (for example fields marked `[data-smoothr="email"]` and
 automatically attaches handlers on page load and uses a `MutationObserver` so
 elements added later are also bound.
 
-### `[data-smoothr="login"]`
+### `[data-smoothr="sign-in"]`
 
 ```html
-<div data-smoothr="login">Sign In</div>
+<div data-smoothr="sign-in">Sign In</div>
 ```
 
 ### `[data-smoothr="sign-up"]`
@@ -124,27 +124,29 @@ elements added later are also bound.
 <div data-smoothr="sign-out">Sign Out</div>
 ```
 
-### `[data-smoothr="password-reset"]`
+### `[data-smoothr="request-password-reset"]`
 
 ```html
-<div data-smoothr="password-reset">Send reset link</div>
+<div data-smoothr="request-password-reset">Send reset link</div>
 ```
 
-### `[data-smoothr="password-reset-confirm"]`
+### `[data-smoothr="submit-reset-password"]`
 
 ```html
-<form data-smoothr="auth-form">
-  <input type="password" data-smoothr="password" />
-  <input type="password" data-smoothr="password-confirm" />
-  <div data-smoothr="password-reset-confirm">Set new password</div>
-</form>
+<div data-smoothr="reset-password">
+  <form data-smoothr="auth-form">
+    <input type="password" data-smoothr="password" />
+    <input type="password" data-smoothr="confirm-password" />
+    <div data-smoothr="submit-reset-password">Set new password</div>
+  </form>
+</div>
 ```
 
 ## Signup
 
 Attach `[data-smoothr="sign-up"]` to an element inside a
 `[data-smoothr="auth-form"]` containing `[data-smoothr="email"]`,
-`[data-smoothr="password"]` and a matching `[data-smoothr="password-confirm"]`
+`[data-smoothr="password"]` and a matching `[data-smoothr="confirm-password"]`
 input. A strength meter element labelled `[data-smoothr-password-strength]` is
 optional but recommended. The SDK
 validates email format, requires a strong password and ensures both password
@@ -196,10 +198,12 @@ completed before relying on it.
 ## Password reset
 
 To send password reset emails the SDK provides a `requestPasswordReset` helper
-and binds triggers marked `[data-smoothr="password-reset"]` inside a form
+and binds triggers marked `[data-smoothr="request-password-reset"]` inside a form
 labelled `[data-smoothr="auth-form"]`. The reset link in
 the email must point to a page that calls `initPasswordResetConfirmation()` so
-the user can set a new password.
+the user can set a new password. The confirmation page can be wrapped in
+an element marked `[data-smoothr="reset-password"]` to scope reset-specific
+behaviour.
 
 Set `NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL` in your `.env` file to
 the URL of that confirmation page:
@@ -213,18 +217,20 @@ NEXT_PUBLIC_SUPABASE_PASSWORD_RESET_REDIRECT_URL=https://your-site.com/reset
 ```html
 <form data-smoothr="auth-form">
   <input type="email" data-smoothr="email" />
-  <div data-smoothr="password-reset">Send reset link</div>
+  <div data-smoothr="request-password-reset">Send reset link</div>
 </form>
 ```
 
 ### Confirmation page markup
 
 ```html
-<form data-smoothr="auth-form">
-  <input type="password" data-smoothr="password" />
-  <input type="password" data-smoothr="password-confirm" />
-  <div data-smoothr="password-reset-confirm">Set new password</div>
-</form>
+<div data-smoothr="reset-password">
+  <form data-smoothr="auth-form">
+    <input type="password" data-smoothr="password" />
+    <input type="password" data-smoothr="confirm-password" />
+    <div data-smoothr="submit-reset-password">Set new password</div>
+  </form>
+</div>
 <script type="module">
   import { initAuth, initPasswordResetConfirmation } from './auth/index.js';
   initAuth();
@@ -236,3 +242,18 @@ Submitting the request form validates the email and shows an inline success or
 error message. On the confirmation page the password strength meter updates as
 the user types. The new password must be strong and match the confirmation
 field. After a successful update the page redirects after a short delay.
+
+## Migration Notes
+
+The SDK still accepts legacy attribute names for backward compatibility, but
+new integrations should use the updated forms:
+
+| Legacy | Preferred |
+| --- | --- |
+| `data-smoothr="login"` | `data-smoothr="sign-in"` |
+| `data-smoothr="password-reset"` | `data-smoothr="request-password-reset"` |
+| `data-smoothr="password-reset-confirm"` | `data-smoothr="submit-reset-password"` |
+| `data-smoothr="password-confirm"` | `data-smoothr="confirm-password"` |
+
+The reset confirmation UI may also be wrapped in
+`data-smoothr="reset-password"` to scope styles and behaviour.

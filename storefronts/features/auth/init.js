@@ -7,7 +7,10 @@ import {
   AUTH_CONTAINER_SELECTOR,
   ATTR_EMAIL,
   ATTR_PASSWORD,
-  ATTR_PASSWORD_CONFIRM,
+  ATTR_SIGNIN,
+  ATTR_REQUEST_RESET,
+  ATTR_SUBMIT_RESET,
+  ATTR_CONFIRM_PASSWORD,
   ATTR_SIGNUP,
 } from './constants.js';
 import { validatePasswordsOrThrow } from './validators.js';
@@ -551,7 +554,7 @@ function extractCredsFrom(container) {
   const email = container?.querySelector(ATTR_EMAIL)?.value?.trim() || '';
   const password = container?.querySelector(ATTR_PASSWORD)?.value || '';
   const confirm =
-    container?.querySelector(ATTR_PASSWORD_CONFIRM)?.value || '';
+    container?.querySelector(ATTR_CONFIRM_PASSWORD)?.value || '';
   return { email, password, confirm };
 }
 
@@ -565,10 +568,10 @@ export function bindAuthElements(root = globalThis.document) {
       _bound.add(el);
     }
   };
-  root.querySelectorAll('[data-smoothr="login"]').forEach(el => attach(el, clickHandler));
-  root.querySelectorAll('[data-smoothr="password-reset-confirm"]').forEach(el => attach(el, clickHandler));
+  root.querySelectorAll(ATTR_SIGNIN).forEach(el => attach(el, clickHandler));
+  root.querySelectorAll(ATTR_SUBMIT_RESET).forEach(el => attach(el, clickHandler));
   root
-    .querySelectorAll('[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]')
+    .querySelectorAll(`${ATTR_SIGNUP}, [data-smoothr="login-google"], [data-smoothr="login-apple"], ${ATTR_REQUEST_RESET}`)
     .forEach(el => {
       const action = el.getAttribute('data-smoothr');
       const handler =
@@ -882,7 +885,7 @@ export async function init(options = {}) {
       const el =
         e?.target?.closest?.('[data-smoothr]') ||
         d?.querySelectorAll?.(
-          '[data-smoothr="login"], [data-smoothr="sign-up"], [data-smoothr="password-reset"], [data-smoothr="password-reset-confirm"], [data-smoothr="login-google"], [data-smoothr="login-apple"]'
+          `${ATTR_SIGNIN}, ${ATTR_SIGNUP}, ${ATTR_REQUEST_RESET}, ${ATTR_SUBMIT_RESET}, [data-smoothr="login-google"], [data-smoothr="login-apple"]`
         )?.[0];
       const container = resolveAuthContainer(el);
       if (!container) {
@@ -893,7 +896,7 @@ export async function init(options = {}) {
       const testClient = (typeof window !== 'undefined' && window.__SMOOTHR_TEST_SUPABASE__) || null;
       const c = testClient || await resolveSupabase();
       if (!action || !c?.auth) return;
-      if (action === 'login') {
+      if (action === 'login' || action === 'sign-in') {
         const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
         const pwd = container?.querySelector('[data-smoothr="password"]')?.value ?? '';
         if (!emailRE.test(email)) return;
@@ -944,7 +947,7 @@ export async function init(options = {}) {
         }
         return;
       }
-      if (action === 'password-reset') {
+      if (action === 'password-reset' || action === 'request-password-reset') {
         const email = container?.querySelector('[data-smoothr="email"]')?.value ?? '';
         const successEl = container?.querySelector('[data-smoothr-success]');
         const errorEl = container?.querySelector('[data-smoothr-error]');
@@ -970,7 +973,7 @@ export async function init(options = {}) {
         }
         return;
       }
-      if (action === 'password-reset-confirm') {
+      if (action === 'password-reset-confirm' || action === 'submit-reset-password') {
         const { password, confirm } = extractCredsFrom(container);
         clearAuthError(container);
         try {
@@ -1177,15 +1180,15 @@ export async function init(options = {}) {
       } catch {}
 
       const hasSignUp       = !!container.querySelector(ATTR_SIGNUP);
-      const hasResetConfirm = !!container.querySelector('[data-smoothr="password-reset-confirm"]');
-      const hasLogin        = !!container.querySelector('[data-smoothr="login"]');
-      const hasResetRequest = !!container.querySelector('[data-smoothr="password-reset"]');
+      const hasResetConfirm = !!container.querySelector(ATTR_SUBMIT_RESET);
+      const hasLogin        = !!container.querySelector(ATTR_SIGNIN);
+      const hasResetRequest = !!container.querySelector(ATTR_REQUEST_RESET);
       // Priority (locked by tests): sign-up → reset-confirm → login → reset
       const target =
         (hasSignUp       && container.querySelector(ATTR_SIGNUP)) ||
-        (hasResetConfirm && container.querySelector('[data-smoothr="password-reset-confirm"]')) ||
-        (hasLogin        && container.querySelector('[data-smoothr="login"]')) ||
-        (hasResetRequest && container.querySelector('[data-smoothr="password-reset"]'));
+        (hasResetConfirm && container.querySelector(ATTR_SUBMIT_RESET)) ||
+        (hasLogin        && container.querySelector(ATTR_SIGNIN)) ||
+        (hasResetRequest && container.querySelector(ATTR_REQUEST_RESET));
 
       if (!target) {
         emitAuth?.('smoothr:auth:error', { code: 'NO_ACTION', message: 'No auth action available in form' });
@@ -1226,10 +1229,10 @@ export async function init(options = {}) {
 
     // Capture click fallback: ensure dynamic action controls route even if per-node listener missed
     const ACTION_SELECTORS = [
-      '[data-smoothr="login"]',
+      ATTR_SIGNIN,
       ATTR_SIGNUP,
-      '[data-smoothr="password-reset"]',
-      '[data-smoothr="password-reset-confirm"]',
+      ATTR_REQUEST_RESET,
+      ATTR_SUBMIT_RESET,
     ].join(',');
     const docActionClickFallback = (e) => {
       try {
@@ -1346,7 +1349,7 @@ try {
     if (!e.target?.closest) return;
     const form = e.target.closest('[data-smoothr="auth-form"]');
     if (!form) return;
-    if (e.target.matches('[data-smoothr="password"], [data-smoothr="password-confirm"]')) {
+    if (e.target.matches(ATTR_PASSWORD) || e.target.matches(ATTR_CONFIRM_PASSWORD)) {
       clearAuthError(form);
     }
   }, { capture: true });

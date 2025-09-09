@@ -66,7 +66,7 @@ async function setupDom(wrapperTag, { mismatch } = {}) {
   wrapper.innerHTML = `
     <input data-smoothr="email" value="new@example.com" />
     <input data-smoothr="password" value="${pwd}" />
-    <input data-smoothr="password-confirm" value="${confirm}" />
+    <input data-smoothr="confirm-password" value="${confirm}" />
     <div data-smoothr="sign-up" tabindex="0"></div>
   `;
   document.body.appendChild(wrapper);

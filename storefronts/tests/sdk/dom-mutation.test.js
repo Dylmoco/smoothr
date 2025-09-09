@@ -10,9 +10,9 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
-const LOGIN_SELECTOR = '[data-smoothr="login"]';
+const LOGIN_SELECTOR = '[data-smoothr="sign-in"], [data-smoothr="login"]';
 const OTHER_SELECTOR =
-  '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
+  '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="request-password-reset"], [data-smoothr="password-reset"]';
 const ACCOUNT_ACCESS_SELECTOR = '[data-smoothr="account-access"]';
 
 function stubSuccessfulSessionSync() {
@@ -80,18 +80,25 @@ describe("dynamic DOM bindings", () => {
       }),
       querySelectorAll: vi.fn((selector) => {
         if (selector.includes(LOGIN_SELECTOR)) {
-          return elements.filter((el) => el.dataset?.smoothr === "login");
+          return elements.filter((el) =>
+            ["login", "sign-in"].includes(el.dataset?.smoothr)
+          );
         }
         if (
           selector.includes('[data-smoothr="sign-up"]') ||
           selector.includes('[data-smoothr="login-google"]') ||
           selector.includes('[data-smoothr="login-apple"]') ||
-          selector.includes('[data-smoothr="password-reset"]')
+          selector.includes('[data-smoothr="password-reset"]') ||
+          selector.includes('[data-smoothr="request-password-reset"]')
         ) {
           return elements.filter((el) =>
-            ["sign-up", "login-google", "login-apple", "password-reset"].includes(
-              el.dataset?.smoothr
-            )
+            [
+              "sign-up",
+              "login-google",
+              "login-apple",
+              "password-reset",
+              "request-password-reset",
+            ].includes(el.dataset?.smoothr)
           );
         }
         if (selector.includes(ACCOUNT_ACCESS_SELECTOR)) {
@@ -139,7 +146,7 @@ describe("dynamic DOM bindings", () => {
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === '[data-smoothr="password"]') return passwordInput;
-        if (sel === '[data-smoothr="login"]') return btn;
+        if (sel === '[data-smoothr="sign-in"]' || sel === '[data-smoothr="login"]') return btn;
         return null;
       }),
     };
@@ -191,7 +198,7 @@ describe("dynamic DOM bindings", () => {
       querySelector: vi.fn((sel) => {
         if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === '[data-smoothr="password"]') return passwordInput;
-        if (sel === '[data-smoothr="password-confirm"]')
+        if (sel === '[data-smoothr="confirm-password"]' || sel === '[data-smoothr="password-confirm"]')
           return confirmInput;
         if (sel === '[data-smoothr="sign-up"]') return btn;
         return null;
@@ -330,7 +337,7 @@ describe("dynamic DOM bindings", () => {
         if (sel === '[data-smoothr="email"]') return emailInput;
         if (sel === "[data-smoothr-success]") return successEl;
         if (sel === "[data-smoothr-error]") return errorEl;
-        if (sel === '[data-smoothr="password-reset"]') return btn;
+        if (sel === '[data-smoothr="request-password-reset"]' || sel === '[data-smoothr="password-reset"]') return btn;
         return null;
       }),
     };

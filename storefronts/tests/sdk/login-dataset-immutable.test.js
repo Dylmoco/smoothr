@@ -55,7 +55,7 @@ describe("login with immutable dataset", () => {
           return { value: emailValue };
         if (sel === '[data-smoothr="password"]')
           return { value: passwordValue };
-        if (sel === '[data-smoothr="login"]') return loginTrigger;
+        if (sel === '[data-smoothr="sign-in"]' || sel === '[data-smoothr="login"]') return loginTrigger;
         return null;
       }),
     };
@@ -83,7 +83,7 @@ describe("login with immutable dataset", () => {
         if (evt === "DOMContentLoaded") cb();
       }),
       querySelectorAll: vi.fn((sel) => {
-        if (sel.includes('[data-smoothr="login"]')) return [loginTrigger];
+        if (sel.includes('[data-smoothr="sign-in"]') || sel.includes('[data-smoothr="login"]')) return [loginTrigger];
         if (sel.includes('[data-smoothr="auth-form"]')) return [form];
         return [];
       }),
