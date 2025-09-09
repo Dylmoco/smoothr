@@ -1,5 +1,6 @@
 // [Codex Fix] Updated for ESM/Vitest/Node 20 compatibility
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { JSDOM } from "jsdom";
 import { createClientMock as createClientMockUtil, currentSupabaseMocks } from "../utils/supabase-mock";
 
 var signInMock;
@@ -177,5 +178,54 @@ describe("login form", () => {
     expect(global.window.Smoothr.auth.user.value).toEqual(user);
     await global.window.Smoothr.auth.client.auth.getSession();
     expect(getSessionMock).toHaveBeenCalled();
+  });
+});
+
+describe('login session-sync', () => {
+  async function setup() {
+    vi.resetModules();
+    const client = createClientMockUtil();
+    ({ signInMock, getSessionMock } = currentSupabaseMocks());
+    signInMock.mockResolvedValue({ data: { user: { id: 'u' } }, error: null });
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+    const dom = new JSDOM('<!doctype html><html><body><div data-smoothr="auth-form"><input data-smoothr="email" value="a@b.com"/><input data-smoothr="password" value="Password1"/><button data-smoothr="login"></button></div></body></html>', { url: 'https://example.com' });
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.CustomEvent = dom.window.CustomEvent;
+    window.SMOOTHR_CONFIG = { storeId: 'store_test', __brokerBase: 'https://broker.example' };
+    const mod = await import('../../features/auth/index.js');
+    await mod.init({ supabase: client });
+  }
+
+  it('posts to broker with bearer token and emits success events', async () => {
+    await setup();
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    window.fetch = global.fetch = fetchSpy;
+    const order = [];
+    document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
+    document.addEventListener('smoothr:auth:close', () => order.push('close'));
+    document.addEventListener('smoothr:auth:error', () => order.push('error'));
+    document.querySelector('[data-smoothr="login"]').click();
+    await flushPromises();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://broker.example/api/auth/session-sync',
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: 'Bearer tok' })
+      })
+    );
+    expect(order).toEqual(['signedin', 'close']);
+  });
+
+  it('emits auth:error when session-sync fails', async () => {
+    await setup();
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    window.fetch = global.fetch = fetchSpy;
+    const order = [];
+    document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
+    document.addEventListener('smoothr:auth:close', () => order.push('close'));
+    document.addEventListener('smoothr:auth:error', () => order.push('error'));
+    document.querySelector('[data-smoothr="login"]').click();
+    await flushPromises();
+    expect(order).toEqual(['error']);
   });
 });

@@ -228,24 +228,22 @@ if (!scriptEl || !storeId) {
         });
       }
     } catch {}
-    let brokerBase =
-      scriptEl?.dataset?.brokerOrigin || window.SMOOTHR_CONFIG?.broker_origin || null;
-    if (!brokerBase) {
-      const cfgAttr = scriptEl?.dataset?.configUrl;
-      if (cfgAttr) {
-        try { brokerBase = new URL(cfgAttr).origin; } catch {}
-      }
+    let brokerBase = null;
+    const cfgAttr = scriptEl?.dataset?.configUrl;
+    if (cfgAttr) {
+      try { brokerBase = new URL(cfgAttr).origin; } catch {}
     }
+    const attrOverride = scriptEl?.dataset?.brokerOrigin || window.SMOOTHR_CONFIG?.broker_origin;
+    if (attrOverride) brokerBase = attrOverride;
     if (!brokerBase && scriptEl?.src) {
       try {
         const u = new URL(scriptEl.src);
         if (u.hostname !== 'sdk.smoothr.io') brokerBase = u.origin;
       } catch {}
     }
-    if (!brokerBase) brokerBase = 'https://lpuqrzvokroazwlricgn.supabase.co';
     window.SMOOTHR_CONFIG = {
       ...(window.SMOOTHR_CONFIG || {}),
-      __brokerBase: brokerBase
+      __brokerBase: brokerBase || ''
     };
     __configReadyResolve?.(true);
 

@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, expect, vi } from 'vitest';
+import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 
 let fromMock;
 let supabaseMock;
@@ -80,6 +80,94 @@ describe('auth feature init', () => {
     expect(captureCall?.[2]).toMatchObject({ capture: true, passive: false });
     const bubbleCall = clickCalls.find(([, , opts]) => opts === false);
     expect(bubbleCall).toBeTruthy();
+  });
+});
+
+describe('broker base resolution', () => {
+  afterEach(() => {
+    delete global.window;
+    delete global.document;
+  });
+
+  it('uses data-config-url origin when present', async () => {
+    vi.resetModules();
+    const script = { id: 'smoothr-sdk', dataset: { configUrl: 'https://cfg.example/config.json' } };
+    const documentMock = { getElementById: () => script };
+    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
+    global.document = documentMock;
+    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
+    delete window.SMOOTHR_CONFIG.__brokerBase;
+    const base = getBrokerBaseUrl();
+    expect(base).toBe('https://cfg.example');
+  });
+
+  it('data-broker-origin overrides config-url', async () => {
+    vi.resetModules();
+    const script = {
+      id: 'smoothr-sdk',
+      dataset: {
+        configUrl: 'https://cfg.example/config.json',
+        brokerOrigin: 'https://override.example'
+      }
+    };
+    const documentMock = { getElementById: () => script };
+    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
+    global.document = documentMock;
+    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
+    delete window.SMOOTHR_CONFIG.__brokerBase;
+    const base = getBrokerBaseUrl();
+    expect(base).toBe('https://override.example');
+  });
+
+  it('falls back to script src origin', async () => {
+    vi.resetModules();
+    const script = { id: 'smoothr-sdk', src: 'https://cdn.example/sdk.js', dataset: {} };
+    const documentMock = { getElementById: () => script };
+    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
+    global.document = documentMock;
+    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
+    delete window.SMOOTHR_CONFIG.__brokerBase;
+    const base = getBrokerBaseUrl();
+    expect(base).toBe('https://cdn.example');
+  });
+
+  it('returns empty string when no hints', async () => {
+    vi.resetModules();
+    const script = { id: 'smoothr-sdk', src: 'https://sdk.smoothr.io/sd.js', dataset: {} };
+    const documentMock = { getElementById: () => script };
+    global.window = { SMOOTHR_CONFIG: {}, document: documentMock };
+    global.document = documentMock;
+    const { getBrokerBaseUrl } = await import('../../features/auth/init.js');
+    delete window.SMOOTHR_CONFIG.__brokerBase;
+    const base = getBrokerBaseUrl();
+    expect(base).toBe('');
+  });
+});
+
+describe('loadPublicConfig fallback', () => {
+  it('queries public_store_settings when view missing', async () => {
+    vi.resetModules();
+    const responses = {
+      v_public_store: { data: null, error: null },
+      public_store_settings: {
+        data: { sign_in_redirect_url: '/from-settings', sign_out_redirect_url: '/out' },
+        error: null
+      }
+    };
+    const from = vi.fn((table) => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => Promise.resolve(responses[table])
+        })
+      })
+    }));
+    const supabase = { from };
+    const { loadPublicConfig } = await import('../../features/config/sdkConfig.js');
+    const cfg = await loadPublicConfig('1', supabase);
+    expect(from).toHaveBeenCalledWith('v_public_store');
+    expect(from).toHaveBeenCalledWith('public_store_settings');
+    expect(cfg.sign_in_redirect_url).toBe('/from-settings');
+    expect(cfg.sign_out_redirect_url).toBe('/out');
   });
 });
 

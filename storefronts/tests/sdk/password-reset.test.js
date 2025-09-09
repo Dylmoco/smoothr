@@ -199,7 +199,7 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
       <div data-smoothr="auth-error" style="display:none"></div>
     </form>
   `;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test' };
+  window.SMOOTHR_CONFIG = { store_id: 'store_test', __brokerBase: 'https://broker.example' };
   window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
 
   const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function () {});
@@ -212,6 +212,8 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
   await new Promise((r) => setTimeout(r, 0));
 
   expect(submitSpy).toHaveBeenCalledTimes(1);
+  const forms = document.querySelectorAll('form');
+  expect(forms[1]?.action).toBe('https://broker.example/api/auth/session-sync');
   submitSpy.mockRestore();
 });
 
