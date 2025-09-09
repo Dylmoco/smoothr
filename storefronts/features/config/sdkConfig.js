@@ -16,29 +16,46 @@ export async function loadPublicConfig(storeId, supabase) {
       .eq('store_id', storeId)
       .maybeSingle();
 
+    const settings = {
+      public_settings: {},
+      active_payment_gateway: null,
+      sign_in_redirect_url: null,
+      sign_out_redirect_url: null,
+      oauth_popup_enabled: false
+    };
+
     if (error || !data) {
       warn('Store settings lookup failed:', {
         status: error?.status,
         code: error?.code,
         message: error?.message,
       });
-      return {
-        public_settings: {},
-        active_payment_gateway: null,
-        sign_in_redirect_url: null,
-        sign_out_redirect_url: null,
-        oauth_popup_enabled: false
-      };
+    } else {
+      Object.assign(settings, {
+        ...data,
+        public_settings: data.public_settings || {},
+        active_payment_gateway: data.active_payment_gateway ?? null,
+        sign_in_redirect_url: data?.sign_in_redirect_url ?? null,
+        sign_out_redirect_url: data?.sign_out_redirect_url ?? null,
+        oauth_popup_enabled: data?.oauth_popup_enabled ?? false
+      });
     }
 
-    const settings = {
-      ...data,
-      public_settings: data.public_settings || {},
-      active_payment_gateway: data.active_payment_gateway ?? null,
-      sign_in_redirect_url: data?.sign_in_redirect_url ?? null,
-      sign_out_redirect_url: data?.sign_out_redirect_url ?? null,
-      oauth_popup_enabled: data?.oauth_popup_enabled ?? false
-    };
+    if (!settings.sign_in_redirect_url || !settings.sign_out_redirect_url) {
+      try {
+        const { data: fb } = await supabase
+          .from('public_store_settings')
+          .select('sign_in_redirect_url,sign_out_redirect_url')
+          .eq('store_id', storeId)
+          .maybeSingle();
+        if (fb) {
+          if (!settings.sign_in_redirect_url)
+            settings.sign_in_redirect_url = fb.sign_in_redirect_url ?? null;
+          if (!settings.sign_out_redirect_url)
+            settings.sign_out_redirect_url = fb.sign_out_redirect_url ?? null;
+        }
+      } catch {}
+    }
 
     const cfg = getConfig();
     cfg.sign_in_redirect_url = settings.sign_in_redirect_url;

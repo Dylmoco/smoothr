@@ -173,30 +173,28 @@ function postViaHiddenIframe(url, fields = {}) {
 function getBrokerBase() {
   const w = globalThis.window || globalThis;
   const script = w.document?.getElementById('smoothr-sdk');
-  const attr = script?.dataset?.brokerOrigin;
-  if (attr) return attr;
-  const cfg = w.SMOOTHR_CONFIG || {};
-  if (cfg.broker_origin || cfg.brokerOrigin)
-    return cfg.broker_origin || cfg.brokerOrigin;
+  let base = null;
   const cfgUrl = script?.dataset?.configUrl;
   if (cfgUrl) {
-    try { return new URL(cfgUrl).origin; } catch {}
+    try { base = new URL(cfgUrl).origin; } catch {}
   }
-  if (script?.src) {
+  const attr = script?.dataset?.brokerOrigin || w.SMOOTHR_CONFIG?.broker_origin;
+  if (attr) base = attr;
+  if (!base && script?.src) {
     try {
       const o = new URL(script.src).origin;
-      if (o !== 'https://sdk.smoothr.io') return o;
+      if (o !== 'https://sdk.smoothr.io') base = o;
     } catch {}
   }
-  return 'https://lpuqrzvokroazwlricgn.supabase.co';
+  return base || '';
 }
 
 // Compute broker base URL without requiring customer markup changes.
 export function getBrokerBaseUrl() {
-  const cached = getCachedBrokerBase();
+  const w = globalThis.window || globalThis;
+  const cached = getCachedBrokerBase() || w.SMOOTHR_CONFIG?.__brokerBase;
   if (cached) return cached;
   const base = getBrokerBase();
-  const w = globalThis.window || globalThis;
   w.SMOOTHR_CONFIG = { ...(w.SMOOTHR_CONFIG || {}), __brokerBase: base };
   return base;
 }
@@ -458,7 +456,7 @@ export async function signInWithApple() {
 
 // when no redirect is configured, we currently use XHR (console may show CORS in dev)
 // optionally use hidden-iframe to avoid CORS noise entirely
-async function sessionSyncStayOnPage(payload) {
+async function sessionSyncStayOnPage({ store_id, access_token }) {
   const silent = !!(
     window.SMOOTHR_CONFIG &&
     window.SMOOTHR_CONFIG.auth &&
@@ -466,13 +464,16 @@ async function sessionSyncStayOnPage(payload) {
   );
   const url = `${getBrokerBaseUrl()}/api/auth/session-sync`;
   if (silent) {
-    await postViaHiddenIframe(url, payload);
+    await postViaHiddenIframe(url, { store_id, access_token });
     return { ok: true, json: async () => ({}) };
   }
   return fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${access_token}`,
+    },
+    body: JSON.stringify({ store_id }),
   });
 }
 
@@ -846,7 +847,6 @@ export async function init(options = {}) {
     // was: /[A-Z]/.test(p) && /[0-9]/.test(p) && p?.length >= 8
     const strong = p => /[0-9]/.test(p) && p?.length >= 8;
 
-    // Auto mode: if a sign-in redirect exists, use form POST + 303; otherwise XHR.
     const sessionSyncAndEmit = async (supa, userId, overrideUrl) => {
       try {
         const { data: sess } = await supa.auth.getSession();
@@ -854,48 +854,6 @@ export async function init(options = {}) {
         const storeId =
           w?.SMOOTHR_CONFIG?.storeId || w?.Smoothr?.config?.storeId || null;
         if (!token || !storeId) throw new Error('missing token or store');
-
-        const cfg = getConfig();
-        let redirectUrl = overrideUrl || cfg.sign_in_redirect_url || null;
-        if (!redirectUrl) {
-          try {
-            redirectUrl = await (typeof lookupRedirectUrl === 'function'
-              ? lookupRedirectUrl()
-              : null);
-            if (redirectUrl) cfg.sign_in_redirect_url = redirectUrl;
-          } catch {}
-        }
-        const shouldRedirect =
-          cfg.forceFormRedirect === true || !!redirectUrl;
-
-        if (shouldRedirect) {
-          log('sessionSync form redirect', { redirectUrl });
-          emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
-          emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-          const doc = w.document;
-          const form = doc?.createElement?.('form');
-          if (!form) return;
-          form.method = 'POST';
-          form.enctype = 'application/x-www-form-urlencoded';
-          form.action = `${getBrokerBaseUrl()}/api/auth/session-sync`;
-          form.style.display = 'none';
-          const mk = (name, value) => {
-            const input = doc?.createElement?.('input');
-            if (input) {
-              input.type = 'hidden';
-              input.name = name;
-              input.value = value || '';
-              form.appendChild(input);
-            }
-          };
-          mk('store_id', storeId);
-          mk('access_token', token);
-          try { doc?.body?.appendChild?.(form); } catch {}
-          try { form.submit(); } catch {}
-          return;
-        }
-
-        log('sessionSync xhr path', { redirectUrl });
         const resp = await sessionSyncStayOnPage({
           store_id: storeId,
           access_token: token,
@@ -904,18 +862,17 @@ export async function init(options = {}) {
         if (resp.ok && json?.ok) {
           emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
           emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-          const url =
-            overrideUrl || json.redirect_url || json.sign_in_redirect_url;
+          const url = overrideUrl || json.redirect_url || json.sign_in_redirect_url;
           if (url) {
             try { w.location?.assign?.(url); } catch {}
           }
-          return;
+          return true;
         }
-      } catch {}
-      emitAuth?.('smoothr:auth:signedin', { userId: userId || null });
-      emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-      if (overrideUrl) {
-        try { w.location?.assign?.(overrideUrl); } catch {}
+        emitAuth?.('smoothr:auth:error', { code: resp.status || 'SESSION_SYNC_FAILED' });
+        return false;
+      } catch (err) {
+        emitAuth?.('smoothr:auth:error', { code: err?.code || 'SESSION_SYNC_FAILED' });
+        return false;
       }
     };
 
@@ -1071,7 +1028,7 @@ export async function init(options = {}) {
           const formEl = w.document?.createElement?.('form');
           if (formEl) {
             formEl.method = 'POST';
-            formEl.action = '/api/auth/session-sync';
+            formEl.action = `${getBrokerBaseUrl()}/api/auth/session-sync`;
             const f1 = w.document.createElement('input');
             f1.type = 'hidden';
             f1.name = 'store_id';

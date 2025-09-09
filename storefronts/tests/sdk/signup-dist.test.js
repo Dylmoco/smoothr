@@ -25,12 +25,13 @@ beforeAll(async () => {
       signUp: vi
         .fn()
         .mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
+      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }),
     },
   };
 
   window.fetch = vi.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ redirect_url: "/" }),
+    json: async () => ({ ok: true, redirect_url: "/" }),
   });
 
   const distPath = path.join(repoRoot, "storefronts/dist/smoothr-sdk.js");
@@ -142,79 +143,44 @@ describe.each(["form", "div"])("signup dist (%s wrapper)", (wrapper) => {
   });
 });
 
-describe('sessionSync transport dist', () => {
+describe('session-sync dist', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     vi.clearAllMocks();
     window.__SMOOTHR_TEST_SUPABASE__.auth.getSession = vi
       .fn()
       .mockResolvedValue({ data: { session: { access_token: 'tok' } } });
+    window.SMOOTHR_CONFIG.__brokerBase = 'https://broker.example';
   });
 
-  it('uses form transport when redirect configured', async () => {
+  it('posts to broker and emits success events', async () => {
     const { trigger } = await setupDom('div');
-    window.SMOOTHR_CONFIG.sign_in_redirect_url = '/';
-    window.fetch = vi.fn();
+    window.fetch = global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
     const order = [];
     document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
     document.addEventListener('smoothr:auth:close', () => order.push('close'));
-    const submitSpy = vi
-      .spyOn(HTMLFormElement.prototype, 'submit')
-      .mockImplementation(() => order.push('submit'));
+    document.addEventListener('smoothr:auth:error', () => order.push('error'));
     trigger.click();
     await flush();
-    expect(window.fetch).not.toHaveBeenCalled();
-    const form = document.querySelector('form');
-    expect(form?.method).toBe('post');
-    expect(form?.enctype).toBe('application/x-www-form-urlencoded');
-    expect(form?.action.endsWith('/api/auth/session-sync')).toBe(true);
-    const storeInput = form?.querySelector('input[name="store_id"]');
-    const tokenInput = form?.querySelector('input[name="access_token"]');
-    expect(storeInput?.value).toBe('store');
-    expect(tokenInput?.value).toBe('tok');
-    expect(order).toEqual(['signedin', 'close', 'submit']);
-    submitSpy.mockRestore();
-  });
-
-  it('uses XHR when no redirect configured', async () => {
-    const { trigger } = await setupDom('div');
-    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
-    window.fetch = vi.fn((url) =>
-      Promise.resolve({
-        ok: true,
-        json: async () =>
-          String(url).includes('/api/auth/session-sync')
-            ? { ok: true }
-            : { sign_in_redirect_url: null, public_settings: {} }
+    expect(window.fetch).toHaveBeenCalledWith(
+      'https://broker.example/api/auth/session-sync',
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: 'Bearer tok' })
       })
     );
-    const initialHref = window.location.href;
-    const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit');
-    trigger.click();
-    await flush();
-    const sessionCalls = window.fetch.mock.calls.filter((c) =>
-      String(c[0]).includes('/api/auth/session-sync')
-    ).length;
-    expect(sessionCalls).toBe(1);
-    expect(submitSpy).not.toHaveBeenCalled();
-    expect(document.querySelector('form')).toBeNull();
-    expect(window.location.href).toBe(initialHref);
-    submitSpy.mockRestore();
+    expect(order).toEqual(['signedin', 'close']);
   });
 
-  it('override forces form transport', async () => {
+  it('emits auth:error when session-sync fails', async () => {
     const { trigger } = await setupDom('div');
-    window.SMOOTHR_CONFIG.sign_in_redirect_url = null;
-    window.SMOOTHR_CONFIG.forceFormRedirect = true;
-    window.fetch = vi.fn();
-    const submitSpy = vi
-      .spyOn(HTMLFormElement.prototype, 'submit')
-      .mockImplementation(() => {});
+    window.fetch = global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    const order = [];
+    document.addEventListener('smoothr:auth:signedin', () => order.push('signedin'));
+    document.addEventListener('smoothr:auth:close', () => order.push('close'));
+    document.addEventListener('smoothr:auth:error', () => order.push('error'));
     trigger.click();
     await flush();
-    expect(window.fetch).not.toHaveBeenCalled();
-    expect(submitSpy).toHaveBeenCalled();
-    submitSpy.mockRestore();
+    expect(order).toEqual(['error']);
   });
 });
 
