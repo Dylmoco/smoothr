@@ -15,6 +15,20 @@ const OTHER_SELECTOR =
   '[data-smoothr="sign-up"], [data-smoothr="login-google"], [data-smoothr="login-apple"], [data-smoothr="password-reset"]';
 const ACCOUNT_ACCESS_SELECTOR = '[data-smoothr="account-access"]';
 
+function stubSuccessfulSessionSync() {
+  global.window.SMOOTHR_CONFIG = {
+    ...(global.window.SMOOTHR_CONFIG || {}),
+    __brokerBase: 'https://sdk.smoothr.io'
+  };
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({ ok: true, redirect: null })
+  });
+  global.fetch = fetchMock;
+  global.window.fetch = fetchMock;
+}
+
 it('routes submit on reset-only form to password-reset handler', async () => {
   vi.resetModules();
   createClientMock();
@@ -154,8 +168,10 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     const user = { id: "1", email: "user@example.com" };
-    const { signInMock } = currentSupabaseMocks();
+    const { signInMock, getSessionMock } = currentSupabaseMocks();
     signInMock.mockResolvedValue({ data: { user }, error: null });
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+    stubSuccessfulSessionSync();
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
@@ -204,8 +220,10 @@ describe("dynamic DOM bindings", () => {
     expect(btn.addEventListener).toHaveBeenCalled();
 
     const user = { id: "2", email: "new@example.com" };
-    const { signUpMock } = currentSupabaseMocks();
+    const { signUpMock, getSessionMock } = currentSupabaseMocks();
     signUpMock.mockResolvedValue({ data: { user }, error: null });
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+    stubSuccessfulSessionSync();
     await clickHandler({ preventDefault: () => {}, target: btn });
     await flushPromises();
 
