@@ -12,8 +12,15 @@ import {
   ATTR_SUBMIT_RESET,
   ATTR_CONFIRM_PASSWORD,
   ATTR_SIGNUP,
+  ATTR_RESET_PANEL,
+  RESET_ROUTE,
 } from './constants.js';
-import { validatePasswordsOrThrow } from './validators.js';
+import {
+  ensureStrongPassword,
+  comparePasswords,
+  ERR_WEAK_PASSWORD,
+  ERR_PASSWORD_MISMATCH,
+} from './validators.js';
 const ensureConfigLoaded =
   globalThis.ensureConfigLoaded || (() => Promise.resolve());
 const getCachedBrokerBase =
@@ -23,7 +30,9 @@ import {
   stripHash,
   isOnResetRoute,
   stripRecoveryHashIfNotOnReset,
+  parseAuthHash,
 } from '../../core/hash.js';
+import { sessionSync } from '../../core/http/sessionSync.js';
 
 const { debug: cfgDebug } = getConfig();
 const debug =
@@ -569,9 +578,13 @@ export function bindAuthElements(root = globalThis.document) {
     }
   };
   root.querySelectorAll(ATTR_SIGNIN).forEach(el => attach(el, clickHandler));
-  root.querySelectorAll(ATTR_SUBMIT_RESET).forEach(el => attach(el, clickHandler));
   root
-    .querySelectorAll(`${ATTR_SIGNUP}, [data-smoothr="login-google"], [data-smoothr="login-apple"], ${ATTR_REQUEST_RESET}`)
+    .querySelectorAll(`${ATTR_SUBMIT_RESET}, [data-smoothr="password-reset-confirm"]`)
+    .forEach(el => attach(el, clickHandler));
+  root
+    .querySelectorAll(
+      `${ATTR_SIGNUP}, [data-smoothr="login-google"], [data-smoothr="login-apple"], ${ATTR_REQUEST_RESET}, [data-smoothr="password-reset"]`
+    )
     .forEach(el => {
       const action = el.getAttribute('data-smoothr');
       const handler =
@@ -751,6 +764,20 @@ let _prRedirect = '';
 export async function init(options = {}) {
   bindAccountAccessTriggersEarly();
   stripRecoveryHashIfNotOnReset();
+  const { access_token, type } = parseAuthHash();
+  if (access_token && type === 'recovery') {
+    const popup = document.querySelector('[data-smoothr="auth-pop-up"]');
+    const resetPanel = document.querySelector(ATTR_RESET_PANEL);
+    if (popup && resetPanel) {
+      popup.style.display = popup.style.display || 'flex';
+      popup.setAttribute('data-state', 'open');
+      resetPanel.setAttribute('data-smoothr-active', 'true');
+      globalThis.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'popup' });
+    } else if (!location.pathname.endsWith(RESET_ROUTE)) {
+      globalThis.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'route-fallback' });
+      location.replace(RESET_ROUTE + location.hash);
+    }
+  }
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {
     const w = globalThis.window || globalThis;
@@ -976,24 +1003,19 @@ export async function init(options = {}) {
       if (action === 'password-reset-confirm' || action === 'submit-reset-password') {
         const { password, confirm } = extractCredsFrom(container);
         clearAuthError(container);
-        try {
-          validatePasswordsOrThrow(password, confirm);
-        } catch (e) {
-          const msg =
-            e?.message === 'password_mismatch'
-              ? 'Passwords do not match.'
-              : e?.message === 'password_too_weak'
-              ? 'Please choose a stronger password.'
-              : 'Invalid password.';
-          renderAuthError(container, msg);
-          emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', code: e?.message || 'password_error' });
-          throw e;
+        if (!ensureStrongPassword(password)) {
+          renderAuthError(container, ERR_WEAK_PASSWORD);
+          emitAuth?.('smoothr:auth:error', { message: ERR_WEAK_PASSWORD, stage: 'reset-confirm', code: 'password_too_weak' });
+          return;
+        }
+        if (!comparePasswords(password, confirm)) {
+          renderAuthError(container, ERR_PASSWORD_MISMATCH);
+          emitAuth?.('smoothr:auth:error', { message: ERR_PASSWORD_MISMATCH, stage: 'reset-confirm', code: 'password_mismatch' });
+          return;
         }
 
-        const hash = (w.location?.hash || '').slice(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token') || '';
-        if (!accessToken) {
+        const { access_token } = parseAuthHash();
+        if (!access_token) {
           const msg = 'Recovery link is missing or expired.';
           renderAuthError(container, msg);
           emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', code: 'missing_recovery_token' });
@@ -1002,14 +1024,14 @@ export async function init(options = {}) {
 
         if (isOnResetRoute()) markResetLoading?.(true);
         try {
-          const { data: userRes, error: userErr } = await c.auth.getUser(accessToken);
+          const { data: userRes, error: userErr } = await c.auth.getUser(access_token);
           if (userErr || !userRes?.user) {
             const msg = 'Invalid or expired recovery token.';
             renderAuthError(container, msg);
             emitAuth?.('smoothr:auth:error', { message: msg, stage: 'reset-confirm', raw: userErr, code: 'invalid_recovery_token' });
             return;
           }
-          const { error: updateErr } = await c.auth.updateUser({ password });
+          const { error: updateErr } = await c.auth.updateUser({ password }, { access_token });
           if (updateErr) {
             const msg = 'Unable to update password. Please try again.';
             renderAuthError(container, msg);
@@ -1019,33 +1041,26 @@ export async function init(options = {}) {
           w.Smoothr.auth.user.value = userRes.user;
           if (isOnResetRoute()) stripHash();
 
+          const brokerBase = getCachedBrokerBase?.() || '';
           const storeId =
             (w.SMOOTHR_CONFIG && w.SMOOTHR_CONFIG.store_id) ||
             w.document?.getElementById('smoothr-sdk')?.dataset?.storeId || '';
-          if (!storeId) {
+          if (!brokerBase || !storeId) {
             history.replaceState?.(null, '', w.location?.pathname + w.location?.search);
             w.location?.assign?.('/');
             return;
           }
 
-          const formEl = w.document?.createElement?.('form');
-          if (formEl) {
-            formEl.method = 'POST';
-            formEl.action = `${getBrokerBaseUrl()}/api/auth/session-sync`;
-            const f1 = w.document.createElement('input');
-            f1.type = 'hidden';
-            f1.name = 'store_id';
-            f1.value = storeId;
-            formEl.appendChild(f1);
-            const f2 = w.document.createElement('input');
-            f2.type = 'hidden';
-            f2.name = 'access_token';
-            f2.value = accessToken;
-            formEl.appendChild(f2);
-            w.document.body.appendChild(formEl);
-            history.replaceState?.(null, '', w.location?.pathname + w.location?.search);
-            formEl.submit();
+          const syncRes = await sessionSync({ brokerBase, store_id: storeId, access_token });
+          const redirectUrl = syncRes?.redirect_url || syncRes?.sign_in_redirect_url || null;
+          if (redirectUrl) {
+            try { w.location?.assign?.(redirectUrl); } catch {}
+            return;
           }
+          emitAuth?.('smoothr:auth:signedin', { userId: userRes.user.id });
+          emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
+          const popup = w.document?.querySelector?.('[data-smoothr="auth-pop-up"]');
+          popup?.setAttribute?.('data-state', 'closed');
         } finally {
           if (isOnResetRoute()) markResetLoading?.(false);
         }
