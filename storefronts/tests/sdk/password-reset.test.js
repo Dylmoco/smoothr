@@ -40,6 +40,38 @@ it('does not set loading class on non-reset routes when hash exists', async () =
   document.body.innerHTML = '';
 });
 
+it('auto-opens reset panel when popup exists', async () => {
+  vi.resetModules();
+  history.replaceState(null, '', '/home#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('open');
+  expect(document.querySelector('[data-smoothr="reset-password"]')?.getAttribute('data-smoothr-active')).toBe('true');
+  expect((window.location).replace).not.toHaveBeenCalled();
+  window.location = origLoc;
+});
+
+it('falls back to reset route when popup missing', async () => {
+  vi.resetModules();
+  history.replaceState(null, '', '/home#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
+  document.body.innerHTML = '';
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect((window.location).replace).toHaveBeenCalledWith('/reset-password#access_token=tok&type=recovery');
+  window.location = origLoc;
+});
+
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
   document.body.innerHTML = '<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-config-url="https://broker.example/api/config" data-store-id="store_test"></script>';
@@ -172,17 +204,68 @@ describe('resolveRecoveryDestination (allowlist)', () => {
 
 describe('password validator', () => {
   it('throws on mismatch', () => {
-    expect(() => validatePasswordsOrThrow('CorrectHorseBatteryStaple', 'wrong')).toThrow('password_mismatch');
+    expect(() => validatePasswordsOrThrow('CorrectHorse1', 'wrong')).toThrow('password_mismatch');
   });
   it('throws on weak password', () => {
     expect(() => validatePasswordsOrThrow('short', 'short')).toThrow('password_too_weak');
   });
   it('passes on valid matching passwords', () => {
-    expect(validatePasswordsOrThrow('CorrectHorseBatteryStaple', 'CorrectHorseBatteryStaple')).toBe(true);
+    expect(validatePasswordsOrThrow('CorrectHorse1', 'CorrectHorse1')).toBe(true);
   });
 });
 
-it('reset confirm posts to session-sync for 303 redirect to home when no redirect set', async () => {
+it('shows error when recovery token missing', async () => {
+  vi.resetModules();
+  createClientMock();
+  const { getUserMock, updateUserMock } = currentSupabaseMocks();
+  const fetchSpy = vi.fn();
+  global.fetch = fetchSpy;
+  document.body.innerHTML = `
+    <form data-smoothr="auth-form">
+      <input data-smoothr="password" value="Correct123" />
+      <input data-smoothr="confirm-password" value="Correct123" />
+      <button data-smoothr="submit-reset-password">Save</button>
+    </form>
+  `;
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect(getUserMock).toHaveBeenCalledTimes(1);
+  const btn = document.querySelector('[data-smoothr="submit-reset-password"]');
+  btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await flushPromises();
+  expect(getUserMock).toHaveBeenCalledTimes(1);
+  expect(updateUserMock).not.toHaveBeenCalled();
+  expect(fetchSpy).not.toHaveBeenCalled();
+  const err = document.querySelector('[data-smoothr="error"]');
+  expect(err?.textContent).toMatch(/Recovery link is missing/);
+});
+
+it('shows error on weak password', async () => {
+  vi.resetModules();
+  createClientMock();
+  const { getUserMock, updateUserMock } = currentSupabaseMocks();
+  global.fetch = vi.fn();
+  document.body.innerHTML = `
+    <form data-smoothr="auth-form">
+      <input data-smoothr="password" value="weak" />
+      <input data-smoothr="confirm-password" value="weak" />
+      <button data-smoothr="submit-reset-password">Save</button>
+    </form>
+  `;
+  window.history.replaceState(null, '', '/reset-password#access_token=tok&type=recovery');
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect(getUserMock).toHaveBeenCalledTimes(1);
+  const btn = document.querySelector('[data-smoothr="submit-reset-password"]');
+  btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  await flushPromises();
+  expect(getUserMock).toHaveBeenCalledTimes(1);
+  expect(updateUserMock).not.toHaveBeenCalled();
+  const err = document.querySelector('[data-smoothr="error"]');
+  expect(err?.textContent).toMatch(/stronger password/i);
+});
+
+it('reset confirm syncs session via fetch when no redirect set', async () => {
   vi.resetModules();
   createClientMock();
   global.window = realWindow;
@@ -192,29 +275,34 @@ it('reset confirm posts to session-sync for 303 redirect to home when no redirec
   updateUserMock.mockResolvedValue({ data: { user: { id: '1' } }, error: null });
 
   document.body.innerHTML = `
-    <form data-smoothr="auth-form">
-      <input data-smoothr="password" value="CorrectHorseBatteryStaple" />
-      <input data-smoothr="password-confirm" value="CorrectHorseBatteryStaple" />
-      <button data-smoothr="password-reset-confirm">Save</button>
-      <div data-smoothr="auth-error" style="display:none"></div>
-    </form>
+    <div data-smoothr="auth-pop-up" data-state="open">
+      <form data-smoothr="auth-form">
+        <input data-smoothr="password" value="Correct123" />
+        <input data-smoothr="confirm-password" value="Correct123" />
+        <button data-smoothr="submit-reset-password">Save</button>
+      </form>
+    </div>
   `;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test', __brokerBase: 'https://broker.example' };
+  window.SMOOTHR_CONFIG = { store_id: 'store_test' };
+  globalThis.getCachedBrokerBase = () => 'https://broker.example';
   window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
 
-  const submitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function () {});
+  const fetchSpy = vi.fn().mockResolvedValue({ json: async () => ({ ok: true }) });
+  global.fetch = fetchSpy;
 
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  const btn = document.querySelector('[data-smoothr="submit-reset-password"], [data-smoothr="password-reset-confirm"]');
+  const btn = document.querySelector('[data-smoothr="submit-reset-password"]');
   btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-  await new Promise((r) => setTimeout(r, 0));
-
-  expect(submitSpy).toHaveBeenCalledTimes(1);
-  const forms = document.querySelectorAll('form');
-  expect(forms[1]?.action).toBe('https://broker.example/api/auth/session-sync');
-  submitSpy.mockRestore();
+  await flushPromises();
+  expect(fetchSpy).toHaveBeenCalledWith(
+    'https://broker.example/api/auth/session-sync',
+    expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({ Authorization: 'Bearer testtoken' }),
+    })
+  );
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('closed');
 });
 
 describe('send-reset auto-forward flag', () => {

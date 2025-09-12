@@ -6,30 +6,40 @@ import { resolveRecoveryDestination } from '../../../shared/auth/resolveRecovery
 
 interface Props {
   redirect?: string | null;
-  error?: string | null; // 'NO_ALLOWED_ORIGIN' | message
+  error?: string | null;
   auto?: '1' | null;
   brokerHost?: string | null;
   storeName?: string | null;
+  storeId?: string | null;
+  requestId?: string | null;
 }
 export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req }) => {
   const storeId = Array.isArray(query.store_id) ? query.store_id[0] : (query.store_id as string) || '';
   const auto = Array.isArray(query.auto) ? query.auto[0] : (query.auto as string) || null;
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
   const host = (req.headers['x-forwarded-host'] as string) || (req.headers.host as string);
-  const brokerOrigin = `${proto}://${host}`;
+  const requestId = (req.headers['x-request-id'] as string) || null;
   if (!storeId) {
-    return { props: { redirect: null, error: 'Missing store_id', auto: auto === '1' ? '1' : null, brokerHost: host || null } };
+    return {
+      props: {
+        redirect: null,
+        error: 'Missing store_id',
+        auto: auto === '1' ? '1' : null,
+        brokerHost: host || null,
+        storeName: null,
+        storeId: null,
+        requestId,
+      },
+    };
   }
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    // 1) Fetch domains & name from stores
     const { data: storeRow } = await supabaseAdmin
       .from('stores')
       .select('store_domain, live_domain, store_name')
       .eq('id', storeId)
       .single();
 
-    // 2) Resolve destination using allowlist logic
     const orig = Array.isArray(query.orig) ? query.orig[0] : (query.orig as string) || null;
     const res = resolveRecoveryDestination({
       liveDomain: storeRow?.live_domain ?? null,
@@ -39,29 +49,36 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
       nodeEnv: process.env.NODE_ENV,
     });
 
-    if (res.type === 'ok') {
-      const dest = new URL('/reset-password', brokerOrigin);
+    if (res.type === 'ok' && res.origin) {
+      const dest = `${res.origin}/auth/reset`;
+      console.log('[recovery-bridge] redirect', { dest, auto: auto === '1' });
       return {
         props: {
-          redirect: dest.toString(),
+          redirect: dest,
           error: null,
           auto: auto === '1' ? '1' : null,
           brokerHost: host || null,
           storeName: storeRow?.store_name ?? null,
+          storeId,
+          requestId,
         },
       };
     }
 
+    console.warn('[recovery-bridge] no destination', { storeId, orig });
     return {
       props: {
         redirect: null,
-        error: 'NO_ALLOWED_ORIGIN',
+        error: res.code || 'NO_DESTINATION',
         auto: auto === '1' ? '1' : null,
         brokerHost: host || null,
         storeName: storeRow?.store_name ?? null,
+        storeId,
+        requestId,
       },
     };
   } catch (e: any) {
+    console.error('[recovery-bridge] error', e);
     return {
       props: {
         redirect: null,
@@ -69,6 +86,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
         auto: auto === '1' ? '1' : null,
         brokerHost: host || null,
         storeName: null,
+        storeId,
+        requestId,
       },
     };
   }
@@ -80,8 +99,10 @@ export default function RecoveryBridgePage(props: Props) {
   React.useEffect(() => {
     if (!props.redirect) return;
     try {
-      const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
-      const dest = props.redirect + hash;
+      const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+      const params = new URLSearchParams(hash);
+      if (props.storeId) params.set('store_id', props.storeId);
+      const dest = `${props.redirect}#${params.toString()}`;
       setTarget(dest);
       if (props.auto === '1' && typeof window !== 'undefined') {
         const onBrokerHost = props.brokerHost ? window.location.host === props.brokerHost : true;
@@ -92,7 +113,7 @@ export default function RecoveryBridgePage(props: Props) {
     } catch {
       // ignore
     }
-  }, [props.redirect, props.auto, props.brokerHost]);
+  }, [props.redirect, props.auto, props.brokerHost, props.storeId]);
 
   return (
     <>
@@ -100,7 +121,10 @@ export default function RecoveryBridgePage(props: Props) {
       {props.error ? (
         <main style={{ padding: 24 }}>
           <h1>Recovery paused</h1>
-          <p>This store has no allowed domain configured yet. Ask the store owner to set <code>live_domain</code> or <code>store_domain</code>.</p>
+          <p>We could not determine where to send you. Ask the store owner to set a store domain or include an <code>orig</code> parameter.</p>
+          {props.requestId && (
+            <p style={{ marginTop: 12, fontSize: 12, color: '#666' }}>Request ID: {props.requestId}</p>
+          )}
         </main>
       ) : (
         <main style={{ padding: 24, maxWidth: 480, margin: '64px auto', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', border: '1px solid #e5e5e5', borderRadius: 12 }}>

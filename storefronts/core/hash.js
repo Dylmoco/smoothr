@@ -26,3 +26,17 @@ export function stripRecoveryHashIfNotOnReset() {
     stripHash();
   }
 }
+
+export function parseAuthHash() {
+  try {
+    if (!location.hash || location.hash.length < 2) return {};
+    const params = new URLSearchParams(location.hash.slice(1));
+    return {
+      access_token: params.get('access_token') || '',
+      type: params.get('type') || '',
+      store_id: params.get('store_id') || '',
+    };
+  } catch {
+    return {};
+  }
+}

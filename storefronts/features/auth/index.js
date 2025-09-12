@@ -25,3 +25,5 @@ export {
 } from './init.js';
 
 export { AUTH_CONTAINER_SELECTOR } from './constants.js';
+export { parseAuthHash } from '../../core/hash.js';
+export { sessionSync } from '../../core/http/sessionSync.js';
