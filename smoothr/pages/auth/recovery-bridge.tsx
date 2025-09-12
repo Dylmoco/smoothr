@@ -13,6 +13,9 @@ interface Props {
   storeId?: string | null;
   requestId?: string | null;
 }
+function hasCode(v: unknown): v is { code: string } {
+  return !!v && typeof v === 'object' && 'code' in (v as any);
+}
 export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req }) => {
   const storeId = Array.isArray(query.store_id) ? query.store_id[0] : (query.store_id as string) || '';
   const auto = Array.isArray(query.auto) ? query.auto[0] : (query.auto as string) || null;
@@ -69,7 +72,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
     return {
       props: {
         redirect: null,
-        error: res.code || 'NO_DESTINATION',
+        error: hasCode(res) ? res.code : 'NO_DESTINATION',
         auto: auto === '1' ? '1' : null,
         brokerHost: host || null,
         storeName: storeRow?.store_name ?? null,
