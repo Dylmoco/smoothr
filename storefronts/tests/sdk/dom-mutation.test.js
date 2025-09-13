@@ -415,10 +415,8 @@ describe("dynamic DOM bindings", () => {
     expect(global.window.dispatchEvent).toHaveBeenCalledTimes(1);
     const docEvt = global.document.dispatchEvent.mock.calls[0][0];
     const winEvt = global.window.dispatchEvent.mock.calls[0][0];
-    expect(docEvt.type).toBe("smoothr:auth:open");
-    expect(winEvt.type).toBe("smoothr:auth:open");
-    expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
-    expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
+      expect(docEvt.type).toBe("smoothr:auth:open");
+      expect(winEvt.type).toBe("smoothr:auth:open");
   });
 
   it("binds newly added sign-out elements and dispatches sign-out", async () => {

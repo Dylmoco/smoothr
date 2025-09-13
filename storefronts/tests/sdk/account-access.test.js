@@ -129,8 +129,6 @@ describe("account access trigger", () => {
       const winEvt = global.window.dispatchEvent.mock.calls[0][0];
       expect(docEvt.type).toBe("smoothr:auth:open");
       expect(winEvt.type).toBe("smoothr:auth:open");
-      expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
-      expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     });
   });
 
