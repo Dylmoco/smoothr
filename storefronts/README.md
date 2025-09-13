@@ -92,7 +92,7 @@ window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 
 - After login: set **Sign-in Success Redirect URL** to redirect via CORS-less form POST; leave blank to stay on page.
 - Recovery redirect origin resolution (allowlist): `live_domain` → `store_domain` → origin of `sign_in_redirect_url`. In development only, `orig=localhost` / `127.0.0.1` is accepted if no domains are configured.
-- The final `/reset-password` URL **does not include** `store_id` (the SDK/loader provides store context).
+- The final `/auth/reset` URL **does not include** `store_id` (the SDK/loader provides store context).
 - Optional: set `SMOOTHR_CONFIG.auth.silentPost = true` to use a hidden-iframe form POST for the “stay on page” path (silences dev CORS noise).
 
 ### Reset UX polish
@@ -105,7 +105,7 @@ html.smoothr-reset-loading body { visibility: hidden; }
 The class is removed once the URL is cleaned (no trailing hash) and the session is set.
 
 **Stale reset code on other pages**  
-If a recovery code (`#access_token=…`) appears on any page that isn’t your reset page, the SDK now **removes it silently** so your site works normally (auth popup opens, links work). The code is only used on `/reset-password`, where it’s consumed and then cleared.
+If a recovery code (`#access_token=…`) appears on any page that isn’t your reset page, the SDK now **removes it silently** so your site works normally (auth popup opens, links work). The code is only used on `/auth/reset`, where it’s consumed and then cleared.
 
 #### Password reset (success)
 On successful password change, the SDK performs a **top-level form POST** to `/api/auth/session-sync` so the broker issues a **303** to the store’s **Sign-in Success Redirect URL**, or `/` if not configured. This guarantees landing on the client homepage.  

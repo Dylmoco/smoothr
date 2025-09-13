@@ -49,6 +49,27 @@ it('auto-opens reset panel before hash is stripped', async () => {
   window.location = origLoc;
 });
 
+it('emits panel-aware event and opens reset panel', async () => {
+  vi.resetModules();
+  vi.useFakeTimers();
+  history.replaceState(null, '', '/home#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
+  const dispatch = vi.spyOn(window, 'dispatchEvent');
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'smoothr:auth:show' }));
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('open');
+  expect(document.querySelector('[data-smoothr="reset-password"]')?.getAttribute('data-smoothr-active')).toBe('true');
+  dispatch.mockRestore();
+  vi.useRealTimers();
+  window.location = origLoc;
+});
+
 it('falls back to reset route when popup missing', async () => {
   vi.resetModules();
   history.replaceState(null, '', '/home#access_token=tok&type=recovery');
@@ -60,18 +81,36 @@ it('falls back to reset route when popup missing', async () => {
   document.body.innerHTML = '';
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  expect((window.location).replace).toHaveBeenCalledWith('/reset-password#access_token=tok&type=recovery');
+  expect((window.location).replace).toHaveBeenCalledWith('/auth/reset#access_token=tok&type=recovery');
+  window.location = origLoc;
+});
+
+it('watchdog redirects when popup/panel not visible', async () => {
+  vi.resetModules();
+  vi.useFakeTimers();
+  history.replaceState(null, '', '/auth/reset#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/auth/reset', hash: '#access_token=tok&type=recovery' };
+  document.body.innerHTML = '';
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  await vi.advanceTimersByTimeAsync(800);
+  expect((window.location).replace).toHaveBeenCalledWith('/auth/reset#access_token=tok&type=recovery');
+  vi.useRealTimers();
   window.location = origLoc;
 });
 
 it('opens popup inserted later via observeDOMChanges', async () => {
   vi.resetModules();
-  history.replaceState(null, '', '/home#access_token=tok&type=recovery');
+  history.replaceState(null, '', '/auth/reset#access_token=tok&type=recovery');
   const origLoc = window.location;
   // @ts-ignore
   delete window.location;
   // @ts-ignore
-  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/auth/reset', hash: '#access_token=tok&type=recovery' };
   const cb = { fn: null };
   window.Smoothr = { platform: { observeDOMChanges: (fn) => { cb.fn = fn; } }, events: { emit: vi.fn() } };
   document.body.innerHTML = '';
@@ -85,14 +124,37 @@ it('opens popup inserted later via observeDOMChanges', async () => {
   window.location = origLoc;
 });
 
+it('guard prevents double redirect when panel appears later', async () => {
+  vi.resetModules();
+  vi.useFakeTimers();
+  history.replaceState(null, '', '/auth/reset#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/auth/reset', hash: '#access_token=tok&type=recovery' };
+  const cb = { fn: null };
+  window.Smoothr = { platform: { observeDOMChanges: (fn) => { cb.fn = fn; } }, events: { emit: vi.fn() } };
+  document.body.innerHTML = '';
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
+  cb.fn && cb.fn();
+  await vi.advanceTimersByTimeAsync(800);
+  expect((window.location).replace).not.toHaveBeenCalled();
+  delete window.Smoothr;
+  vi.useRealTimers();
+  window.location = origLoc;
+});
+
 it('re-checks on hashchange when hash appears later', async () => {
   vi.resetModules();
   history.replaceState(null, '', '/home');
   window.Smoothr = { events: { emit: vi.fn() } };
-  document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up" data-state="closed"><div data-smoothr="reset-password"></div></div>`;
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).not.toBe('open');
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('closed');
   window.location.hash = '#access_token=tok&type=recovery';
   window.dispatchEvent(new Event('hashchange'));
   await flushPromises();
@@ -162,7 +224,7 @@ it('does not send duplicate reset emails when clicking a bound reset control', a
 it('sends reset via broker API with redirectTo (bridge + orig)', async () => {
   vi.resetModules();
   document.body.innerHTML = `<script id="smoothr-sdk" src="https://sdk.smoothr.io/smoothr-sdk.js" data-store-id="store_test" data-config-url="https://broker.example/api/config"></script><form data-smoothr="auth-form"></form>`;
-  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/reset-password' } };
+  window.SMOOTHR_CONFIG = { store_id: 'store_test', storeId: 'store_test', routes: { resetPassword: '/auth/reset' } };
   globalThis.getCachedBrokerBase = () => 'https://broker.example';
   globalThis.ensureConfigLoaded = () => Promise.resolve();
     createClientMock();
@@ -250,6 +312,7 @@ it('shows error when recovery token missing', async () => {
   const { getUserMock, updateUserMock } = currentSupabaseMocks();
   const fetchSpy = vi.fn();
   global.fetch = fetchSpy;
+  window.history.replaceState(null, '', '/auth/reset');
   document.body.innerHTML = `
     <form data-smoothr="auth-form">
       <input data-smoothr="password" value="Correct123" />
@@ -282,7 +345,7 @@ it('shows error on weak password', async () => {
       <button data-smoothr="submit-reset-password">Save</button>
     </form>
   `;
-  window.history.replaceState(null, '', '/reset-password#access_token=tok&type=recovery');
+  window.history.replaceState(null, '', '/auth/reset#access_token=tok&type=recovery');
   const auth = await import('../../features/auth/index.js');
   await auth.init();
   expect(getUserMock).toHaveBeenCalledTimes(1);
@@ -315,7 +378,7 @@ it('reset confirm syncs session via fetch when no redirect set', async () => {
   `;
   window.SMOOTHR_CONFIG = { store_id: 'store_test' };
   globalThis.getCachedBrokerBase = () => 'https://broker.example';
-  window.history.replaceState(null, '', '/reset-password#access_token=testtoken&type=recovery');
+  window.history.replaceState(null, '', '/auth/reset#access_token=tok&type=recovery');
 
   const fetchSpy = vi.fn().mockResolvedValue({ json: async () => ({ ok: true }) });
   global.fetch = fetchSpy;
@@ -329,7 +392,7 @@ it('reset confirm syncs session via fetch when no redirect set', async () => {
     'https://broker.example/api/auth/session-sync',
     expect.objectContaining({
       method: 'POST',
-      headers: expect.objectContaining({ Authorization: 'Bearer testtoken' }),
+      headers: expect.objectContaining({ Authorization: 'Bearer tok' }),
     })
   );
   expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('closed');
