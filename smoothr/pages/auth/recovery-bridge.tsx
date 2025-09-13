@@ -38,8 +38,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
   try {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: storeRow } = await supabaseAdmin
-      .from('stores')
-      .select('store_domain, live_domain, store_name')
+      .from('v_public_store')
+      .select('store_domain, live_domain, store_name, auth_reset_url')
       .eq('id', storeId)
       .single();
 
@@ -52,8 +52,56 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
       nodeEnv: process.env.NODE_ENV,
     });
 
-    if (res.type === 'ok' && res.origin) {
-      const dest = `${res.origin}/auth/reset`;
+    const expectedHost = (storeRow?.live_domain || storeRow?.store_domain || '').toLowerCase();
+    let dest: string | null = null;
+
+    if (storeRow?.auth_reset_url) {
+      try {
+        const u = new URL(storeRow.auth_reset_url);
+        if (u.host.toLowerCase() === expectedHost) {
+          dest = storeRow.auth_reset_url;
+        } else {
+          console.warn('[recovery-bridge] auth_reset_url host mismatch', {
+            storeId,
+            authResetUrl: storeRow.auth_reset_url,
+            expectedHost,
+          });
+          return {
+            props: {
+              redirect: null,
+              error: 'INVALID_RESET_URL',
+              auto: auto === '1' ? '1' : null,
+              brokerHost: host || null,
+              storeName: storeRow?.store_name ?? null,
+              storeId,
+              requestId,
+            },
+          };
+        }
+      } catch {
+        console.warn('[recovery-bridge] invalid auth_reset_url', {
+          storeId,
+          authResetUrl: storeRow?.auth_reset_url,
+        });
+        return {
+          props: {
+            redirect: null,
+            error: 'INVALID_RESET_URL',
+            auto: auto === '1' ? '1' : null,
+            brokerHost: host || null,
+            storeName: storeRow?.store_name ?? null,
+            storeId,
+            requestId,
+          },
+        };
+      }
+    }
+
+    if (!dest && res.type === 'ok' && res.origin) {
+      dest = `${res.origin}/auth/reset`;
+    }
+
+    if (dest) {
       console.log('[recovery-bridge] redirect', { dest, auto: auto === '1' });
       return {
         props: {
