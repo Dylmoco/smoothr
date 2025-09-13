@@ -39,6 +39,9 @@ const debug =
   cfgDebug || /smoothr-debug=1/.test(globalThis.location?.search || '');
 const log = (...args) => debug && console.debug('[Smoothr][oauth]', ...args);
 
+// prevents double actions / redirects
+let __smoothrResetShown = false;
+
 // Test environment detector (Vitest/JSDOM)
 const IS_VITEST = (() => {
   try {
@@ -220,6 +223,7 @@ export function getPasswordResetRedirectUrl() {
 }
 
 function tryAutoOpenReset(modeHint) {
+  if (__smoothrResetShown) return false;
   const { access_token, type } = parseAuthHash();
   if (!(access_token && type === 'recovery')) return false;
 
@@ -230,12 +234,22 @@ function tryAutoOpenReset(modeHint) {
     popup.style.display = popup.style.display || 'flex';
     popup.setAttribute('data-state', 'open');
     resetPanel.setAttribute('data-smoothr-active', 'true');
+    // Panel-aware event (for GSAP)
+    window.dispatchEvent(
+      new CustomEvent('smoothr:auth:show', {
+        detail: { panel: 'reset', selector: ATTR_RESET_PANEL },
+      })
+    );
+    // Optional direct hook (no-throw)
+    try { window.SmoothrUI?.auth?.showReset?.(); } catch (_) {}
     window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: modeHint || 'popup' });
+    __smoothrResetShown = true;
     return true;
   }
 
   if (!location.pathname.endsWith(RESET_ROUTE)) {
     window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'route-fallback' });
+    __smoothrResetShown = true;
     window.location.replace(RESET_ROUTE + location.hash);
     return true;
   }
@@ -722,7 +736,7 @@ export async function requestPasswordReset(email) {
   const storeId = getStoreId();
   const redirectTo =
     `https://lpuqrzvokroazwlricgn.supabase.co/reset?store_id=${storeId}&redirect_to=${encodeURIComponent(
-      `${w.location.origin}/reset-password`
+      `${w.location.origin}/auth/reset`
     )}`;
   const supabase = await resolveSupabase();
   const { error } = await supabase?.auth.resetPasswordForEmail(email, { redirectTo }) || {};
@@ -788,6 +802,20 @@ let _prRedirect = '';
 export async function init(options = {}) {
   const w = globalThis.window || globalThis;
   tryAutoOpenReset('early');
+  if (hasRecoveryHash() && !__smoothrResetShown) {
+    setTimeout(() => {
+      if (__smoothrResetShown) return;
+      const wrap = document.querySelector('[data-smoothr="auth-pop-up"]');
+      const panel = document.querySelector('[data-smoothr="reset-password"]');
+      const isOpen = !!wrap && wrap.getAttribute('data-state') === 'open';
+      const isActive =
+        !!panel &&
+        (panel.getAttribute('data-smoothr-active') === 'true' || panel.style.display === 'flex');
+      if (!(isOpen && isActive)) {
+        window.location.replace(RESET_ROUTE + window.location.hash);
+      }
+    }, 800);
+  }
   if (typeof w.addEventListener === 'function') {
     w.addEventListener('hashchange', () => { tryAutoOpenReset('hashchange'); }, { once: true });
   }

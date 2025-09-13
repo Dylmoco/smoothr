@@ -12,7 +12,7 @@ export function resetPath() {
     (window.SMOOTHR_CONFIG &&
       window.SMOOTHR_CONFIG.routes &&
       window.SMOOTHR_CONFIG.routes.resetPassword) ||
-    '/reset-password'
+    '/auth/reset'
   );
 }
 
