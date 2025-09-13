@@ -226,9 +226,11 @@ function tryAutoOpenReset(modeHint) {
   if (!(access_token && type === 'recovery')) return false;
 
   const route = getResetRoute();
+  const path = window.location.pathname || '/';
   window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: modeHint || 'route' });
   __smoothrResetShown = true;
-  if (!location.pathname.startsWith(route)) {
+  const onReset = path.endsWith(route);
+  if (!onReset) {
     window.location.replace(route + window.location.hash);
     return true;
   }

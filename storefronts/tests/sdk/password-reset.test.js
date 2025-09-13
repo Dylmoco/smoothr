@@ -87,6 +87,25 @@ it('stays on reset route when already present', async () => {
   delete window.Smoothr;
 });
 
+it('already on localized reset page → no redirect', async () => {
+  vi.resetModules();
+  history.replaceState(null, '', '/fr/reset-password#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/fr/reset-password', hash: '#access_token=tok&type=recovery' };
+  window.Smoothr = { events: { emit: vi.fn() } };
+  document.body.innerHTML = '<script id="smoothr-sdk" platform="webflow"></script>';
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect((window.location).replace).not.toHaveBeenCalled();
+  expect(window.Smoothr.events.emit).toHaveBeenCalledWith('smoothr:reset:auto-open', { mode: 'early' });
+  window.location = origLoc;
+  document.body.innerHTML = '';
+  delete window.Smoothr;
+});
+
 
 it('submits password-reset via Enter on reset-only form', async () => {
   vi.resetModules();
