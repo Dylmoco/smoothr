@@ -341,7 +341,7 @@ it('reset confirm syncs session via fetch when no redirect set', async () => {
   });
 
 describe('send-reset auto-forward flag', () => {
-  async function run(auto) {
+  async function run() {
     vi.resetModules();
     const generateLink = vi.fn().mockResolvedValue({
       data: { properties: { action_link: 'https://action.link' } },
@@ -360,7 +360,7 @@ describe('send-reset auto-forward flag', () => {
                         limit() {
                           return {
                             single: async () => ({
-                              data: { logo_url: null, auto_forward_recovery: auto },
+                              data: { logo_url: null },
                               error: null,
                             }),
                           };
@@ -425,13 +425,9 @@ describe('send-reset auto-forward flag', () => {
     const redirect = generateLink.mock.calls[0][0].options.redirectTo;
     return redirect;
   }
-  it('includes auto=1 when enabled', async () => {
-    const redirect = await run(true);
+  it('always includes auto=1', async () => {
+    const redirect = await run();
     expect(redirect).toMatch(/auto=1/);
-  });
-  it('omits auto when disabled', async () => {
-    const redirect = await run(false);
-    expect(redirect).not.toMatch(/auto=1/);
   });
 });
 
