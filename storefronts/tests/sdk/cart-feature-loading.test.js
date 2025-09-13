@@ -18,6 +18,9 @@ afterEach(() => {
 
 test('initializes cart when [data-smoothr-total] exists', async () => {
   document.body.innerHTML = `<div data-smoothr-total></div>`;
+  if (document.readyState === 'loading') {
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
+  }
   await __test_bootstrap({
     storeId: 'test-store',
     supabaseUrl: 'x',
@@ -30,6 +33,9 @@ test('initializes cart when [data-smoothr-total] exists', async () => {
 test('logs when cart triggers are absent', async () => {
   document.body.innerHTML = '';
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  if (document.readyState === 'loading') {
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
+  }
   await __test_bootstrap({
     storeId: 'test-store',
     supabaseUrl: 'x',

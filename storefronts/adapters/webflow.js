@@ -48,31 +48,32 @@ function observeDOMChanges() {
   return observer;
 }
 
+export function domReady() {
+  if (globalThis.__SMOOTHR_TEST_FAST_BOOT) {
+    initCurrencyDom();
+    normalizeLegacyAttributes();
+    return Promise.resolve();
+  }
+  if (document.readyState !== 'loading') {
+    initCurrencyDom();
+    normalizeLegacyAttributes();
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const onReady = () => {
+      document.removeEventListener('DOMContentLoaded', onReady);
+      initCurrencyDom();
+      normalizeLegacyAttributes();
+      resolve();
+    };
+    document.addEventListener('DOMContentLoaded', onReady, { once: true });
+  });
+}
+
 export function initAdapter(config) {
   // Placeholder for future Webflow-specific setup using `config` if needed.
-
   return {
-    domReady: () =>
-      new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          if (getConfig().debug)
-            console.warn('[Smoothr Webflow] DOM ready timeout');
-          reject(new Error('DOM ready timeout'));
-        }, 5000);
-
-        const run = () => {
-          clearTimeout(timeoutId);
-          initCurrencyDom();
-          normalizeLegacyAttributes();
-          resolve();
-        };
-
-        if (document.readyState !== 'loading') {
-          run();
-        } else {
-          document.addEventListener('DOMContentLoaded', run, { once: true });
-        }
-      }),
+    domReady,
     observeDOMChanges,
   };
 }

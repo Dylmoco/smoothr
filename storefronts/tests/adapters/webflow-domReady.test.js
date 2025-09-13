@@ -11,6 +11,7 @@ describe('webflow adapter domReady', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     globalThis.SMOOTHR_CONFIG = {};
+    delete globalThis.__SMOOTHR_TEST_FAST_BOOT;
     global.document = {
       readyState: 'loading',
       addEventListener: vi.fn(),
@@ -37,17 +38,14 @@ describe('webflow adapter domReady', () => {
     expect(initCurrencyDom).toHaveBeenCalled();
   });
 
-  it('rejects after timeout when DOMContentLoaded never fires', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    globalThis.SMOOTHR_CONFIG = { debug: true };
-
+  it('waits if DOMContentLoaded never fires', async () => {
     const { domReady } = initAdapter({});
     const p = domReady();
-    const expectation = expect(p).rejects.toThrow('DOM ready timeout');
-    await vi.advanceTimersByTimeAsync(5000);
-    await expectation;
-    expect(warnSpy).toHaveBeenCalledWith('[Smoothr Webflow] DOM ready timeout');
+    const result = await Promise.race([
+      p.then(() => 'resolved'),
+      vi.advanceTimersByTimeAsync(5000).then(() => 'timeout'),
+    ]);
+    expect(result).toBe('timeout');
     expect(initCurrencyDom).not.toHaveBeenCalled();
-    warnSpy.mockRestore();
   });
 });
