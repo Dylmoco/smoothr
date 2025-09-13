@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       .select('store_name')
       .eq('id', store_id)
       .maybeSingle();
-    const { logo_url, auto_forward_recovery } = await getStoreBranding(
+    const { logo_url } = await getStoreBranding(
       supabase,
       store_id,
     );
@@ -96,7 +96,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Choose preferred origin: live → store → broker (fallback)
     const preferredOrigin = allowedOrigins.find(Boolean) || brokerOrigin;
 
-    const dest = `${brokerOrigin}/auth/recovery-bridge?store_id=${encodeURIComponent(store_id)}&orig=${encodeURIComponent(preferredOrigin)}${auto_forward_recovery ? '&auto=1' : ''}`;
+    const qp = new URLSearchParams({
+      store_id,
+      orig: preferredOrigin,
+      auto: '1',
+    });
+    const dest = `${brokerOrigin}/auth/recovery-bridge?${qp.toString()}`;
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[send-reset] dest', { dest });
+    }
 
     // Generate Supabase recovery link
     // NOTE: supabase-js v2 admin.generateLink supports redirectTo

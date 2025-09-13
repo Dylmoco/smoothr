@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
 import { getSupabaseAdmin } from '../../lib/supabaseAdmin';
 import { resolveRecoveryDestination } from '../../../shared/auth/resolveRecoveryDestination';
 
@@ -146,15 +147,31 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query, req
 
 export default function RecoveryBridgePage(props: Props) {
   const [target, setTarget] = React.useState<string | null>(null);
+  const router = useRouter();
 
   React.useEffect(() => {
     if (!props.redirect) return;
     try {
       const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-      const params = new URLSearchParams(hash);
+      const hashParams = new URLSearchParams(hash);
+      const params = new URLSearchParams({ type: 'recovery' });
+      const token = hashParams.get('access_token');
+      if (token) params.set('access_token', token);
       if (props.storeId) params.set('store_id', props.storeId);
-      const dest = `${props.redirect}#${params.toString()}`;
+      const baseHref = new URL(props.redirect).href;
+      const dest = `${baseHref}#${params.toString()}`;
       setTarget(dest);
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        router.query.debug === '1'
+      ) {
+        // eslint-disable-next-line no-console
+        console.debug('[recovery-bridge]', {
+          auth_reset_url: props.redirect,
+          baseHref,
+          final: dest,
+        });
+      }
       if (props.auto === '1' && typeof window !== 'undefined') {
         const onBrokerHost = props.brokerHost ? window.location.host === props.brokerHost : true;
         if (onBrokerHost) {
@@ -164,7 +181,7 @@ export default function RecoveryBridgePage(props: Props) {
     } catch {
       // ignore
     }
-  }, [props.redirect, props.auto, props.brokerHost, props.storeId]);
+  }, [props.redirect, props.auto, props.brokerHost, props.storeId, router.query.debug]);
 
   return (
     <>
