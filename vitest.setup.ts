@@ -64,3 +64,13 @@ process.env.VITE_SUPABASE_ANON_KEY            ??= process.env.NEXT_PUBLIC_SUPABA
 const s = document.createElement('script');
 s.setAttribute('data-store-id', (globalThis as any).SMOOTHR_CONFIG.storeId);
 document.head.appendChild(s);
+
+// Speed up features that await domReady()
+;(globalThis as any).__SMOOTHR_TEST_FAST_BOOT = true;
+
+// Also dispatch DOMContentLoaded once for any direct listeners
+try {
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
+  }
+} catch {}
