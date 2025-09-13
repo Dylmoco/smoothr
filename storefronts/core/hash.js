@@ -1,3 +1,5 @@
+import { getResetRoute } from './platformRoutes.js';
+
 export function hasRecoveryHash() {
   const h = (location.hash || '').slice(1);
   return /(^|&)(access_token|refresh_token)=/.test(h);
@@ -12,7 +14,7 @@ export function resetPath() {
     (window.SMOOTHR_CONFIG &&
       window.SMOOTHR_CONFIG.routes &&
       window.SMOOTHR_CONFIG.routes.resetPassword) ||
-    '/auth/reset'
+    getResetRoute()
   );
 }
 

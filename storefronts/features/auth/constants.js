@@ -7,4 +7,4 @@ export const ATTR_RESET_PANEL = '[data-smoothr="reset-password"]';
 export const ATTR_SUBMIT_RESET = '[data-smoothr="submit-reset-password"]';
 export const ATTR_CONFIRM_PASSWORD = '[data-smoothr="confirm-password"]';
 export const ATTR_SIGNUP = '[data-smoothr="sign-up"]';
-export const RESET_ROUTE = '/auth/reset';
+export { getResetRoute } from '../../core/platformRoutes';

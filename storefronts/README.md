@@ -92,7 +92,7 @@ window.SMOOTHR_CONFIG.apiBase; // => 'https://example.com'
 
 - After login: set **Sign-in Success Redirect URL** to redirect via CORS-less form POST; leave blank to stay on page.
 - Recovery redirect origin resolution (allowlist): `live_domain` → `store_domain` → origin of `sign_in_redirect_url`. In development only, `orig=localhost` / `127.0.0.1` is accepted if no domains are configured.
-- The final `/auth/reset` URL **does not include** `store_id` (the SDK/loader provides store context).
+- The reset route is auto-detected: Webflow uses `/reset-password`, others default to `/auth/reset`. The final URL **does not include** `store_id` (the SDK/loader provides store context).
 - Optional: set `SMOOTHR_CONFIG.auth.silentPost = true` to use a hidden-iframe form POST for the “stay on page” path (silences dev CORS noise).
 
 ### Reset UX polish

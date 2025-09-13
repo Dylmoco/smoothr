@@ -70,7 +70,7 @@ it('emits panel-aware event and opens reset panel', async () => {
   window.location = origLoc;
 });
 
-it('falls back to reset route when popup missing', async () => {
+it('falls back to platform reset route when popup missing (framer)', async () => {
   vi.resetModules();
   history.replaceState(null, '', '/home#access_token=tok&type=recovery');
   const origLoc = window.location;
@@ -78,11 +78,28 @@ it('falls back to reset route when popup missing', async () => {
   delete window.location;
   // @ts-ignore
   window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
-  document.body.innerHTML = '';
+  document.body.innerHTML = '<script id="smoothr-sdk" platform="framer"></script>';
   const auth = await import('../../features/auth/index.js');
   await auth.init();
   expect((window.location).replace).toHaveBeenCalledWith('/auth/reset#access_token=tok&type=recovery');
   window.location = origLoc;
+  document.body.innerHTML = '';
+});
+
+it('falls back to platform reset route when popup missing (webflow)', async () => {
+  vi.resetModules();
+  history.replaceState(null, '', '/home#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
+  document.body.innerHTML = '<script id="smoothr-sdk" platform="webflow"></script>';
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect((window.location).replace).toHaveBeenCalledWith('/reset-password#access_token=tok&type=recovery');
+  window.location = origLoc;
+  document.body.innerHTML = '';
 });
 
 it('watchdog redirects when popup/panel not visible', async () => {
@@ -380,7 +397,7 @@ it('reset confirm syncs session via fetch when no redirect set', async () => {
   globalThis.getCachedBrokerBase = () => 'https://broker.example';
   window.history.replaceState(null, '', '/auth/reset#access_token=tok&type=recovery');
 
-  const fetchSpy = vi.fn().mockResolvedValue({ json: async () => ({ ok: true }) });
+  const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true }) });
   global.fetch = fetchSpy;
 
   const auth = await import('../../features/auth/index.js');
@@ -552,4 +569,22 @@ describe('recovery-bridge auto-forward', () => {
     document.body.innerHTML = '';
     window.location = orig;
   });
+});
+
+it('sessionSync falls back to form POST when JSON auth fails', async () => {
+  vi.resetModules();
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) })
+    .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ success: true }) });
+  const realFetch = global.fetch;
+  // @ts-ignore
+  global.fetch = fetchMock;
+  const { sessionSync } = await import('../../core/http/sessionSync.js');
+  await sessionSync({ brokerBase: 'https://broker', store_id: 's1', access_token: 'tok' });
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock.mock.calls[1][1].headers['Content-Type']).toBe(
+    'application/x-www-form-urlencoded'
+  );
+  global.fetch = realFetch;
 });

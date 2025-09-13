@@ -13,8 +13,8 @@ import {
   ATTR_CONFIRM_PASSWORD,
   ATTR_SIGNUP,
   ATTR_RESET_PANEL,
-  RESET_ROUTE,
 } from './constants.js';
+import { getResetRoute } from '../../core/platformRoutes.js';
 import {
   ensureStrongPassword,
   comparePasswords,
@@ -247,10 +247,11 @@ function tryAutoOpenReset(modeHint) {
     return true;
   }
 
-  if (!location.pathname.endsWith(RESET_ROUTE)) {
+  const route = getResetRoute();
+  if (!location.pathname.endsWith(route)) {
     window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'route-fallback' });
     __smoothrResetShown = true;
-    window.location.replace(RESET_ROUTE + location.hash);
+    window.location.replace(route + location.hash);
     return true;
   }
 
@@ -734,9 +735,10 @@ export async function requestPasswordReset(email) {
   await ensureConfigLoaded();
   const w = globalThis.window || globalThis;
   const storeId = getStoreId();
+  const base = `${w.location.origin}${getResetRoute()}`;
   const redirectTo =
     `https://lpuqrzvokroazwlricgn.supabase.co/reset?store_id=${storeId}&redirect_to=${encodeURIComponent(
-      `${w.location.origin}/auth/reset`
+      base
     )}`;
   const supabase = await resolveSupabase();
   const { error } = await supabase?.auth.resetPasswordForEmail(email, { redirectTo }) || {};
@@ -812,7 +814,7 @@ export async function init(options = {}) {
         !!panel &&
         (panel.getAttribute('data-smoothr-active') === 'true' || panel.style.display === 'flex');
       if (!(isOpen && isActive)) {
-        window.location.replace(RESET_ROUTE + window.location.hash);
+        window.location.replace(getResetRoute() + window.location.hash);
       }
     }, 800);
   }
