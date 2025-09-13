@@ -12,7 +12,6 @@ import {
   ATTR_SUBMIT_RESET,
   ATTR_CONFIRM_PASSWORD,
   ATTR_SIGNUP,
-  ATTR_RESET_PANEL,
 } from './constants.js';
 import { getResetRoute } from '../../core/platformRoutes.js';
 import {
@@ -26,7 +25,6 @@ const ensureConfigLoaded =
 const getCachedBrokerBase =
   globalThis.getCachedBrokerBase || (() => null);
 import {
-  hasRecoveryHash,
   stripHash,
   isOnResetRoute,
   stripRecoveryHashIfNotOnReset,
@@ -227,34 +225,13 @@ function tryAutoOpenReset(modeHint) {
   const { access_token, type } = parseAuthHash();
   if (!(access_token && type === 'recovery')) return false;
 
-  const popup = document.querySelector('[data-smoothr="auth-pop-up"]');
-  const resetPanel = document.querySelector(ATTR_RESET_PANEL);
-
-  if (popup && resetPanel) {
-    popup.style.display = popup.style.display || 'flex';
-    popup.setAttribute('data-state', 'open');
-    resetPanel.setAttribute('data-smoothr-active', 'true');
-    // Panel-aware event (for GSAP)
-    window.dispatchEvent(
-      new CustomEvent('smoothr:auth:show', {
-        detail: { panel: 'reset', selector: ATTR_RESET_PANEL },
-      })
-    );
-    // Optional direct hook (no-throw)
-    try { window.SmoothrUI?.auth?.showReset?.(); } catch (_) {}
-    window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: modeHint || 'popup' });
-    __smoothrResetShown = true;
-    return true;
-  }
-
   const route = getResetRoute();
-  if (!location.pathname.endsWith(route)) {
-    window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'route-fallback' });
-    __smoothrResetShown = true;
-    window.location.replace(route + location.hash);
+  window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: modeHint || 'route' });
+  __smoothrResetShown = true;
+  if (!location.pathname.startsWith(route)) {
+    window.location.replace(route + window.location.hash);
     return true;
   }
-
   return false;
 }
 
@@ -804,20 +781,6 @@ let _prRedirect = '';
 export async function init(options = {}) {
   const w = globalThis.window || globalThis;
   tryAutoOpenReset('early');
-  if (hasRecoveryHash() && !__smoothrResetShown) {
-    setTimeout(() => {
-      if (__smoothrResetShown) return;
-      const wrap = document.querySelector('[data-smoothr="auth-pop-up"]');
-      const panel = document.querySelector('[data-smoothr="reset-password"]');
-      const isOpen = !!wrap && wrap.getAttribute('data-state') === 'open';
-      const isActive =
-        !!panel &&
-        (panel.getAttribute('data-smoothr-active') === 'true' || panel.style.display === 'flex');
-      if (!(isOpen && isActive)) {
-        window.location.replace(getResetRoute() + window.location.hash);
-      }
-    }, 800);
-  }
   if (typeof w.addEventListener === 'function') {
     w.addEventListener('hashchange', () => { tryAutoOpenReset('hashchange'); }, { once: true });
   }
@@ -1103,15 +1066,16 @@ export async function init(options = {}) {
           }
 
           const syncRes = await sessionSync({ brokerBase, store_id: storeId, access_token });
-          const redirectUrl = syncRes?.redirect_url || syncRes?.sign_in_redirect_url || null;
-          if (redirectUrl) {
-            try { w.location?.assign?.(redirectUrl); } catch {}
-            return;
-          }
           emitAuth?.('smoothr:auth:signedin', { userId: userRes.user.id });
           emitAuth?.('smoothr:auth:close', { reason: 'signedin' });
-          const popup = w.document?.querySelector?.('[data-smoothr="auth-pop-up"]');
-          popup?.setAttribute?.('data-state', 'closed');
+          const wrap = w.document?.querySelector?.('[data-smoothr="auth-pop-up"]');
+          if (wrap) wrap.setAttribute('data-state', 'closed');
+          if (syncRes?.sign_in_redirect_url) {
+            try { w.location?.assign?.(syncRes.sign_in_redirect_url); } catch {}
+          } else {
+            try { w.location?.assign?.('/'); } catch {}
+          }
+          return;
         } finally {
           if (isOnResetRoute()) markResetLoading?.(false);
         }

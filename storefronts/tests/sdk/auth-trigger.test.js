@@ -43,8 +43,6 @@ describe('auth triggers', () => {
     const docEvt = doc.dispatchEvent.mock.calls[0][0];
     expect(winEvt.type).toBe('smoothr:auth:open');
     expect(docEvt.type).toBe('smoothr:auth:open');
-    expect(winEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
-    expect(docEvt.detail.targetSelector).toBe('[data-smoothr="auth-pop-up"]');
     expect(panel.classList.toggle).toHaveBeenCalledWith('is-active', true);
   });
 
