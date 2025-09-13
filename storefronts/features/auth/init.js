@@ -219,6 +219,30 @@ export function getPasswordResetRedirectUrl() {
   return `${broker}/auth/recovery-bridge${storeId ? `?store_id=${encodeURIComponent(storeId)}&orig=${origin}` : `?orig=${origin}`}`;
 }
 
+function tryAutoOpenReset(modeHint) {
+  const { access_token, type } = parseAuthHash();
+  if (!(access_token && type === 'recovery')) return false;
+
+  const popup = document.querySelector('[data-smoothr="auth-pop-up"]');
+  const resetPanel = document.querySelector(ATTR_RESET_PANEL);
+
+  if (popup && resetPanel) {
+    popup.style.display = popup.style.display || 'flex';
+    popup.setAttribute('data-state', 'open');
+    resetPanel.setAttribute('data-smoothr-active', 'true');
+    window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: modeHint || 'popup' });
+    return true;
+  }
+
+  if (!location.pathname.endsWith(RESET_ROUTE)) {
+    window.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'route-fallback' });
+    window.location.replace(RESET_ROUTE + location.hash);
+    return true;
+  }
+
+  return false;
+}
+
 function ensureSpinner() {
   const doc = globalThis.document;
   let el = doc?.querySelector?.('[data-smoothr="loading"]');
@@ -762,21 +786,18 @@ let _seededUserOnce = false;
 let _prSession = null;
 let _prRedirect = '';
 export async function init(options = {}) {
+  const w = globalThis.window || globalThis;
+  tryAutoOpenReset('early');
+  if (typeof w.addEventListener === 'function') {
+    w.addEventListener('hashchange', () => { tryAutoOpenReset('hashchange'); }, { once: true });
+  }
+  const observer = w.Smoothr?.platform?.observeDOMChanges;
+  if (typeof observer === 'function') {
+    observer(() => { tryAutoOpenReset('dom-observe'); });
+  }
   bindAccountAccessTriggersEarly();
-  stripRecoveryHashIfNotOnReset();
-  const { access_token, type } = parseAuthHash();
-  if (access_token && type === 'recovery') {
-    const popup = document.querySelector('[data-smoothr="auth-pop-up"]');
-    const resetPanel = document.querySelector(ATTR_RESET_PANEL);
-    if (popup && resetPanel) {
-      popup.style.display = popup.style.display || 'flex';
-      popup.setAttribute('data-state', 'open');
-      resetPanel.setAttribute('data-smoothr-active', 'true');
-      globalThis.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'popup' });
-    } else if (!location.pathname.endsWith(RESET_ROUTE)) {
-      globalThis.Smoothr?.events?.emit?.('smoothr:reset:auto-open', { mode: 'route-fallback' });
-      location.replace(RESET_ROUTE + location.hash);
-    }
+  if (!parseAuthHash().access_token) {
+    stripRecoveryHashIfNotOnReset();
   }
   if (_initPromise) return _initPromise;
   _initPromise = (async () => {

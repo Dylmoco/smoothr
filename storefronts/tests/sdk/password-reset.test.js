@@ -12,35 +12,26 @@ function flushPromises() {
   return new Promise(setImmediate);
 }
 
-it('strips stale recovery hash on non-reset routes (no redirect)', async () => {
-  vi.resetModules();
-  document.body.innerHTML = `<a data-smoothr="account-access"></a>`;
-  window.SMOOTHR_CONFIG = { routes: { resetPassword: '/reset-password' } };
-  history.replaceState(null, '', '/home#access_token=abc&type=recovery');
-  const auth = await import('../../features/auth/index.js');
-  await auth.init();
-  expect(location.pathname).toBe('/home');
-  expect(location.hash).toBe('');
-  document.body.innerHTML = '';
-  delete window.SMOOTHR_CONFIG;
-});
-
 it('does not set loading class on non-reset routes when hash exists', async () => {
   vi.resetModules();
-  document.body.innerHTML = `<div data-smoothr="auth-pop-up"></div>`;
   history.replaceState(null, '', '/home#access_token=abc&type=recovery');
-
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=abc&type=recovery' };
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"></div>`;
   const classAdd = vi.spyOn(document.documentElement.classList, 'add');
   const auth = await import('../../features/auth/index.js');
   await auth.init();
-
   // should not add smoothr-reset-loading on non-reset route
   expect(classAdd.mock.calls.find(([c]) => c === 'smoothr-reset-loading')).toBeUndefined();
   classAdd.mockRestore();
   document.body.innerHTML = '';
+  window.location = origLoc;
 });
 
-it('auto-opens reset panel when popup exists', async () => {
+it('auto-opens reset panel before hash is stripped', async () => {
   vi.resetModules();
   history.replaceState(null, '', '/home#access_token=tok&type=recovery');
   const origLoc = window.location;
@@ -51,6 +42,7 @@ it('auto-opens reset panel when popup exists', async () => {
   document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
   const auth = await import('../../features/auth/index.js');
   await auth.init();
+  history.replaceState(null, '', '/home');
   expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('open');
   expect(document.querySelector('[data-smoothr="reset-password"]')?.getAttribute('data-smoothr-active')).toBe('true');
   expect((window.location).replace).not.toHaveBeenCalled();
@@ -70,6 +62,44 @@ it('falls back to reset route when popup missing', async () => {
   await auth.init();
   expect((window.location).replace).toHaveBeenCalledWith('/reset-password#access_token=tok&type=recovery');
   window.location = origLoc;
+});
+
+it('opens popup inserted later via observeDOMChanges', async () => {
+  vi.resetModules();
+  history.replaceState(null, '', '/home#access_token=tok&type=recovery');
+  const origLoc = window.location;
+  // @ts-ignore
+  delete window.location;
+  // @ts-ignore
+  window.location = { ...origLoc, replace: vi.fn(), pathname: '/home', hash: '#access_token=tok&type=recovery' };
+  const cb = { fn: null };
+  window.Smoothr = { platform: { observeDOMChanges: (fn) => { cb.fn = fn; } }, events: { emit: vi.fn() } };
+  document.body.innerHTML = '';
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
+  cb.fn && cb.fn();
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('open');
+  expect(document.querySelector('[data-smoothr="reset-password"]')?.getAttribute('data-smoothr-active')).toBe('true');
+  delete window.Smoothr;
+  window.location = origLoc;
+});
+
+it('re-checks on hashchange when hash appears later', async () => {
+  vi.resetModules();
+  history.replaceState(null, '', '/home');
+  window.Smoothr = { events: { emit: vi.fn() } };
+  document.body.innerHTML = `<div data-smoothr="auth-pop-up"><div data-smoothr="reset-password"></div></div>`;
+  const auth = await import('../../features/auth/index.js');
+  await auth.init();
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).not.toBe('open');
+  window.location.hash = '#access_token=tok&type=recovery';
+  window.dispatchEvent(new Event('hashchange'));
+  await flushPromises();
+  expect(document.querySelector('[data-smoothr="auth-pop-up"]')?.getAttribute('data-state')).toBe('open');
+  expect(document.querySelector('[data-smoothr="reset-password"]')?.getAttribute('data-smoothr-active')).toBe('true');
+  delete window.Smoothr;
+  window.location.hash = '';
 });
 
 it('submits password-reset via Enter on reset-only form', async () => {
